@@ -10,9 +10,9 @@ import {
   upcomingFollowUps,
   type DashIconName,
 } from '../../../data/dashboardDemo'
-import Button from '../../../components/Button'
-import PageHeader from '../../../components/PageHeader'
-import PageMeta from '../../../components/PageMeta'
+import { Button } from '@/components/ui'
+import { PageHeader } from '@/components/common/Navigation'
+import { PageMeta } from '@/components/common/Meta'
 import type { AuthSession } from '../../../types'
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']

@@ -1,4 +1,4 @@
-import { rowActionBtn, rowActionMenu, rowActionMenuItem, rowActionMenuItemDanger } from '../styles/admin'
+import { rowActionBtn, rowActionMenu, rowActionMenuItem, rowActionMenuItemDanger } from '@/styles/admin'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { HugeiconsIcon } from '@hugeicons/react'

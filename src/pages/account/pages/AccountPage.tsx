@@ -1,9 +1,9 @@
 import { accountForm, adminBanner, adminCard, adminForm, adminPage } from '../../../styles/admin'
 import { useState, type FormEvent } from 'react'
-import Button from '../../../components/Button'
-import Input from '../../../components/Input'
-import PageHeader from '../../../components/PageHeader'
-import PageMeta from '../../../components/PageMeta'
+import { Button } from '@/components/ui'
+import { FormInput } from '@/components/common/Forms'
+import { PageHeader } from '@/components/common/Navigation'
+import { PageMeta } from '@/components/common/Meta'
 import { useChangePasswordMutation } from '../../../redux/features/auth/authApi'
 
 export default function AccountPage() {
@@ -45,7 +45,7 @@ export default function AccountPage() {
       <form className={`${adminCard} ${adminForm} ${accountForm}`} onSubmit={handleSubmit}>
         <label>
           Current password
-          <Input.Password
+          <FormInput.Password
             value={currentPassword}
             onChange={(event) => setCurrentPassword(event.target.value)}
             required
@@ -53,7 +53,7 @@ export default function AccountPage() {
         </label>
         <label>
           New password
-          <Input.Password
+          <FormInput.Password
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
             required

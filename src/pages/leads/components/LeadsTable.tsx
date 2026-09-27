@@ -1,4 +1,4 @@
-import { DataTable } from '../../../components/common/Tables'
+import { DataTable } from '@/components/common/Tables'
 import type { LeadRow } from '../types'
 import { leadColumns } from '../utils/leadColumns'
 

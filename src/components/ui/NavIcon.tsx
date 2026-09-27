@@ -15,7 +15,7 @@ import {
   UserIcon,
   UserMultiple02Icon,
 } from '@hugeicons/core-free-icons'
-import type { NavIconName } from '../config/navigation'
+import type { NavIconName } from '@/config/navigation'
 
 const ICONS: Record<NavIconName, typeof DashboardSquare01Icon> = {
   grid: DashboardSquare01Icon,

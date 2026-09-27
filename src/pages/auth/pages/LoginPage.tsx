@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Alert, Button, Checkbox, Form } from 'antd'
 import { toast } from 'react-toastify'
-import Input from '../../../components/Input'
-import PageMeta from '../../../components/PageMeta'
+import { FormInput } from '@/components/common/Forms'
+import { PageMeta } from '@/components/common/Meta'
 import { useAuth } from '../../../hooks/useAuth'
 import { isAuthSession } from '../../../lib/auth-session'
 import { useLoginMutation } from '../../../redux/features/auth/authApi'
@@ -79,21 +79,21 @@ export default function LoginPage() {
             <p className="m-0 text-[0.92rem] text-text-muted">Sign in to continue to your dashboard</p>
           </div>
 
-          <Form.Item
+          <FormInput
             name="identifier"
             label="Email or Username"
             rules={[{ required: true, message: 'Enter email or username' }]}
-          >
-            <Input autoComplete="username" placeholder="Email or username" />
-          </Form.Item>
+            autoComplete="username"
+            placeholder="Email or username"
+          />
 
-          <Form.Item
+          <FormInput.Password
             name="password"
             label="Password"
             rules={[{ required: true, message: 'Enter password' }]}
-          >
-            <Input.Password autoComplete="current-password" placeholder="Enter password" />
-          </Form.Item>
+            autoComplete="current-password"
+            placeholder="Enter password"
+          />
 
           <div className="mb-5 flex items-center justify-between gap-3">
             <Form.Item name="rememberMe" valuePropName="checked" className="mb-0!">

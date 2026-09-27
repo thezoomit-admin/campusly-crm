@@ -2,10 +2,10 @@ import { adminCard, adminForm, adminPage, formActions } from '../../../styles/ad
 import { useState } from 'react'
 import { Switch } from 'antd'
 import { toast } from 'react-toastify'
-import Button from '../../../components/Button'
-import Input from '../../../components/Input'
-import PageHeader from '../../../components/PageHeader'
-import PageMeta from '../../../components/PageMeta'
+import { Button } from '@/components/ui'
+import { FormInput } from '@/components/common/Forms'
+import { PageHeader } from '@/components/common/Navigation'
+import { PageMeta } from '@/components/common/Meta'
 
 export default function SettingsPage() {
   const [workspaceName, setWorkspaceName] = useState('EduConsult CRM')
@@ -44,12 +44,12 @@ export default function SettingsPage() {
         >
           <label>
             Workspace name
-            <Input value={workspaceName} onChange={(event) => setWorkspaceName(event.target.value)} />
+            <FormInput value={workspaceName} onChange={(event) => setWorkspaceName(event.target.value)} />
           </label>
 
           <label>
             Support email
-            <Input
+            <FormInput
               type="email"
               value={supportEmail}
               onChange={(event) => setSupportEmail(event.target.value)}

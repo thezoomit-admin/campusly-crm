@@ -1,4 +1,4 @@
-import { DataTable } from '../../../components/common/Tables'
+import { DataTable } from '@/components/common/Tables'
 import type { ReportRow } from '../types'
 import { reportColumns } from '../utils/reportColumns'
 

@@ -1,5 +1,6 @@
-import { Button, Form, Input } from 'antd'
-import AntModal from '../../../components/common/Modal/AntModal'
+import { Button, Form } from 'antd'
+import { FormInput } from '@/components/common/Forms'
+import { AntModal } from '@/components/common/Modals'
 import type { LeadFormValues } from '../types'
 
 type LeadFormModalProps = {
@@ -22,18 +23,10 @@ export default function LeadFormModal({ open, onClose, onSubmit }: LeadFormModal
           onClose()
         }}
       >
-        <Form.Item name="name" label="Lead name" rules={[{ required: true, message: 'Name is required' }]}>
-          <Input placeholder="Full name" />
-        </Form.Item>
-        <Form.Item name="phone" label="Phone">
-          <Input placeholder="Phone number" />
-        </Form.Item>
-        <Form.Item name="country" label="Country">
-          <Input placeholder="Preferred country" />
-        </Form.Item>
-        <Form.Item name="source" label="Source">
-          <Input placeholder="e.g. Facebook, Walk-in" />
-        </Form.Item>
+        <FormInput name="name" label="Lead name" rules={[{ required: true, message: 'Name is required' }]} placeholder="Full name" />
+        <FormInput name="phone" label="Phone" placeholder="Phone number" />
+        <FormInput name="country" label="Country" placeholder="Preferred country" />
+        <FormInput name="source" label="Source" placeholder="e.g. Facebook, Walk-in" />
         <div className="mt-2 flex justify-end gap-2">
           <Button onClick={onClose}>Cancel</Button>
           <Button type="primary" htmlType="submit">

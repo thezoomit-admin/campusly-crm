@@ -36,9 +36,9 @@ import {
   useUploadEmployeePhotoMutation,
 } from '@/redux/features/employees/employeesApi'
 import { getApiError } from '@/utils/apiError'
-import Button from '../../../components/Button'
-import PageHeader from '../../../components/PageHeader'
-import PageMeta from '../../../components/PageMeta'
+import { Button } from '@/components/ui'
+import { PageHeader } from '@/components/common/Navigation'
+import { PageMeta } from '@/components/common/Meta'
 import { hasPermission } from '../../../lib/access'
 import type { AuthSession, EmployeeCrmAccess, EmployeeRecord } from '../../../types'
 type ProfileSection = {

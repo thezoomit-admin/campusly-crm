@@ -1,4 +1,4 @@
-import { DataTable } from '../../../components/common/Tables'
+import { DataTable } from '@/components/common/Tables'
 import type { StudentRow } from '../types'
 import { studentColumns } from '../utils/studentColumns'
 

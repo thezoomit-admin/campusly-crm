@@ -1,8 +1,8 @@
 import { Alert, Button, Form } from "antd";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import Input from "../../../components/Input";
-import PageMeta from "../../../components/PageMeta";
+import { FormInput } from '@/components/common/Forms'
+import { PageMeta } from '@/components/common/Meta'
 import { useForgotPasswordMutation } from "../../../redux/features/auth/authApi";
 
 type ForgotValues = {
@@ -75,13 +75,12 @@ export default function ForgotPasswordPage() {
             </p>
           </div>
 
-          <Form.Item
+          <FormInput
             name="identifier"
             label="Email or Username"
             rules={[{ required: true, message: "Enter email or username" }]}
-          >
-            <Input placeholder="Email or username" />
-          </Form.Item>
+            placeholder="Email or username"
+          />
 
           {message ? (
             <Alert

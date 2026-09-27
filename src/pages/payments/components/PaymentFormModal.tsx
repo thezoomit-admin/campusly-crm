@@ -1,5 +1,5 @@
 import { Button, Form, Input } from 'antd'
-import AntModal from '../../../components/common/Modal/AntModal'
+import { AntModal } from '@/components/common/Modals'
 import type { PaymentFormValues } from '../types'
 
 type PaymentFormModalProps = {

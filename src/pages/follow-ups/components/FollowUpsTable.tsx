@@ -1,4 +1,4 @@
-import { DataTable } from '../../../components/common/Tables'
+import { DataTable } from '@/components/common/Tables'
 import type { FollowUpRow } from '../types'
 import { followUpColumns } from '../utils/followUpColumns'
 

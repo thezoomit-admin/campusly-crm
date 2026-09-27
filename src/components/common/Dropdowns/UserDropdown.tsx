@@ -2,12 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Logout01Icon, UserCircleIcon } from '@hugeicons/core-free-icons'
-import { hasPermission } from '../lib/access'
-import { useAuth } from '../hooks/useAuth'
-import type { NavIconName } from '../config/navigation'
-import NavIcon from './NavIcon'
-import UserAvatar from './UserAvatar'
-import type { AuthSession } from '../types'
+import { hasPermission } from '@/lib/access'
+import { useAuth } from '@/hooks/useAuth'
+import type { NavIconName } from '@/config/navigation'
+import { NavIcon, UserAvatar } from '@/components/ui'
+import type { AuthSession } from '@/types'
 
 const CLOSE_MS = 180
 

@@ -11,7 +11,7 @@ import router from './routes/routes'
 import { persistor, store } from './redux/features/store'
 import AuthSessionProvider from './providers/AuthSessionProvider'
 import { ThemeProvider, useTheme } from './theme/ThemeProvider'
-import PageLoader from './components/PageLoader'
+import { PageLoader } from '@/components/common/Loading'
 import './index.css'
 import './styles/antd.css'
 

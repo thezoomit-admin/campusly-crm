@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLazyGlobalSearchQuery } from '@/redux/features/search/searchApi'
-import { APP_NAV_GROUPS, flattenSearchablePages, type NavItem } from '../config/navigation'
-import { hasPermission } from '../lib/access'
-import type { AuthSession, GlobalSearchHit } from '../types'
+import { APP_NAV_GROUPS, flattenSearchablePages, type NavItem } from '@/config/navigation'
+import { hasPermission } from '@/lib/access'
+import type { AuthSession, GlobalSearchHit } from '@/types'
 
 const GROUP_ORDER = ['Pages', 'Users', 'Employees', 'Roles', 'Master Data', 'Activity', 'Audit Log', 'Account']
 

@@ -1,4 +1,4 @@
-import { Wave } from '@/components/loading-ui/wave'
+import { Wave } from '@/components/ui'
 
 export default function PageLoader() {
   return (

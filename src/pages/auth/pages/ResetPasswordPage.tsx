@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Alert, Button, Form } from 'antd'
-import Input from '../../../components/Input'
-import PageMeta from '../../../components/PageMeta'
+import { FormInput } from '@/components/common/Forms'
+import { PageMeta } from '@/components/common/Meta'
 import { useResetPasswordMutation } from '../../../redux/features/auth/authApi'
 
 type ResetValues = {
@@ -59,16 +59,16 @@ export default function ResetPasswordPage() {
             </p>
           </div>
 
-          <Form.Item
+          <FormInput.Password
             name="password"
             label="New password"
             rules={[
               { required: true, message: 'Enter a new password' },
               { min: 8, message: 'Password must be at least 8 characters' },
             ]}
-          >
-            <Input.Password autoComplete="new-password" placeholder="Enter a new password" />
-          </Form.Item>
+            autoComplete="new-password"
+            placeholder="Enter a new password"
+          />
 
           {message ? (
             <Alert type={success ? 'success' : 'error'} showIcon message={message} className="mb-4" />

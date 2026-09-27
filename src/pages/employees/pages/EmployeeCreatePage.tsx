@@ -63,11 +63,9 @@ import {
   useUploadEmployeePhotoMutation,
 } from '@/redux/features/employees/employeesApi'
 import { getApiError, getApiErrorFields } from '@/utils/apiError'
-import Button from '../../../components/Button'
-import Input from '../../../components/Input'
-import Select from '../../../components/Select'
-import PageHeader from '../../../components/PageHeader'
-import PageMeta from '../../../components/PageMeta'
+import { Button, Input, Select } from '@/components/ui'
+import { PageHeader } from '@/components/common/Navigation'
+import { PageMeta } from '@/components/common/Meta'
 import { hasPermission } from '../../../lib/access'
 import type { AuthSession, EmployeeOptions, EmployeeRecord, UserStatus } from '../../../types'
 type FieldErrors = Record<string, string>

@@ -1,5 +1,6 @@
-import { Button, Form, Input } from 'antd'
-import AntModal from '../../../components/common/Modal/AntModal'
+import { Button, Form } from 'antd'
+import { FormInput } from '@/components/common/Forms'
+import { AntModal } from '@/components/common/Modals'
 import type { StudentFormValues } from '../types'
 
 type StudentFormModalProps = {
@@ -22,18 +23,10 @@ export default function StudentFormModal({ open, onClose, onSubmit }: StudentFor
           onClose()
         }}
       >
-        <Form.Item name="name" label="Name" rules={[{ required: true, message: 'Name is required' }]}>
-          <Input placeholder="Student name" />
-        </Form.Item>
-        <Form.Item name="studentId" label="Student ID">
-          <Input placeholder="Student ID" />
-        </Form.Item>
-        <Form.Item name="destination" label="Destination">
-          <Input placeholder="Country / city" />
-        </Form.Item>
-        <Form.Item name="program" label="Program">
-          <Input placeholder="Program" />
-        </Form.Item>
+        <FormInput name="name" label="Name" rules={[{ required: true, message: 'Name is required' }]} placeholder="Student name" />
+        <FormInput name="studentId" label="Student ID" placeholder="Student ID" />
+        <FormInput name="destination" label="Destination" placeholder="Country / city" />
+        <FormInput name="program" label="Program" placeholder="Program" />
         <div className="mt-2 flex justify-end gap-2">
           <Button onClick={onClose}>Cancel</Button>
           <Button type="primary" htmlType="submit">

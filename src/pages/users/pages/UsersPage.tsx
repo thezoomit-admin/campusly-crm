@@ -89,12 +89,10 @@ import {
   ViewIcon,
 } from '@hugeicons/core-free-icons'
 import { Skeleton, Spin, Switch } from 'antd'
-import Button from '../../../components/Button'
-import RowActionMenu, { type RowActionItem } from '../../../components/RowActionMenu'
-import Input from '../../../components/Input'
-import Select from '../../../components/Select'
-import PageHeader from '../../../components/PageHeader'
-import PageMeta from '../../../components/PageMeta'
+import { Button, Input, Select } from '@/components/ui'
+import { PageHeader } from '@/components/common/Navigation'
+import { PageMeta } from '@/components/common/Meta'
+import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
 import { hasPermission } from '../../../lib/access'
 import { readUrlSearchQuery } from '../../../lib/url-search'
 import type {
