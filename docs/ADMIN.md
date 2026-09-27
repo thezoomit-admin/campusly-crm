@@ -28,7 +28,7 @@ Campusly Admin is the frontend CRM used by staff to manage leads, applications, 
 | `pnpm preview` | Preview the production build |
 | `pnpm lint` | Oxlint |
 | `pnpm typecheck` | `tsc -b` |
-| `pnpm test` | Vitest (unit / page tests) |
+| `pnpm test` | Vitest |
 
 ---
 
@@ -37,19 +37,18 @@ Campusly Admin is the frontend CRM used by staff to manage leads, applications, 
 ```
 campusly-crm/
 ├── docs/
-│   └── ADMIN.md                 ← this file
+│   └── ADMIN.md
 ├── public/
-│   ├── favicon.svg
-│   └── icons.svg
-├── src/                         ← all application code
+│   └── favicon.svg
+├── src/
 ├── .env.development
 ├── .env.production
 ├── .gitignore
 ├── .oxlintrc.json
 ├── index.html
-├── jsconfig.json
 ├── package.json
-├── README.md                    ← only the title: admin-educational-crm
+├── pnpm-lock.yaml
+├── README.md
 ├── tsconfig.json
 ├── tsconfig.app.json
 ├── tsconfig.node.json
@@ -58,7 +57,7 @@ campusly-crm/
 └── vitest.config.ts
 ```
 
-Not listed here: `node_modules/`, `dist/`, `.git/`, `.agents/` (Neon skill docs, not project docs).
+Not listed here: `node_modules/`, `dist/`, `.git/`, `.agents/`, `.neon/`, `neon.ts` (Neon tooling, not app code).
 
 ---
 
@@ -70,13 +69,9 @@ src/
 ├── index.css
 ├── vite-env.d.ts
 │
-├── assets/
-│   ├── images/
-│   └── icons/
-│       └── react.svg
-│
 ├── components/
-│   ├── ui/                          # pure, dumb, no business logic
+│   ├── ui/                          # pure primitives, no business logic
+│   │   ├── index.ts
 │   │   ├── Button/Button.tsx
 │   │   ├── Avatar/UserAvatar.tsx
 │   │   ├── ThemeToggle/ThemeToggle.tsx
@@ -84,21 +79,28 @@ src/
 │   │   ├── Icon/HugeIcon.tsx + NavIcon.tsx
 │   │   └── Wave/Wave.tsx
 │   │
-│   ├── common/                      # admin-aware, reusable across modules
-│   │   ├── Button/CustomActionButton.tsx
-│   │   ├── Card/PageCard.tsx + PageHeaderCard.tsx
-│   │   ├── Dropdowns/RowActionMenu.tsx + UserDropdown.tsx
-│   │   ├── Filters/AdminFilterDrawer.tsx
-│   │   ├── Forms/                   # Formik-friendly fields
-│   │   ├── Loading/
-│   │   ├── Meta/PageMeta.tsx
-│   │   ├── Modals/AntModal.tsx + DeleteModal.tsx
-│   │   ├── Navigation/PageHeader.tsx
-│   │   ├── Search/GlobalSearch.tsx
-│   │   ├── Tables/DataTable.tsx + DraggableTable.tsx
-│   │   └── DateTimeHighlight.tsx
-│   │
-│   └── index.ts                     # barrel export
+│   └── common/                      # admin-aware, reusable across modules
+│       ├── index.ts
+│       ├── Button/CustomActionButton.tsx
+│       ├── Card/PageCard.tsx + PageHeaderCard.tsx
+│       ├── Dropdowns/RowActionMenu.tsx + UserDropdown.tsx
+│       ├── Filters/AdminFilterDrawer.tsx
+│       ├── Forms/
+│       │   ├── FormInput.tsx
+│       │   ├── FormSelect.tsx
+│       │   ├── FormTextArea.tsx
+│       │   ├── FormDatePicker.tsx
+│       │   ├── InputError.tsx
+│       │   ├── SwitchStatus.tsx
+│       │   └── SwitchStatus2.tsx
+│       ├── Loading/Loader.tsx + PageLoader.tsx + Spinner.tsx
+│       ├── Meta/PageMeta.tsx
+│       ├── Modals/AntModal.tsx + AntModal.css + DeleteModal.tsx
+│       ├── Navigation/PageHeader.tsx
+│       ├── Search/GlobalSearch.tsx
+│       ├── Tables/DataTable.tsx + DataTable.css
+│       │         + DraggableTable.tsx + DraggableTable.css
+│       └── DateTimeHighlight.tsx
 │
 ├── config/
 │   ├── index.ts
@@ -108,10 +110,10 @@ src/
 ├── constants/
 │   └── index.ts
 │
-├── mocks/                           # renamed from data/, dev-only
+├── mocks/
 │   └── dashboardDemo.ts
 │
-├── hooks/                           # cross-module hooks only
+├── hooks/
 │   ├── useAuth.ts
 │   └── useDebounce.ts
 │
@@ -119,14 +121,14 @@ src/
 │   ├── AppLayout.tsx
 │   └── AuthLayout.tsx
 │
-├── lib/                             # merged old lib/ + utils/
+├── lib/
 │   ├── access.ts                    # permission helpers
 │   ├── auth.ts                      # session + persist + logout
 │   ├── api.ts                       # getApiError + toQuery
 │   ├── url.ts                       # URL search helpers
 │   └── statusClass.ts               # shared status pill classes
 │
-├── modules/                         # renamed from pages/
+├── modules/
 │   ├── auth/
 │   ├── dashboard/
 │   ├── leads/                       # full CRUD + api/leadsApi.ts
@@ -163,7 +165,7 @@ src/
 │       ├── auth/authApi.ts + authSlice.ts
 │       ├── employees/employeesApi.ts
 │       ├── masterData/masterDataApi.ts
-│       ├── pipeline/pipelineApi.ts  # cross-cutting pipeline reads
+│       ├── pipeline/pipelineApi.ts
 │       ├── roles/rolesApi.ts
 │       ├── search/searchApi.ts
 │       ├── sidebar/sidebarSlice.ts
@@ -191,17 +193,7 @@ src/
     └── modules/leads/LeadsPage.test.tsx
 ```
 
-### Folders that do **not** exist
-
-| Expected | Reality |
-|----------|---------|
-| `pages/` | Renamed to `modules/` |
-| `data/` | Renamed to `mocks/` |
-| `utils/` | Merged into `lib/` |
-| `components/shared/` | Moved into `common/Modals` + `common/Search` |
-| `services/` | HTTP lives in `redux/` + module `api/` folders |
-| `store/` | Store is `redux/features/store.ts` |
-| `dao/` | Not used on the frontend |
+HTTP lives in `redux/api` + `redux/features/*/…Api.ts` plus co-located `modules/*/api/`. There is no `services/`, `pages/`, `data/`, `utils/`, or `components/shared/` folder.
 
 ---
 
@@ -210,8 +202,6 @@ src/
 Each feature is its own folder. Most export from `index.ts`.
 
 ### Full CRUD modules
-
-These share the same shape:
 
 ```
 modules/<feature>/
@@ -225,7 +215,7 @@ modules/<feature>/
 ├── utils/
 │   ├── <feature>Columns.tsx
 │   └── <feature>Status.ts
-└── api/<feature>Api.ts              # RTK Query injectEndpoints
+└── api/<feature>Api.ts
 ```
 
 | Folder | Page | Route | Permission | Module API |
@@ -238,7 +228,7 @@ modules/<feature>/
 | `follow-ups/` | Follow-ups | `/follow-ups` | `follow_up:view` | `followUpsApi.ts` |
 | `reports/` | Reports | `/reports` | `report:view` | `reportsApi.ts` |
 
-### Thinner modules (mostly `pages/` + `index.ts`)
+### Thinner modules
 
 | Folder | Files | Route(s) | Permission |
 |--------|-------|----------|------------|
@@ -258,7 +248,9 @@ modules/<feature>/
 
 ## Components (`src/components/`)
 
-### `ui/` — pure primitives (no business logic)
+Import from `@/components/ui` or `@/components/common/...`.
+
+### `ui/` — primitives
 
 | Folder | Files | Role |
 |--------|-------|------|
@@ -269,7 +261,7 @@ modules/<feature>/
 | `Icon/` | `HugeIcon.tsx`, `NavIcon.tsx` | Icon wrappers |
 | `Wave/` | `Wave.tsx` | Loading wave |
 
-### `common/` — admin-aware, reusable across modules
+### `common/` — admin-aware
 
 | Folder | Files | Role |
 |--------|-------|------|
@@ -286,13 +278,9 @@ modules/<feature>/
 | `Tables/` | `DataTable.tsx`, `DraggableTable.tsx` + CSS | Tables |
 | (root) | `DateTimeHighlight.tsx` | Date display |
 
-Import short paths from `@/components` (barrel) or `@/components/ui` / `@/components/common/...`.
-
 ---
 
 ## Routes & sidebar
-
-Defined in:
 
 - Routes: `src/routes/routes.tsx`
 - Sidebar: `src/config/navigation.ts`
@@ -336,7 +324,7 @@ Sidebar groups from `APP_NAV_GROUPS`:
 - `/master-data` (+ group / category slugs)
 - `/settings`
 
-**Account (not in main sidebar groups, searchable)**
+**Account (searchable, not in main sidebar groups)**
 
 - `/profile`
 - `/account` (change password)
@@ -347,10 +335,8 @@ Sidebar groups from `APP_NAV_GROUPS`:
 
 ## Redux / API map
 
-HTTP is split:
-
 - Cross-cutting / admin APIs stay in `redux/features/*`
-- Pipeline CRUD modules own their slices under `modules/*/api/` and register via `injectEndpoints` (imported from `store.ts`)
+- Pipeline CRUD modules own slices under `modules/*/api/` and register via `injectEndpoints` (imported from `store.ts`)
 
 | Frontend API | Typical pages |
 |--------------|----------------|
@@ -374,7 +360,7 @@ Dashboard, settings, account, and profile still use local/demo data where no ded
 
 Example: Leads
 
-1. Route `/leads` in `routes.tsx` (wrapped by `PermissionRoute` + `lead:view`)
+1. Route `/leads` in `routes.tsx` (`PermissionRoute` + `lead:view`)
 2. Nav item in `config/navigation.ts`
 3. Page: `modules/leads/pages/LeadsPage.tsx`
 4. Table / filters / modal under `modules/leads/components/`
@@ -404,7 +390,7 @@ Helpers: `src/lib/access.ts`, `src/lib/auth.ts`, `src/hooks/useAuth.ts`.
 
 ---
 
-## Backend pairing (for context)
+## Backend pairing
 
 Admin talks to `campusly-crm-api` (Express + Prisma). Matching modules today:
 
@@ -426,9 +412,9 @@ Admin talks to `campusly-crm-api` (Express + Prisma). Matching modules today:
 
 | Area | Count |
 |------|--------|
-| Files under `src/` | ~190 |
+| Files under `src/` | 185 |
 | Feature modules | 19 |
 | Full CRUD modules | 7 |
 | Redux feature APIs | 9 + auth + sidebar |
 | Co-located module APIs | 7 |
-| Shared common component groups | 12 |
+| Common component groups | 12 |
