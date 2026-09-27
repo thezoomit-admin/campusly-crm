@@ -1,4 +1,4 @@
-import { Input } from 'antd'
+import { FormInput } from '@/components/common/Forms'
 
 type ReportFiltersProps = {
   search: string
@@ -12,7 +12,7 @@ export default function ReportFilters({
   placeholder = 'Search report metric…',
 }: ReportFiltersProps) {
   return (
-    <Input.Search
+    <FormInput.Search
       allowClear
       value={search}
       onChange={(event) => onSearchChange(event.target.value)}

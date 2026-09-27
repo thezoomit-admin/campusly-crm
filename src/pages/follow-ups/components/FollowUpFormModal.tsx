@@ -1,4 +1,5 @@
-import { Button, Form, Input } from 'antd'
+import { Button, Form } from 'antd'
+import { FormInput } from '@/components/common/Forms'
 import { AntModal } from '@/components/common/Modals'
 import type { FollowUpFormValues } from '../types'
 
@@ -22,18 +23,10 @@ export default function FollowUpFormModal({ open, onClose, onSubmit }: FollowUpF
           onClose()
         }}
       >
-        <Form.Item name="contact" label="Contact" rules={[{ required: true, message: 'Contact is required' }]}>
-          <Input placeholder="Contact name" />
-        </Form.Item>
-        <Form.Item name="type" label="Type">
-          <Input placeholder="Call, Email, Visit…" />
-        </Form.Item>
-        <Form.Item name="owner" label="Owner">
-          <Input placeholder="Assigned to" />
-        </Form.Item>
-        <Form.Item name="due" label="Due">
-          <Input placeholder="Due date" />
-        </Form.Item>
+        <FormInput name="contact" label="Contact" rules={[{ required: true, message: 'Contact is required' }]} placeholder="Contact name" />
+        <FormInput name="type" label="Type" placeholder="Call, Email, Visit…" />
+        <FormInput name="owner" label="Owner" placeholder="Assigned to" />
+        <FormInput name="due" label="Due" placeholder="Due date" />
         <div className="mt-2 flex justify-end gap-2">
           <Button onClick={onClose}>Cancel</Button>
           <Button type="primary" htmlType="submit">

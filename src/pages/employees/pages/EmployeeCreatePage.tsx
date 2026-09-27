@@ -63,7 +63,8 @@ import {
   useUploadEmployeePhotoMutation,
 } from '@/redux/features/employees/employeesApi'
 import { getApiError, getApiErrorFields } from '@/utils/apiError'
-import { Button, Input, Select } from '@/components/ui'
+import { Button } from '@/components/ui'
+import { FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { hasPermission } from '../../../lib/access'
@@ -925,7 +926,7 @@ export default function EmployeeCreatePage() {
             ) : null}
           </div>
           <Field id="fullName" label="Employee name" required error={errors.fullName}>
-            <Input
+            <FormInput
               {...fieldProps('fullName')}
               value={form.fullName}
               autoComplete="name"
@@ -934,10 +935,10 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="employeeCode" label="Employee ID">
-            <Input id="employeeCode" value={employeeCodeLabel} disabled readOnly />
+            <FormInput id="employeeCode" value={employeeCodeLabel} disabled readOnly />
           </Field>
           <Field id="gender" label="Gender" error={errors.gender}>
-            <Select
+            <FormSelect
               id="gender"
               allowClear
               placeholder="Select gender"
@@ -960,21 +961,21 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="nationality" label="Nationality" error={errors.nationality}>
-            <Input
+            <FormInput
               {...fieldProps('nationality')}
               value={form.nationality}
               onChange={(event) => update('nationality', event.target.value)}
             />
           </Field>
           <Field id="identityNumber" label="NID / Passport no." error={errors.identityNumber}>
-            <Input
+            <FormInput
               {...fieldProps('identityNumber')}
               value={form.identityNumber}
               onChange={(event) => update('identityNumber', event.target.value)}
             />
           </Field>
           <Field id="maritalStatus" label="Marital status" error={errors.maritalStatus}>
-            <Select
+            <FormSelect
               id="maritalStatus"
               allowClear
               placeholder="Select status"
@@ -993,7 +994,7 @@ export default function EmployeeCreatePage() {
 
         <FormSection id="contact" title="Contact Information" errors={sectionErrors('contact', errors)}>
           <Field id="mobile" label="Personal mobile" required error={errors.mobile}>
-            <Input
+            <FormInput
               {...fieldProps('mobile')}
               value={form.mobile}
               autoComplete="tel"
@@ -1002,7 +1003,7 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="personalEmail" label="Personal email" error={errors.personalEmail}>
-            <Input
+            <FormInput
               {...fieldProps('personalEmail')}
               type="email"
               value={form.personalEmail}
@@ -1012,7 +1013,7 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="officialEmail" label="Official email" required error={errors.officialEmail}>
-            <Input
+            <FormInput
               {...fieldProps('officialEmail')}
               type="email"
               value={form.officialEmail}
@@ -1040,7 +1041,7 @@ export default function EmployeeCreatePage() {
           </Field>
           <div className={`grid min-w-0 grid-cols-1 gap-3 min-[721px]:grid-cols-2 ${adminFormSpan}`}>
             <Field id="presentAddress" label="Present address" error={errors.presentAddress}>
-              <Input.TextArea
+              <FormTextArea
                 {...fieldProps('presentAddress')}
                 rows={3}
                 value={form.presentAddress}
@@ -1048,7 +1049,7 @@ export default function EmployeeCreatePage() {
               />
             </Field>
             <Field id="permanentAddress" label="Permanent address" error={errors.permanentAddress}>
-              <Input.TextArea
+              <FormTextArea
                 {...fieldProps('permanentAddress')}
                 rows={3}
                 value={form.permanentAddress}
@@ -1068,7 +1069,7 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="employmentTypeId" label="Employment type" required error={errors.employmentTypeId}>
-            <Select
+            <FormSelect
               id="employmentTypeId"
               placeholder="Select type"
               value={form.employmentTypeId || undefined}
@@ -1077,7 +1078,7 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="employmentStatusId" label="Employment status" required error={errors.employmentStatusId}>
-            <Select
+            <FormSelect
               id="employmentStatusId"
               placeholder="Select status"
               value={form.employmentStatusId || undefined}
@@ -1086,7 +1087,7 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="designationId" label="Designation" required error={errors.designationId}>
-            <Select
+            <FormSelect
               id="designationId"
               placeholder="Select designation"
               value={form.designationId || undefined}
@@ -1103,7 +1104,7 @@ export default function EmployeeCreatePage() {
           errors={sectionErrors('organization', errors)}
         >
           <Field id="departmentId" label="Department" required error={errors.departmentId}>
-            <Select
+            <FormSelect
               id="departmentId"
               placeholder="Select department"
               value={form.departmentId || undefined}
@@ -1121,7 +1122,7 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="teamId" label="Team" error={errors.teamId}>
-            <Select
+            <FormSelect
               id="teamId"
               allowClear
               disabled={!form.departmentId}
@@ -1132,7 +1133,7 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="reportingManagerId" label="Reporting manager" error={errors.reportingManagerId}>
-            <Select
+            <FormSelect
               id="reportingManagerId"
               allowClear
               placeholder="Select manager"
@@ -1179,7 +1180,7 @@ export default function EmployeeCreatePage() {
           {showCrmFields ? (
             <>
               <Field id="username" label="Username" required error={errors.username}>
-                <Input
+                <FormInput
                   {...fieldProps('username')}
                   value={form.username}
                   autoComplete="off"
@@ -1191,7 +1192,7 @@ export default function EmployeeCreatePage() {
                 />
               </Field>
               <Field id="roleId" label="Role" required error={errors.roleId}>
-                <Select
+                <FormSelect
                   id="roleId"
                   placeholder="Select role"
                   value={form.roleId || undefined}
@@ -1200,7 +1201,7 @@ export default function EmployeeCreatePage() {
                 />
               </Field>
               <Field id="userStatus" label={hasExistingCrmAccount ? 'Account status' : 'Initial account status'} required error={errors.userStatus}>
-                <Select
+                <FormSelect
                   id="userStatus"
                   value={form.userStatus}
                   options={[
@@ -1212,10 +1213,10 @@ export default function EmployeeCreatePage() {
                 />
               </Field>
               <Field id="crmDepartment" label="Department" hint="Taken from Organization Structure.">
-                <Input id="crmDepartment" value={departmentName} disabled readOnly />
+                <FormInput id="crmDepartment" value={departmentName} disabled readOnly />
               </Field>
               <Field id="crmTeam" label="Team" hint="Taken from Organization Structure.">
-                <Input id="crmTeam" value={teamName} disabled readOnly />
+                <FormInput id="crmTeam" value={teamName} disabled readOnly />
               </Field>
             </>
           ) : (
@@ -1225,7 +1226,7 @@ export default function EmployeeCreatePage() {
 
         <FormSection id="emergency" title="Emergency Contact" errors={sectionErrors('emergency', errors)}>
           <Field id="emergencyName" label="Contact name" required={emergencyStarted} error={errors.emergencyName}>
-            <Input
+            <FormInput
               {...fieldProps('emergencyName')}
               value={form.emergencyName}
               onChange={(event) => update('emergencyName', event.target.value)}
@@ -1233,14 +1234,14 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="emergencyRelationship" label="Relationship" error={errors.emergencyRelationship}>
-            <Input
+            <FormInput
               {...fieldProps('emergencyRelationship')}
               value={form.emergencyRelationship}
               onChange={(event) => update('emergencyRelationship', event.target.value)}
             />
           </Field>
           <Field id="emergencyMobile" label="Mobile" required={emergencyStarted} error={errors.emergencyMobile}>
-            <Input
+            <FormInput
               {...fieldProps('emergencyMobile')}
               value={form.emergencyMobile}
               onChange={(event) => update('emergencyMobile', event.target.value)}
@@ -1248,7 +1249,7 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="emergencyAddress" label="Address" span error={errors.emergencyAddress}>
-            <Input.TextArea
+            <FormTextArea
               {...fieldProps('emergencyAddress')}
               rows={3}
               value={form.emergencyAddress}

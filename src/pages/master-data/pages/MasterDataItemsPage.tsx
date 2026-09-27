@@ -52,7 +52,8 @@ import {
 import { DatePicker, Spin, Switch } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { Button, Input, Select } from '@/components/ui'
+import { Button } from '@/components/ui'
+import { FormInput, FormSelect } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
@@ -878,7 +879,7 @@ export default function MasterDataItemsPage() {
       </nav>
 
       <section className={`${adminFilters} ${adminFiltersMaster}`}>
-        <Input.Search
+        <FormInput.Search
           allowClear
           enterButton="Search"
           loading={searching}
@@ -889,7 +890,7 @@ export default function MasterDataItemsPage() {
             void loadItems(true)
           }}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All statuses"
           style={{ width: '100%' }}
@@ -901,7 +902,7 @@ export default function MasterDataItemsPage() {
           onChange={(value) => setStatus(asSelectString(value))}
         />
         {category?.parentCategoryKey ? (
-          <Select
+          <FormSelect
             allowClear
             loading={parentsLoading}
             style={{ width: '100%' }}
@@ -933,7 +934,7 @@ export default function MasterDataItemsPage() {
           disabledDate={(current) => Boolean(createdFrom && current.isBefore(dayjs(createdFrom), 'day'))}
           onChange={(value) => setCreatedTo(toDateString(value))}
         />
-        <Select
+        <FormSelect
           style={{ width: '100%' }}
           value={sortBy}
           options={[
@@ -1092,7 +1093,7 @@ export default function MasterDataItemsPage() {
                   <fieldset className={`${adminFormFields}`} disabled={formSaving}>
                     <label>
                       <FieldLabel required>Name</FieldLabel>
-                      <Input
+                      <FormInput
                         value={form.name}
                         onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                         required
@@ -1100,7 +1101,7 @@ export default function MasterDataItemsPage() {
                     </label>
                     <label>
                       <FieldLabel required={category?.codePolicy === 'required'}>Code</FieldLabel>
-                      <Input
+                      <FormInput
                         value={form.code}
                         onChange={(event) => setForm((current) => ({ ...current, code: event.target.value }))}
                         disabled={Boolean(selected?.isSystem)}
@@ -1111,7 +1112,7 @@ export default function MasterDataItemsPage() {
                     {category?.parentCategoryKey ? (
                       <label>
                         <FieldLabel required>{parentCategoryName(category.parentCategoryKey)}</FieldLabel>
-                        <Select
+                        <FormSelect
                           loading={parentsLoading}
                           placeholder={
                             parentsLoading
@@ -1127,7 +1128,7 @@ export default function MasterDataItemsPage() {
                     ) : null}
                     <label>
                       Status
-                      <Select
+                      <FormSelect
                         value={form.status}
                         options={[
                           { value: 'ACTIVE', label: 'Active' },
@@ -1145,7 +1146,7 @@ export default function MasterDataItemsPage() {
                     {category?.extraFields === 'leadStatus' ? (
                       <label>
                         Behavior
-                        <Select
+                        <FormSelect
                           allowClear
                           placeholder="No special behavior"
                           value={form.behaviorKey || undefined}
@@ -1197,7 +1198,7 @@ export default function MasterDataItemsPage() {
                     ) : null}
                     <label className={`${adminFormSpan}`}>
                       Description
-                      <Input
+                      <FormInput
                         value={form.description}
                         maxLength={DESCRIPTION_MAX}
                         showCount

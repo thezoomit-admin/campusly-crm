@@ -48,7 +48,8 @@ import {
 import { DatePicker, Spin, Switch } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { Button, Input, Select } from '@/components/ui'
+import { Button } from '@/components/ui'
+import { FormInput, FormSelect } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
@@ -390,7 +391,7 @@ export default function EmployeesPage() {
       />
 
       <section className={`${adminFilters} ${adminFiltersEmployees}`}>
-        <Input.Search
+        <FormInput.Search
           allowClear
           enterButton="Search"
           loading={loading}
@@ -401,7 +402,7 @@ export default function EmployeesPage() {
             void loadList()
           }}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All departments"
           value={filters.departmentId || undefined}
@@ -410,35 +411,35 @@ export default function EmployeesPage() {
             setFilters((current) => ({ ...current, departmentId: asSelectString(value), teamId: '' }))
           }
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All teams"
           value={filters.teamId || undefined}
           options={filterTeams.map((item) => ({ value: item.id, label: item.name }))}
           onChange={(value) => setFilters((current) => ({ ...current, teamId: asSelectString(value) }))}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All designations"
           value={filters.designationId || undefined}
           options={options.designations.map((item) => ({ value: item.id, label: item.name }))}
           onChange={(value) => setFilters((current) => ({ ...current, designationId: asSelectString(value) }))}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All roles"
           value={filters.roleId || undefined}
           options={options.roles.map((item) => ({ value: item.id, label: item.name }))}
           onChange={(value) => setFilters((current) => ({ ...current, roleId: asSelectString(value) }))}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All employment types"
           value={filters.employmentTypeId || undefined}
           options={options.employmentTypes.map((item) => ({ value: item.id, label: item.name }))}
           onChange={(value) => setFilters((current) => ({ ...current, employmentTypeId: asSelectString(value) }))}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All statuses"
           value={filters.employmentStatusId || undefined}
@@ -461,7 +462,7 @@ export default function EmployeesPage() {
           disabledDate={(current) => Boolean(filters.joiningFrom && current.isBefore(dayjs(filters.joiningFrom), 'day'))}
           onChange={(value) => setFilters((current) => ({ ...current, joiningTo: toDateString(value) }))}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All managers"
           value={filters.reportingManagerId || undefined}
@@ -678,7 +679,7 @@ export default function EmployeesPage() {
                 </p>
                 <label className={`${adminForm}`}>
                   <FieldLabel required>New status</FieldLabel>
-                  <Select
+                  <FormSelect
                     value={statusPrompt.nextStatusId || undefined}
                     options={options.employmentStatuses.map((item) => ({ value: item.id, label: item.name }))}
                     onChange={(value) =>

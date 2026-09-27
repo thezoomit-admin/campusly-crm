@@ -1,4 +1,5 @@
-import { Button, Form, Input } from 'antd'
+import { Button, Form } from 'antd'
+import { FormInput } from '@/components/common/Forms'
 import { AntModal } from '@/components/common/Modals'
 import type { PaymentFormValues } from '../types'
 
@@ -22,18 +23,10 @@ export default function PaymentFormModal({ open, onClose, onSubmit }: PaymentFor
           onClose()
         }}
       >
-        <Form.Item name="invoice" label="Invoice" rules={[{ required: true, message: 'Invoice is required' }]}>
-          <Input placeholder="Invoice number" />
-        </Form.Item>
-        <Form.Item name="payer" label="Payer">
-          <Input placeholder="Payer name" />
-        </Form.Item>
-        <Form.Item name="type" label="Type">
-          <Input placeholder="e.g. Tuition, Service fee" />
-        </Form.Item>
-        <Form.Item name="amount" label="Amount">
-          <Input placeholder="Amount" />
-        </Form.Item>
+        <FormInput name="invoice" label="Invoice" rules={[{ required: true, message: 'Invoice is required' }]} placeholder="Invoice number" />
+        <FormInput name="payer" label="Payer" placeholder="Payer name" />
+        <FormInput name="type" label="Type" placeholder="e.g. Tuition, Service fee" />
+        <FormInput name="amount" label="Amount" placeholder="Amount" />
         <div className="mt-2 flex justify-end gap-2">
           <Button onClick={onClose}>Cancel</Button>
           <Button type="primary" htmlType="submit">

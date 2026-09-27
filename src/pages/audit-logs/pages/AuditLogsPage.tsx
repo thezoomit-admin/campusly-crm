@@ -15,7 +15,8 @@ import {
 import { useLazyListAuditLogsQuery } from '@/redux/features/auditLogs/auditLogsApi'
 import { getApiError } from '@/utils/apiError'
 import { readUrlSearchQuery } from '../../../lib/url-search'
-import { Button, Input, Select } from '@/components/ui'
+import { Button } from '@/components/ui'
+import { FormInput, FormSelect } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { DataTable } from '@/components/common/Tables'
@@ -638,7 +639,7 @@ export default function AuditLogsPage() {
           >
             <div className="grid grid-rows-[auto_42px] gap-1.5 min-w-0 m-0">
               <span className="text-text-muted text-[0.78rem] font-semibold leading-[1.2]">Search</span>
-              <Input
+              <FormInput
                 allowClear
                 placeholder="User, action, record ID..."
                 value={filters.search}
@@ -647,7 +648,7 @@ export default function AuditLogsPage() {
             </div>
             <div className="grid grid-rows-[auto_42px] gap-1.5 min-w-0 m-0">
               <span className="text-text-muted text-[0.78rem] font-semibold leading-[1.2]">Module</span>
-              <Select
+              <FormSelect
                 allowClear
                 placeholder="All Modules"
                 value={filters.module || undefined}
@@ -657,7 +658,7 @@ export default function AuditLogsPage() {
             </div>
             <div className="grid grid-rows-[auto_42px] gap-1.5 min-w-0 m-0">
               <span className="text-text-muted text-[0.78rem] font-semibold leading-[1.2]">Action</span>
-              <Select
+              <FormSelect
                 allowClear
                 placeholder="All Actions"
                 value={filters.action || undefined}
@@ -667,7 +668,7 @@ export default function AuditLogsPage() {
             </div>
             <div className="grid grid-rows-[auto_42px] gap-1.5 min-w-0 m-0">
               <span className="text-text-muted text-[0.78rem] font-semibold leading-[1.2]">User</span>
-              <Select
+              <FormSelect
                 allowClear
                 placeholder="All Users"
                 value={filters.userId || undefined}

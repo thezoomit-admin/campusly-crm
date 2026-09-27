@@ -89,7 +89,8 @@ import {
   ViewIcon,
 } from '@hugeicons/core-free-icons'
 import { Skeleton, Spin, Switch } from 'antd'
-import { Button, Input, Select } from '@/components/ui'
+import { Button } from '@/components/ui'
+import { FormInput, FormSelect } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
@@ -653,7 +654,7 @@ function UserViewLayout({
                           {detailLoading ? (
                             <Skeleton.Input active block className={`${scopeSkeleton}`} />
                           ) : (
-                            <Select
+                            <FormSelect
                               value={scopeDraft[resource]}
                               options={[
                                 { value: 'OWN', label: 'Own' },
@@ -1185,7 +1186,7 @@ export default function UsersPage() {
       />
 
       <section className={`${adminFilters}`}>
-        <Input.Search
+        <FormInput.Search
           allowClear
           enterButton="Search"
           loading={searching}
@@ -1196,7 +1197,7 @@ export default function UsersPage() {
             void loadList({ fromSearch: true })
           }}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All roles"
           value={filters.roleId || undefined}
@@ -1205,7 +1206,7 @@ export default function UsersPage() {
             .map((role) => ({ value: role.id, label: role.name }))}
           onChange={(value) => setFilters((current) => ({ ...current, roleId: asSelectString(value) }))}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All departments"
           value={filters.departmentId || undefined}
@@ -1214,7 +1215,7 @@ export default function UsersPage() {
             setFilters((current) => ({ ...current, departmentId: asSelectString(value), teamId: '' }))
           }
         />
-        <Select
+        <FormSelect
           allowClear
           disabled={!filters.departmentId}
           placeholder={filters.departmentId ? 'All teams' : 'Select department first'}
@@ -1222,7 +1223,7 @@ export default function UsersPage() {
           options={filterTeams.map((item) => ({ value: item.id, label: item.name }))}
           onChange={(value) => setFilters((current) => ({ ...current, teamId: asSelectString(value) }))}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All statuses"
           value={filters.status || undefined}
@@ -1469,7 +1470,7 @@ export default function UsersPage() {
               </div>
               <label>
                 <FieldLabel required>Full Name</FieldLabel>
-                <Input
+                <FormInput
                   value={form.fullName}
                   autoComplete="off"
                   onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))}
@@ -1480,7 +1481,7 @@ export default function UsersPage() {
               </label>
               <label>
                 <FieldLabel required>Email</FieldLabel>
-                <Input
+                <FormInput
                   type="email"
                   value={form.email}
                   autoComplete="off"
@@ -1490,7 +1491,7 @@ export default function UsersPage() {
               </label>
               <label>
                 <FieldLabel required>Mobile</FieldLabel>
-                <Input
+                <FormInput
                   value={form.mobile}
                   autoComplete="off"
                   onChange={(event) => setForm((current) => ({ ...current, mobile: event.target.value }))}
@@ -1499,8 +1500,7 @@ export default function UsersPage() {
               </label>
               <label>
                 <FieldLabel required>Username</FieldLabel>
-                <Input
-                  name="create-username"
+                <FormInput
                   value={form.username}
                   autoComplete="off"
                   readOnly={!editingId}
@@ -1514,8 +1514,7 @@ export default function UsersPage() {
               {editingId ? null : (
                 <label>
                   <FieldLabel>Temporary password</FieldLabel>
-                  <Input.Password
-                    name="create-password"
+                  <FormInput.Password
                     value={form.password}
                     autoComplete="new-password"
                     readOnly
@@ -1529,7 +1528,7 @@ export default function UsersPage() {
               )}
               <label>
                 <FieldLabel required>Role</FieldLabel>
-                <Select
+                <FormSelect
                   placeholder="Select role"
                   value={form.roleId || undefined}
                   options={roles
@@ -1540,7 +1539,7 @@ export default function UsersPage() {
               </label>
               <label>
                 <FieldLabel>Department</FieldLabel>
-                <Select
+                <FormSelect
                   allowClear
                   placeholder="None"
                   value={form.departmentId || undefined}
@@ -1550,7 +1549,7 @@ export default function UsersPage() {
               </label>
               <label>
                 <FieldLabel>Team</FieldLabel>
-                <Select
+                <FormSelect
                   allowClear
                   disabled={!form.departmentId}
                   placeholder={form.departmentId ? 'None' : 'Select department first'}
@@ -1561,7 +1560,7 @@ export default function UsersPage() {
               </label>
               <label>
                 <FieldLabel required>Status</FieldLabel>
-                <Select
+                <FormSelect
                   value={form.status}
                   options={[
                     { value: 'ACTIVE', label: 'Active' },

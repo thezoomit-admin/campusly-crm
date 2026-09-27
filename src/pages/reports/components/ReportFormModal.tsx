@@ -1,4 +1,5 @@
-import { Button, Form, Input } from 'antd'
+import { Button, Form } from 'antd'
+import { FormInput } from '@/components/common/Forms'
 import { AntModal } from '@/components/common/Modals'
 import type { ReportFormValues } from '../types'
 
@@ -22,15 +23,9 @@ export default function ReportFormModal({ open, onClose, onSubmit }: ReportFormM
           onClose()
         }}
       >
-        <Form.Item name="metric" label="Metric" rules={[{ required: true, message: 'Metric is required' }]}>
-          <Input placeholder="Metric name" />
-        </Form.Item>
-        <Form.Item name="period" label="Period">
-          <Input placeholder="e.g. This month" />
-        </Form.Item>
-        <Form.Item name="value" label="Value">
-          <Input placeholder="Value" />
-        </Form.Item>
+        <FormInput name="metric" label="Metric" rules={[{ required: true, message: 'Metric is required' }]} placeholder="Metric name" />
+        <FormInput name="period" label="Period" placeholder="e.g. This month" />
+        <FormInput name="value" label="Value" placeholder="Value" />
         <div className="mt-2 flex justify-end gap-2">
           <Button onClick={onClose}>Cancel</Button>
           <Button type="primary" htmlType="submit">

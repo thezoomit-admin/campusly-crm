@@ -20,7 +20,8 @@ import {
   useRecordActivityExportMutation,
 } from '@/redux/features/activities/activitiesApi'
 import { getApiError } from '@/utils/apiError'
-import { Button, Input, Select, UserAvatar } from '@/components/ui'
+import { Button, UserAvatar } from '@/components/ui'
+import { FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { hasPermission } from '../../../lib/access'
@@ -410,13 +411,13 @@ export default function ActivityHistoryPage() {
           format="D MMM YYYY"
           onChange={(value) => applyRange(toDateString(value?.[0] || null), toDateString(value?.[1] || null))}
         />
-        <Input
+        <FormInput
           allowClear
           placeholder="Search activities..."
           value={search}
           onChange={(event) => applySearch(event.target.value)}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All users"
           value={userId || undefined}
@@ -608,7 +609,7 @@ export default function ActivityHistoryPage() {
               )}
             </div>
             <label className="flex items-center gap-2 text-text-muted text-[0.82rem] mb-0 [&_.ant-select]:w-[84px]">
-              <Select
+              <FormSelect
                 value={pageSize}
                 options={PAGE_SIZE_OPTIONS.map((value) => ({ value, label: String(value) }))}
                 onChange={(value) => {
@@ -767,21 +768,21 @@ export default function ActivityHistoryPage() {
             <div className={adminForm}>
               <label>
                 Related to
-                <Input value={logName} onChange={(event) => setLogName(event.target.value)} placeholder="Contact or student name" />
+                <FormInput value={logName} onChange={(event) => setLogName(event.target.value)} placeholder="Contact or student name" />
               </label>
               {logType === 'CALL' ? (
                 <label>
                   Duration (minutes)
-                  <Input value={logDuration} onChange={(event) => setLogDuration(event.target.value)} />
+                  <FormInput value={logDuration} onChange={(event) => setLogDuration(event.target.value)} />
                 </label>
               ) : null}
               <label>
                 Outcome
-                <Input value={logOutcome} onChange={(event) => setLogOutcome(event.target.value)} />
+                <FormInput value={logOutcome} onChange={(event) => setLogOutcome(event.target.value)} />
               </label>
               <label>
                 Notes
-                <Input value={logNotes} onChange={(event) => setLogNotes(event.target.value)} placeholder="What happened?" />
+                <FormTextArea rows={3} value={logNotes} onChange={(event) => setLogNotes(event.target.value)} placeholder="What happened?" />
               </label>
               <div className="flex justify-end gap-2 mt-3">
                 <Button variant="secondary" onClick={() => setLogOpen(false)}>

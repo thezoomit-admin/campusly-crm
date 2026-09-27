@@ -22,7 +22,8 @@ import {
   ViewIcon,
 } from '@hugeicons/core-free-icons'
 import { Spin, Switch } from 'antd'
-import { Button, Input, Select } from '@/components/ui'
+import { Button } from '@/components/ui'
+import { FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
@@ -260,7 +261,7 @@ export default function RolesPage() {
       />
 
       <section className={`${adminFilters} ${adminFiltersCompact}`}>
-        <Input.Search
+        <FormInput.Search
           allowClear
           enterButton="Search"
           loading={loading}
@@ -271,7 +272,7 @@ export default function RolesPage() {
             void load()
           }}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="All statuses"
           value={status || undefined}
@@ -399,7 +400,7 @@ export default function RolesPage() {
                   <fieldset className={`${adminFormFields}`} disabled={formLocked}>
                     <label>
                       Role Name
-                      <Input
+                      <FormInput
                         value={form.name}
                         onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                         required
@@ -408,7 +409,7 @@ export default function RolesPage() {
                     </label>
                     <label>
                       Status
-                      <Select
+                      <FormSelect
                         value={form.status}
                         options={[
                           { value: 'ACTIVE', label: 'Active' },
@@ -425,7 +426,8 @@ export default function RolesPage() {
                     </label>
                     <label className={`${adminFormSpan}`}>
                       Description
-                      <Input
+                      <FormTextArea
+                        rows={3}
                         value={form.description}
                         onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
                         disabled={formLocked}
@@ -462,7 +464,7 @@ export default function RolesPage() {
                   </button>
                 </div>
                 <div className={`${matrix} ${matrixModal}`}>
-                  <Input.Search
+                  <FormInput.Search
                     allowClear
                     placeholder="Search permissions, e.g. Lead"
                     value={permissionSearch}

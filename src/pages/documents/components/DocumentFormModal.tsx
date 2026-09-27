@@ -1,4 +1,5 @@
-import { Button, Form, Input } from 'antd'
+import { Button, Form } from 'antd'
+import { FormInput } from '@/components/common/Forms'
 import { AntModal } from '@/components/common/Modals'
 import type { DocumentFormValues } from '../types'
 
@@ -22,15 +23,9 @@ export default function DocumentFormModal({ open, onClose, onSubmit }: DocumentF
           onClose()
         }}
       >
-        <Form.Item name="owner" label="Owner" rules={[{ required: true, message: 'Owner is required' }]}>
-          <Input placeholder="Document owner" />
-        </Form.Item>
-        <Form.Item name="type" label="Type">
-          <Input placeholder="e.g. Passport, Transcript" />
-        </Form.Item>
-        <Form.Item name="category" label="Category">
-          <Input placeholder="Category" />
-        </Form.Item>
+        <FormInput name="owner" label="Owner" rules={[{ required: true, message: 'Owner is required' }]} placeholder="Document owner" />
+        <FormInput name="type" label="Type" placeholder="e.g. Passport, Transcript" />
+        <FormInput name="category" label="Category" placeholder="Category" />
         <div className="mt-2 flex justify-end gap-2">
           <Button onClick={onClose}>Cancel</Button>
           <Button type="primary" htmlType="submit">

@@ -19,7 +19,7 @@ type FormItemExtras = {
 }
 
 function wrapFormItem(extras: FormItemExtras, control: ReactElement) {
-  const { name, label, rules, fieldError = {}, setFieldError, initialValue } = extras
+  const { name, label, rules, fieldError = {}, initialValue } = extras
   if (!name) return control
 
   const nameKey = Array.isArray(name) ? name.join('.') : name
