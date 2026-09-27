@@ -112,9 +112,6 @@ src/
 ├── constants/
 │   └── index.ts
 │
-├── mocks/
-│   └── dashboardDemo.ts
-│
 ├── hooks/
 │   ├── useAuth.ts
 │   └── useDebounce.ts

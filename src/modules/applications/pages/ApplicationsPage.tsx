@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useListApplicationsQuery } from '../api/applicationsApi'
-import { adminCard, adminPage, muted } from '../../../styles/admin'
+import { adminCard, adminPage } from '../../../styles/admin'
 import ApplicationFilters from '../components/ApplicationFilters'
 import ApplicationFormModal from '../components/ApplicationFormModal'
 import ApplicationsTable from '../components/ApplicationsTable'
@@ -63,8 +63,6 @@ export default function ApplicationsPage() {
           onLimitChange={setLimit}
         />
       </div>
-
-      <p className={`${muted} mt-3 mb-0 text-sm`}>Demo list data — wire create/update when application APIs are ready.</p>
 
       <ApplicationFormModal open={formOpen} onClose={() => setFormOpen(false)} />
     </div>

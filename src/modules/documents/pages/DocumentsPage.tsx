@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useListDocumentsQuery } from '../api/documentsApi'
-import { adminCard, adminPage, muted } from '../../../styles/admin'
+import { adminCard, adminPage } from '../../../styles/admin'
 import DocumentFilters from '../components/DocumentFilters'
 import DocumentFormModal from '../components/DocumentFormModal'
 import DocumentsTable from '../components/DocumentsTable'
@@ -63,8 +63,6 @@ export default function DocumentsPage() {
           onLimitChange={setLimit}
         />
       </div>
-
-      <p className={`${muted} mt-3 mb-0 text-sm`}>Demo list data — wire create/update when document APIs are ready.</p>
 
       <DocumentFormModal open={formOpen} onClose={() => setFormOpen(false)} />
     </div>

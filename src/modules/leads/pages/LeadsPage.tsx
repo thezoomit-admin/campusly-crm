@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useListLeadsQuery } from '../api/leadsApi'
-import { adminCard, adminPage, muted } from '../../../styles/admin'
+import { adminCard, adminPage } from '../../../styles/admin'
 import LeadFilters from '../components/LeadFilters'
 import LeadFormModal from '../components/LeadFormModal'
 import LeadsTable from '../components/LeadsTable'
@@ -63,8 +63,6 @@ export default function LeadsPage() {
           onLimitChange={setLimit}
         />
       </div>
-
-      <p className={`${muted} mt-3 mb-0 text-sm`}>Demo list data — wire create/update when lead APIs are ready.</p>
 
       <LeadFormModal open={formOpen} onClose={() => setFormOpen(false)} />
     </div>
