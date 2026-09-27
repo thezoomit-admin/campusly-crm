@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useListReportsQuery } from '../api/reportsApi'
-import { adminCard, adminPage, muted } from '../../../styles/admin'
+import { adminCard, adminPage } from '../../../styles/admin'
 import ReportFilters from '../components/ReportFilters'
 import ReportFormModal from '../components/ReportFormModal'
 import ReportsTable from '../components/ReportsTable'
@@ -63,8 +63,6 @@ export default function ReportsPage() {
           onLimitChange={setLimit}
         />
       </div>
-
-      <p className={`${muted} mt-3 mb-0 text-sm`}>Demo list data — wire create/update when report APIs are ready.</p>
 
       <ReportFormModal open={formOpen} onClose={() => setFormOpen(false)} />
     </div>

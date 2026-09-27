@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useListFollowUpsQuery } from '../api/followUpsApi'
-import { adminCard, adminPage, muted } from '../../../styles/admin'
+import { adminCard, adminPage } from '../../../styles/admin'
 import FollowUpFilters from '../components/FollowUpFilters'
 import FollowUpFormModal from '../components/FollowUpFormModal'
 import FollowUpsTable from '../components/FollowUpsTable'
@@ -63,8 +63,6 @@ export default function FollowUpsPage() {
           onLimitChange={setLimit}
         />
       </div>
-
-      <p className={`${muted} mt-3 mb-0 text-sm`}>Demo list data — wire create/update when follow-up APIs are ready.</p>
 
       <FollowUpFormModal open={formOpen} onClose={() => setFormOpen(false)} />
     </div>
