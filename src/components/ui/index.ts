@@ -1,6 +1,6 @@
 export { default as Button } from './Button/Button'
-export { Dropdown } from './Dropdown/Dropdown'
-export { DropdownItem } from './Dropdown/DropdownItem'
+export { Dropdown } from './dropdown/Dropdown'
+export { DropdownItem } from './dropdown/DropdownItem'
 export { default as HugeIcon } from './Icon/HugeIcon'
 export type { HugeIconProps } from './Icon/HugeIcon'
 export { default as NavIcon } from './Icon/NavIcon'
