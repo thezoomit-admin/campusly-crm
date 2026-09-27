@@ -320,15 +320,27 @@ export default function AppLayout() {
               strokeWidth={1.5}
             />
           </button>
-          <img
-            src={collapsed ? "/logo-icon.png" : "/logo.jpg"}
-            alt="Abroad Education Experts"
-            className={
-              collapsed
-                ? "h-8 w-auto max-w-full shrink-0 object-contain"
-                : "size-12 shrink-0 object-contain"
-            }
-          />
+          <span className="relative grid h-10 w-full min-w-0 items-center overflow-hidden">
+            <img
+              src="/logo.jpg"
+              alt="Abroad Education Experts"
+              className={[
+                "col-start-1 row-start-1 h-10 w-auto max-w-full justify-self-start object-contain object-left",
+                "transition-opacity duration-300 ease-in-out",
+                collapsed ? "opacity-0" : "opacity-100",
+              ].join(" ")}
+            />
+            <img
+              src="/logo-icon.png"
+              alt=""
+              aria-hidden="true"
+              className={[
+                "col-start-1 row-start-1 h-10 w-auto justify-self-center object-contain",
+                "transition-opacity duration-300 ease-in-out",
+                collapsed ? "opacity-100" : "opacity-0",
+              ].join(" ")}
+            />
+          </span>
         </div>
 
         <div className="relative flex items-center justify-between gap-4 py-2.5 pr-6 pl-7 max-[1100px]:pr-4 max-[960px]:contents">
