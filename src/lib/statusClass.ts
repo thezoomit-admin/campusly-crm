@@ -1,5 +1,6 @@
 import { statusPill } from '../styles/admin'
 
+/** Shared badge/pill colors. Feature modules re-export this as `<feature>StatusClass`. */
 export function statusClass(status: string) {
   const key = status.toLowerCase()
   if (['new', 'pending', 'draft', 'submitted'].includes(key)) {

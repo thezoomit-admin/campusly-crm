@@ -41,6 +41,7 @@ campusly-crm/
 ├── public/
 │   └── favicon.svg
 ├── src/
+├── .env.example
 ├── .env.development
 ├── .env.production
 ├── .gitignore
@@ -70,6 +71,7 @@ src/
 ├── vite-env.d.ts
 │
 ├── components/
+│   ├── index.ts                     # barrel: ui + common
 │   ├── ui/                          # pure primitives, no business logic
 │   │   ├── index.ts
 │   │   ├── Button/Button.tsx
@@ -126,7 +128,7 @@ src/
 │   ├── auth.ts                      # session + persist + logout
 │   ├── api.ts                       # getApiError + toQuery
 │   ├── url.ts                       # URL search helpers
-│   └── statusClass.ts               # shared status pill classes
+│   └── statusClass.ts               # shared pill colors; modules re-export as <feature>StatusClass
 │
 ├── modules/
 │   ├── auth/
@@ -248,7 +250,7 @@ modules/<feature>/
 
 ## Components (`src/components/`)
 
-Import from `@/components/ui` or `@/components/common/...`.
+Import from `@/components`, `@/components/ui`, or `@/components/common/...`.
 
 ### `ui/` — primitives
 
@@ -342,7 +344,7 @@ Sidebar groups from `APP_NAV_GROUPS`:
 |--------------|----------------|
 | `authApi` + `authSlice` | Login, forgot, reset, session |
 | `usersApi` | Users |
-| `employeesApi` | Employees |
+| `employeesApi` | Employees (stays in `redux/features/employees`) |
 | `rolesApi` | Roles |
 | `masterDataApi` | Master data |
 | `pipelineApi` | Cross-cutting pipeline reads |
@@ -412,7 +414,7 @@ Admin talks to `campusly-crm-api` (Express + Prisma). Matching modules today:
 
 | Area | Count |
 |------|--------|
-| Files under `src/` | 185 |
+| Files under `src/` | 186 |
 | Feature modules | 19 |
 | Full CRUD modules | 7 |
 | Redux feature APIs | 9 + auth + sidebar |
