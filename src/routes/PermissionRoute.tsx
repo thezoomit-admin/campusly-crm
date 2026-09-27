@@ -1,7 +1,7 @@
 import { adminCard, adminPage } from '../styles/admin'
 import { Outlet, useOutletContext } from 'react-router-dom'
-import PageHeader from '../components/PageHeader'
-import PageMeta from '../components/PageMeta'
+import { PageHeader } from '@/components/common/Navigation'
+import { PageMeta } from '@/components/common/Meta'
 import { hasPermission } from '../lib/access'
 import type { AuthSession } from '../types'
 

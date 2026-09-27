@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router-dom'
-import ThemeToggle from '../components/ThemeToggle'
+import { ThemeToggle } from '@/components/ui'
 
 const ICON_BTN =
   'absolute top-4 right-4 z-10 grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-icon hover:bg-hover-bg'

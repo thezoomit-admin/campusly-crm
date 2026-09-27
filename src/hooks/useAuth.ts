@@ -11,7 +11,7 @@ import {
   type AppDispatch,
 } from '@/redux'
 import { baseApi } from '@/redux/api/baseApi'
-import { clearAuthPersistStorage, notifyServerLogout } from '@/lib/authStorage'
+import { clearAuthPersistStorage, notifyServerLogout } from '@/lib/auth'
 import { hasPermission as checkPermission } from '@/lib/access'
 import type { AuthSession, AuthUser } from '@/types'
 

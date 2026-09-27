@@ -7,7 +7,7 @@ import {
 } from '@reduxjs/toolkit/query/react'
 import { toast } from 'react-toastify'
 import { config } from '@/config'
-import { clearAuthPersistStorage } from '@/lib/authStorage'
+import { clearAuthPersistStorage } from '@/lib/auth'
 import { clearSession } from '../features/auth/authSlice'
 
 function getToastMessage(data: unknown, fallback: string): string {
@@ -94,6 +94,13 @@ export const baseApi = createApi({
     'AuditLogs',
     'Search',
     'Pipeline',
+    'Leads',
+    'Applications',
+    'Students',
+    'Documents',
+    'Payments',
+    'FollowUps',
+    'Reports',
   ],
   endpoints: () => ({}),
 })

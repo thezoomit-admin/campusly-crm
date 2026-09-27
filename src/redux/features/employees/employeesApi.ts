@@ -1,5 +1,5 @@
 import { baseApi } from '../../api/baseApi'
-import { toQuery } from '@/utils/query'
+import { toQuery } from '@/lib/api'
 import type { EmployeeOptions, EmployeeRecord } from '@/types'
 
 export type EmployeeListParams = {
