@@ -11,6 +11,15 @@ import {
 import { baseApi } from '../api/baseApi'
 import { reducer } from './rootReducer'
 
+/** Module APIs register into baseApi via injectEndpoints. */
+import '@/modules/leads/api/leadsApi'
+import '@/modules/applications/api/applicationsApi'
+import '@/modules/students/api/studentsApi'
+import '@/modules/documents/api/documentsApi'
+import '@/modules/payments/api/paymentsApi'
+import '@/modules/follow-ups/api/followUpsApi'
+import '@/modules/reports/api/reportsApi'
+
 export const store = configureStore({
   reducer,
   middleware: (getDefaultMiddleware) =>

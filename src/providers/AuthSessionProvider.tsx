@@ -6,7 +6,7 @@ import {
   useAppDispatch,
 } from '@/redux'
 import { clearClientAuthState } from '@/hooks/useAuth'
-import { isAuthSession } from '@/lib/auth-session'
+import { isAuthSession } from '@/lib/auth'
 
 const ME_TIMEOUT_MS = 8000
 
