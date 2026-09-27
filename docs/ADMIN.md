@@ -54,7 +54,8 @@ campusly-crm/
 ├── tsconfig.app.json
 ├── tsconfig.node.json
 ├── vercel.json
-└── vite.config.ts
+├── vite.config.ts
+└── vitest.config.ts
 ```
 
 Not listed here: `node_modules/`, `dist/`, `.git/`, `.agents/` (Neon skill docs, not project docs).
@@ -186,7 +187,7 @@ src/
 └── tests/
     ├── setup.ts
     ├── lib/access.test.ts + auth.test.ts
-    ├── hooks/useAuth.test.ts
+    ├── hooks/useAuth.test.tsx
     └── modules/leads/LeadsPage.test.tsx
 ```
 

@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { renderHook } from '@testing-library/react'
-import { Provider } from 'react-redux'
 import type { ReactNode } from 'react'
+import { Provider } from 'react-redux'
 import { describe, expect, it } from 'vitest'
 import { useAuth } from '@/hooks/useAuth'
 import { baseApi } from '@/redux/api/baseApi'
