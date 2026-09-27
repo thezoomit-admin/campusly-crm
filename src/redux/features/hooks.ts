@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux'
+import { useDebounce } from '@/hooks/useDebounce'
 import type { AppDispatch, RootState } from './store'
 
 export const useAppDispatch: () => AppDispatch = useDispatch
@@ -10,16 +10,7 @@ type DebouncedProps = {
   delay: number
 }
 
+/** @deprecated Prefer `useDebounce` from `@/hooks/useDebounce`. */
 export function useDebounced({ searchQuery, delay }: DebouncedProps) {
-  const [debouncedValue, setDebouncedValue] = useState(searchQuery)
-
-  useEffect(() => {
-    const handler = window.setTimeout(() => {
-      setDebouncedValue(searchQuery)
-    }, delay)
-
-    return () => window.clearTimeout(handler)
-  }, [searchQuery, delay])
-
-  return debouncedValue
+  return useDebounce(searchQuery, delay)
 }

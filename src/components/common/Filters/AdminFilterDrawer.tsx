@@ -2,7 +2,7 @@ import { DatePicker, InputNumber, Select, Switch } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { Cancel01Icon, FilterIcon } from '@hugeicons/core-free-icons'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import HugeIcon from '../Icons/HugeIcon'
+import HugeIcon from '@/components/ui/Icon/HugeIcon'
 import { Button } from '@/components/ui'
 
 const { RangePicker } = DatePicker

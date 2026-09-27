@@ -15,13 +15,12 @@ export {
   SwitchStatus,
   SwitchStatus2,
 } from './Forms'
-export { HugeIcon } from './Icons'
-export type { HugeIconProps } from './Icons'
 export { Loader, PageLoader, Spinner } from './Loading'
 export { PageMeta, PAGE_TITLE_SUFFIX } from './Meta'
-export { AntModal } from './Modals'
+export { AntModal, DeleteModal } from './Modals'
 export type { AntModalProps } from './Modals'
 export { PageHeader } from './Navigation'
 export type { PageHeaderBreadcrumb } from './Navigation'
+export { GlobalSearch } from './Search'
 export { DataTable, DraggableTable } from './Tables'
 export type { DataTableActionItem } from './Tables'

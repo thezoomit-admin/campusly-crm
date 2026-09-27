@@ -3,7 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { MoreVerticalIcon } from '@hugeicons/core-free-icons'
 import { useEffect, useRef, useState, type CSSProperties, type Key, type MouseEvent, type ReactNode } from 'react'
 import { useAppSelector } from '@/redux/features/hooks'
-import './AntTable.css'
+import './DataTable.css'
 
 export type DataTableActionItem = {
   key: string

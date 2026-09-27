@@ -1,7 +1,7 @@
 import { Table } from 'antd'
 import type { TableProps } from 'antd'
 import { useEffect, useRef } from 'react'
-import './AntTable.css'
+import './DraggableTable.css'
 
 export default function DraggableTable<T extends object>(props: TableProps<T>) {
   const wrapRef = useRef<HTMLDivElement>(null)

@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
 import { PageLoader } from '@/components/common/Loading'
-import { AUTH_USER_PATCH_EVENT } from '../lib/auth-session'
+import { AUTH_USER_PATCH_EVENT } from '@/lib/auth'
 import { useAuth } from '../hooks/useAuth'
 import type { AuthUser } from '../types'
 
