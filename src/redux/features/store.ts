@@ -19,6 +19,7 @@ import '@/modules/documents/api/documentsApi'
 import '@/modules/payments/api/paymentsApi'
 import '@/modules/follow-ups/api/followUpsApi'
 import '@/modules/reports/api/reportsApi'
+import '@/modules/dashboard/api/dashboardApi'
 
 export const store = configureStore({
   reducer,

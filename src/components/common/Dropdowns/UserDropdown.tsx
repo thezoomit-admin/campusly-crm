@@ -128,10 +128,10 @@ export default function UserDropdown({
       <button
         type="button"
         className={[
-          'grid size-11 cursor-pointer place-items-center rounded-full border border-border bg-surface p-0 transition-[border-color,background,box-shadow] duration-200 ease-in-out',
-          'hover:border-input-border hover:bg-hover-bg',
+          'grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 shadow-none outline-none',
+          'hover:[&>span]:bg-[color-mix(in_srgb,var(--color-primary)_24%,white)] dark:hover:[&>span]:bg-[color-mix(in_srgb,var(--color-primary)_32%,transparent)]',
           isOpen
-            ? 'border-primary shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-primary)_18%,transparent)]'
+            ? '[&>span]:bg-[color-mix(in_srgb,var(--color-primary)_28%,white)] dark:[&>span]:bg-[color-mix(in_srgb,var(--color-primary)_36%,transparent)]'
             : '',
         ]
           .filter(Boolean)
@@ -144,7 +144,7 @@ export default function UserDropdown({
           key={user.photoUrl || user.id}
           name={displayName}
           photoUrl={user.photoUrl}
-          className="grid size-8 place-items-center overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--color-primary)_16%,white)] text-[0.72rem] font-bold text-primary-active dark:bg-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] dark:text-nav-active [&_img]:size-full [&_img]:object-cover"
+          className="grid size-full place-items-center overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--color-primary)_16%,white)] text-[0.72rem] font-bold text-primary-active transition-colors duration-200 ease-in-out dark:bg-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] dark:text-nav-active [&_img]:size-full [&_img]:object-cover"
         />
       </button>
 

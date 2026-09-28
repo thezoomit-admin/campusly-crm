@@ -1,19 +1,20 @@
-import { useMemo, useState, type SVGProps } from 'react'
-import { useOutletContext } from 'react-router-dom'
-import {
-  calendarEvents,
-  dashboardStats,
-  leadSources,
-  leadTrend,
-  quickActions,
-  recentLeads,
-  upcomingFollowUps,
-  type DashIconName,
-} from '@/mocks/dashboardDemo'
+import { useMemo, type SVGProps } from 'react'
+import { useNavigate, useOutletContext } from 'react-router-dom'
+import { useGetDashboardQuery } from '../api/dashboardApi'
 import { Button } from '@/components/ui'
+import { Spinner } from '@/components/common/Loading'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import type { AuthSession } from '../../../types'
+import type { DashIconName, DashboardQuickAction } from '../types'
+
+const QUICK_ACTIONS: DashboardQuickAction[] = [
+  { label: 'Create New Lead', hint: '', tone: 'primary', icon: 'plus', to: '/leads' },
+  { label: 'Add Application', hint: 'Create a new application', tone: 'blue', icon: 'file', to: '/applications' },
+  { label: 'Add Student', hint: 'Register a new student', tone: 'green', icon: 'graduate', to: '/students' },
+  { label: 'Add Payment', hint: 'Record a payment', tone: 'orange', icon: 'card', to: '/payments' },
+  { label: 'Schedule Follow-up', hint: 'Set a follow-up reminder', tone: 'purple', icon: 'bell', to: '/follow-ups' },
+]
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
@@ -256,7 +257,7 @@ function DonutChart({ segments, total }: { segments: ChartSegment[]; total: numb
       <circle className="stroke-chart-track" cx="90" cy="90" r={radius} fill="none" strokeWidth={stroke} />
       <g transform="rotate(-90 90 90)">
         {segments.map((segment) => {
-          const length = (segment.value / total) * circumference
+          const length = total > 0 ? (segment.value / total) * circumference : 0
           const circle = (
             <circle
               key={segment.label}
@@ -291,12 +292,20 @@ function LineChart({ points }: { points: TrendPoint[] }) {
   const width = 420
   const height = 180
   const pad = { top: 16, right: 12, bottom: 28, left: 28 }
-  const max = Math.max(...points.map((point) => point.value), 80)
+  const max = Math.max(...points.map((point) => point.value), 1)
   const innerWidth = width - pad.left - pad.right
   const innerHeight = height - pad.top - pad.bottom
 
+  if (points.length === 0) {
+    return (
+      <p className="m-0 grid h-[180px] place-items-center text-[0.85rem] text-text-faint">
+        No lead activity in the last 7 days.
+      </p>
+    )
+  }
+
   const coords = points.map((point, index) => {
-    const x = pad.left + (index / (points.length - 1)) * innerWidth
+    const x = pad.left + (index / Math.max(points.length - 1, 1)) * innerWidth
     const y = pad.top + innerHeight - (point.value / max) * innerHeight
     return { ...point, x, y }
   })
@@ -349,7 +358,15 @@ function LineChart({ points }: { points: TrendPoint[] }) {
   )
 }
 
-function CalendarCard({ year, month }: { year: number; month: number }) {
+function CalendarCard({
+  year,
+  month,
+  events,
+}: {
+  year: number
+  month: number
+  events: Record<string, string[]>
+}) {
   const firstDay = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const today = new Date()
@@ -377,7 +394,7 @@ function CalendarCard({ year, month }: { year: number; month: number }) {
             return <span key={`empty-${index}`} />
           }
 
-          const marks = calendarEvents[day] || []
+          const marks = events[String(day)] || []
           const isToday =
             today.getFullYear() === year && today.getMonth() === month && today.getDate() === day
 
@@ -427,9 +444,18 @@ function CalendarCard({ year, month }: { year: number; month: number }) {
 
 export default function DashboardPage() {
   const auth = useOutletContext<AuthSession>()
+  const navigate = useNavigate()
   const now = useMemo(() => new Date(), [])
-  const [notice, setNotice] = useState('')
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1
+  const { data, isFetching, isError } = useGetDashboardQuery({ year, month })
   const name = displayName(auth)
+  const stats = data?.stats || []
+  const leadSources = data?.leadSources || []
+  const leadTrend = data?.leadTrend || []
+  const recentLeads = data?.recentLeads || []
+  const upcomingFollowUps = data?.upcomingFollowUps || []
+  const calendarEvents = data?.calendarEvents || {}
   const leadTotal = leadSources.reduce((sum, source) => sum + source.value, 0)
   const dateLabel = new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
@@ -437,11 +463,6 @@ export default function DashboardPage() {
     day: 'numeric',
     year: 'numeric',
   }).format(now)
-
-  function handleAction(label: string) {
-    setNotice(`${label} is demo-only for now.`)
-    window.setTimeout(() => setNotice(''), 2400)
-  }
 
   return (
     <section className="grid gap-[18px] min-w-0 text-text max-sm:gap-3.5">
@@ -470,8 +491,18 @@ export default function DashboardPage() {
         }
       />
 
+      {isError ? (
+        <p className="m-0 text-danger">Could not load dashboard. Check API connection.</p>
+      ) : null}
+
+      {isFetching && !data ? (
+        <div className="grid min-h-[240px] place-items-center">
+          <Spinner />
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-5 gap-3.5 max-[1280px]:grid-cols-3 max-[1100px]:grid-cols-2 max-sm:grid-cols-1">
-        {dashboardStats.map((stat) => (
+        {stats.map((stat) => (
           <article key={stat.key} className={cx(card, 'relative overflow-hidden pt-4 px-4 pb-3')}>
             <div className={cx('size-[42px] grid place-items-center rounded-xl', toneIcon[stat.tone])}>
               <Icon name={stat.icon} />
@@ -508,23 +539,27 @@ export default function DashboardPage() {
             <h3 className="m-0 text-base">Lead Source Overview</h3>
             <span className={chip}>Last 30 Days</span>
           </div>
-          <div className="grid grid-cols-[170px_1fr] gap-3 items-center max-[1100px]:grid-cols-[140px_1fr] max-[960px]:grid-cols-1">
-            <DonutChart segments={leadSources} total={leadTotal} />
-            <ul className="list-none m-0 p-0 grid gap-2">
-              {leadSources.map((source) => (
-                <li key={source.label} className="flex justify-between gap-2.5 text-[0.85rem]">
-                  <span className="flex items-center gap-2">
-                    <i className="size-2 rounded-full" style={{ background: source.color }} />
-                    {source.label}
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <em className="text-text-faint not-italic min-w-8">{source.percent}%</em>
-                    <strong className="min-w-6 text-right">{source.value}</strong>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {leadSources.length === 0 ? (
+            <p className="m-0 py-8 text-center text-[0.85rem] text-text-faint">No leads in the last 30 days.</p>
+          ) : (
+            <div className="grid grid-cols-[170px_1fr] gap-3 items-center max-[1100px]:grid-cols-[140px_1fr] max-[960px]:grid-cols-1">
+              <DonutChart segments={leadSources} total={leadTotal} />
+              <ul className="list-none m-0 p-0 grid gap-2">
+                {leadSources.map((source) => (
+                  <li key={source.label} className="flex justify-between gap-2.5 text-[0.85rem]">
+                    <span className="flex items-center gap-2">
+                      <i className="size-2 rounded-full" style={{ background: source.color }} />
+                      {source.label}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <em className="text-text-faint not-italic min-w-8">{source.percent}%</em>
+                      <strong className="min-w-6 text-right">{source.value}</strong>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </article>
 
         <article className={dashCard}>
@@ -536,13 +571,13 @@ export default function DashboardPage() {
         </article>
 
         <aside className="grid gap-2.5 max-[1280px]:col-span-full max-[960px]:col-auto">
-          {quickActions.map((action) =>
+          {QUICK_ACTIONS.map((action) =>
             action.tone === 'primary' ? (
               <Button
                 key={action.label}
                 icon={<Icon name={action.icon} />}
                 fullWidth
-                onClick={() => handleAction(action.label)}
+                onClick={() => navigate(action.to)}
               >
                 {action.label}
               </Button>
@@ -554,7 +589,7 @@ export default function DashboardPage() {
                   'flex items-center gap-3 w-full py-3 px-3.5 border-0 rounded-[14px] text-left text-text cursor-pointer shadow-soft',
                   actionBtnTone[action.tone] || 'bg-surface',
                 )}
-                onClick={() => handleAction(action.label)}
+                onClick={() => navigate(action.to)}
               >
                 <span
                   className={cx(
@@ -581,7 +616,7 @@ export default function DashboardPage() {
             <button
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
-              onClick={() => handleAction('View all leads')}
+              onClick={() => navigate('/leads')}
             >
               View All
             </button>
@@ -598,8 +633,15 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
+                {recentLeads.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-[0.85rem] text-text-faint">
+                      No leads found.
+                    </td>
+                  </tr>
+                ) : null}
                 {recentLeads.map((lead) => (
-                  <tr key={lead.email}>
+                  <tr key={lead.id}>
                     <td className="py-2.5 px-1.5 border-t border-border-subtle text-[0.86rem]">
                       <div className="flex items-center gap-2.5">
                         <span className="size-[34px] grid place-items-center rounded-full bg-[#e8f1ff] text-[#3b82f6] text-[0.72rem] font-bold dark:bg-blue-500/20 dark:text-[#93c5fd]">
@@ -634,15 +676,18 @@ export default function DashboardPage() {
             <button
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
-              onClick={() => handleAction('View all follow-ups')}
+              onClick={() => navigate('/follow-ups')}
             >
               View All
             </button>
           </div>
           <ul className="list-none m-0 p-0 grid gap-2.5">
+            {upcomingFollowUps.length === 0 ? (
+              <li className="py-8 text-center text-[0.85rem] text-text-faint">No upcoming follow-ups.</li>
+            ) : null}
             {upcomingFollowUps.map((item) => (
               <li
-                key={item.title}
+                key={item.id}
                 className={cx(
                   'flex gap-3 items-start py-2.5 px-3 rounded-[14px] max-sm:p-2.5',
                   followupBg[item.tone] || 'bg-[#f8fbff] dark:bg-blue-500/10',
@@ -665,19 +710,13 @@ export default function DashboardPage() {
           </ul>
         </article>
 
-        <CalendarCard year={now.getFullYear()} month={now.getMonth()} />
+        <CalendarCard year={now.getFullYear()} month={now.getMonth()} events={calendarEvents} />
       </div>
 
       <footer className="flex justify-between gap-3 text-text-faint text-[0.78rem] max-sm:grid max-sm:grid-cols-1">
         <span>EduConsult CRM &nbsp; v1.0.0</span>
         <span>© {now.getFullYear()} Education Consultancy CRM. All rights reserved.</span>
       </footer>
-
-      {notice ? (
-        <p className="fixed right-6 bottom-6 m-0 py-3 px-4 rounded-xl bg-[#16324f] text-white shadow-[0_12px_30px_rgba(22,50,79,0.2)] max-sm:left-3 max-sm:right-3 max-sm:bottom-3">
-          {notice}
-        </p>
-      ) : null}
     </section>
   )
 }

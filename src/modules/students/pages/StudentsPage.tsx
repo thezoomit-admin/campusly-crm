@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useListStudentsQuery } from '../api/studentsApi'
-import { adminCard, adminPage, muted } from '../../../styles/admin'
+import { adminCard, adminPage } from '../../../styles/admin'
 import StudentFilters from '../components/StudentFilters'
 import StudentFormModal from '../components/StudentFormModal'
 import StudentsTable from '../components/StudentsTable'
@@ -63,8 +63,6 @@ export default function StudentsPage() {
           onLimitChange={setLimit}
         />
       </div>
-
-      <p className={`${muted} mt-3 mb-0 text-sm`}>Demo list data — wire create/update when student APIs are ready.</p>
 
       <StudentFormModal open={formOpen} onClose={() => setFormOpen(false)} />
     </div>

@@ -4,7 +4,7 @@ import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { useDebounce } from '@/hooks/useDebounce'
 import { useListPaymentsQuery } from '../api/paymentsApi'
-import { adminCard, adminPage, muted } from '../../../styles/admin'
+import { adminCard, adminPage } from '../../../styles/admin'
 import PaymentFilters from '../components/PaymentFilters'
 import PaymentFormModal from '../components/PaymentFormModal'
 import PaymentsTable from '../components/PaymentsTable'
@@ -63,8 +63,6 @@ export default function PaymentsPage() {
           onLimitChange={setLimit}
         />
       </div>
-
-      <p className={`${muted} mt-3 mb-0 text-sm`}>Demo list data — wire create/update when payment APIs are ready.</p>
 
       <PaymentFormModal open={formOpen} onClose={() => setFormOpen(false)} />
     </div>
