@@ -1,11 +1,11 @@
-import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Alert, Button, Checkbox, Form } from 'antd'
+import { Button, Checkbox, Form } from 'antd'
 import { toast } from 'react-toastify'
 import { FormInput } from '@/components/common/Forms'
 import { PageMeta } from '@/components/common/Meta'
 import { useAuth } from '../../../hooks/useAuth'
 import { isAuthSession } from '@/lib/auth'
+import { loginIdentifierValidationError } from '../identifier'
 import { useLoginMutation } from '../../../redux/features/auth/authApi'
 
 type LoginValues = {
@@ -13,6 +13,20 @@ type LoginValues = {
   password: string
   rememberMe?: boolean
 }
+
+type LoginField = 'identifier' | 'password'
+
+type LoginApiError = {
+  data?: { error?: string; message?: string; code?: string; field?: string }
+  status?: string | number
+}
+
+const IDENTIFIER_ERROR_CODES = new Set([
+  'ACCOUNT_LOCKED',
+  'ACCOUNT_INACTIVE',
+  'ACCOUNT_SUSPENDED',
+  'ROLE_MISSING',
+])
 
 const cardClass =
   'w-full max-w-[400px] rounded-2xl border border-card-border bg-surface p-6 shadow-card'
@@ -25,10 +39,26 @@ export default function LoginPage() {
   const { applySession } = useAuth()
   const [login, { isLoading }] = useLoginMutation()
   const [form] = Form.useForm<LoginValues>()
-  const [message, setMessage] = useState('')
+
+  function showFieldError(text: string, field: LoginField) {
+    form.setFields([
+      { name: 'identifier', errors: field === 'identifier' ? [text] : [] },
+      { name: 'password', errors: field === 'password' ? [text] : [] },
+    ])
+  }
+
+  function errorField(code?: string, field?: string): LoginField {
+    if (field === 'identifier' || field === 'password') return field
+    if (code === 'INVALID_CREDENTIALS') return 'password'
+    if (!code || IDENTIFIER_ERROR_CODES.has(code)) return 'identifier'
+    return 'password'
+  }
 
   async function onFinish(values: LoginValues) {
-    setMessage('')
+    form.setFields([
+      { name: 'identifier', errors: [] },
+      { name: 'password', errors: [] },
+    ])
 
     try {
       const data = await login({
@@ -44,16 +74,16 @@ export default function LoginPage() {
         return
       }
 
-      setMessage('Could not sign in.')
+      showFieldError('Could not sign in.', 'identifier')
     } catch (error) {
-      const err = error as { data?: { error?: string; message?: string }; status?: string | number }
+      const err = error as LoginApiError
       const text =
         err?.data?.error ||
         err?.data?.message ||
         (err?.status === 'FETCH_ERROR'
           ? 'Server is not reachable. Start campusly-crm-api.'
           : 'Could not sign in.')
-      setMessage(text)
+      showFieldError(text, errorField(err?.data?.code, err?.data?.field))
     }
   }
 
@@ -82,7 +112,16 @@ export default function LoginPage() {
           <FormInput
             name="identifier"
             label="Email or Username"
-            rules={[{ required: true, message: 'Enter email or username' }]}
+            rules={[
+              { required: true, whitespace: true, message: 'Enter email or username' },
+              {
+                validator: async (_, value: string) => {
+                  if (!value || !value.trim()) return
+                  const error = loginIdentifierValidationError(value)
+                  if (error) throw new Error(error)
+                },
+              },
+            ]}
             autoComplete="username"
             placeholder="Email or username"
           />
@@ -106,8 +145,6 @@ export default function LoginPage() {
               Forgot password?
             </Link>
           </div>
-
-          {message ? <Alert type="error" showIcon message={message} className="mb-4" /> : null}
 
           <Form.Item className="mb-0!">
             <Button type="primary" htmlType="submit" block size="large" loading={isLoading}>
