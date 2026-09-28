@@ -460,7 +460,7 @@ export default function AppLayout() {
         </div>
       </aside>
 
-      <main className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto px-6 pt-3 pb-6 max-[1100px]:px-4 max-[1100px]:pt-2.5 max-[1100px]:pb-5 max-[960px]:w-full max-[640px]:px-3 max-[640px]:pt-2 max-[640px]:pb-4">
+      <main className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto p-4 max-[960px]:w-full max-[640px]:p-3">
         <Outlet context={auth} />
       </main>
     </div>

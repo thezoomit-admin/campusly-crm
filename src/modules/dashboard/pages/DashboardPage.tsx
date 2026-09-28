@@ -46,10 +46,10 @@ const sparkStroke: Record<string, string> = {
 }
 
 const actionBtnTone: Record<string, string> = {
-  blue: 'bg-[#eef5ff] dark:bg-blue-500/10',
-  green: 'bg-[#eefaf3] dark:bg-green-500/10',
-  orange: 'bg-[#fff6eb] dark:bg-amber-500/10',
-  purple: 'bg-[#f4efff] dark:bg-violet-500/10',
+  blue: 'bg-[#eef5ff] hover:bg-[#dceaff] dark:bg-blue-500/10 dark:hover:bg-blue-500/20',
+  green: 'bg-[#eefaf3] hover:bg-[#d8f4e4] dark:bg-green-500/10 dark:hover:bg-green-500/20',
+  orange: 'bg-[#fff6eb] hover:bg-[#ffecd6] dark:bg-amber-500/10 dark:hover:bg-amber-500/20',
+  purple: 'bg-[#f4efff] hover:bg-[#e9e0ff] dark:bg-violet-500/10 dark:hover:bg-violet-500/20',
 }
 
 const followupBg: Record<string, string> = {
@@ -253,7 +253,7 @@ function DonutChart({ segments, total }: { segments: ChartSegment[]; total: numb
   let offset = 0
 
   return (
-    <svg className="w-full h-auto max-[960px]:max-w-[180px] max-[960px]:mx-auto" viewBox="0 0 180 180" aria-hidden="true">
+    <svg className="h-auto w-full" viewBox="0 0 180 180" aria-hidden="true">
       <circle className="stroke-chart-track" cx="90" cy="90" r={radius} fill="none" strokeWidth={stroke} />
       <g transform="rotate(-90 90 90)">
         {segments.map((segment) => {
@@ -316,7 +316,7 @@ function LineChart({ points }: { points: TrendPoint[] }) {
   const area = last && first ? `${line} L${last.x},${height - pad.bottom} L${first.x},${height - pad.bottom} Z` : ''
 
   return (
-    <svg className="w-full h-auto" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Lead trend">
+    <svg className="h-auto w-full max-w-full" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Lead trend">
       {[0.25, 0.5, 0.75, 1].map((step) => {
         const y = pad.top + innerHeight * (1 - step)
         return (
@@ -378,7 +378,7 @@ function CalendarCard({
   >
 
   return (
-    <article className={cx(dashCard, 'max-[1280px]:col-span-full max-[960px]:col-auto')}>
+    <article className={cx(dashCard, 'min-w-0')}>
       <div className={cardHead}>
         <h3 className="m-0 text-base">Calendar</h3>
         <strong>{title}</strong>
@@ -465,7 +465,7 @@ export default function DashboardPage() {
   }).format(now)
 
   return (
-    <section className="grid gap-[18px] min-w-0 text-text max-sm:gap-3.5">
+    <section className="@container grid min-w-0 max-w-full gap-4 overflow-x-hidden text-text">
       <PageMeta
         title="Dashboard"
         description="Overview of leads, applications, follow-ups, and consultancy performance in EduConsult CRM."
@@ -475,7 +475,7 @@ export default function DashboardPage() {
         subtitle="Here's what's happening with your consultancy today."
         breadcrumbs={[{ title: 'Dashboard' }]}
         extra={
-          <div className="flex flex-wrap gap-3 max-[960px]:w-full">
+          <div className="flex flex-wrap gap-3 @3xl:w-auto max-[960px]:w-full">
             <div className="m-0 flex items-center gap-2.5 rounded-2xl border border-border bg-surface px-3.5 py-2.5 shadow-soft">
               <Icon name="calendar" />
               <div>
@@ -501,23 +501,30 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-5 gap-3.5 max-[1280px]:grid-cols-3 max-[1100px]:grid-cols-2 max-sm:grid-cols-1">
+      <div className="grid min-w-0 grid-cols-1 gap-3 *:min-w-0 sm:grid-cols-2 lg:grid-cols-5">
         {stats.map((stat) => (
-          <article key={stat.key} className={cx(card, 'relative overflow-hidden pt-4 px-4 pb-3')}>
-            <div className={cx('size-[42px] grid place-items-center rounded-xl', toneIcon[stat.tone])}>
+          <article
+            key={stat.key}
+            className={cx(card, 'relative min-h-[118px] min-w-0 overflow-hidden px-3 py-3 xl:px-3.5 xl:py-3.5')}
+          >
+            <div className={cx('grid size-8 place-items-center rounded-[10px] xl:size-9', toneIcon[stat.tone])}>
               <Icon name={stat.icon} />
             </div>
-            <p className="mt-2.5 mb-0.5 text-text-muted text-[0.82rem]">{stat.label}</p>
-            <strong className="text-[1.55rem] tracking-[-0.03em] max-sm:text-[1.35rem]">{stat.value}</strong>
-            <div className="flex items-center gap-2 mt-1.5 text-[0.75rem]">
-              <span className={stat.change >= 0 ? 'text-[#16a34a]' : 'text-[#e11d48]'}>
+            <p className="mt-2 mb-0.5 truncate text-[0.75rem] leading-snug text-text-muted xl:text-[0.8rem]">
+              {stat.label}
+            </p>
+            <strong className="block text-[1.25rem] leading-none tracking-[-0.03em] xl:text-[1.4rem]">
+              {stat.value}
+            </strong>
+            <div className="mt-1.5 flex min-w-0 items-center gap-1.5 pr-12 text-[0.68rem] xl:pr-16 xl:text-[0.72rem]">
+              <span className={cx('shrink-0 font-medium', stat.change >= 0 ? 'text-[#16a34a]' : 'text-[#e11d48]')}>
                 {stat.change >= 0 ? '↑' : '↓'} {Math.abs(stat.change)}%
               </span>
-              <small className="text-text-faint">vs. last 30 days</small>
+              <small className="min-w-0 truncate text-text-faint">vs. last 30 days</small>
             </div>
             <svg
               className={cx(
-                'absolute right-2.5 bottom-2 w-[92px] h-7 max-sm:hidden',
+                'pointer-events-none absolute right-2 bottom-2 h-5 w-12 xl:h-6 xl:w-[72px]',
                 sparkStroke[stat.tone],
               )}
               viewBox="0 0 120 28"
@@ -533,8 +540,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-3.5 grid-cols-[1.15fr_1.2fr_0.75fr] max-[1280px]:grid-cols-2 max-[960px]:grid-cols-1">
-        <article className={dashCard}>
+      <div className="grid min-w-0 grid-cols-1 gap-3 *:min-w-0 md:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1.2fr)_minmax(0,0.75fr)]">
+        <article className={cx(dashCard, 'min-w-0')}>
           <div className={cardHead}>
             <h3 className="m-0 text-base">Lead Source Overview</h3>
             <span className={chip}>Last 30 Days</span>
@@ -542,18 +549,20 @@ export default function DashboardPage() {
           {leadSources.length === 0 ? (
             <p className="m-0 py-8 text-center text-[0.85rem] text-text-faint">No leads in the last 30 days.</p>
           ) : (
-            <div className="grid grid-cols-[170px_1fr] gap-3 items-center max-[1100px]:grid-cols-[140px_1fr] max-[960px]:grid-cols-1">
-              <DonutChart segments={leadSources} total={leadTotal} />
-              <ul className="list-none m-0 p-0 grid gap-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="mx-auto w-[min(100%,150px)] shrink-0 xl:w-[min(100%,170px)]">
+                <DonutChart segments={leadSources} total={leadTotal} />
+              </div>
+              <ul className="m-0 grid min-w-[140px] flex-1 list-none gap-1.5 p-0">
                 {leadSources.map((source) => (
-                  <li key={source.label} className="flex justify-between gap-2.5 text-[0.85rem]">
-                    <span className="flex items-center gap-2">
-                      <i className="size-2 rounded-full" style={{ background: source.color }} />
-                      {source.label}
+                  <li key={source.label} className="flex justify-between gap-2 text-[0.8rem]">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <i className="size-2 shrink-0 rounded-full" style={{ background: source.color }} />
+                      <span className="truncate">{source.label}</span>
                     </span>
-                    <span className="flex items-center gap-2">
-                      <em className="text-text-faint not-italic min-w-8">{source.percent}%</em>
-                      <strong className="min-w-6 text-right">{source.value}</strong>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <em className="min-w-7 not-italic text-text-faint">{source.percent}%</em>
+                      <strong className="min-w-5 text-right">{source.value}</strong>
                     </span>
                   </li>
                 ))}
@@ -562,7 +571,7 @@ export default function DashboardPage() {
           )}
         </article>
 
-        <article className={dashCard}>
+        <article className={cx(dashCard, 'min-w-0')}>
           <div className={cardHead}>
             <h3 className="m-0 text-base">Lead Trend</h3>
             <span className={chip}>Last 7 Days</span>
@@ -570,11 +579,13 @@ export default function DashboardPage() {
           <LineChart points={leadTrend} />
         </article>
 
-        <aside className="grid gap-2.5 max-[1280px]:col-span-full max-[960px]:col-auto">
+        <aside className={cx(dashCard, 'grid min-w-0 content-start gap-2 md:col-span-2 lg:col-span-1')}>
           {QUICK_ACTIONS.map((action) =>
             action.tone === 'primary' ? (
               <Button
                 key={action.label}
+                className="min-w-0 overflow-hidden text-ellipsis !shadow-none transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px"
+                size="sm"
                 icon={<Icon name={action.icon} />}
                 fullWidth
                 onClick={() => navigate(action.to)}
@@ -586,22 +597,25 @@ export default function DashboardPage() {
                 key={action.label}
                 type="button"
                 className={cx(
-                  'flex items-center gap-3 w-full py-3 px-3.5 border-0 rounded-[14px] text-left text-text cursor-pointer shadow-soft',
-                  actionBtnTone[action.tone] || 'bg-surface',
+                  'flex min-w-0 w-full cursor-pointer items-center gap-2.5 overflow-hidden rounded-[12px] border-0 px-2.5 py-2 text-left text-text shadow-none',
+                  'transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:-translate-y-0.5',
+                  actionBtnTone[action.tone] || 'bg-surface hover:bg-hover-bg',
                 )}
                 onClick={() => navigate(action.to)}
               >
                 <span
                   className={cx(
-                    'size-9 grid place-items-center rounded-[10px]',
+                    'grid size-8 shrink-0 place-items-center rounded-[9px]',
                     toneIcon[action.tone],
                   )}
                 >
                   <Icon name={action.icon} />
                 </span>
-                <span className="grid">
-                  <strong>{action.label}</strong>
-                  {action.hint ? <small className="text-text-muted">{action.hint}</small> : null}
+                <span className="grid min-w-0">
+                  <strong className="truncate text-[0.82rem] leading-tight">{action.label}</strong>
+                  {action.hint ? (
+                    <small className="truncate text-[0.7rem] text-text-muted">{action.hint}</small>
+                  ) : null}
                 </span>
               </button>
             ),
@@ -609,8 +623,8 @@ export default function DashboardPage() {
         </aside>
       </div>
 
-      <div className="grid gap-3.5 grid-cols-[1.35fr_1fr_0.85fr] max-[1280px]:grid-cols-2 max-[960px]:grid-cols-1">
-        <article className={dashCard}>
+      <div className="grid min-w-0 grid-cols-1 gap-3 *:min-w-0 md:grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.85fr)]">
+        <article className={cx(dashCard, 'min-w-0')}>
           <div className={cardHead}>
             <h3 className="m-0 text-base">Recent Leads</h3>
             <button
@@ -670,7 +684,7 @@ export default function DashboardPage() {
           </div>
         </article>
 
-        <article className={dashCard}>
+        <article className={cx(dashCard, 'min-w-0')}>
           <div className={cardHead}>
             <h3 className="m-0 text-base">Upcoming Follow-ups</h3>
             <button
