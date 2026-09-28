@@ -14,6 +14,7 @@ type PageHeaderProps = {
   subtitle?: string
   breadcrumbs?: PageHeaderBreadcrumb[]
   extra?: ReactNode
+  showDivider?: boolean
 }
 
 export default function PageHeader({
@@ -21,6 +22,7 @@ export default function PageHeader({
   subtitle,
   breadcrumbs = [],
   extra,
+  showDivider = true,
 }: PageHeaderProps) {
   return (
     <div className="mb-0">
@@ -51,7 +53,7 @@ export default function PageHeader({
           <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-0">{extra}</div>
         ) : null}
       </div>
-      <Divider className="my-4" />
+      {showDivider ? <Divider className="my-4" /> : null}
     </div>
   )
 }

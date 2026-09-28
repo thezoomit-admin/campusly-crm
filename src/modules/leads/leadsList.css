@@ -1,0 +1,83 @@
+.leads-toolbar {
+  min-height: 58px;
+}
+
+.leads-list-search.ant-input-affix-wrapper {
+  min-height: 42px !important;
+  height: 42px !important;
+  padding-inline: 12px;
+  border-radius: 12px;
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.leads-filter-btn {
+  min-height: 42px !important;
+  height: 42px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-radius: 12px !important;
+}
+
+.leads-list-search.ant-input-affix-wrapper:hover,
+.leads-list-search.ant-input-affix-wrapper-focused,
+.leads-list-search.ant-input-affix-wrapper:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.leads-list-search .ant-input {
+  font-size: 13px;
+}
+
+.leads-table-shell .ant-table-wrapper .ant-table-thead > tr > th {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #fff !important;
+  border-inline-end: none !important;
+  border-bottom: 1px solid #eef0f4 !important;
+  border-top: none !important;
+  padding: 12px 14px;
+}
+
+.leads-table-shell .ant-table-wrapper .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f3f4f6;
+  padding: 12px 14px;
+  vertical-align: middle;
+}
+
+.leads-table-shell .ant-table-wrapper .ant-table {
+  border-radius: 16px;
+}
+
+.leads-table-shell .ant-table-wrapper .ant-pagination {
+  width: 100%;
+  justify-content: flex-end;
+  margin: 16px 0 0;
+}
+
+.leads-table-shell .ant-table-wrapper .ant-pagination-total-text {
+  margin-right: auto;
+  color: #6b7280;
+  font-size: 13px;
+  line-height: 40px;
+  font-weight: 500;
+}
+
+[data-theme='dark'] .leads-table-shell .ant-table-wrapper .ant-table-thead > tr > th {
+  background: var(--color-surface) !important;
+  color: var(--color-text-muted);
+  border-bottom-color: var(--color-border) !important;
+}
+
+[data-theme='dark'] .leads-table-shell .ant-table-wrapper .ant-table-tbody > tr > td {
+  border-bottom-color: var(--color-border-subtle);
+}
+
+[data-theme='dark'] .leads-table-shell .ant-table-wrapper .ant-pagination-total-text {
+  color: var(--color-text-muted);
+}

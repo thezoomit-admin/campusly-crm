@@ -82,6 +82,7 @@ type AdminFilterDrawerProps<TValues extends FilterValues> = {
   onApply: (value: TValues) => void
   activeCount?: number
   buttonLabel?: string
+  buttonClassName?: string
 }
 
 function isEmptyValue(value: FilterValue): boolean {
@@ -105,6 +106,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
   onApply,
   activeCount,
   buttonLabel = 'Filter',
+  buttonClassName = '',
 }: AdminFilterDrawerProps<TValues>) {
   const [isOpen, setIsOpen] = useState(false)
   const [isPanelVisible, setIsPanelVisible] = useState(false)
@@ -220,7 +222,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
         variant="secondary"
         icon={<HugeIcon icon={FilterIcon} size={16} />}
         onClick={openDrawer}
-        className="relative"
+        className={`relative ${buttonClassName}`.trim()}
       >
         {buttonLabel}
         {resolvedActiveCount > 0 ? (

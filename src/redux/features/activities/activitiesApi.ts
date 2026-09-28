@@ -8,14 +8,19 @@ export type ActivityFeedParams = {
   search?: string
   category?: string
   userId?: string
+  relatedId?: string
 }
 
 export type ActivityPayload = {
   type: string
   relatedName?: string
+  relatedType?: string
+  relatedId?: string
   durationMin?: number | null
   outcome?: string
   notes?: string
+  nextAction?: string
+  nextDate?: string | null
 }
 
 const activitiesApi = baseApi.injectEndpoints({
