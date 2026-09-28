@@ -43,6 +43,8 @@ type DataTableProps = {
   pagination?: Record<string, unknown>
   summary?: unknown
   bordered?: boolean
+  className?: string
+  alwaysShowPagination?: boolean
 }
 
 export default function DataTable(props: DataTableProps) {
@@ -73,6 +75,8 @@ export default function DataTable(props: DataTableProps) {
     pagination: paginationProp,
     summary,
     bordered = false,
+    className = '',
+    alwaysShowPagination = false,
   } = props
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const suppressRowClickRef = useRef(false)
@@ -238,7 +242,9 @@ export default function DataTable(props: DataTableProps) {
 
   const totalDataCount = total || (paginationProp?.total as number | undefined) || safeData.length || 0
   const hasPaginationConfig = isPaginate || paginationProp
-  const shouldShowPagination = Boolean(hasPaginationConfig && totalDataCount > 10)
+  const shouldShowPagination = Boolean(
+    hasPaginationConfig && (alwaysShowPagination || totalDataCount > 10),
+  )
   const isServerSidePaginated = Boolean(total || paginationProp?.total)
   const pageSize = limit || (paginationProp?.pageSize as number | undefined) || 20
   const currentPageNum = currentPage || (paginationProp?.current as number | undefined) || 1
@@ -248,7 +254,7 @@ export default function DataTable(props: DataTableProps) {
       : safeData
 
   return (
-    <div className="w-full min-w-0 max-w-full overflow-x-auto">
+    <div className={`w-full min-w-0 max-w-full overflow-x-auto ${className}`.trim()}>
       <Table
         bordered={bordered}
         loading={loading}

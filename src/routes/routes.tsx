@@ -10,7 +10,7 @@ import { DashboardPage } from '../modules/dashboard'
 import { DocumentsPage } from '../modules/documents'
 import { EmployeesPage, EmployeeCreatePage, EmployeeProfilePage } from '../modules/employees/index'
 import { FollowUpsPage } from '../modules/follow-ups'
-import { LeadsPage } from '../modules/leads'
+import { LeadCreatePage, LeadDetailsPage, LeadsPage } from '../modules/leads'
 import { MasterDataPage, MasterDataItemsPage } from '../modules/master-data'
 import { PaymentsPage } from '../modules/payments'
 import { ProfilePage } from '../modules/profile'
@@ -36,7 +36,12 @@ const routes = [
 
           {
             element: <PermissionRoute permission="lead:view" />,
-            children: [{ path: '/leads', element: <LeadsPage /> }],
+            children: [
+              { path: '/leads', element: <LeadsPage /> },
+              { path: '/leads/new', element: <LeadCreatePage /> },
+              { path: '/leads/:id/edit', element: <LeadCreatePage /> },
+              { path: '/leads/:id', element: <LeadDetailsPage /> },
+            ],
           },
           {
             element: <PermissionRoute permission="lead:convert" />,

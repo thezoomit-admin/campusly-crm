@@ -1,6 +1,6 @@
 import { DataTable } from '@/components/common/Tables'
 import type { LeadRow } from '../types'
-import { leadColumns } from '../utils/leadColumns'
+import { getLeadColumns } from '../utils/leadColumns'
 
 type LeadsTableProps = {
   data: LeadRow[]
@@ -8,8 +8,12 @@ type LeadsTableProps = {
   page: number
   limit: number
   total: number
+  canEdit?: boolean
+  showStatus?: boolean
   onPageChange: (page: number) => void
   onLimitChange: (limit: number) => void
+  onView: (row: LeadRow) => void
+  onEdit: (row: LeadRow) => void
 }
 
 export default function LeadsTable({
@@ -18,22 +22,38 @@ export default function LeadsTable({
   page,
   limit,
   total,
+  canEdit,
+  showStatus = true,
   onPageChange,
   onLimitChange,
+  onView,
+  onEdit,
 }: LeadsTableProps) {
   return (
     <DataTable
+      className="leads-table-shell"
       loading={loading}
       data={data}
-      columns={leadColumns}
+      columns={getLeadColumns({ canEdit, showStatus, onView, onEdit })}
       rowKey="id"
+      selectRow
       isPaginate
+      alwaysShowPagination
       currentPage={page}
       setCurrentPage={onPageChange}
       limit={limit}
       setLimit={onLimitChange}
       total={total}
-      showSizeChanger={total > 10}
+      showSizeChanger
+      onRow={(record) => ({
+        onClick: () => onView(record as unknown as LeadRow),
+        style: { cursor: 'pointer' },
+      })}
+      pagination={{
+        showTotal: (count: number, range: [number, number]) =>
+          `Showing ${range[0]}-${range[1]} of ${count} leads`,
+        pageSizeOptions: ['10', '25', '50'],
+      }}
     />
   )
 }
