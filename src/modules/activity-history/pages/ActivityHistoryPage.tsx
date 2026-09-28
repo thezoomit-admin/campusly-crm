@@ -112,6 +112,9 @@ const statTone: Record<string, { icon: string; bar: string }> = {
 const pageBtn =
   'min-w-8 h-8 border-0 rounded-lg bg-transparent text-text-muted font-semibold cursor-pointer'
 
+const quickActionBtn =
+  'w-full py-2.5 px-3 border border-border rounded-xl bg-input-bg text-text-strong text-left font-inherit font-semibold cursor-pointer hover:enabled:bg-hover-bg hover:enabled:border-input-border disabled:opacity-55 disabled:cursor-not-allowed'
+
 const pageBtnActive = 'bg-primary text-on-primary'
 
 function cx(...parts: Array<string | false | undefined | null>) {
@@ -728,7 +731,7 @@ export default function ActivityHistoryPage() {
                   <div className="grid gap-2">
                     <button
                       type="button"
-                      className="w-full py-2.5 px-3 border border-border rounded-xl bg-[#f8fafc] text-text text-left font-inherit font-semibold cursor-pointer hover:enabled:bg-[#eef4ff] hover:enabled:border-[#bfdbfe] disabled:opacity-55 disabled:cursor-not-allowed"
+                      className={quickActionBtn}
                       onClick={() => {
                         setLogType('CALL')
                         setLogName(active.relatedName || '')
@@ -739,7 +742,7 @@ export default function ActivityHistoryPage() {
                     </button>
                     <button
                       type="button"
-                      className="w-full py-2.5 px-3 border border-border rounded-xl bg-[#f8fafc] text-text text-left font-inherit font-semibold cursor-pointer hover:enabled:bg-[#eef4ff] hover:enabled:border-[#bfdbfe] disabled:opacity-55 disabled:cursor-not-allowed"
+                      className={quickActionBtn}
                       onClick={() => {
                         setLogType('MESSAGE')
                         setLogName(active.relatedName || '')

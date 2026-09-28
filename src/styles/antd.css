@@ -16,7 +16,9 @@
   z-index: 2100 !important;
 }
 
-[data-theme='dark'] .ant-table {
+[data-theme='dark'] .ant-table,
+[data-theme='dark'] .ant-table-wrapper,
+[data-theme='dark'] .ant-table-container {
   background: transparent;
 }
 

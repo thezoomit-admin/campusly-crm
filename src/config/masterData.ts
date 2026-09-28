@@ -24,6 +24,28 @@ export const MASTER_DATA_NAV_GROUPS: MasterDataNavGroup[] = [
     ],
   },
   {
+    slug: 'lead-qualification',
+    name: 'Lead Qualification',
+    categories: [
+      { key: 'QUALIFICATION_RESULT', name: 'Qualification Result' },
+      { key: 'UNQUALIFIED_REASON', name: 'Unqualified Reason' },
+      { key: 'QUALIFICATION_FIT', name: 'Qualification Fit' },
+      { key: 'BUDGET_RANGE', name: 'Estimated Budget' },
+      { key: 'FUNDING_SOURCE', name: 'Funding Source' },
+      { key: 'FINANCIAL_READINESS', name: 'Financial Readiness' },
+    ],
+  },
+  {
+    slug: 'lead-intent',
+    name: 'Lead Intent',
+    categories: [
+      { key: 'DECISION_TIMELINE', name: 'Decision Timeline' },
+      { key: 'DECISION_MAKER', name: 'Decision Maker' },
+      { key: 'APPLICATION_READINESS', name: 'Application Readiness' },
+      { key: 'STUDY_INTENT', name: 'Study Intent' },
+    ],
+  },
+  {
     slug: 'academic',
     name: 'Academic',
     categories: [
@@ -32,6 +54,7 @@ export const MASTER_DATA_NAV_GROUPS: MasterDataNavGroup[] = [
       { key: 'SUBJECT_FIELD', name: 'Subject/Field of Study' },
       { key: 'GRADING_SYSTEM', name: 'Grading System' },
       { key: 'ENGLISH_TEST_TYPE', name: 'English Test Type' },
+      { key: 'TEST_STATUS', name: 'Test Status' },
       { key: 'ENGLISH_PROFICIENCY_LEVEL', name: 'English Proficiency Level' },
     ],
   },
@@ -46,6 +69,7 @@ export const MASTER_DATA_NAV_GROUPS: MasterDataNavGroup[] = [
       { key: 'UNIVERSITY', name: 'University' },
       { key: 'COURSE_PROGRAM', name: 'Course/Program' },
       { key: 'STUDY_LEVEL', name: 'Study Level' },
+      { key: 'STUDY_PURPOSE', name: 'Study Purpose' },
     ],
   },
   {
@@ -66,6 +90,7 @@ export const MASTER_DATA_NAV_GROUPS: MasterDataNavGroup[] = [
       { key: 'ACTIVITY_TYPE', name: 'Activity Type' },
       { key: 'FOLLOW_UP_TYPE', name: 'Follow-up Type' },
       { key: 'CONTACT_METHOD', name: 'Contact Method' },
+      { key: 'CONTACT_TIME', name: 'Contact Time' },
       { key: 'CONTACT_RESULT', name: 'Contact Result' },
     ],
   },
