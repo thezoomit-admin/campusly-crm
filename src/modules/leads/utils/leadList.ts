@@ -14,9 +14,9 @@ export const LEAD_PIPELINE_TABS = [
   { key: 'all', label: 'All Leads' },
   { key: 'New', label: 'New' },
   { key: 'Contacted', label: 'Contacted' },
-  { key: 'Interested', label: 'Interested' },
+  { key: 'Qualified', label: 'Qualified' },
   { key: 'Counselling', label: 'Counselling' },
-  { key: 'Offer Sent', label: 'Offer Sent' },
+  { key: 'Offered', label: 'Offered' },
   { key: 'Converted', label: 'Converted' },
 ] as const
 
@@ -131,9 +131,9 @@ function statusStat(summary: LeadListSummary | undefined, label: string): LeadLi
 export function leadStatCards(summary: LeadListSummary | undefined): LeadStatCard[] {
   const all = { count: summary?.total || 0, change: summary?.change || 0 }
   const contacted = statusStat(summary, 'Contacted')
-  const interested = statusStat(summary, 'Interested')
+  const qualified = statusStat(summary, 'Qualified')
   const counselling = statusStat(summary, 'Counselling')
-  const offerSent = statusStat(summary, 'Offer Sent')
+  const offered = statusStat(summary, 'Offered')
   const converted = statusStat(summary, 'Converted')
   const created = statusStat(summary, 'New')
 
@@ -141,9 +141,9 @@ export function leadStatCards(summary: LeadListSummary | undefined): LeadStatCar
     { key: 'all', label: 'All Leads', count: all.count, change: all.change, tone: 'teal', icon: UserGroupIcon, status: 'all' },
     { key: 'new', label: 'New', count: created.count, change: created.change, tone: 'blue', icon: UserAdd01Icon, status: 'New' },
     { key: 'contacted', label: 'Contacted', count: contacted.count, change: contacted.change, tone: 'violet', icon: Call02Icon, status: 'Contacted' },
-    { key: 'interested', label: 'Interested', count: interested.count, change: interested.change, tone: 'amber', icon: FavouriteIcon, status: 'Interested' },
+    { key: 'qualified', label: 'Qualified', count: qualified.count, change: qualified.change, tone: 'amber', icon: FavouriteIcon, status: 'Qualified' },
     { key: 'counselling', label: 'Counselling', count: counselling.count, change: counselling.change, tone: 'purple', icon: UserMultiple02Icon, status: 'Counselling' },
-    { key: 'offer-sent', label: 'Offer Sent', count: offerSent.count, change: offerSent.change, tone: 'orange', icon: File01Icon, status: 'Offer Sent' },
+    { key: 'offered', label: 'Offered', count: offered.count, change: offered.change, tone: 'orange', icon: File01Icon, status: 'Offered' },
     { key: 'converted', label: 'Converted', count: converted.count, change: converted.change, tone: 'green', icon: CheckmarkCircle02Icon, status: 'Converted' },
   ]
 }

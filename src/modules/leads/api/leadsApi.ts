@@ -1,6 +1,17 @@
 import { baseApi } from '@/redux/api/baseApi'
 import { toQuery } from '@/lib/api'
-import type { DuplicateLead, LeadListSummary, LeadRecord, LeadRow } from '../types'
+import type {
+  DuplicateLead,
+  LeadAssignee,
+  LeadAssignmentHistoryItem,
+  LeadListSummary,
+  LeadPoolRow,
+  LeadRecord,
+  LeadRow,
+  LeadStatusHistoryItem,
+  MyLeadRow,
+  MyLeadsSummary,
+} from '../types'
 
 export type LeadListParams = {
   search?: string
@@ -19,6 +30,50 @@ export type LeadListResponse = {
   limit?: number
   summary?: LeadListSummary
 }
+
+export type LeadPoolParams = {
+  search?: string
+  page?: number
+  limit?: number
+  source?: string
+  country?: string
+  createdFrom?: string
+  createdTo?: string
+}
+
+export type LeadPoolResponse = {
+  items: LeadPoolRow[]
+  total: number
+  page?: number
+  limit?: number
+}
+
+export type MyLeadsParams = {
+  search?: string
+  page?: number
+  limit?: number
+  status?: string
+  source?: string
+  priority?: string
+  country?: string
+  followUpStatus?: string
+  sort?: string
+  order?: string
+}
+
+export type MyLeadsResponse = {
+  items: MyLeadRow[]
+  total: number
+  page?: number
+  limit?: number
+  summary?: MyLeadsSummary
+}
+
+const LEAD_COLLECTION_TAGS = [
+  { type: 'Leads' as const, id: 'LIST' },
+  { type: 'Leads' as const, id: 'POOL' },
+  { type: 'Leads' as const, id: 'MINE' },
+]
 
 const leadsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -47,36 +102,94 @@ const leadsApi = baseApi.injectEndpoints({
     }),
     createLead: builder.mutation<{ lead: LeadRecord; message: string }, Record<string, unknown>>({
       query: (body) => ({ url: '/leads', method: 'POST', body }),
-      invalidatesTags: [
-        { type: 'Leads', id: 'LIST' },
-        'Dashboard',
-        'Pipeline',
-      ],
+      invalidatesTags: [...LEAD_COLLECTION_TAGS, 'Dashboard', 'Pipeline'],
     }),
     updateLead: builder.mutation<{ lead: LeadRecord }, { id: string; body: Record<string, unknown> }>({
       query: ({ id, body }) => ({ url: `/leads/${id}`, method: 'PATCH', body }),
-      invalidatesTags: (_r, _e, { id }) => [
-        { type: 'Leads', id },
-        { type: 'Leads', id: 'LIST' },
-      ],
+      invalidatesTags: (_r, _e, { id }) => [{ type: 'Leads', id }, ...LEAD_COLLECTION_TAGS],
     }),
     updateLeadQualification: builder.mutation<{ lead: LeadRecord }, { id: string; body: Record<string, unknown> }>({
       query: ({ id, body }) => ({ url: `/leads/${id}/qualification`, method: 'PATCH', body }),
-      invalidatesTags: (_r, _e, { id }) => [
-        { type: 'Leads', id },
-        { type: 'Leads', id: 'LIST' },
-      ],
+      invalidatesTags: (_r, _e, { id }) => [{ type: 'Leads', id }, ...LEAD_COLLECTION_TAGS],
     }),
     updateLeadPriority: builder.mutation<{ lead: LeadRecord }, { id: string; body: Record<string, unknown> }>({
       query: ({ id, body }) => ({ url: `/leads/${id}/priority`, method: 'PATCH', body }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: 'Leads', id }, { type: 'Leads', id: 'LIST' }],
+      invalidatesTags: (_r, _e, { id }) => [{ type: 'Leads', id }, ...LEAD_COLLECTION_TAGS],
     }),
     createLeadFollowUp: builder.mutation<{ followUp: { id: string } }, { id: string; body: Record<string, unknown> }>({
       query: ({ id, body }) => ({ url: `/leads/${id}/follow-ups`, method: 'POST', body }),
       invalidatesTags: (_r, _e, { id }) => [
         { type: 'FollowUps', id: 'LIST' },
         { type: 'Leads', id },
+        { type: 'Leads', id: 'MINE' },
         'Activities',
+      ],
+    }),
+    updateLeadStatus: builder.mutation<{ lead: LeadRecord }, { id: string; body: Record<string, unknown> }>({
+      query: ({ id, body }) => ({ url: `/leads/${id}/status`, method: 'PATCH', body }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Leads', id },
+        ...LEAD_COLLECTION_TAGS,
+        'Activities',
+        'Dashboard',
+        'Pipeline',
+      ],
+    }),
+    listLeadStatusHistory: builder.query<{ items: LeadStatusHistoryItem[] }, string>({
+      query: (id) => `/leads/${id}/status-history`,
+      providesTags: (_r, _e, id) => [{ type: 'Leads', id }],
+    }),
+    listLeadPool: builder.query<LeadPoolResponse, LeadPoolParams | void>({
+      query: (params) =>
+        `/leads/pool${toQuery({
+          search: params?.search,
+          page: params?.page ? String(params.page) : undefined,
+          limit: params?.limit ? String(params.limit) : undefined,
+          source: params?.source,
+          country: params?.country,
+          createdFrom: params?.createdFrom,
+          createdTo: params?.createdTo,
+        })}`,
+      providesTags: [{ type: 'Leads', id: 'POOL' }],
+    }),
+    listMyLeads: builder.query<MyLeadsResponse, MyLeadsParams | void>({
+      query: (params) =>
+        `/leads/mine${toQuery({
+          search: params?.search,
+          page: params?.page ? String(params.page) : undefined,
+          limit: params?.limit ? String(params.limit) : undefined,
+          status: params?.status,
+          source: params?.source,
+          priority: params?.priority,
+          country: params?.country,
+          followUpStatus: params?.followUpStatus,
+          sort: params?.sort && params.sort !== 'assigned' ? params.sort : undefined,
+          order: params?.order,
+        })}`,
+      providesTags: [{ type: 'Leads', id: 'MINE' }],
+    }),
+    listLeadAssignees: builder.query<{ items: LeadAssignee[] }, { teamId?: string; search?: string } | void>({
+      query: (params) =>
+        `/leads/assignees${toQuery({
+          teamId: params?.teamId,
+          search: params?.search,
+        })}`,
+    }),
+    listLeadAssignments: builder.query<{ items: LeadAssignmentHistoryItem[] }, string>({
+      query: (id) => `/leads/${id}/assignments`,
+      providesTags: (_r, _e, id) => [{ type: 'Leads', id }],
+    }),
+    assignLead: builder.mutation<
+      { lead: LeadRecord; message?: string },
+      { id: string; body: { ownerId: string; reason?: string } }
+    >({
+      query: ({ id, body }) => ({ url: `/leads/${id}/assign`, method: 'PATCH', body }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Leads', id },
+        ...LEAD_COLLECTION_TAGS,
+        'Activities',
+        'Dashboard',
+        'Pipeline',
       ],
     }),
   }),
@@ -92,4 +205,11 @@ export const {
   useUpdateLeadQualificationMutation,
   useUpdateLeadPriorityMutation,
   useCreateLeadFollowUpMutation,
+  useUpdateLeadStatusMutation,
+  useListLeadStatusHistoryQuery,
+  useListLeadPoolQuery,
+  useListMyLeadsQuery,
+  useListLeadAssigneesQuery,
+  useListLeadAssignmentsQuery,
+  useAssignLeadMutation,
 } = leadsApi

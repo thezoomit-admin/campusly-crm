@@ -22,6 +22,7 @@ const CATEGORIES = [
   'QUALIFICATION_RESULT',
   'UNQUALIFIED_REASON',
   'LEAD_PRIORITY',
+  'LEAD_LOST_REASON',
 ] as const
 
 export type MasterOption = { value: string; label: string }
@@ -59,6 +60,7 @@ export function useLeadMasterOptions() {
   const result = useCategory('QUALIFICATION_RESULT')
   const unqualified = useCategory('UNQUALIFIED_REASON')
   const priority = useCategory('LEAD_PRIORITY')
+  const lostReason = useCategory('LEAD_LOST_REASON')
 
   return {
     country: country.options,
@@ -82,6 +84,7 @@ export function useLeadMasterOptions() {
     result: result.options,
     unqualified: unqualified.options,
     priority: priority.options,
+    lostReason: lostReason.options,
   }
 }
 

@@ -12,7 +12,7 @@ import {
   UserSwitchIcon,
 } from '@hugeicons/core-free-icons'
 import type { ActivityFeedItem } from '@/types'
-import type { LeadRecord } from '../../types'
+import type { LeadAssignmentHistoryItem, LeadRecord, LeadStatusHistoryItem } from '../../types'
 import {
   activityTitle,
   completionRows,
@@ -24,7 +24,12 @@ import {
 export default function LeadDetailsSidebar({
   lead,
   activities,
+  statusHistory,
+  assignmentHistory,
   canFollowUp,
+  canEditFollowUp,
+  canChangeStatus,
+  canChangeOwner,
   onViewCompletion,
   onViewActivities,
   onSetReminder,
@@ -32,10 +37,17 @@ export default function LeadDetailsSidebar({
   onScheduleFollowUp,
   onSendEmail,
   onChangeOwner,
+  onChangeStatus,
+  onCompleteNextFollowUp,
 }: {
   lead: LeadRecord
   activities: ActivityFeedItem[]
+  statusHistory: LeadStatusHistoryItem[]
+  assignmentHistory: LeadAssignmentHistoryItem[]
   canFollowUp: boolean
+  canEditFollowUp?: boolean
+  canChangeStatus: boolean
+  canChangeOwner: boolean
   onViewCompletion: () => void
   onViewActivities: () => void
   onSetReminder: () => void
@@ -43,6 +55,8 @@ export default function LeadDetailsSidebar({
   onScheduleFollowUp: () => void
   onSendEmail: () => void
   onChangeOwner: () => void
+  onChangeStatus: () => void
+  onCompleteNextFollowUp?: () => void
 }) {
   const rows = completionRows(lead)
   const percent = lead.profileCompletion ?? 0
@@ -96,17 +110,31 @@ export default function LeadDetailsSidebar({
             label="Next Follow-up"
             value={lead.nextFollowUp?.dueAt ? formatFollowUpDue(lead.nextFollowUp.dueAt) : 'Not scheduled'}
             action={
-              canFollowUp ? (
-                <button
-                  type="button"
-                  className="cursor-pointer border-0 bg-transparent p-0 text-[0.75rem] font-medium text-primary hover:underline"
-                  onClick={onSetReminder}
-                >
-                  Set Reminder
-                </button>
-              ) : null
+              <span className="inline-flex flex-wrap items-center gap-2">
+                {canEditFollowUp && lead.nextFollowUp ? (
+                  <button
+                    type="button"
+                    className="cursor-pointer border-0 bg-transparent p-0 text-[0.75rem] font-medium text-primary hover:underline"
+                    onClick={onCompleteNextFollowUp}
+                  >
+                    Complete
+                  </button>
+                ) : null}
+                {canFollowUp ? (
+                  <button
+                    type="button"
+                    className="cursor-pointer border-0 bg-transparent p-0 text-[0.75rem] font-medium text-primary hover:underline"
+                    onClick={onSetReminder}
+                  >
+                    {lead.nextFollowUp ? 'Schedule' : 'Set Reminder'}
+                  </button>
+                ) : null}
+              </span>
             }
           />
+          {lead.nextFollowUp?.nextAction ? (
+            <SummaryRow icon={Notification01Icon} label="Next Action" value={lead.nextFollowUp.nextAction} />
+          ) : null}
           <SummaryRow icon={Globe02Icon} label="Lead Source" value={lead.source || '—'} />
           <SummaryRow icon={Calendar03Icon} label="Created On" value={formatDisplayDateTime(lead.createdAt) || '—'} />
           <SummaryRow icon={UserIcon} label="Assigned Counsellor" value={lead.owner?.name || 'Unassigned'} />
@@ -123,10 +151,67 @@ export default function LeadDetailsSidebar({
                   <span className="size-1.5 rounded-full bg-current" />
                   {lead.status}
                 </span>
+                {lead.statusChange?.lockedReason ? (
+                  <p className="m-0 mt-1.5 text-[0.75rem] leading-snug text-[#8b97a8]">{lead.statusChange.lockedReason}</p>
+                ) : null}
               </div>
             </div>
+            {canChangeStatus ? (
+              <button
+                type="button"
+                className="cursor-pointer border-0 bg-transparent p-0 text-[0.75rem] font-medium text-primary hover:underline"
+                onClick={onChangeStatus}
+              >
+                Change
+              </button>
+            ) : null}
           </div>
         </dl>
+      </section>
+
+      <section className="rounded-2xl border border-[#e7eef5] bg-surface p-5 shadow-[0_10px_28px_rgba(22,50,79,0.035)] dark:border-border">
+        <h3 className="mt-0 mb-4 text-[0.98rem] font-semibold text-[#1b3a57] dark:text-text-strong">Status History</h3>
+        {statusHistory.length === 0 ? (
+          <p className="m-0 text-[0.84rem] text-[#8b97a8]">No status changes recorded yet.</p>
+        ) : (
+          <ol className="m-0 grid list-none gap-3 p-0">
+            {statusHistory.slice(0, 8).map((item) => (
+              <li key={item.id} className="border-b border-[#eef3f8] pb-3 last:border-0 last:pb-0 dark:border-border-subtle">
+                <p className="m-0 text-[0.86rem] font-medium text-[#17324f] dark:text-text-strong">
+                  {item.previousStatus || '—'} → {item.newStatus}
+                </p>
+                <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
+                  {formatDisplayDateTime(item.createdAt)}
+                  {item.updatedBy?.name ? ` · ${item.updatedBy.name}` : ''}
+                </p>
+                {item.lostReason ? <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">Lost reason: {item.lostReason}</p> : null}
+                {item.remarks ? <p className="m-0 mt-0.5 text-[0.78rem] text-[#5b6b7c]">{item.remarks}</p> : null}
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-[#e7eef5] bg-surface p-5 shadow-[0_10px_28px_rgba(22,50,79,0.035)] dark:border-border">
+        <h3 className="mt-0 mb-4 text-[0.98rem] font-semibold text-[#1b3a57] dark:text-text-strong">Assignment History</h3>
+        {assignmentHistory.length === 0 ? (
+          <p className="m-0 text-[0.84rem] text-[#8b97a8]">No assignment records yet.</p>
+        ) : (
+          <ol className="m-0 grid list-none gap-3 p-0">
+            {assignmentHistory.slice(0, 8).map((item) => (
+              <li key={item.id} className="border-b border-[#eef3f8] pb-3 last:border-0 last:pb-0 dark:border-border-subtle">
+                <p className="m-0 text-[0.86rem] font-medium text-[#17324f] dark:text-text-strong">
+                  {item.fromOwner?.name || 'Unassigned'} → {item.toOwner?.name || 'Lead Pool'}
+                </p>
+                <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
+                  {formatDisplayDateTime(item.createdAt)}
+                  {item.assignedBy?.name ? ` · ${item.assignedBy.name}` : ''}
+                </p>
+                {item.reason ? <p className="m-0 mt-0.5 text-[0.78rem] text-[#5b6b7c]">{item.reason}</p> : null}
+              </li>
+            ))}
+          </ol>
+        )}
       </section>
 
       <section className="rounded-2xl border border-[#e7eef5] bg-surface p-5 shadow-[0_10px_28px_rgba(22,50,79,0.035)] dark:border-border">
@@ -169,7 +254,13 @@ export default function LeadDetailsSidebar({
           <QuickAction icon={Note01Icon} label="Add Note" onClick={onAddNote} />
           <QuickAction icon={Notification01Icon} label="Schedule Follow-up" onClick={onScheduleFollowUp} />
           <QuickAction icon={MailSend01Icon} label="Send Email" onClick={onSendEmail} />
-          <QuickAction icon={UserSwitchIcon} label="Change Owner" onClick={onChangeOwner} />
+          {canChangeOwner ? (
+            <QuickAction
+              icon={UserSwitchIcon}
+              label={lead.owner?.id ? 'Change Owner' : 'Assign Lead'}
+              onClick={onChangeOwner}
+            />
+          ) : null}
         </div>
       </section>
     </aside>

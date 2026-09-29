@@ -41,6 +41,8 @@ export const APP_NAV_GROUPS: NavGroup[] = [
     label: 'Pipeline',
     items: [
       { to: '/leads', label: 'Leads', icon: 'users', permission: 'lead:view' },
+      { to: '/leads/mine', label: 'My Leads', icon: 'users', permission: 'lead:view' },
+      { to: '/leads/pool', label: 'Lead Pool', icon: 'users', permission: 'lead:assign' },
       { to: '/applications', label: 'Applications', icon: 'file', permission: 'lead:convert' },
       { to: '/students', label: 'Students', icon: 'graduate', permission: 'lead:convert' },
       { to: '/documents', label: 'Documents', icon: 'folder', permission: 'document:view' },
@@ -93,6 +95,8 @@ export type SearchablePage = {
 const PAGE_KEYWORDS: Record<string, string[]> = {
   '/dashboard': ['home', 'overview', 'summary'],
   '/leads': ['prospect', 'enquiry', 'inquiry'],
+  '/leads/mine': ['assigned', 'my leads', 'workload', 'follow-up'],
+  '/leads/pool': ['unassigned', 'queue', 'assign', 'distribution'],
   '/applications': ['admission', 'apply'],
   '/students': ['learner', 'client'],
   '/documents': ['files', 'papers'],

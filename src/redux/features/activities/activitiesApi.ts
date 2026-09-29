@@ -21,6 +21,9 @@ export type ActivityPayload = {
   notes?: string
   nextAction?: string
   nextDate?: string | null
+  createNextFollowUp?: boolean
+  nextFollowUpType?: string
+  nextFollowUpPriority?: string
 }
 
 const activitiesApi = baseApi.injectEndpoints({
@@ -29,13 +32,16 @@ const activitiesApi = baseApi.injectEndpoints({
       query: (params) => `/activities${toQuery({ ...(params || {}) })}`,
       providesTags: ['Activities'],
     }),
-    createActivity: builder.mutation<{ activity: unknown }, ActivityPayload>({
+    createActivity: builder.mutation<
+      { activity: unknown; nextFollowUp: { id: string } | null },
+      ActivityPayload
+    >({
       query: (body) => ({
         url: '/activities',
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Activities'],
+      invalidatesTags: ['Activities', 'FollowUps', 'Dashboard', { type: 'Leads', id: 'MINE' }, 'Leads'],
     }),
     recordActivityExport: builder.mutation<{ ok: boolean }, { count: number }>({
       query: (body) => ({

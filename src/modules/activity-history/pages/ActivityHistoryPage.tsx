@@ -48,6 +48,7 @@ const EMPTY_COUNTS: ActivityFeedResponse['counts'] = {
   message: 0,
   meeting: 0,
   email: 0,
+  counselling: 0,
   document: 0,
   status: 0,
   assignment: 0,
@@ -64,6 +65,7 @@ const FILTERS: Array<{ key: 'all' | ActivityFeedCategory; label: string; icon: t
   { key: 'message', label: 'Messages', icon: Message01Icon },
   { key: 'meeting', label: 'Meetings', icon: Calendar03Icon },
   { key: 'email', label: 'Emails', icon: Mail01Icon },
+  { key: 'counselling', label: 'Counselling', icon: UserMultiple02Icon },
   { key: 'document', label: 'Documents', icon: File01Icon },
   { key: 'status', label: 'Status Changes', icon: Activity01Icon },
   { key: 'assignment', label: 'Assignments', icon: UserMultiple02Icon },
@@ -213,6 +215,7 @@ export default function ActivityHistoryPage() {
     message: EMPTY_STAT,
     meeting: EMPTY_STAT,
     email: EMPTY_STAT,
+    counselling: EMPTY_STAT,
     document: EMPTY_STAT,
   })
   const [loading, setLoading] = useState(true)
@@ -225,8 +228,11 @@ export default function ActivityHistoryPage() {
   const [logType, setLogType] = useState('CALL')
   const [logName, setLogName] = useState('')
   const [logDuration, setLogDuration] = useState('5')
-  const [logOutcome, setLogOutcome] = useState('Interested')
+  const [logOutcome, setLogOutcome] = useState('Connected')
   const [logNotes, setLogNotes] = useState('')
+  const [logNextAction, setLogNextAction] = useState('')
+  const [logCreateNext, setLogCreateNext] = useState(false)
+  const [logNextDueAt, setLogNextDueAt] = useState('')
   const [saving, setSaving] = useState(false)
   const syncedSearch = useRef(false)
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -360,15 +366,49 @@ export default function ActivityHistoryPage() {
   async function submitLog() {
     setSaving(true)
     try {
+      if (logCreateNext && !logNextDueAt) {
+        setMessage('Follow-up date is required.')
+        setSaving(false)
+        return
+      }
+      if (logCreateNext && !logNextAction.trim()) {
+        setMessage('Please enter the next action.')
+        setSaving(false)
+        return
+      }
+      if (logType === 'CALL' && logOutcome === 'Other' && !logNotes.trim()) {
+        setMessage('Please provide a reason.')
+        setSaving(false)
+        return
+      }
       await createActivity({
         type: logType,
         relatedName: logName || active?.relatedName || undefined,
-        durationMin: logType === 'CALL' || logType === 'MEETING' ? Number(logDuration) || null : null,
+        relatedType: active?.relatedType || undefined,
+        relatedId: active?.relatedId || undefined,
+        durationMin:
+          logType === 'CALL' || logType === 'MEETING' || logType === 'COUNSELLING'
+            ? Number(logDuration) || null
+            : null,
         outcome: logOutcome,
         notes: logNotes,
+        nextAction: logNextAction || undefined,
+        nextDate: logCreateNext ? logNextDueAt || null : null,
+        createNextFollowUp: logCreateNext,
+        nextFollowUpType:
+          logType === 'CALL'
+            ? 'Call'
+            : logType === 'WHATSAPP'
+              ? 'WhatsApp'
+              : logType === 'EMAIL'
+                ? 'Email'
+                : 'Call',
       }).unwrap()
       setLogOpen(false)
       setLogNotes('')
+      setLogNextAction('')
+      setLogCreateNext(false)
+      setLogNextDueAt('')
       await load()
     } catch (err) {
       setMessage(getApiError(err, 'Unable to save activity.'))
@@ -381,7 +421,7 @@ export default function ActivityHistoryPage() {
     { key: 'message', title: 'Messages', icon: Message01Icon, tone: 'lavender', stat: summary.message },
     { key: 'meeting', title: 'Meetings', icon: Calendar03Icon, tone: 'plum', stat: summary.meeting },
     { key: 'email', title: 'Emails', icon: Mail01Icon, tone: 'magenta', stat: summary.email },
-    { key: 'document', title: 'Documents', icon: File01Icon, tone: 'sky', stat: summary.document },
+    { key: 'counselling', title: 'Counselling', icon: UserMultiple02Icon, tone: 'sky', stat: summary.counselling },
   ] as const
   const maxStat = Math.max(...cards.map((card) => card.stat.value), 0)
 
@@ -735,6 +775,8 @@ export default function ActivityHistoryPage() {
                       onClick={() => {
                         setLogType('CALL')
                         setLogName(active.relatedName || '')
+                        setLogOutcome('Connected')
+                        setLogDuration(String(active.durationMin || 5))
                         setLogOpen(true)
                       }}
                     >
@@ -744,8 +786,9 @@ export default function ActivityHistoryPage() {
                       type="button"
                       className={quickActionBtn}
                       onClick={() => {
-                        setLogType('MESSAGE')
+                        setLogType('WHATSAPP')
                         setLogName(active.relatedName || '')
+                        setLogOutcome('Completed')
                         setLogOpen(true)
                       }}
                     >
@@ -763,17 +806,51 @@ export default function ActivityHistoryPage() {
         <div className={modalBackdrop} onClick={() => setLogOpen(false)}>
           <div className={modalPanel} onClick={(event) => event.stopPropagation()}>
             <div className={modalHeader}>
-              <h3 className="m-0 flex-1">Log {logType === 'CALL' ? 'Call' : 'Message'}</h3>
+              <h3 className="m-0 flex-1">
+                Log{' '}
+                {logType === 'CALL'
+                  ? 'Call'
+                  : logType === 'WHATSAPP' || logType === 'MESSAGE'
+                    ? 'WhatsApp'
+                    : logType === 'EMAIL'
+                      ? 'Email'
+                      : 'Activity'}
+              </h3>
               <button type="button" className={modalClose} onClick={() => setLogOpen(false)}>
                 ×
               </button>
             </div>
             <div className={adminForm}>
               <label>
+                Activity type
+                <FormSelect
+                  value={logType}
+                  options={[
+                    { value: 'CALL', label: 'Call' },
+                    { value: 'WHATSAPP', label: 'WhatsApp' },
+                    { value: 'EMAIL', label: 'Email' },
+                    { value: 'SMS', label: 'SMS' },
+                    { value: 'COUNSELLING', label: 'Counselling' },
+                    { value: 'MEETING', label: 'Meeting' },
+                    { value: 'DOCUMENT_REQUEST', label: 'Document Request' },
+                    { value: 'PAYMENT_DISCUSSION', label: 'Payment Discussion' },
+                    { value: 'SERVICE_DISCUSSION', label: 'Service Discussion' },
+                    { value: 'OTHER', label: 'Other' },
+                  ]}
+                  onChange={(value) => {
+                    const next = String(value || 'CALL')
+                    setLogType(next)
+                    setLogOutcome(
+                      next === 'CALL' ? 'Connected' : next === 'COUNSELLING' ? 'Completed' : 'Completed',
+                    )
+                  }}
+                />
+              </label>
+              <label>
                 Related to
                 <FormInput value={logName} onChange={(event) => setLogName(event.target.value)} placeholder="Contact or student name" />
               </label>
-              {logType === 'CALL' ? (
+              {logType === 'CALL' || logType === 'MEETING' || logType === 'COUNSELLING' ? (
                 <label>
                   Duration (minutes)
                   <FormInput value={logDuration} onChange={(event) => setLogDuration(event.target.value)} />
@@ -781,18 +858,75 @@ export default function ActivityHistoryPage() {
               ) : null}
               <label>
                 Outcome
-                <FormInput value={logOutcome} onChange={(event) => setLogOutcome(event.target.value)} />
+                <FormSelect
+                  value={logOutcome || undefined}
+                  options={(logType === 'CALL'
+                    ? [
+                        'Connected',
+                        'No Answer',
+                        'Busy',
+                        'Call Back Requested',
+                        'Interested',
+                        'Not Interested',
+                        'Information Requested',
+                        'Counselling Scheduled',
+                        'Payment Discussed',
+                        'Documents Requested',
+                        'Other',
+                      ]
+                    : logType === 'COUNSELLING'
+                      ? ['Scheduled', 'Completed', 'Rescheduled', 'Cancelled', 'No Show']
+                      : [
+                          'Completed',
+                          'Interested',
+                          'Not Interested',
+                          'Information Requested',
+                          'Follow-up Required',
+                          'Other',
+                        ]
+                  ).map((value) => ({ value, label: value }))}
+                  onChange={(value) => setLogOutcome(String(value || ''))}
+                />
               </label>
               <label>
                 Notes
                 <FormTextArea rows={3} value={logNotes} onChange={(event) => setLogNotes(event.target.value)} placeholder="What happened?" />
               </label>
+              <label>
+                Next Action
+                <FormTextArea
+                  rows={2}
+                  value={logNextAction}
+                  onChange={(event) => setLogNextAction(event.target.value)}
+                  placeholder="e.g. Send Course List"
+                />
+              </label>
+              <label className="flex items-center justify-between gap-3">
+                <span>Schedule Next Follow-up</span>
+                <input
+                  type="checkbox"
+                  checked={logCreateNext}
+                  onChange={(event) => setLogCreateNext(event.target.checked)}
+                />
+              </label>
+              {logCreateNext ? (
+                <label>
+                  Next Follow-up Date & Time
+                  <DatePicker
+                    showTime
+                    className="w-full"
+                    format="DD MMM YYYY hh:mm A"
+                    value={logNextDueAt ? dayjs(logNextDueAt) : null}
+                    onChange={(value) => setLogNextDueAt(value ? value.toISOString() : '')}
+                  />
+                </label>
+              ) : null}
               <div className="flex justify-end gap-2 mt-3">
                 <Button variant="secondary" onClick={() => setLogOpen(false)}>
                   Cancel
                 </Button>
                 <Button loading={saving} onClick={() => void submitLog()}>
-                  Save activity
+                  {logCreateNext ? 'Complete & Schedule Next Follow-up' : 'Save activity'}
                 </Button>
               </div>
             </div>

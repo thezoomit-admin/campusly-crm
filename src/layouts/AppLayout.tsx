@@ -195,7 +195,17 @@ export default function AppLayout() {
         <NavLink
           key={item.to}
           to={item.to}
-          className={({ isActive }) => navLinkClass({ isActive, collapsed })}
+          className={({ isActive }) => {
+            const nestedLeadPages = ['/leads/pool', '/leads/mine']
+            const active =
+              item.to === '/leads'
+                ? isActive &&
+                  !nestedLeadPages.some(
+                    (path) => location.pathname === path || location.pathname.startsWith(`${path}/`),
+                  )
+                : isActive
+            return navLinkClass({ isActive: active, collapsed });
+          }}
           title={item.label}
         >
           <NavIcon name={item.icon} />

@@ -1154,6 +1154,10 @@ export default function MasterDataItemsPage() {
                             { value: 'converted', label: 'Converted process' },
                             { value: 'lost', label: 'Lost reason required' },
                             { value: 'closed', label: 'Closed' },
+                            { value: 'file_opening_pending', label: 'File opening pending' },
+                            { value: 'file_opened', label: 'File opened' },
+                            { value: 'duplicate', label: 'Duplicate' },
+                            { value: 'invalid', label: 'Invalid' },
                           ]}
                           onChange={(value) => setForm((current) => ({ ...current, behaviorKey: asSelectString(value) }))}
                           disabled={Boolean(selected?.isSystem)}

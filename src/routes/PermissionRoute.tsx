@@ -6,10 +6,16 @@ import { hasPermission } from '../lib/access'
 import type { AuthSession } from '../types'
 
 type PermissionRouteProps = {
-  permission: string
+  permission: string | string[]
+  deniedTitle?: string
+  deniedMessage?: string
 }
 
-export default function PermissionRoute({ permission }: PermissionRouteProps) {
+export default function PermissionRoute({
+  permission,
+  deniedTitle = 'Access denied',
+  deniedMessage = 'You do not have permission to perform this action.',
+}: PermissionRouteProps) {
   const auth = useOutletContext<AuthSession>()
 
   if (!hasPermission(auth, permission)) {
@@ -17,12 +23,12 @@ export default function PermissionRoute({ permission }: PermissionRouteProps) {
       <div className={`${adminPage}`}>
         <PageMeta
           title="Access Denied"
-          description="You do not have permission to view this page in EduConsult CRM. Contact an administrator for access."
+          description={deniedMessage}
         />
         <PageHeader
-          title="Access denied"
-          subtitle="You do not have permission to perform this action."
-          breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Access denied' }]}
+          title={deniedTitle}
+          subtitle={deniedMessage}
+          breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: deniedTitle }]}
         />
         <div className={`${adminCard}`}>
           <p>Contact an administrator if you believe you should have access to this area.</p>

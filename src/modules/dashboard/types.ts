@@ -54,8 +54,16 @@ export type DashboardFollowUp = {
   icon: DashIconName
 }
 
+export type DashboardFollowUpMetrics = {
+  overdue: number
+  dueToday: number
+  completedToday: number
+  pending: number
+}
+
 export type DashboardOverview = {
   stats: DashboardStat[]
+  followUpMetrics?: DashboardFollowUpMetrics
   leadSources: DashboardSource[]
   leadTrend: DashboardTrendPoint[]
   recentLeads: DashboardLead[]

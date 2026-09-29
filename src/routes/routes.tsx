@@ -10,7 +10,7 @@ import { DashboardPage } from '../modules/dashboard'
 import { DocumentsPage } from '../modules/documents'
 import { EmployeesPage, EmployeeCreatePage, EmployeeProfilePage } from '../modules/employees/index'
 import { FollowUpsPage } from '../modules/follow-ups'
-import { LeadCreatePage, LeadDetailsPage, LeadsPage } from '../modules/leads'
+import { LeadCreatePage, LeadDetailsPage, LeadPoolPage, LeadsPage, MyLeadsPage } from '../modules/leads'
 import { MasterDataPage, MasterDataItemsPage } from '../modules/master-data'
 import { PaymentsPage } from '../modules/payments'
 import { ProfilePage } from '../modules/profile'
@@ -34,6 +34,26 @@ const routes = [
           { path: '/profile', element: <ProfilePage /> },
           { path: '/account', element: <AccountPage /> },
 
+          {
+            element: (
+              <PermissionRoute
+                permission="lead:assign"
+                deniedTitle="Lead Pool"
+                deniedMessage="You do not have permission to access the Lead Pool."
+              />
+            ),
+            children: [{ path: '/leads/pool', element: <LeadPoolPage /> }],
+          },
+          {
+            element: (
+              <PermissionRoute
+                permission="lead:view"
+                deniedTitle="My Leads"
+                deniedMessage="You do not have permission to access this page."
+              />
+            ),
+            children: [{ path: '/leads/mine', element: <MyLeadsPage /> }],
+          },
           {
             element: <PermissionRoute permission="lead:view" />,
             children: [

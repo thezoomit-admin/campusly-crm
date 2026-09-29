@@ -39,6 +39,7 @@ type DataTableProps = {
     style?: CSSProperties
     [key: string]: unknown
   }
+  onChange?: (...args: unknown[]) => void
   showRowNumber?: boolean
   pagination?: Record<string, unknown>
   summary?: unknown
@@ -71,6 +72,7 @@ export default function DataTable(props: DataTableProps) {
     actionsMode = 'dropdown',
     actionsAlign = 'center',
     onRow,
+    onChange,
     showRowNumber = true,
     pagination: paginationProp,
     summary,
@@ -267,6 +269,7 @@ export default function DataTable(props: DataTableProps) {
         scroll={{ x: true }}
         expandable={expandable as never}
         onRow={getRowProps as never}
+        onChange={onChange as never}
         pagination={
           shouldShowPagination
             ? {

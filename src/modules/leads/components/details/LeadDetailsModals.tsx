@@ -1,11 +1,16 @@
-import { useState } from 'react'
-import { DatePicker } from 'antd'
+import { useEffect, useState } from 'react'
+import { DatePicker, Modal, Switch } from 'antd'
 import dayjs from 'dayjs'
 import { Button } from '@/components/ui'
-import { FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
+import { FormInput, FormSelect, FormTextArea, InputError } from '@/components/common/Forms'
 import { AntModal } from '@/components/common/Modals'
+import { useListLeadAssigneesQuery } from '../../api/leadsApi'
 import type { MasterOption } from '../../hooks/useLeadMasterOptions'
-import type { LeadRecord } from '../../types'
+import type { LeadRecord, LeadStatusOption } from '../../types'
+import {
+  ACTIVITY_TYPE_OPTIONS,
+  outcomesForActivityType,
+} from '@/modules/activities/activityConstants'
 
 function asSelectString(value: unknown) {
   return typeof value === 'string' ? value : ''
@@ -80,48 +85,175 @@ export function AddActivityModal({
   saving,
   onClose,
   onSubmit,
+  defaultType = 'CALL',
+  title,
 }: {
   open: boolean
   saving: boolean
   onClose: () => void
-  onSubmit: (body: { type: string; notes: string; outcome: string }) => Promise<void>
+  onSubmit: (body: {
+    type: string
+    notes: string
+    outcome: string
+    durationMin?: number | null
+    nextAction: string
+    createNextFollowUp: boolean
+    nextDueAt?: string
+    nextFollowUpType?: string
+    nextFollowUpPriority?: string
+  }) => Promise<void>
+  defaultType?: string
+  title?: string
 }) {
-  const [type, setType] = useState('CALL')
+  const [type, setType] = useState(defaultType)
   const [notes, setNotes] = useState('')
   const [outcome, setOutcome] = useState('')
+  const [durationMin, setDurationMin] = useState('')
+  const [nextAction, setNextAction] = useState('')
+  const [createNext, setCreateNext] = useState(false)
+  const [nextDueAt, setNextDueAt] = useState('')
+  const [nextFollowUpPriority, setNextFollowUpPriority] = useState('Medium')
+
+  useEffect(() => {
+    if (!open) return
+    setType(defaultType)
+    setNotes('')
+    setOutcome(defaultType === 'CALL' ? 'Connected' : defaultType === 'COUNSELLING' ? 'Completed' : 'Completed')
+    setDurationMin('')
+    setNextAction('')
+    setCreateNext(false)
+    setNextDueAt('')
+    setNextFollowUpPriority('Medium')
+  }, [open, defaultType])
+
+  const outcomeOptions = outcomesForActivityType(type).map((value) => ({ value, label: value }))
+  const modalTitle =
+    title ||
+    (type === 'CALL'
+      ? 'Log Call'
+      : type === 'COUNSELLING'
+        ? 'Log Counselling'
+        : type === 'WHATSAPP'
+          ? 'Log WhatsApp'
+          : type === 'EMAIL'
+            ? 'Log Email'
+            : 'Log Activity')
 
   async function handleSubmit() {
-    await onSubmit({ type, notes, outcome })
-    setType('CALL')
-    setNotes('')
-    setOutcome('')
+    await onSubmit({
+      type,
+      notes,
+      outcome,
+      durationMin: type === 'CALL' || type === 'MEETING' || type === 'COUNSELLING' ? Number(durationMin) || null : null,
+      nextAction: nextAction.trim(),
+      createNextFollowUp: createNext,
+      nextDueAt: createNext ? nextDueAt : undefined,
+      nextFollowUpType:
+        type === 'CALL'
+          ? 'Call'
+          : type === 'WHATSAPP'
+            ? 'WhatsApp'
+            : type === 'EMAIL'
+              ? 'Email'
+              : type === 'COUNSELLING'
+                ? 'Counselling'
+                : 'Call',
+      nextFollowUpPriority,
+    })
   }
 
   return (
-    <AntModal open={open} onClose={onClose} title="Add Activity" width={480}>
+    <AntModal open={open} onClose={onClose} title={modalTitle} width={560}>
       <div className="grid gap-3">
         <label className="grid gap-1.5 text-sm">
           <span>Activity type</span>
           <FormSelect
+            showSearch
+            optionFilterProp="label"
             value={type}
-            options={[
-              { value: 'CALL', label: 'Call' },
-              { value: 'MESSAGE', label: 'WhatsApp / Message' },
-              { value: 'EMAIL', label: 'Email' },
-              { value: 'MEETING', label: 'Meeting' },
-              { value: 'NOTE', label: 'Note' },
-            ]}
-            onChange={(value) => setType(asSelectString(value) || 'CALL')}
+            options={[...ACTIVITY_TYPE_OPTIONS]}
+            onChange={(value) => {
+              const next = asSelectString(value) || 'CALL'
+              setType(next)
+              setOutcome(outcomesForActivityType(next)[0] || 'Completed')
+            }}
           />
         </label>
-        <FormInput value={outcome} placeholder="Outcome (optional)" onChange={(event) => setOutcome(event.target.value)} />
-        <FormTextArea rows={3} value={notes} placeholder="What happened?" onChange={(event) => setNotes(event.target.value)} />
+        <label className="grid gap-1.5 text-sm">
+          <span>Outcome</span>
+          <FormSelect
+            showSearch
+            optionFilterProp="label"
+            value={outcome || undefined}
+            options={outcomeOptions}
+            onChange={(value) => setOutcome(asSelectString(value))}
+          />
+        </label>
+        {type === 'CALL' || type === 'MEETING' || type === 'COUNSELLING' ? (
+          <label className="grid gap-1.5 text-sm">
+            <span>Duration (minutes)</span>
+            <FormInput
+              value={durationMin}
+              placeholder="e.g. 12"
+              onChange={(event) => setDurationMin(event.target.value)}
+            />
+          </label>
+        ) : null}
+        <label className="grid gap-1.5 text-sm">
+          <span>Notes{(type === 'CALL' && outcome === 'Other') || !outcome ? '' : ''}</span>
+          <FormTextArea
+            rows={3}
+            value={notes}
+            placeholder={type === 'CALL' && outcome === 'Other' ? 'Notes are required when outcome is Other' : 'What happened?'}
+            onChange={(event) => setNotes(event.target.value)}
+          />
+        </label>
+        <label className="grid gap-1.5 text-sm">
+          <span>Next Action</span>
+          <FormTextArea
+            autoSize={{ minRows: 2, maxRows: 4 }}
+            maxLength={500}
+            value={nextAction}
+            placeholder="e.g. Send University List"
+            onChange={(event) => setNextAction(event.target.value)}
+          />
+        </label>
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-[#e7eef5] px-3 py-2.5 dark:border-border">
+          <span className="text-sm text-[#17324f] dark:text-text">Schedule Next Follow-up</span>
+          <Switch checked={createNext} onChange={setCreateNext} />
+        </div>
+        {createNext ? (
+          <div className="grid gap-3 min-[481px]:grid-cols-2">
+            <label className="grid gap-1.5 text-sm min-[481px]:col-span-2">
+              <span>Next Follow-up Date & Time</span>
+              <DatePicker
+                showTime
+                className="w-full"
+                format="DD MMM YYYY hh:mm A"
+                value={nextDueAt ? dayjs(nextDueAt) : null}
+                onChange={(value) => setNextDueAt(value ? value.toISOString() : '')}
+              />
+            </label>
+            <label className="grid gap-1.5 text-sm">
+              <span>Priority</span>
+              <FormSelect
+                value={nextFollowUpPriority}
+                options={[
+                  { value: 'High', label: 'High' },
+                  { value: 'Medium', label: 'Medium' },
+                  { value: 'Low', label: 'Low' },
+                ]}
+                onChange={(value) => setNextFollowUpPriority(asSelectString(value) || 'Medium')}
+              />
+            </label>
+          </div>
+        ) : null}
         <div className="mt-2 flex justify-end gap-2">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           <Button type="button" loading={saving} onClick={() => void handleSubmit()}>
-            Save activity
+            {createNext ? 'Complete & Schedule Next Follow-up' : 'Save activity'}
           </Button>
         </div>
       </div>
@@ -197,25 +329,274 @@ export function QualifyLeadModal({
   )
 }
 
+export function AssignLeadModal({
+  open,
+  leadName,
+  currentOwnerName,
+  assignedTeamId,
+  saving,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean
+  leadName?: string | null
+  currentOwnerName?: string | null
+  assignedTeamId?: string | null
+  saving: boolean
+  onClose: () => void
+  onSubmit: (ownerId: string, reason: string) => Promise<void>
+}) {
+  const [ownerId, setOwnerId] = useState('')
+  const [reason, setReason] = useState('')
+  const { data, isFetching } = useListLeadAssigneesQuery(
+    { teamId: assignedTeamId || undefined },
+    { skip: !open },
+  )
+  const options = (data?.items || []).map((user) => ({
+    value: user.id,
+    label: [user.name, user.role?.name, user.team?.name].filter(Boolean).join(' · '),
+  }))
+
+  useEffect(() => {
+    if (open) {
+      setOwnerId('')
+      setReason('')
+    }
+  }, [open])
+
+  async function handleSubmit() {
+    if (!ownerId) return
+    await onSubmit(ownerId, reason.trim())
+  }
+
+  const title = currentOwnerName ? 'Reassign Lead' : 'Assign Lead'
+
+  return (
+    <AntModal open={open} onClose={onClose} title={title} width={480}>
+      <div className="grid gap-3">
+        {leadName ? (
+          <p className="m-0 text-sm text-text-muted">
+            {currentOwnerName
+              ? `Reassign ${leadName} from ${currentOwnerName} to another Call Executive.`
+              : `Assign ${leadName} to a Call Executive.`}
+          </p>
+        ) : null}
+        <label className="grid gap-1.5 text-sm">
+          <span>Assign to</span>
+          <FormSelect
+            showSearch
+            optionFilterProp="label"
+            placeholder={isFetching ? 'Loading users...' : 'Select a Call Executive'}
+            value={ownerId || undefined}
+            options={options}
+            onChange={(value) => setOwnerId(asSelectString(value))}
+          />
+          {!isFetching && options.length === 0 ? (
+            <span className="text-xs text-text-muted">No eligible Call Executives are available to receive this lead.</span>
+          ) : null}
+        </label>
+        <label className="grid gap-1.5 text-sm">
+          <span>Reason (optional)</span>
+          <FormTextArea
+            rows={3}
+            value={reason}
+            placeholder="Why is this lead being assigned?"
+            onChange={(event) => setReason(event.target.value)}
+          />
+        </label>
+        <div className="mt-2 flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="button" loading={saving} disabled={!ownerId} onClick={() => void handleSubmit()}>
+            {currentOwnerName ? 'Reassign Lead' : 'Assign Lead'}
+          </Button>
+        </div>
+      </div>
+    </AntModal>
+  )
+}
+
 export function ChangeOwnerModal({
   open,
   lead,
+  saving,
   onClose,
+  onSubmit,
 }: {
   open: boolean
   lead: LeadRecord | null
+  saving?: boolean
   onClose: () => void
+  onSubmit?: (ownerId: string, reason: string) => Promise<void>
 }) {
   return (
-    <AntModal open={open} onClose={onClose} title="Change Owner" width={440}>
-      <p className="mt-0 text-sm leading-relaxed text-text-muted">
-        Ownership is assigned automatically from the lead&apos;s preferred country and team rules.
-        {lead?.owner?.name ? ` Current owner is ${lead.owner.name}.` : ' This lead is currently unassigned.'}
-      </p>
-      <div className="mt-4 flex justify-end">
-        <Button type="button" onClick={onClose}>
-          Got it
-        </Button>
+    <AssignLeadModal
+      open={open}
+      leadName={lead?.name}
+      currentOwnerName={lead?.owner?.name}
+      assignedTeamId={lead?.assignedTeam?.id}
+      saving={Boolean(saving)}
+      onClose={onClose}
+      onSubmit={onSubmit || (async () => undefined)}
+    />
+  )
+}
+
+export function ChangeStatusModal({
+  open,
+  saving,
+  currentStatus,
+  options,
+  lostReasons,
+  errors,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean
+  saving: boolean
+  currentStatus: string
+  options: LeadStatusOption[]
+  lostReasons: MasterOption[]
+  errors: Record<string, string>
+  onClose: () => void
+  onSubmit: (body: {
+    statusCode: string
+    remarks: string
+    lostReasonCode: string
+    override: boolean
+    overrideReason: string
+  }) => Promise<void>
+}) {
+  const [statusCode, setStatusCode] = useState('')
+  const [remarks, setRemarks] = useState('')
+  const [lostReasonCode, setLostReasonCode] = useState('')
+  const [overrideReason, setOverrideReason] = useState('')
+  const [confirming, setConfirming] = useState(false)
+
+  const selected = options.find((item) => item.code === statusCode)
+  const remarksRequired = Boolean(selected?.remarksRequired)
+  const lostReasonRequired = Boolean(selected?.lostReasonRequired)
+  const needsOverride = Boolean(selected?.requiresOverride)
+  const dirty = Boolean(statusCode || remarks || lostReasonCode || overrideReason)
+
+  useEffect(() => {
+    if (!open) {
+      setStatusCode('')
+      setRemarks('')
+      setLostReasonCode('')
+      setOverrideReason('')
+      setConfirming(false)
+    }
+  }, [open])
+
+  function requestClose() {
+    if (!dirty) {
+      onClose()
+      return
+    }
+    setConfirming(true)
+    Modal.confirm({
+      title: 'Discard unsaved changes?',
+      content: 'You have unsaved status changes. Close without updating?',
+      okText: 'Discard',
+      cancelText: 'Keep editing',
+      onOk: onClose,
+      afterClose: () => setConfirming(false),
+    })
+  }
+
+  return (
+    <AntModal open={open} onClose={requestClose} title="Change Lead Status" width={520} mask={{ closable: !confirming }}>
+      <div className="grid gap-3">
+        <label className="grid gap-1.5 text-sm">
+          <span>Current Status</span>
+          <input
+            readOnly
+            value={currentStatus}
+            className="h-10 rounded-lg border border-[#dbe4ee] bg-[#f7fafc] px-3 text-sm text-[#17324f] dark:border-border dark:bg-hover-bg dark:text-text"
+          />
+        </label>
+        <label className="grid gap-1.5 text-sm">
+          <span>Select New Status</span>
+          <FormSelect
+            showSearch
+            optionFilterProp="label"
+            placeholder="Select a status"
+            value={statusCode || undefined}
+            options={options.map((item) => ({ value: item.code, label: item.name }))}
+            onChange={(value) => {
+              const next = asSelectString(value)
+              setStatusCode(next)
+              const option = options.find((item) => item.code === next)
+              if (!option?.lostReasonRequired) setLostReasonCode('')
+              if (!option?.requiresOverride) setOverrideReason('')
+            }}
+          />
+          {errors.statusCode ? <InputError>{errors.statusCode}</InputError> : null}
+        </label>
+        {lostReasonRequired ? (
+          <label className="grid gap-1.5 text-sm">
+            <span>Lost Reason</span>
+            <FormSelect
+              showSearch
+              optionFilterProp="label"
+              placeholder="Select a lost reason"
+              value={lostReasonCode || undefined}
+              options={lostReasons}
+              onChange={(value) => setLostReasonCode(asSelectString(value))}
+            />
+            {errors.lostReasonCode ? <InputError>{errors.lostReasonCode}</InputError> : null}
+          </label>
+        ) : null}
+        <label className="grid gap-1.5 text-sm">
+          <span>
+            Reason / Remarks
+            {remarksRequired ? ' *' : ''}
+          </span>
+          <FormTextArea
+            autoSize={{ minRows: 3, maxRows: 8 }}
+            maxLength={1000}
+            showCount
+            value={remarks}
+            placeholder={remarksRequired ? 'Remarks are required for this status' : 'Optional remarks'}
+            onChange={(event) => setRemarks(event.target.value)}
+          />
+          {errors.remarks ? <InputError>{errors.remarks}</InputError> : null}
+        </label>
+        {needsOverride ? (
+          <label className="grid gap-1.5 text-sm">
+            <span>Override Reason *</span>
+            <FormTextArea
+              autoSize={{ minRows: 2, maxRows: 6 }}
+              maxLength={1000}
+              value={overrideReason}
+              placeholder="This jump skips required stages. Record why."
+              onChange={(event) => setOverrideReason(event.target.value)}
+            />
+            {errors.overrideReason ? <InputError>{errors.overrideReason}</InputError> : null}
+          </label>
+        ) : null}
+        <div className="mt-2 flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={requestClose}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            loading={saving}
+            onClick={() =>
+              void onSubmit({
+                statusCode,
+                remarks,
+                lostReasonCode,
+                override: needsOverride,
+                overrideReason,
+              })
+            }
+          >
+            Update Status
+          </Button>
+        </div>
       </div>
     </AntModal>
   )

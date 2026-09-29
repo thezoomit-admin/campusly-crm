@@ -1,36 +1,178 @@
-import { Button, Form } from 'antd'
-import { FormInput } from '@/components/common/Forms'
+import { useEffect, useState } from 'react'
+import { DatePicker, Form, Input, Select } from 'antd'
+import dayjs from 'dayjs'
+import { Button } from '@/components/ui'
 import { AntModal } from '@/components/common/Modals'
-import type { FollowUpFormValues } from '../types'
+import { useListLeadsQuery } from '@/modules/leads/api/leadsApi'
+import { useDebounce } from '@/hooks/useDebounce'
+import {
+  FOLLOW_UP_PRIORITIES,
+  FOLLOW_UP_PURPOSES,
+  FOLLOW_UP_REMINDERS,
+  FOLLOW_UP_TYPES,
+  type FollowUpFormValues,
+} from '../types'
 
 type FollowUpFormModalProps = {
   open: boolean
+  saving?: boolean
   onClose: () => void
-  onSubmit?: (values: FollowUpFormValues) => void
+  onSubmit: (values: FollowUpFormValues) => Promise<void> | void
+  fixedLeadId?: string
+  fixedLeadLabel?: string
+  title?: string
 }
 
-export default function FollowUpFormModal({ open, onClose, onSubmit }: FollowUpFormModalProps) {
+export default function FollowUpFormModal({
+  open,
+  saving,
+  onClose,
+  onSubmit,
+  fixedLeadId,
+  fixedLeadLabel,
+  title = 'Create Follow-up',
+}: FollowUpFormModalProps) {
   const [form] = Form.useForm<FollowUpFormValues>()
+  const purpose = Form.useWatch('purpose', form)
+  const [leadSearch, setLeadSearch] = useState('')
+  const debouncedLeadSearch = useDebounce(leadSearch, 300)
+  const { data: leadsData, isFetching: leadsLoading } = useListLeadsQuery(
+    { search: debouncedLeadSearch, limit: 20 },
+    { skip: !open || Boolean(fixedLeadId) },
+  )
+
+  useEffect(() => {
+    if (!open) return
+    form.setFieldsValue({
+      leadId: fixedLeadId || undefined,
+      type: 'Call',
+      priority: 'Medium',
+      purpose: 'Initial Contact',
+      reminder: '30 Minutes Before',
+      notes: '',
+      nextAction: '',
+      purposeOther: '',
+      dueAt: undefined,
+    })
+    setLeadSearch('')
+  }, [open, fixedLeadId, form])
+
+  const leadOptions = (leadsData?.items || []).map((lead) => ({
+    value: lead.id,
+    label: `${lead.code || lead.id} — ${lead.name}`,
+  }))
 
   return (
-    <AntModal open={open} onClose={onClose} title="Add follow-up" width={520}>
+    <AntModal open={open} onClose={onClose} title={title} width={560}>
       <Form
         form={form}
         layout="vertical"
-        onFinish={(values) => {
-          onSubmit?.(values)
+        onFinish={async (values) => {
+          await onSubmit({
+            ...values,
+            leadId: fixedLeadId || values.leadId,
+            dueAt: values.dueAt,
+          })
           form.resetFields()
-          onClose()
         }}
       >
-        <FormInput name="contact" label="Contact" rules={[{ required: true, message: 'Contact is required' }]} placeholder="Contact name" />
-        <FormInput name="type" label="Type" placeholder="Call, Email, Visit…" />
-        <FormInput name="owner" label="Owner" placeholder="Assigned to" />
-        <FormInput name="due" label="Due" placeholder="Due date" />
+        {fixedLeadId ? (
+          <p className="m-0 mb-3 rounded-lg bg-[#f7fafc] px-3 py-2 text-sm text-[#3d5166] dark:bg-hover-bg dark:text-text">
+            Lead: {fixedLeadLabel || fixedLeadId}
+          </p>
+        ) : (
+          <Form.Item name="leadId" label="Lead" rules={[{ required: true, message: 'Lead is required.' }]}>
+            <Select
+              showSearch
+              filterOption={false}
+              placeholder={leadsLoading ? 'Loading leads…' : 'Search lead by name or code'}
+              options={leadOptions}
+              onSearch={setLeadSearch}
+              notFoundContent={leadsLoading ? 'Loading…' : 'No leads found'}
+            />
+          </Form.Item>
+        )}
+
+        <Form.Item name="type" label="Activity Type" rules={[{ required: true, message: 'Activity type is required.' }]}>
+          <Select
+            showSearch
+            optionFilterProp="label"
+            className="w-full"
+            size="large"
+            options={FOLLOW_UP_TYPES.map((value) => ({ value, label: value }))}
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="dueAt"
+          label="Follow-up Date & Time"
+          rules={[{ required: true, message: 'Follow-up date is required.' }]}
+          getValueFromEvent={(value) => (value ? value.toISOString() : '')}
+          getValueProps={(value) => ({ value: value ? dayjs(value) : null })}
+        >
+          <DatePicker showTime className="w-full" format="DD MMM YYYY hh:mm A" />
+        </Form.Item>
+
+        <div className="grid gap-0 min-[481px]:grid-cols-2 min-[481px]:gap-3">
+          <Form.Item name="priority" label="Priority" rules={[{ required: true, message: 'Priority is required.' }]}>
+            <Select
+              className="w-full"
+              size="large"
+              options={FOLLOW_UP_PRIORITIES.map((value) => ({ value, label: value }))}
+            />
+          </Form.Item>
+          <Form.Item name="reminder" label="Reminder">
+            <Select
+              className="w-full"
+              size="large"
+              options={FOLLOW_UP_REMINDERS.map((value) => ({ value, label: value }))}
+            />
+          </Form.Item>
+        </div>
+
+        <Form.Item name="purpose" label="Purpose" rules={[{ required: true, message: 'Purpose is required.' }]}>
+          <Select
+            showSearch
+            optionFilterProp="label"
+            className="w-full"
+            size="large"
+            options={FOLLOW_UP_PURPOSES.map((value) => ({ value, label: value }))}
+          />
+        </Form.Item>
+
+        {purpose === 'Other' ? (
+          <Form.Item
+            name="purposeOther"
+            label="Purpose description"
+            rules={[{ required: true, message: 'Please provide a reason.' }]}
+          >
+            <Input placeholder="Describe the purpose" maxLength={500} size="large" />
+          </Form.Item>
+        ) : null}
+
+        <Form.Item
+          name="nextAction"
+          label="Next Action"
+          rules={[{ required: true, message: 'Please enter the next action.' }]}
+        >
+          <Input.TextArea
+            autoSize={{ minRows: 2, maxRows: 5 }}
+            maxLength={500}
+            showCount
+            placeholder="What needs to happen next?"
+          />
+        </Form.Item>
+
+        <Form.Item name="notes" label="Notes">
+          <Input.TextArea autoSize={{ minRows: 2, maxRows: 6 }} maxLength={1000} showCount placeholder="Optional notes" />
+        </Form.Item>
+
         <div className="mt-2 flex justify-end gap-2">
-          <Button onClick={onClose}>Cancel</Button>
-          <Button type="primary" htmlType="submit">
-            Save
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button type="submit" loading={Boolean(saving)}>
+            Save Follow-up
           </Button>
         </div>
       </Form>
