@@ -1,27 +1,107 @@
 import { Button } from 'antd'
+import { useOutletContext } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { useMemo, useState } from 'react'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
+import { getApiError } from '@/lib/api'
+import { hasPermission } from '@/lib/access'
 import { useDebounce } from '@/hooks/useDebounce'
-import { useListFollowUpsQuery } from '../api/followUpsApi'
+import type { AuthSession } from '@/types'
+import {
+  useCancelFollowUpMutation,
+  useCompleteFollowUpMutation,
+  useCreateFollowUpMutation,
+  useListFollowUpsQuery,
+  useRescheduleFollowUpMutation,
+} from '../api/followUpsApi'
 import { adminCard, adminPage } from '../../../styles/admin'
 import FollowUpFilters from '../components/FollowUpFilters'
 import FollowUpFormModal from '../components/FollowUpFormModal'
+import {
+  CancelFollowUpModal,
+  CompleteFollowUpModal,
+  RescheduleFollowUpModal,
+} from '../components/FollowUpLifecycleModals'
 import FollowUpsTable from '../components/FollowUpsTable'
-import type { FollowUpRow } from '../types'
+import type {
+  CompleteFollowUpValues,
+  FollowUpFormValues,
+  FollowUpRecord,
+  RescheduleFollowUpValues,
+} from '../types'
 
 export default function FollowUpsPage() {
+  const auth = useOutletContext<AuthSession>()
+  const canCreate = hasPermission(auth, 'follow_up:create')
+  const canEdit = hasPermission(auth, 'follow_up:edit')
+
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
   const [formOpen, setFormOpen] = useState(false)
+  const [selected, setSelected] = useState<FollowUpRecord | null>(null)
+  const [completeOpen, setCompleteOpen] = useState(false)
+  const [rescheduleOpen, setRescheduleOpen] = useState(false)
+  const [cancelOpen, setCancelOpen] = useState(false)
   const debouncedSearch = useDebounce(search, 300)
 
   const { data, isFetching, isError } = useListFollowUpsQuery({
     search: debouncedSearch,
   })
+  const [createFollowUp, { isLoading: creating }] = useCreateFollowUpMutation()
+  const [completeFollowUp, { isLoading: completing }] = useCompleteFollowUpMutation()
+  const [rescheduleFollowUp, { isLoading: rescheduling }] = useRescheduleFollowUpMutation()
+  const [cancelFollowUp, { isLoading: cancelling }] = useCancelFollowUpMutation()
 
-  const rows = useMemo(() => (data?.items || []) as FollowUpRow[], [data?.items])
+  const rows = useMemo(() => data?.items || [], [data?.items])
+
+  async function onCreate(values: FollowUpFormValues) {
+    try {
+      await createFollowUp(values).unwrap()
+      toast.success('Follow-up created.')
+      setFormOpen(false)
+    } catch (error) {
+      toast.error(getApiError(error, 'Unable to create follow-up.'))
+      throw error
+    }
+  }
+
+  async function onComplete(values: CompleteFollowUpValues) {
+    if (!selected) return
+    try {
+      await completeFollowUp({ id: selected.id, body: values }).unwrap()
+      toast.success(values.createNextFollowUp ? 'Follow-up completed and next scheduled.' : 'Follow-up completed.')
+      setCompleteOpen(false)
+      setSelected(null)
+    } catch (error) {
+      toast.error(getApiError(error, 'Unable to complete follow-up.'))
+    }
+  }
+
+  async function onReschedule(values: RescheduleFollowUpValues) {
+    if (!selected) return
+    try {
+      await rescheduleFollowUp({ id: selected.id, body: values }).unwrap()
+      toast.success('Follow-up rescheduled.')
+      setRescheduleOpen(false)
+      setSelected(null)
+    } catch (error) {
+      toast.error(getApiError(error, 'Unable to reschedule follow-up.'))
+    }
+  }
+
+  async function onCancel(reason: string) {
+    if (!selected) return
+    try {
+      await cancelFollowUp({ id: selected.id, body: { reason } }).unwrap()
+      toast.success('Follow-up cancelled.')
+      setCancelOpen(false)
+      setSelected(null)
+    } catch (error) {
+      toast.error(getApiError(error, 'Unable to cancel follow-up.'))
+    }
+  }
 
   return (
     <div className={adminPage}>
@@ -34,9 +114,11 @@ export default function FollowUpsPage() {
         subtitle="Plan and complete follow-up calls, emails, and tasks with leads and students."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Follow-ups' }]}
         extra={
-          <Button type="primary" onClick={() => setFormOpen(true)}>
-            Add follow-up
-          </Button>
+          canCreate ? (
+            <Button type="primary" onClick={() => setFormOpen(true)}>
+              Add follow-up
+            </Button>
+          ) : null
         }
       />
 
@@ -59,12 +141,60 @@ export default function FollowUpsPage() {
           page={page}
           limit={limit}
           total={data?.total || rows.length}
+          canEdit={canEdit}
           onPageChange={setPage}
           onLimitChange={setLimit}
+          onComplete={(row) => {
+            setSelected(row)
+            setCompleteOpen(true)
+          }}
+          onReschedule={(row) => {
+            setSelected(row)
+            setRescheduleOpen(true)
+          }}
+          onCancel={(row) => {
+            setSelected(row)
+            setCancelOpen(true)
+          }}
         />
       </div>
 
-      <FollowUpFormModal open={formOpen} onClose={() => setFormOpen(false)} />
+      <FollowUpFormModal
+        open={formOpen && canCreate}
+        saving={creating}
+        onClose={() => setFormOpen(false)}
+        onSubmit={onCreate}
+      />
+      <CompleteFollowUpModal
+        open={completeOpen && canEdit}
+        saving={completing}
+        followUp={selected}
+        onClose={() => {
+          setCompleteOpen(false)
+          setSelected(null)
+        }}
+        onSubmit={onComplete}
+      />
+      <RescheduleFollowUpModal
+        open={rescheduleOpen && canEdit}
+        saving={rescheduling}
+        followUp={selected}
+        onClose={() => {
+          setRescheduleOpen(false)
+          setSelected(null)
+        }}
+        onSubmit={onReschedule}
+      />
+      <CancelFollowUpModal
+        open={cancelOpen && canEdit}
+        saving={cancelling}
+        followUp={selected}
+        onClose={() => {
+          setCancelOpen(false)
+          setSelected(null)
+        }}
+        onSubmit={onCancel}
+      />
     </div>
   )
 }

@@ -25,9 +25,9 @@ vi.mock('@/modules/leads/api/leadsApi', () => ({
         statuses: [
           { key: 'new', label: 'New', count: 1, change: 8 },
           { key: 'contacted', label: 'Contacted', count: 0, change: 0 },
-          { key: 'interested', label: 'Interested', count: 0, change: 0 },
+          { key: 'qualified', label: 'Qualified', count: 0, change: 0 },
           { key: 'counselling', label: 'Counselling', count: 0, change: 0 },
-          { key: 'offer-sent', label: 'Offer Sent', count: 0, change: 0 },
+          { key: 'offered', label: 'Offered', count: 0, change: 0 },
           { key: 'converted', label: 'Converted', count: 0, change: 0 },
         ],
       },

@@ -121,6 +121,7 @@ export type ActivityFeedCategory =
   | 'message'
   | 'meeting'
   | 'email'
+  | 'counselling'
   | 'document'
   | 'status'
   | 'assignment'
@@ -168,7 +169,7 @@ export type ActivityFeedResponse = {
   to: string
   items: ActivityFeedItem[]
   counts: Record<'all' | ActivityFeedCategory, number>
-  summary: Record<'call' | 'message' | 'meeting' | 'email' | 'document', ActivitySummaryStat>
+  summary: Record<'call' | 'message' | 'meeting' | 'email' | 'counselling' | 'document', ActivitySummaryStat>
 }
 
 export type MasterDataCategory = {

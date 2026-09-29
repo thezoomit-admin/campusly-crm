@@ -1,8 +1,7 @@
 import type { LeadRecord } from '../types'
 import type { MasterOption } from '../hooks/useLeadMasterOptions'
 
-export type LeadTabKey = 'overview' | 'academic' | 'study' | 'documents' | 'activities' | 'notes'
-export type LeadEditSection = 'lead' | 'academic' | 'study' | 'notes' | 'all' | null
+export type LeadTabKey = 'overview' | 'academic' | 'study' | 'documents' | 'activities' | 'followups' | 'notes'
 
 export const LEAD_TABS: Array<{ key: LeadTabKey; label: string }> = [
   { key: 'overview', label: 'Overview' },
@@ -10,6 +9,7 @@ export const LEAD_TABS: Array<{ key: LeadTabKey; label: string }> = [
   { key: 'study', label: 'Study & Visa' },
   { key: 'documents', label: 'Documents' },
   { key: 'activities', label: 'Activities' },
+  { key: 'followups', label: 'Follow-ups' },
   { key: 'notes', label: 'Notes' },
 ]
 
@@ -90,22 +90,25 @@ export function stageBadgeClass(status: string) {
   if (key === 'contacted') {
     return 'bg-[#fef9c3] text-[#a16207] dark:bg-yellow-600/20 dark:text-[#fde047]'
   }
-  if (key === 'interested') {
+  if (key === 'qualified') {
     return 'bg-[#ffedd5] text-[#c2410c] dark:bg-orange-600/20 dark:text-[#fdba74]'
   }
   if (key === 'counselling') {
     return 'bg-[#fed7aa] text-[#9a3412] dark:bg-orange-700/20 dark:text-[#fdba74]'
   }
-  if (key === 'offer sent') {
+  if (key === 'offered' || key === 'offer sent') {
     return 'bg-[#ccfbf1] text-[#0f766e] dark:bg-teal-600/20 dark:text-[#5eead4]'
   }
-  if (key === 'follow-up') {
-    return 'bg-[#fef9c3] text-[#854d0e] dark:bg-yellow-600/20 dark:text-[#fde047]'
+  if (key === 'file opening pending') {
+    return 'bg-[#e0f2fe] text-[#0369a1] dark:bg-sky-600/20 dark:text-[#7dd3fc]'
+  }
+  if (key === 'file opened') {
+    return 'bg-[#dcfce7] text-[#047857] dark:bg-emerald-600/20 dark:text-[#6ee7b7]'
   }
   if (['converted', 'enrolled', 'completed', 'active'].includes(key)) {
     return 'bg-[#dcfce7] text-[#15803d] dark:bg-green-600/20 dark:text-[#86efac]'
   }
-  if (['lost', 'rejected', 'cancelled', 'unqualified'].includes(key)) {
+  if (['lost', 'rejected', 'cancelled', 'unqualified', 'invalid', 'duplicate', 'closed'].includes(key)) {
     return 'bg-[#ffe8ee] text-[#e11d48] dark:bg-rose-600/20 dark:text-[#fda4af]'
   }
   return 'bg-[#f3f4f6] text-[#4b5563] dark:bg-[#24303a] dark:text-[#cbd5e1]'
@@ -182,6 +185,7 @@ export function completionRows(lead: LeadRecord): CompletionRow[] {
 
 export function activityTitle(action: string, details?: string | null) {
   const text = `${action} ${details || ''}`.toLowerCase()
+  if (text.includes('status')) return 'Status updated'
   if (text.includes('created') || action.toLowerCase() === 'lead created') return 'Lead created'
   if (text.includes('follow-up') || text.includes('follow up')) return 'Follow-up scheduled'
   if (text.includes('updated') || text.includes('profile')) return 'Profile updated'

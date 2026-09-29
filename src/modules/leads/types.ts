@@ -15,6 +15,57 @@ export type LeadRow = {
   createdAt?: string
 }
 
+export type LeadPoolRow = {
+  id: string
+  code: string
+  name: string
+  phone: string
+  country: string
+  source: string
+  assignedTeam?: { id: string; name: string } | null
+  createdAt: string
+  waitingTime: string
+}
+
+export type MyLeadRow = {
+  id: string
+  code: string
+  name: string
+  phone: string
+  country: string
+  status: string
+  score: number
+  priority: string
+  nextFollowUpAt: string | null
+  lastActivity: string
+  lastActivityAt: string | null
+  assignedAt: string
+}
+
+export type MyLeadsSummary = {
+  totalAssigned: number
+  highPriority: number
+  pendingFollowUps: number
+  todayFollowUps: number
+  overdueFollowUps: number
+}
+
+export type LeadAssignee = {
+  id: string
+  name: string
+  role: { key: string; name: string } | null
+  team: { id: string; name: string } | null
+}
+
+export type LeadAssignmentHistoryItem = {
+  id: string
+  fromOwner: { id: string; name: string } | null
+  toOwner: { id: string; name: string } | null
+  reason: string | null
+  assignedBy: { id: string; name: string } | null
+  createdAt: string
+}
+
 export type LeadListSummaryStat = {
   key: string
   label: string
@@ -30,6 +81,40 @@ export type LeadListSummary = {
 
 export type LeadOwner = { id: string | null; name: string } | null
 export type LeadTeam = { id: string; name: string } | null
+
+export type LeadStatusOption = {
+  code: string
+  name: string
+  behaviorKey: string | null
+  remarksRequired: boolean
+  lostReasonRequired: boolean
+  requiresOverride: boolean
+  processGated: boolean
+}
+
+export type LeadStatusChange = {
+  canUpdate: boolean
+  locked: boolean
+  lockedReason: string | null
+  canOverride: boolean
+  current: { code: string; name: string; behaviorKey: string | null; sortOrder: number } | null
+  options: LeadStatusOption[]
+}
+
+export type LeadStatusHistoryItem = {
+  id: string
+  previousStatus: string | null
+  previousStatusCode: string | null
+  newStatus: string
+  newStatusCode: string
+  remarks: string | null
+  lostReasonCode: string | null
+  lostReason: string | null
+  isOverride: boolean
+  overrideReason: string | null
+  updatedBy: { id: string; name: string } | null
+  createdAt: string
+}
 
 export type LeadCompletion = {
   personal: boolean
@@ -100,6 +185,7 @@ export type LeadRecord = {
   notes: string | null
   status: string
   statusCode: string | null
+  lostReasonCode: string | null
   academicFitCode: string | null
   englishReadinessCode: string | null
   countryIntakeFitCode: string | null
@@ -124,7 +210,13 @@ export type LeadRecord = {
     dueAt: string | null
     status: string
     notes: string | null
+    priority?: string | null
+    purpose?: string | null
+    nextAction?: string | null
+    reminder?: string | null
+    outcome?: string | null
   } | null
+  statusChange?: LeadStatusChange
 }
 
 export type LeadFormState = {

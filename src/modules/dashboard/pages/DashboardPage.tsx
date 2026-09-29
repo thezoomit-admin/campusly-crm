@@ -456,6 +456,12 @@ export default function DashboardPage() {
   const recentLeads = data?.recentLeads || []
   const upcomingFollowUps = data?.upcomingFollowUps || []
   const calendarEvents = data?.calendarEvents || {}
+  const followUpMetrics = data?.followUpMetrics || {
+    overdue: 0,
+    dueToday: 0,
+    completedToday: 0,
+    pending: 0,
+  }
   const leadTotal = leadSources.reduce((sum, source) => sum + source.value, 0)
   const dateLabel = new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
@@ -686,7 +692,7 @@ export default function DashboardPage() {
 
         <article className={cx(dashCard, 'min-w-0')}>
           <div className={cardHead}>
-            <h3 className="m-0 text-base">Upcoming Follow-ups</h3>
+            <h3 className="m-0 text-base">Today&apos;s Follow-ups</h3>
             <button
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
@@ -695,6 +701,37 @@ export default function DashboardPage() {
               View All
             </button>
           </div>
+          <div className="mb-3 grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              className="cursor-pointer rounded-[14px] border-0 bg-[#fff5f7] px-3 py-3 text-left dark:bg-rose-500/10"
+              onClick={() => navigate('/follow-ups')}
+            >
+              <span className="block text-[0.72rem] font-medium text-[#e11d48]">Overdue</span>
+              <strong className="mt-1 block text-[1.35rem] text-[#e11d48]">{followUpMetrics.overdue}</strong>
+            </button>
+            <button
+              type="button"
+              className="cursor-pointer rounded-[14px] border-0 bg-[#f4f8ff] px-3 py-3 text-left dark:bg-blue-500/10"
+              onClick={() => navigate('/follow-ups')}
+            >
+              <span className="block text-[0.72rem] font-medium text-[#2563eb]">Due Today</span>
+              <strong className="mt-1 block text-[1.35rem] text-[#2563eb]">{followUpMetrics.dueToday}</strong>
+            </button>
+            <button
+              type="button"
+              className="cursor-pointer rounded-[14px] border-0 bg-[#f3fbf6] px-3 py-3 text-left dark:bg-green-500/10"
+              onClick={() => navigate('/follow-ups')}
+            >
+              <span className="block text-[0.72rem] font-medium text-[#16a34a]">Completed</span>
+              <strong className="mt-1 block text-[1.35rem] text-[#16a34a]">{followUpMetrics.completedToday}</strong>
+            </button>
+          </div>
+          {followUpMetrics.overdue > 0 ? (
+            <p className="m-0 mb-3 rounded-xl bg-[#fff5f7] px-3 py-2 text-[0.82rem] font-medium text-[#e11d48] dark:bg-rose-500/10">
+              ⚠ Overdue Follow-ups: {followUpMetrics.overdue}
+            </p>
+          ) : null}
           <ul className="list-none m-0 p-0 grid gap-2.5">
             {upcomingFollowUps.length === 0 ? (
               <li className="py-8 text-center text-[0.85rem] text-text-faint">No upcoming follow-ups.</li>

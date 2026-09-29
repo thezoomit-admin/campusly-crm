@@ -15,7 +15,7 @@ export function statusClass(status: string) {
   if (['overdue', 'rejected', 'lost', 'failed', 'cancelled'].includes(key)) {
     return `${statusPill} bg-[#ffe8ee] text-[#e11d48] dark:bg-rose-600/20 dark:text-[#fda4af]`
   }
-  if (['follow-up', 'interested', 'offer sent', 'due soon'].includes(key)) {
+  if (['follow-up', 'interested', 'offer sent', 'offered', 'qualified', 'due soon'].includes(key)) {
     return `${statusPill} bg-[#fff1e6] text-[#d97706] dark:bg-amber-600/20 dark:text-[#fcd34d]`
   }
   return `${statusPill} bg-[#f3f4f6] text-[#4b5563] dark:bg-[#24303a] dark:text-[#cbd5e1]`

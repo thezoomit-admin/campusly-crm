@@ -25,6 +25,7 @@ const ACCOUNT_MENUS = [
 
 const QUICK_MENUS: QuickMenuItem[] = [
   { key: 'leads', label: 'Leads', to: '/leads', icon: 'users', permission: 'lead:view' },
+  { key: 'my-leads', label: 'My Leads', to: '/leads/mine', icon: 'users', permission: 'lead:view' },
   { key: 'applications', label: 'Applications', to: '/applications', icon: 'file', permission: 'lead:convert' },
   { key: 'students', label: 'Students', to: '/students', icon: 'graduate', permission: 'lead:convert' },
   { key: 'follow-ups', label: 'Follow-ups', to: '/follow-ups', icon: 'bell', permission: 'follow_up:view' },
@@ -35,6 +36,16 @@ const QUICK_MENUS: QuickMenuItem[] = [
 
 function isPathActive(pathname: string, to: string) {
   if (to === '/dashboard') return pathname === '/' || pathname === '/dashboard'
+  if (to === '/leads') {
+    return (
+      pathname === '/leads' ||
+      (pathname.startsWith('/leads/') &&
+        pathname !== '/leads/mine' &&
+        pathname !== '/leads/pool' &&
+        !pathname.startsWith('/leads/mine/') &&
+        !pathname.startsWith('/leads/pool/'))
+    )
+  }
   return pathname === to || pathname.startsWith(`${to}/`)
 }
 
