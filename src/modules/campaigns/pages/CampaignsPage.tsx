@@ -11,7 +11,9 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { statusClass } from '@/lib/statusClass'
 import type { AuthSession } from '@/types'
 import { adminCard, adminPage } from '@/styles/admin'
+import { useListMasterDataOptionsQuery } from '@/redux/features/masterData/masterDataApi'
 import {
+  useAttributionSummaryQuery,
   useCreateCampaignMutation,
   useListCampaignsQuery,
   useUpdateCampaignMutation,
@@ -26,13 +28,6 @@ const STATUS_OPTIONS: Array<{ value: CampaignStatus; label: string }> = [
   { value: 'ARCHIVED', label: 'Archived' },
 ]
 
-const CHANNEL_OPTIONS = [
-  { value: 'Website', label: 'Website' },
-  { value: 'WhatsApp', label: 'WhatsApp' },
-  { value: 'Email', label: 'Email' },
-  { value: 'Meta', label: 'Meta' },
-  { value: 'Other', label: 'Other' },
-]
 
 export default function CampaignsPage() {
   const auth = useOutletContext<AuthSession>()
@@ -55,13 +50,27 @@ export default function CampaignsPage() {
   })
   const [createCampaign, { isLoading: creating }] = useCreateCampaignMutation()
   const [updateCampaign, { isLoading: updating }] = useUpdateCampaignMutation()
+  const { data: performance } = useAttributionSummaryQuery()
+  const { data: sourceData } = useListMasterDataOptionsQuery({ category: 'LEAD_SOURCE' })
+  const { data: channelData } = useListMasterDataOptionsQuery({ category: 'LEAD_CHANNEL' })
+  const watchedSource = Form.useWatch('sourceCode', form)
+  const sourceOptions = (sourceData?.items || [])
+    .filter((item) => item.code)
+    .map((item) => ({ value: item.code as string, label: item.name }))
+  const sourceId = sourceData?.items.find((item) => item.code === watchedSource)?.id
+  const channelOptions = (channelData?.items || [])
+    .filter((item) => item.code && item.parentId === sourceId)
+    .map((item) => ({ value: item.code as string, label: item.name }))
+  const sourceLabel = (code: string | null) => sourceOptions.find((item) => item.value === code)?.label || code || '—'
+  const channelLabel = (code: string | null) =>
+    channelData?.items.find((item) => item.code === code)?.name || code || '—'
 
   const rows = useMemo(() => data?.items || [], [data?.items])
 
   function openCreate() {
     setEditing(null)
     form.resetFields()
-    form.setFieldsValue({ status: 'DRAFT' })
+    form.setFieldsValue({ status: 'ACTIVE' })
     setFormOpen(true)
   }
 
@@ -104,8 +113,8 @@ export default function CampaignsPage() {
   const columns = [
     { title: 'Code', dataIndex: 'code', key: 'code' },
     { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Source', dataIndex: 'sourceCode', key: 'sourceCode', render: (v: string | null) => v || '—' },
-    { title: 'Channel', dataIndex: 'channel', key: 'channel', render: (v: string | null) => v || '—' },
+    { title: 'Source', dataIndex: 'sourceCode', key: 'sourceCode', render: (v: string | null) => sourceLabel(v) },
+    { title: 'Channel', dataIndex: 'channel', key: 'channel', render: (v: string | null) => channelLabel(v) },
     {
       title: 'Status',
       dataIndex: 'status',
@@ -179,6 +188,27 @@ export default function CampaignsPage() {
           />
         </div>
 
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="rounded-xl border border-border p-3">
+            <p className="m-0 mb-2 text-[0.82rem] font-semibold text-text-strong">Source-wise leads</p>
+            {(performance?.sources || []).slice(0, 8).map((row) => (
+              <p key={row.code} className="m-0 text-[0.82rem] text-text">
+                {row.label}: {row.total} leads, {row.converted} converted, {row.conversionRate}%
+              </p>
+            ))}
+            {!performance?.sources.length ? <p className="m-0 text-[0.82rem] text-text-muted">No leads yet.</p> : null}
+          </div>
+          <div className="rounded-xl border border-border p-3">
+            <p className="m-0 mb-2 text-[0.82rem] font-semibold text-text-strong">Campaign-wise leads</p>
+            {(performance?.campaigns || []).slice(0, 8).map((row) => (
+              <p key={row.id || row.label} className="m-0 text-[0.82rem] text-text">
+                {row.label}: {row.total} leads, {row.converted} converted, {row.conversionRate}%
+              </p>
+            ))}
+            {!performance?.campaigns.length ? <p className="m-0 text-[0.82rem] text-text-muted">No leads yet.</p> : null}
+          </div>
+        </div>
+
         {isError ? <p className="m-0 text-danger">Could not load campaigns.</p> : null}
 
         <DataTable
@@ -210,8 +240,15 @@ export default function CampaignsPage() {
         width={560}
       >
         <Form form={form} layout="vertical" className="mt-2">
-          <Form.Item name="name" label="Campaign name" rules={[{ required: true, message: 'Name is required' }]}>
-            <Input placeholder="Spring Intake Meta Ads" />
+          <Form.Item
+            name="name"
+            label="Campaign name"
+            rules={[
+              { required: true, message: 'Campaign name is required.' },
+              { min: 2, max: 150, message: 'Campaign name must be between 2 and 150 characters.' },
+            ]}
+          >
+            <Input placeholder="Canada September Campaign" />
           </Form.Item>
           {!editing ? (
             <Form.Item name="code" label="Code (optional)">
@@ -222,15 +259,21 @@ export default function CampaignsPage() {
             <Select options={STATUS_OPTIONS} />
           </Form.Item>
           <div className="grid gap-0 sm:grid-cols-2 sm:gap-3">
-            <Form.Item name="sourceCode" label="Lead source code">
-              <Input placeholder="META / WEBSITE / …" />
+            <Form.Item name="sourceCode" label="Source" rules={[{ required: true, message: 'Lead source is required.' }]}>
+              <Select
+                showSearch
+                optionFilterProp="label"
+                options={sourceOptions}
+                placeholder="Select source"
+                onChange={() => form.setFieldValue('channel', undefined)}
+              />
             </Form.Item>
-            <Form.Item name="channel" label="Channel">
-              <Select allowClear options={CHANNEL_OPTIONS} placeholder="Select channel" />
+            <Form.Item name="channel" label="Channel" rules={[{ required: true, message: 'Channel is required.' }]}>
+              <Select showSearch optionFilterProp="label" options={channelOptions} placeholder="Select channel" />
             </Form.Item>
           </div>
           <div className="grid gap-0 sm:grid-cols-2 sm:gap-3">
-            <Form.Item name="startDate" label="Start date">
+            <Form.Item name="startDate" label="Start date" rules={[{ required: true, message: 'Start date is required.' }]}>
               <Input type="date" />
             </Form.Item>
             <Form.Item name="endDate" label="End date">
@@ -251,8 +294,8 @@ export default function CampaignsPage() {
               <Input />
             </Form.Item>
           </div>
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} />
+          <Form.Item name="description" label="Description" rules={[{ max: 1000, message: 'Description must be 1000 characters or less.' }]}>
+            <Input.TextArea rows={3} autoSize={{ minRows: 3, maxRows: 8 }} />
           </Form.Item>
         </Form>
       </Modal>

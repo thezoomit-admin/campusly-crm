@@ -12,7 +12,8 @@ import { DatePicker, Switch } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
 import type { LeadFormState } from '../types'
-import { useLeadMasterOptions } from '../hooks/useLeadMasterOptions'
+import { useListCampaignOptionsQuery } from '@/modules/campaigns/api/campaignsApi'
+import { INTEGRATION_SOURCES, useLeadMasterOptions } from '../hooks/useLeadMasterOptions'
 
 type FieldErrors = Record<string, string>
 
@@ -104,6 +105,7 @@ type LeadFormFieldsProps = {
   form: LeadFormState
   errors: FieldErrors
   sourceLocked?: boolean
+  attributionLocked?: boolean
   assignedTeamName?: string | null
   onChange: (key: keyof LeadFormState, value: string | boolean) => void
 }
@@ -112,10 +114,25 @@ export default function LeadFormFields({
   form,
   errors,
   sourceLocked,
+  attributionLocked,
   assignedTeamName,
   onChange,
 }: LeadFormFieldsProps) {
   const options = useLeadMasterOptions()
+  const lockAttribution = Boolean(attributionLocked || sourceLocked)
+  const sourceId = options.sourceItems.find((item) => item.code === form.sourceCode)?.id
+  const channelOptions = options.channelItems
+    .filter((item) => item.code && item.parentId === sourceId)
+    .map((item) => ({ value: item.code as string, label: item.name }))
+  const sourceOptions = options.source.filter((item) => lockAttribution || !INTEGRATION_SOURCES.has(item.value) || item.value === form.sourceCode)
+  const { data: campaignData } = useListCampaignOptionsQuery(
+    { sourceCode: form.sourceCode || undefined },
+    { skip: !form.sourceCode },
+  )
+  const campaignOptions = (campaignData?.items || []).map((item) => ({
+    value: item.value,
+    label: item.name || item.label,
+  }))
   const showEnglishDetail = form.testStatusCode === 'TAKEN'
   const showPurposeOther = form.studyPurposeCode === 'OTHER'
   const showVisaApp = form.previousVisaApplication === 'true'
@@ -549,19 +566,87 @@ export default function LeadFormFields({
             showSearch
             optionFilterProp="label"
             placeholder="Select source"
-            disabled={sourceLocked}
+            disabled={lockAttribution}
             value={form.sourceCode || undefined}
-            options={options.source}
-            onChange={(value) => onChange('sourceCode', asSelectString(value))}
+            options={sourceOptions}
+            onChange={(value) => {
+              onChange('sourceCode', asSelectString(value))
+              onChange('channelCode', '')
+              onChange('campaignId', '')
+              onChange('campaign', '')
+            }}
           />
         </Field>
-        <Field id="campaign" label="Campaign">
+        <Field id="channelCode" label="Channel" required={channelOptions.length > 0} error={errors.channelCode}>
+          <FormSelect
+            id="channelCode"
+            showSearch
+            optionFilterProp="label"
+            placeholder={form.sourceCode ? 'Select channel' : 'Select a source first'}
+            disabled={lockAttribution || !form.sourceCode}
+            value={form.channelCode || undefined}
+            options={channelOptions}
+            onChange={(value) => onChange('channelCode', asSelectString(value))}
+          />
+        </Field>
+        <Field id="campaignId" label="Campaign" error={errors.campaignId}>
+          <FormSelect
+            id="campaignId"
+            showSearch
+            allowClear
+            optionFilterProp="label"
+            placeholder="Active campaign (optional)"
+            disabled={lockAttribution || !form.sourceCode}
+            value={form.campaignId || undefined}
+            options={campaignOptions}
+            onChange={(value) => {
+              const id = asSelectString(value)
+              const selected = campaignData?.items.find((item) => item.value === id)
+              onChange('campaignId', id)
+              onChange('campaign', selected?.name || '')
+            }}
+          />
+        </Field>
+        {form.campaignId ? (
+          <Field id="campaignCode" label="Campaign ID">
+            <FormInput id="campaignCode" value={form.campaignId} disabled />
+          </Field>
+        ) : null}
+        {form.sourceCode === 'REFERRAL' ? (
+          <>
+            <Field id="referralBy" label="Referral By" required error={errors.referralBy}>
+              <FormInput
+                id="referralBy"
+                value={form.referralBy}
+                disabled={lockAttribution}
+                onChange={(event) => onChange('referralBy', event.target.value)}
+              />
+            </Field>
+            <Field id="referralDetails" label="Referral Details" error={errors.referralDetails}>
+              <FormInput
+                id="referralDetails"
+                value={form.referralDetails}
+                disabled={lockAttribution}
+                onChange={(event) => onChange('referralDetails', event.target.value)}
+              />
+            </Field>
+          </>
+        ) : null}
+        <Field id="sourceDetails" label="Source Details" error={errors.sourceDetails}>
           <FormInput
-            id="campaign"
-            value={form.campaign}
-            disabled={sourceLocked}
-            placeholder="Optional campaign / UTM"
-            onChange={(event) => onChange('campaign', event.target.value)}
+            id="sourceDetails"
+            value={form.sourceDetails}
+            disabled={lockAttribution}
+            placeholder="Optional context, max 500 characters"
+            onChange={(event) => onChange('sourceDetails', event.target.value)}
+          />
+        </Field>
+        <Field id="externalLeadId" label="External Lead ID">
+          <FormInput
+            id="externalLeadId"
+            value={form.externalLeadId}
+            disabled={lockAttribution}
+            onChange={(event) => onChange('externalLeadId', event.target.value)}
           />
         </Field>
         <Field id="remarks" label="Remarks" span error={errors.remarks}>

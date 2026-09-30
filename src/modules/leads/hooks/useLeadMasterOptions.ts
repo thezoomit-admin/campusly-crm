@@ -1,5 +1,7 @@
 import { useListMasterDataOptionsQuery } from '@/redux/features/masterData/masterDataApi'
 
+const INTEGRATION_SOURCES = new Set(['WEBSITE', 'META', 'WHATSAPP', 'EMAIL', 'FACEBOOK_LEAD_ADS', 'INSTAGRAM_LEAD_ADS'])
+
 const CATEGORIES = [
   'COUNTRY',
   'STUDY_LEVEL',
@@ -18,6 +20,7 @@ const CATEGORIES = [
   'CONTACT_METHOD',
   'CONTACT_TIME',
   'LEAD_SOURCE',
+  'LEAD_CHANNEL',
   'QUALIFICATION_FIT',
   'QUALIFICATION_RESULT',
   'UNQUALIFIED_REASON',
@@ -30,14 +33,17 @@ export type MasterOption = { value: string; label: string }
 
 function useCategory(category: string) {
   const { data, isFetching } = useListMasterDataOptionsQuery({ category })
-  const options: MasterOption[] = (data?.items || [])
+  const items = data?.items || []
+  const options: MasterOption[] = items
     .filter((item) => item.code)
     .map((item) => ({ value: item.code as string, label: item.name }))
   if (category === 'COUNTRY') {
     options.sort((a, b) => a.label.localeCompare(b.label))
   }
-  return { options, isFetching }
+  return { options, items, isFetching }
 }
+
+export { INTEGRATION_SOURCES }
 
 export function useLeadMasterOptions() {
   const country = useCategory('COUNTRY')
@@ -57,6 +63,7 @@ export function useLeadMasterOptions() {
   const contactMethod = useCategory('CONTACT_METHOD')
   const contactTime = useCategory('CONTACT_TIME')
   const source = useCategory('LEAD_SOURCE')
+  const channel = useCategory('LEAD_CHANNEL')
   const fit = useCategory('QUALIFICATION_FIT')
   const result = useCategory('QUALIFICATION_RESULT')
   const unqualified = useCategory('UNQUALIFIED_REASON')
@@ -82,6 +89,9 @@ export function useLeadMasterOptions() {
     contactMethod: contactMethod.options,
     contactTime: contactTime.options,
     source: source.options,
+    channel: channel.options,
+    sourceItems: source.items,
+    channelItems: channel.items,
     fit: fit.options,
     result: result.options,
     unqualified: unqualified.options,

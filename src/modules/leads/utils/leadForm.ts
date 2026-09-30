@@ -58,7 +58,13 @@ export function recordToForm(lead: LeadRecord): LeadFormState {
     preferredContactTimeCode: lead.preferredContactTimeCode || '',
     specificContactTime: lead.specificContactTime || '',
     sourceCode: lead.sourceCode || '',
+    channelCode: lead.channelCode || '',
     campaign: lead.campaign || '',
+    campaignId: lead.campaignId || '',
+    referralBy: lead.referralBy || '',
+    referralDetails: lead.referralDetails || '',
+    sourceDetails: lead.sourceDetails || '',
+    externalLeadId: lead.externalLeadId || '',
     remarks: lead.remarks || '',
     notes: lead.notes || '',
   }
@@ -121,14 +127,20 @@ export function formToPayload(form: LeadFormState, extra?: Record<string, unknow
     preferredContactTimeCode: emptyToNull(form.preferredContactTimeCode),
     specificContactTime: emptyToNull(form.specificContactTime),
     sourceCode: emptyToNull(form.sourceCode),
+    channelCode: emptyToNull(form.channelCode),
     campaign: emptyToNull(form.campaign),
+    campaignId: emptyToNull(form.campaignId),
+    referralBy: emptyToNull(form.referralBy),
+    referralDetails: emptyToNull(form.referralDetails),
+    sourceDetails: emptyToNull(form.sourceDetails),
+    externalLeadId: emptyToNull(form.externalLeadId),
     remarks: emptyToNull(form.remarks),
     notes: emptyToNull(form.notes),
     ...extra,
   }
 }
 
-export function validateLeadForm(form: LeadFormState) {
+export function validateLeadForm(form: LeadFormState, options?: { channelRequired?: boolean }) {
   const errors: Record<string, string> = {}
   if (form.name.trim().length < 2 || form.name.trim().length > 100) {
     errors.name = 'Full Name is required.'
@@ -141,7 +153,13 @@ export function validateLeadForm(form: LeadFormState) {
     errors.email = 'Please enter a valid email address.'
   }
   if (!form.preferredCountryCode) errors.preferredCountryCode = 'Please select a preferred country.'
-  if (!form.sourceCode) errors.sourceCode = 'Please select a lead source.'
+  if (!form.sourceCode) errors.sourceCode = 'Lead source is required.'
+  if (options?.channelRequired && !form.channelCode) errors.channelCode = 'Please select a channel.'
+  if (form.sourceCode === 'REFERRAL' && form.referralBy.trim().length < 2) {
+    errors.referralBy = 'Referral by is required.'
+  }
+  if (form.sourceDetails.length > 500) errors.sourceDetails = 'Source details must be 500 characters or less.'
+  if (form.referralDetails.length > 500) errors.referralDetails = 'Referral details must be 500 characters or less.'
   if (form.studyPurposeCode === 'OTHER' && !form.studyPurposeOther.trim()) {
     errors.studyPurposeOther = 'Please specify the study purpose.'
   }

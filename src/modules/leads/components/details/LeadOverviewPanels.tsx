@@ -25,15 +25,21 @@ import {
 } from '../../utils/leadDetails'
 import LeadInfoField from './LeadInfoField'
 import LeadSectionCard from './LeadSectionCard'
+import LeadMetaCampaignHistory from '@/modules/meta-leads/components/LeadMetaCampaignHistory'
+import LeadMarketingPanel from './LeadMarketingPanel'
 
 const GRID = 'grid gap-x-6 gap-y-5 sm:grid-cols-2 xl:grid-cols-3'
 
 export default function LeadOverviewPanels({
   lead,
   options,
+  canChangeSource = false,
+  canChangeCampaign = false,
 }: {
   lead: LeadRecord
   options: ReturnType<typeof import('../../hooks/useLeadMasterOptions').useLeadMasterOptions>
+  canChangeSource?: boolean
+  canChangeCampaign?: boolean
 }) {
   const visaSummary =
     yesNoLabel(lead.previousVisaApplication) ||
@@ -59,6 +65,9 @@ export default function LeadOverviewPanels({
           <LeadInfoField icon={Calendar03Icon} label="Date of Birth" value={formatDob(lead.dateOfBirth)} />
           <LeadInfoField icon={Location01Icon} label="Current Location" value={lead.currentLocation} />
           <LeadInfoField icon={Globe02Icon} label="Lead Source" value={lead.source || optionLabel(options.source, lead.sourceCode)} />
+          <LeadInfoField icon={Flag01Icon} label="Campaign" value={lead.campaign} />
+          <LeadInfoField icon={Globe02Icon} label="Landing Page" value={lead.landingPageUrl} />
+          <LeadInfoField icon={Clock01Icon} label="Last Enquiry" value={formatDisplayDateTime(lead.lastEnquiryAt)} />
           <LeadInfoField icon={Clock01Icon} label="Created On" value={formatDisplayDateTime(lead.createdAt)} />
           <LeadInfoField icon={UserIcon} label="Assigned Counsellor" value={lead.owner?.name} empty="Unassigned" />
           <LeadInfoField
@@ -106,6 +115,8 @@ export default function LeadOverviewPanels({
           <p className="m-0 text-[0.88rem] text-[#9aa6b2] dark:text-text-faint">No notes yet.</p>
         )}
       </LeadSectionCard>
+      <LeadMarketingPanel lead={lead} canChangeSource={canChangeSource} canChangeCampaign={canChangeCampaign} />
+      <LeadMetaCampaignHistory leadId={lead.id} />
     </div>
   )
 }

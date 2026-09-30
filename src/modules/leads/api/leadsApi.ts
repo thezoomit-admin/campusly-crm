@@ -102,7 +102,7 @@ const leadsApi = baseApi.injectEndpoints({
     }),
     createLead: builder.mutation<{ lead: LeadRecord; message: string }, Record<string, unknown>>({
       query: (body) => ({ url: '/leads', method: 'POST', body }),
-      invalidatesTags: [...LEAD_COLLECTION_TAGS, 'Dashboard', 'Pipeline'],
+      invalidatesTags: [...LEAD_COLLECTION_TAGS, 'Dashboard', 'Pipeline', { type: 'Campaigns', id: 'PERFORMANCE' }],
     }),
     updateLead: builder.mutation<{ lead: LeadRecord }, { id: string; body: Record<string, unknown> }>({
       query: ({ id, body }) => ({ url: `/leads/${id}`, method: 'PATCH', body }),
@@ -201,6 +201,34 @@ const leadsApi = baseApi.injectEndpoints({
       query: (id) => `/leads/${id}/assignments`,
       providesTags: (_r, _e, id) => [{ type: 'Leads', id }],
     }),
+    correctLeadSource: builder.mutation<
+      { message: string },
+      { id: string; body: { sourceCode: string; channelCode?: string; referralBy?: string; referralDetails?: string; reason: string } }
+    >({
+      query: ({ id, body }) => ({ url: `/leads/${id}/source-correction`, method: 'POST', body }),
+      invalidatesTags: (_r, _e, { id }) => [{ type: 'Leads', id }, 'Activities'],
+    }),
+    correctLeadCampaign: builder.mutation<{ message: string }, { id: string; body: { campaignId: string; reason: string } }>({
+      query: ({ id, body }) => ({ url: `/leads/${id}/campaign-correction`, method: 'POST', body }),
+      invalidatesTags: (_r, _e, { id }) => [{ type: 'Leads', id }, 'Activities'],
+    }),
+    listAttributionChanges: builder.query<
+      {
+        items: Array<{
+          id: string
+          kind: 'SOURCE' | 'CAMPAIGN'
+          previousValue: string | null
+          nextValue: string | null
+          reason: string
+          changedBy: { id: string; name: string } | null
+          createdAt: string
+        }>
+      },
+      string
+    >({
+      query: (id) => `/leads/${id}/attribution-changes`,
+      providesTags: (_r, _e, id) => [{ type: 'Leads', id }],
+    }),
     assignLead: builder.mutation<
       { lead: LeadRecord; message?: string },
       { id: string; body: { ownerId: string; reason?: string } }
@@ -236,4 +264,7 @@ export const {
   useListLeadAssigneesQuery,
   useListLeadAssignmentsQuery,
   useAssignLeadMutation,
+  useCorrectLeadSourceMutation,
+  useCorrectLeadCampaignMutation,
+  useListAttributionChangesQuery,
 } = leadsApi

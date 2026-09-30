@@ -105,6 +105,9 @@ export const baseApi = createApi({
     'Notifications',
     'Communications',
     'Campaigns',
+    'MetaLeads',
+    'WhatsApp',
+    'Email',
   ],
   endpoints: () => ({}),
 })

@@ -35,6 +35,8 @@ import {
   RescheduleFollowUpModal,
 } from '@/modules/follow-ups/components/FollowUpLifecycleModals'
 import LeadFollowUpHistoryPanel from '@/modules/follow-ups/components/LeadFollowUpHistoryPanel'
+import { LeadWhatsAppPanel } from '@/modules/whatsapp'
+import { LeadEmailPanel } from '@/modules/email'
 import type {
   CompleteFollowUpValues,
   FollowUpFormValues,
@@ -91,6 +93,8 @@ export default function LeadDetailsPage() {
   const canAddActivity = hasPermission(auth, 'activity:create')
   const canViewCommunications =
     hasPermission(auth, 'communication:view') || hasPermission(auth, 'lead:view')
+  const canViewWhatsApp = hasPermission(auth, 'communication:view')
+  const canViewEmail = hasPermission(auth, 'communication:view')
   const canAssign = hasPermission(auth, 'lead:assign')
   const canReassign = hasPermission(auth, 'lead:reassign')
   const canChangeOwner = Boolean(lead?.owner?.id ? canReassign : canAssign)
@@ -437,7 +441,12 @@ export default function LeadDetailsPage() {
           />
 
           <div className="flex gap-1 overflow-x-auto border-b border-[#e6eef6] dark:border-border">
-            {LEAD_TABS.filter((item) => item.key !== 'followups' || canViewFollowUp).map((item) => {
+            {LEAD_TABS.filter(
+              (item) =>
+                (item.key !== 'followups' || canViewFollowUp) &&
+                (item.key !== 'whatsapp' || canViewWhatsApp) &&
+                (item.key !== 'email' || canViewEmail),
+            ).map((item) => {
               const active = tab === item.key
               return (
                 <button
@@ -467,12 +476,25 @@ export default function LeadDetailsPage() {
 
           <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="min-w-0">
-              {tab === 'overview' ? <LeadOverviewPanels lead={lead} options={options} /> : null}
+              {tab === 'overview' ? (
+                <LeadOverviewPanels
+                  lead={lead}
+                  options={options}
+                  canChangeSource={hasPermission(auth, 'lead:change_source')}
+                  canChangeCampaign={hasPermission(auth, 'lead:change_source') || hasPermission(auth, 'campaign:manage')}
+                />
+              ) : null}
               {tab === 'academic' ? <LeadAcademicPanel lead={lead} options={options} /> : null}
               {tab === 'study' ? <LeadStudyVisaPanel lead={lead} options={options} /> : null}
               {tab === 'documents' ? <LeadDocumentsPanel /> : null}
               {tab === 'communications' && canViewCommunications ? (
                 <LeadCommunicationsPanel items={communications} loading={communicationsLoading} />
+              ) : null}
+              {tab === 'whatsapp' && canViewWhatsApp ? (
+                <LeadWhatsAppPanel leadId={lead.id} hasWhatsAppNumber={Boolean(lead.whatsapp || lead.phone)} />
+              ) : null}
+              {tab === 'email' && canViewEmail ? (
+                <LeadEmailPanel leadId={lead.id} hasEmail={Boolean(lead.email)} />
               ) : null}
               {tab === 'activities' ? (
                 <LeadActivitiesPanel activities={activities} canAdd={canAddActivity} onAdd={() => setActivityOpen(true)} />
