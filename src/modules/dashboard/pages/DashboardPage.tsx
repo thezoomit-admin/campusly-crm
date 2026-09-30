@@ -6,20 +6,12 @@ import { Spinner } from '@/components/common/Loading'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import type { AuthSession } from '../../../types'
-import type { DashIconName, DashboardQuickAction } from '../types'
-
-const QUICK_ACTIONS: DashboardQuickAction[] = [
-  { label: 'Create New Lead', hint: '', tone: 'primary', icon: 'plus', to: '/leads' },
-  { label: 'Add Application', hint: 'Create a new application', tone: 'blue', icon: 'file', to: '/applications' },
-  { label: 'Add Student', hint: 'Register a new student', tone: 'green', icon: 'graduate', to: '/students' },
-  { label: 'Add Payment', hint: 'Record a payment', tone: 'orange', icon: 'card', to: '/payments' },
-  { label: 'Schedule Follow-up', hint: 'Set a follow-up reminder', tone: 'purple', icon: 'bell', to: '/follow-ups' },
-]
+import type { DashIconName } from '../types'
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
 const card =
-  'bg-surface border border-border rounded-[20px] shadow-soft'
+  'bg-surface border border-border rounded-[20px]'
 
 const dashCard = `${card} p-4 px-[18px] pb-[18px] max-sm:p-3.5`
 
@@ -43,13 +35,6 @@ const sparkStroke: Record<string, string> = {
   purple: 'stroke-[#a78bfa]',
   orange: 'stroke-[#fb923c]',
   rose: 'stroke-[#fb7185]',
-}
-
-const actionBtnTone: Record<string, string> = {
-  blue: 'bg-[#eef5ff] hover:bg-[#dceaff] dark:bg-blue-500/10 dark:hover:bg-blue-500/20',
-  green: 'bg-[#eefaf3] hover:bg-[#d8f4e4] dark:bg-green-500/10 dark:hover:bg-green-500/20',
-  orange: 'bg-[#fff6eb] hover:bg-[#ffecd6] dark:bg-amber-500/10 dark:hover:bg-amber-500/20',
-  purple: 'bg-[#f4efff] hover:bg-[#e9e0ff] dark:bg-violet-500/10 dark:hover:bg-violet-500/20',
 }
 
 const followupBg: Record<string, string> = {
@@ -378,12 +363,12 @@ function CalendarCard({
   >
 
   return (
-    <article className={cx(dashCard, 'min-w-0')}>
+    <article className={cx(dashCard, 'flex h-full min-h-0 min-w-0 flex-col')}>
       <div className={cardHead}>
         <h3 className="m-0 text-base">Calendar</h3>
         <strong>{title}</strong>
       </div>
-      <div className="grid grid-cols-7 gap-1.5 text-center">
+      <div className="grid min-h-0 flex-1 grid-cols-7 content-start gap-1.5 text-center">
         {WEEKDAYS.map((day) => (
           <span key={day} className="text-[0.75rem] text-text-faint font-semibold">
             {day}
@@ -424,7 +409,7 @@ function CalendarCard({
           )
         })}
       </div>
-      <div className="flex flex-wrap gap-2.5 mt-3 text-text-muted text-[0.72rem]">
+      <div className="mt-auto flex flex-wrap gap-2.5 pt-3 text-text-muted text-[0.72rem]">
         {(
           [
             ['followup', 'Follow-ups'],
@@ -473,7 +458,7 @@ export default function DashboardPage() {
   }).format(now)
 
   return (
-    <section className="@container grid min-w-0 max-w-full gap-4 overflow-x-hidden text-text">
+    <section className="@container grid min-w-0 max-w-full gap-3 overflow-x-hidden text-text">
       <PageMeta
         title="Dashboard"
         description="Overview of leads, applications, follow-ups, and consultancy performance in EduConsult CRM."
@@ -482,19 +467,14 @@ export default function DashboardPage() {
         title={`${greetingForHour(now.getHours())}, ${name}`}
         subtitle="Here's what's happening with your consultancy today."
         breadcrumbs={[{ title: 'Dashboard' }]}
+        showDivider={false}
         extra={
-          <div className="flex flex-wrap gap-3 @3xl:w-auto max-[960px]:w-full">
-            <div className="m-0 flex items-center gap-2.5 rounded-2xl border border-border bg-surface px-3.5 py-2.5 shadow-soft">
-              <Icon name="calendar" />
-              <div>
-                <strong className="block text-[0.9rem]">{dateLabel}</strong>
-                <span className="block text-[0.78rem] text-text-muted">Dhaka, Bangladesh</span>
-              </div>
+          <div className="flex items-center gap-2 text-right text-text-muted">
+            <Icon name="calendar" />
+            <div className="min-w-0">
+              <strong className="block text-[0.88rem] font-semibold text-text">{dateLabel}</strong>
+              <span className="block text-[0.75rem]">Dhaka, Bangladesh</span>
             </div>
-            <blockquote className="m-0 flex max-w-[240px] items-center gap-2.5 rounded-2xl border border-border bg-surface px-3.5 py-2.5 text-[#5b8def] shadow-soft max-[960px]:max-w-none max-[960px]:flex-[1_1_180px]">
-              <Icon name="quote" />
-              <p className="m-0 text-[0.78rem] text-[#5b8def] italic">“Great things start with a single step.”</p>
-            </blockquote>
           </div>
         }
       />
@@ -548,7 +528,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-3 *:min-w-0 md:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1.2fr)_minmax(0,0.75fr)]">
+      <div className="grid min-w-0 grid-cols-1 gap-3 *:min-w-0 lg:grid-cols-2">
         <article className={cx(dashCard, 'min-w-0')}>
           <div className={cardHead}>
             <h3 className="m-0 text-base">Lead Source Overview</h3>
@@ -586,67 +566,18 @@ export default function DashboardPage() {
           </div>
           <LineChart points={leadTrend} />
         </article>
-
-        <aside className={cx(dashCard, 'grid min-w-0 content-start gap-2 md:col-span-2 lg:col-span-1')}>
-          {QUICK_ACTIONS.map((action) =>
-            action.tone === 'primary' ? (
-              <PrimaryButton
-                key={action.label}
-                className="min-w-0 overflow-hidden text-ellipsis !shadow-none transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px"
-                size="sm"
-                icon={<Icon name={action.icon} />}
-                fullWidth
-                label={action.label}
-                onClick={() => navigate(action.to)}
-              />
-            ) : (
-              <div
-                key={action.label}
-                role="button"
-                tabIndex={0}
-                className={cx(
-                  'flex min-w-0 w-full cursor-pointer items-center gap-2.5 overflow-hidden rounded-[12px] border-0 px-2.5 py-2 text-left text-text',
-                  'transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:-translate-y-0.5',
-                  actionBtnTone[action.tone] || 'bg-surface hover:bg-hover-bg',
-                )}
-                onClick={() => navigate(action.to)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    navigate(action.to)
-                  }
-                }}
-              >
-                <span
-                  className={cx(
-                    'grid size-8 shrink-0 place-items-center rounded-[9px]',
-                    toneIcon[action.tone],
-                  )}
-                >
-                  <Icon name={action.icon} />
-                </span>
-                <span className="grid min-w-0">
-                  <strong className="truncate text-[0.82rem] leading-tight">{action.label}</strong>
-                  {action.hint ? (
-                    <small className="truncate text-[0.7rem] text-text-muted">{action.hint}</small>
-                  ) : null}
-                </span>
-              </div>
-            ),
-          )}
-        </aside>
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-3 *:min-w-0 md:grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.85fr)]">
-        <article className={cx(dashCard, 'min-w-0')}>
-          <div className={cardHead}>
+      <div className="grid min-w-0 grid-cols-1 items-stretch gap-3 *:min-w-0 md:grid-cols-2 lg:h-[28rem] lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.85fr)] lg:grid-rows-1">
+        <article className={cx(dashCard, 'flex h-full min-h-0 min-w-0 flex-col overflow-hidden')}>
+          <div className={cx(cardHead, 'shrink-0')}>
             <h3 className="m-0 text-base">Recent Leads</h3>
             <PrimaryButton
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
               onClick={() => navigate('/leads')} label="View All" />
           </div>
-          <div className="overflow-x-auto">
+          <div className="min-h-0 flex-1 overflow-auto">
             <table className="w-full min-w-[620px] border-collapse">
               <thead>
                 <tr>
@@ -695,15 +626,15 @@ export default function DashboardPage() {
           </div>
         </article>
 
-        <article className={cx(dashCard, 'min-w-0')}>
-          <div className={cardHead}>
+        <article className={cx(dashCard, 'flex h-full min-h-0 min-w-0 flex-col overflow-hidden')}>
+          <div className={cx(cardHead, 'shrink-0')}>
             <h3 className="m-0 text-base">Today&apos;s Follow-ups</h3>
             <PrimaryButton
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
               onClick={() => navigate('/follow-ups')} label="View All" />
           </div>
-          <div className="mb-3 grid grid-cols-3 gap-2">
+          <div className="mb-3 grid shrink-0 grid-cols-3 gap-2">
             <div
               role="button"
               tabIndex={0}
@@ -750,7 +681,7 @@ export default function DashboardPage() {
               <strong className="mt-1 block text-[1.35rem] text-[#16a34a]">{followUpMetrics.completedToday}</strong>
             </div>
           </div>
-          <div className="mb-3 grid grid-cols-2 gap-2">
+          <div className="mb-3 grid shrink-0 grid-cols-2 gap-2">
             <div className="rounded-[14px] bg-[#f8fafc] px-3 py-2.5 dark:bg-hover-bg">
               <span className="block text-[0.72rem] text-text-muted">Completion Rate (30d)</span>
               <strong className="mt-0.5 block text-[1.1rem] text-text">{followUpMetrics.completionRate ?? 0}%</strong>
@@ -761,11 +692,11 @@ export default function DashboardPage() {
             </div>
           </div>
           {followUpMetrics.overdue > 0 ? (
-            <p className="m-0 mb-3 rounded-xl bg-[#fff5f7] px-3 py-2 text-[0.82rem] font-medium text-[#e11d48] dark:bg-rose-500/10">
+            <p className="m-0 mb-3 shrink-0 rounded-xl bg-[#fff5f7] px-3 py-2 text-[0.82rem] font-medium text-[#e11d48] dark:bg-rose-500/10">
               ⚠ Overdue Follow-ups: {followUpMetrics.overdue}
             </p>
           ) : null}
-          <ul className="list-none m-0 p-0 grid gap-2.5">
+          <ul className="m-0 grid min-h-0 flex-1 list-none gap-2.5 overflow-y-auto p-0">
             {upcomingFollowUps.length === 0 ? (
               <li className="py-8 text-center text-[0.85rem] text-text-faint">No upcoming follow-ups.</li>
             ) : null}
