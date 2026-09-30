@@ -438,8 +438,11 @@ export default function ActivityHistoryPage() {
         extra={
           <Dropdown menu={{ items: exportItems }} trigger={['click']}>
             <span>
-              <PrimaryButton variant="outline" label={<>Export
-                <HugeiconsIcon icon={ArrowDown01Icon} size={14} /></>} />
+              <PrimaryButton
+                variant="outline"
+                label="Export"
+                icon={<HugeiconsIcon icon={ArrowDown01Icon} size={14} />}
+              />
             </span>
           </Dropdown>
         }

@@ -90,7 +90,6 @@ export default function PrimaryButton({
 }: PrimaryButtonProps) {
   const antSize = isAppSize(size) ? SIZE_MAP[size] : size
   const visual = resolveVariant(variant)
-  const content = children ?? label
 
   return (
     <AntButton
@@ -102,7 +101,8 @@ export default function PrimaryButton({
       className={['rounded-lg', className].filter(Boolean).join(' ')}
       {...rest}
     >
-      {content}
+      {label}
+      {children}
     </AntButton>
   )
 }

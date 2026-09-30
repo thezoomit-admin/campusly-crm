@@ -418,10 +418,12 @@ export default function EmployeeProfilePage() {
                 <PrimaryButton variant="outline" onClick={() => navigate(`/documents?employeeId=${employee.id}`)} label="Manage documents" />
               ) : null}
               {canEdit ? (
-                <PrimaryButton onClick={() => navigate(`/employees/${employee.id}/edit`)} label={<><span className="ui-btn-icon">
-                    <HugeiconsIcon icon={PencilEdit02Icon} size={16} color="currentColor" strokeWidth={1.6} />
-                  </span>
-                  Edit profile</>} />
+                <PrimaryButton
+                  variant="primary"
+                  label="Edit profile"
+                  icon={<HugeiconsIcon icon={PencilEdit02Icon} size={16} color="currentColor" strokeWidth={1.6} />}
+                  onClick={() => navigate(`/employees/${employee.id}/edit`)}
+                />
               ) : null}
             </>
           ) : undefined

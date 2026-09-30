@@ -597,8 +597,12 @@ export default function AuditLogsPage() {
         extra={
           <Dropdown menu={{ items: exportItems }} trigger={['click']}>
             <span>
-              <PrimaryButton className="min-w-[132px]" variant="outline" label={<>Export Logs
-                <HugeiconsIcon icon={ArrowDown01Icon} size={14} /></>} />
+              <PrimaryButton
+                className="min-w-[132px]"
+                variant="outline"
+                label="Export Logs"
+                icon={<HugeiconsIcon icon={ArrowDown01Icon} size={14} />}
+              />
             </span>
           </Dropdown>
         }
