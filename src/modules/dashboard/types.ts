@@ -59,6 +59,11 @@ export type DashboardFollowUpMetrics = {
   dueToday: number
   completedToday: number
   pending: number
+  completionRate?: number
+  onTimeRate?: number
+  dueInRange?: number
+  completedInRange?: number
+  onTimeInRange?: number
 }
 
 export type DashboardOverview = {

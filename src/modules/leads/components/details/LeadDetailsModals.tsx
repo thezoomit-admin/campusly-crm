@@ -475,7 +475,6 @@ export function ChangeStatusModal({
   const [confirming, setConfirming] = useState(false)
 
   const selected = options.find((item) => item.code === statusCode)
-  const remarksRequired = Boolean(selected?.remarksRequired)
   const lostReasonRequired = Boolean(selected?.lostReasonRequired)
   const needsOverride = Boolean(selected?.requiresOverride)
   const dirty = Boolean(statusCode || remarks || lostReasonCode || overrideReason)
@@ -550,16 +549,13 @@ export function ChangeStatusModal({
           </label>
         ) : null}
         <label className="grid gap-1.5 text-sm">
-          <span>
-            Reason / Remarks
-            {remarksRequired ? ' *' : ''}
-          </span>
+          <span>Reason / Remarks</span>
           <FormTextArea
             autoSize={{ minRows: 3, maxRows: 8 }}
             maxLength={1000}
             showCount
             value={remarks}
-            placeholder={remarksRequired ? 'Remarks are required for this status' : 'Optional remarks'}
+            placeholder="Optional remarks"
             onChange={(event) => setRemarks(event.target.value)}
           />
           {errors.remarks ? <InputError>{errors.remarks}</InputError> : null}
@@ -595,6 +591,268 @@ export function ChangeStatusModal({
             }
           >
             Update Status
+          </Button>
+        </div>
+      </div>
+    </AntModal>
+  )
+}
+
+export function CloseLeadModal({
+  open,
+  saving,
+  currentStatus,
+  options,
+  lostReasons,
+  closeReasons,
+  errors,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean
+  saving: boolean
+  currentStatus: string
+  options: LeadStatusOption[]
+  lostReasons: MasterOption[]
+  closeReasons: MasterOption[]
+  errors: Record<string, string>
+  onClose: () => void
+  onSubmit: (body: { statusCode: string; reasonCode: string; remarks: string }) => Promise<void>
+}) {
+  const [statusCode, setStatusCode] = useState('')
+  const [reasonCode, setReasonCode] = useState('')
+  const [remarks, setRemarks] = useState('')
+  const [confirming, setConfirming] = useState(false)
+
+  const selected = options.find((item) => item.code === statusCode)
+  const reasonOptions =
+    selected?.reasonCategory === 'LEAD_LOST_REASON'
+      ? lostReasons
+      : selected?.reasonCategory === 'LEAD_CLOSE_REASON'
+        ? closeReasons
+        : []
+  const remarksRequired = reasonCode.toUpperCase() === 'OTHER'
+  const dirty = Boolean(statusCode || reasonCode || remarks)
+
+  useEffect(() => {
+    if (!open) {
+      setStatusCode('')
+      setReasonCode('')
+      setRemarks('')
+      setConfirming(false)
+    }
+  }, [open])
+
+  function requestClose() {
+    if (!dirty) {
+      onClose()
+      return
+    }
+    setConfirming(true)
+    Modal.confirm({
+      title: 'Discard unsaved changes?',
+      content: 'You have unsaved close details. Close without confirming?',
+      okText: 'Discard',
+      cancelText: 'Keep editing',
+      onOk: onClose,
+      afterClose: () => setConfirming(false),
+    })
+  }
+
+  const title =
+    selected?.behaviorKey === 'lost'
+      ? 'Mark Lead as Lost'
+      : selected
+        ? `Close Lead as ${selected.name}`
+        : 'Close Lead'
+
+  return (
+    <AntModal open={open} onClose={requestClose} title={title} width={520} mask={{ closable: !confirming }}>
+      <div className="grid gap-3">
+        <label className="grid gap-1.5 text-sm">
+          <span>Current Status</span>
+          <input
+            readOnly
+            value={currentStatus}
+            className="h-10 rounded-lg border border-[#dbe4ee] bg-[#f7fafc] px-3 text-sm text-[#17324f] dark:border-border dark:bg-hover-bg dark:text-text"
+          />
+        </label>
+        <label className="grid gap-1.5 text-sm">
+          <span>New Status *</span>
+          <FormSelect
+            showSearch
+            optionFilterProp="label"
+            placeholder="Lost / Closed / Duplicate / Invalid"
+            value={statusCode || undefined}
+            options={options.map((item) => ({ value: item.code, label: item.name }))}
+            onChange={(value) => {
+              setStatusCode(asSelectString(value))
+              setReasonCode('')
+            }}
+          />
+          {errors.statusCode ? <InputError>{errors.statusCode}</InputError> : null}
+        </label>
+        {selected ? (
+          <label className="grid gap-1.5 text-sm">
+            <span>{selected.behaviorKey === 'lost' ? 'Lost Reason *' : 'Reason *'}</span>
+            <FormSelect
+              showSearch
+              optionFilterProp="label"
+              placeholder="Select a reason"
+              value={reasonCode || undefined}
+              options={reasonOptions}
+              onChange={(value) => setReasonCode(asSelectString(value))}
+            />
+            {errors.reasonCode ? <InputError>{errors.reasonCode}</InputError> : null}
+          </label>
+        ) : null}
+        <label className="grid gap-1.5 text-sm">
+          <span>
+            Remarks
+            {remarksRequired ? ' *' : ''}
+          </span>
+          <FormTextArea
+            autoSize={{ minRows: 3, maxRows: 8 }}
+            maxLength={1000}
+            showCount
+            value={remarks}
+            placeholder={remarksRequired ? 'Required when reason is Other' : 'Optional remarks'}
+            onChange={(event) => setRemarks(event.target.value)}
+          />
+          {errors.remarks ? <InputError>{errors.remarks}</InputError> : null}
+        </label>
+        <div className="mt-2 flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={requestClose}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            loading={saving}
+            onClick={() => void onSubmit({ statusCode, reasonCode, remarks })}
+          >
+            Confirm
+          </Button>
+        </div>
+      </div>
+    </AntModal>
+  )
+}
+
+export function ReopenLeadModal({
+  open,
+  saving,
+  leadName,
+  currentOwnerId,
+  assignedTeamId,
+  errors,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean
+  saving: boolean
+  leadName?: string | null
+  currentOwnerId?: string | null
+  assignedTeamId?: string | null
+  errors: Record<string, string>
+  onClose: () => void
+  onSubmit: (body: { reopenReason: string; followUpDate: string; ownerId: string }) => Promise<void>
+}) {
+  const [reopenReason, setReopenReason] = useState('')
+  const [followUpDate, setFollowUpDate] = useState('')
+  const [ownerId, setOwnerId] = useState('')
+  const [confirming, setConfirming] = useState(false)
+  const { data, isFetching } = useListLeadAssigneesQuery(
+    { teamId: assignedTeamId || undefined },
+    { skip: !open },
+  )
+  const assigneeOptions = (data?.items || []).map((user) => ({
+    value: user.id,
+    label: [user.name, user.role?.name, user.team?.name].filter(Boolean).join(' · '),
+  }))
+
+  const dirty = Boolean(reopenReason || followUpDate || (ownerId && ownerId !== (currentOwnerId || '')))
+
+  useEffect(() => {
+    if (open) {
+      setReopenReason('')
+      setFollowUpDate('')
+      setOwnerId(currentOwnerId || '')
+      setConfirming(false)
+    }
+  }, [open, currentOwnerId])
+
+  function requestClose() {
+    if (!dirty) {
+      onClose()
+      return
+    }
+    setConfirming(true)
+    Modal.confirm({
+      title: 'Discard unsaved changes?',
+      content: 'You have unsaved reopen details. Close without reopening?',
+      okText: 'Discard',
+      cancelText: 'Keep editing',
+      onOk: onClose,
+      afterClose: () => setConfirming(false),
+    })
+  }
+
+  return (
+    <AntModal open={open} onClose={requestClose} title="Reopen Lead" width={520} mask={{ closable: !confirming }}>
+      <div className="grid gap-3">
+        {leadName ? (
+          <p className="m-0 text-sm text-text-muted">
+            Reopen <strong>{leadName}</strong> into the active lifecycle with a new follow-up and assignment.
+          </p>
+        ) : null}
+        <label className="grid gap-1.5 text-sm">
+          <span>Reopen Reason *</span>
+          <FormTextArea
+            autoSize={{ minRows: 3, maxRows: 8 }}
+            maxLength={1000}
+            showCount
+            value={reopenReason}
+            placeholder="Why is this lead being reopened?"
+            onChange={(event) => setReopenReason(event.target.value)}
+          />
+          {errors.reopenReason ? <InputError>{errors.reopenReason}</InputError> : null}
+        </label>
+        <label className="grid gap-1.5 text-sm">
+          <span>New Follow-up Date *</span>
+          <DatePicker
+            showTime
+            className="w-full"
+            format="DD MMM YYYY hh:mm A"
+            value={followUpDate ? dayjs(followUpDate) : null}
+            onChange={(value) => setFollowUpDate(value ? value.toISOString() : '')}
+          />
+          {errors.followUpDate ? <InputError>{errors.followUpDate}</InputError> : null}
+        </label>
+        <label className="grid gap-1.5 text-sm">
+          <span>Assigned Employee *</span>
+          <FormSelect
+            showSearch
+            optionFilterProp="label"
+            placeholder={isFetching ? 'Loading users...' : 'Select an employee'}
+            value={ownerId || undefined}
+            options={assigneeOptions}
+            onChange={(value) => setOwnerId(asSelectString(value))}
+          />
+          {errors.ownerId ? <InputError>{errors.ownerId}</InputError> : null}
+          {!isFetching && assigneeOptions.length === 0 ? (
+            <span className="text-xs text-text-muted">No eligible employees are available for assignment.</span>
+          ) : null}
+        </label>
+        <div className="mt-2 flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={requestClose}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            loading={saving}
+            onClick={() => void onSubmit({ reopenReason, followUpDate, ownerId })}
+          >
+            Reopen
           </Button>
         </div>
       </div>

@@ -15,6 +15,7 @@ export type NavIconName =
   | 'database'
   | 'settings'
   | 'activity'
+  | 'message'
 
 export type NavItem = {
   to: string
@@ -48,6 +49,8 @@ export const APP_NAV_GROUPS: NavGroup[] = [
       { to: '/documents', label: 'Documents', icon: 'folder', permission: 'document:view' },
       { to: '/payments', label: 'Payments', icon: 'card', permission: 'payment:view' },
       { to: '/follow-ups', label: 'Follow-ups', icon: 'bell', permission: 'follow_up:view' },
+      { to: '/communications', label: 'Communication Hub', icon: 'message', permission: 'communication:view' },
+      { to: '/campaigns', label: 'Campaigns', icon: 'chart', permission: 'campaign:view' },
       { to: '/activity-history', label: 'Activity History', icon: 'activity', permission: 'activity:view' },
     ],
   },
@@ -102,6 +105,8 @@ const PAGE_KEYWORDS: Record<string, string[]> = {
   '/documents': ['files', 'papers'],
   '/payments': ['invoice', 'fee', 'billing'],
   '/follow-ups': ['reminder', 'task'],
+  '/communications': ['hub', 'whatsapp', 'email', 'meta', 'website', 'enquiry', 'inbox'],
+  '/campaigns': ['source', 'utm', 'roi', 'ads', 'marketing'],
   '/activity-history': ['timeline', 'calls', 'meetings', 'log'],
   '/reports': ['analytics', 'stats'],
   '/employees': ['staff', 'hr', 'people', 'directory'],

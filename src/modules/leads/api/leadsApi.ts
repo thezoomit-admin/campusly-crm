@@ -135,6 +135,28 @@ const leadsApi = baseApi.injectEndpoints({
         'Pipeline',
       ],
     }),
+    closeLead: builder.mutation<{ lead: LeadRecord }, { id: string; body: Record<string, unknown> }>({
+      query: ({ id, body }) => ({ url: `/leads/${id}/close`, method: 'PATCH', body }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Leads', id },
+        ...LEAD_COLLECTION_TAGS,
+        'Activities',
+        'Dashboard',
+        'Pipeline',
+        { type: 'FollowUps', id: 'LIST' },
+      ],
+    }),
+    reopenLead: builder.mutation<{ lead: LeadRecord }, { id: string; body: Record<string, unknown> }>({
+      query: ({ id, body }) => ({ url: `/leads/${id}/reopen`, method: 'PATCH', body }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Leads', id },
+        ...LEAD_COLLECTION_TAGS,
+        'Activities',
+        'Dashboard',
+        'Pipeline',
+        { type: 'FollowUps', id: 'LIST' },
+      ],
+    }),
     listLeadStatusHistory: builder.query<{ items: LeadStatusHistoryItem[] }, string>({
       query: (id) => `/leads/${id}/status-history`,
       providesTags: (_r, _e, id) => [{ type: 'Leads', id }],
@@ -206,6 +228,8 @@ export const {
   useUpdateLeadPriorityMutation,
   useCreateLeadFollowUpMutation,
   useUpdateLeadStatusMutation,
+  useCloseLeadMutation,
+  useReopenLeadMutation,
   useListLeadStatusHistoryQuery,
   useListLeadPoolQuery,
   useListMyLeadsQuery,

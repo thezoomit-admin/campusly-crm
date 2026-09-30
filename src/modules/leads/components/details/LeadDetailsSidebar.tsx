@@ -29,6 +29,8 @@ export default function LeadDetailsSidebar({
   canFollowUp,
   canEditFollowUp,
   canChangeStatus,
+  canClose,
+  canReopen,
   canChangeOwner,
   onViewCompletion,
   onViewActivities,
@@ -38,6 +40,8 @@ export default function LeadDetailsSidebar({
   onSendEmail,
   onChangeOwner,
   onChangeStatus,
+  onCloseLead,
+  onReopenLead,
   onCompleteNextFollowUp,
 }: {
   lead: LeadRecord
@@ -47,6 +51,8 @@ export default function LeadDetailsSidebar({
   canFollowUp: boolean
   canEditFollowUp?: boolean
   canChangeStatus: boolean
+  canClose?: boolean
+  canReopen?: boolean
   canChangeOwner: boolean
   onViewCompletion: () => void
   onViewActivities: () => void
@@ -56,6 +62,8 @@ export default function LeadDetailsSidebar({
   onSendEmail: () => void
   onChangeOwner: () => void
   onChangeStatus: () => void
+  onCloseLead?: () => void
+  onReopenLead?: () => void
   onCompleteNextFollowUp?: () => void
 }) {
   const rows = completionRows(lead)
@@ -156,15 +164,35 @@ export default function LeadDetailsSidebar({
                 ) : null}
               </div>
             </div>
-            {canChangeStatus ? (
-              <button
-                type="button"
-                className="cursor-pointer border-0 bg-transparent p-0 text-[0.75rem] font-medium text-primary hover:underline"
-                onClick={onChangeStatus}
-              >
-                Change
-              </button>
-            ) : null}
+            <div className="flex flex-col items-end gap-1">
+              {canReopen ? (
+                <button
+                  type="button"
+                  className="cursor-pointer border-0 bg-transparent p-0 text-[0.75rem] font-medium text-primary hover:underline"
+                  onClick={onReopenLead}
+                >
+                  Reopen
+                </button>
+              ) : null}
+              {canChangeStatus ? (
+                <button
+                  type="button"
+                  className="cursor-pointer border-0 bg-transparent p-0 text-[0.75rem] font-medium text-primary hover:underline"
+                  onClick={onChangeStatus}
+                >
+                  Change
+                </button>
+              ) : null}
+              {canClose ? (
+                <button
+                  type="button"
+                  className="cursor-pointer border-0 bg-transparent p-0 text-[0.75rem] font-medium text-primary hover:underline"
+                  onClick={onCloseLead}
+                >
+                  Close
+                </button>
+              ) : null}
+            </div>
           </div>
         </dl>
       </section>
@@ -185,6 +213,7 @@ export default function LeadDetailsSidebar({
                   {item.updatedBy?.name ? ` · ${item.updatedBy.name}` : ''}
                 </p>
                 {item.lostReason ? <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">Lost reason: {item.lostReason}</p> : null}
+                {item.closeReason ? <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">Close reason: {item.closeReason}</p> : null}
                 {item.remarks ? <p className="m-0 mt-0.5 text-[0.78rem] text-[#5b6b7c]">{item.remarks}</p> : null}
               </li>
             ))}
@@ -261,6 +290,8 @@ export default function LeadDetailsSidebar({
               onClick={onChangeOwner}
             />
           ) : null}
+          {canClose ? <QuickAction icon={CheckmarkCircle02Icon} label="Close Lead" onClick={onCloseLead || (() => undefined)} /> : null}
+          {canReopen ? <QuickAction icon={CheckmarkCircle02Icon} label="Reopen Lead" onClick={onReopenLead || (() => undefined)} /> : null}
         </div>
       </section>
     </aside>

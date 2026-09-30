@@ -10,6 +10,8 @@ import { DashboardPage } from '../modules/dashboard'
 import { DocumentsPage } from '../modules/documents'
 import { EmployeesPage, EmployeeCreatePage, EmployeeProfilePage } from '../modules/employees/index'
 import { FollowUpsPage } from '../modules/follow-ups'
+import { CommunicationHubPage } from '../modules/communications'
+import { CampaignsPage } from '../modules/campaigns'
 import { LeadCreatePage, LeadDetailsPage, LeadPoolPage, LeadsPage, MyLeadsPage } from '../modules/leads'
 import { MasterDataPage, MasterDataItemsPage } from '../modules/master-data'
 import { PaymentsPage } from '../modules/payments'
@@ -81,6 +83,20 @@ const routes = [
           {
             element: <PermissionRoute permission="follow_up:view" />,
             children: [{ path: '/follow-ups', element: <FollowUpsPage /> }],
+          },
+          {
+            element: (
+              <PermissionRoute
+                permission="communication:view"
+                deniedTitle="Communication Hub"
+                deniedMessage="You do not have permission to access this communication."
+              />
+            ),
+            children: [{ path: '/communications', element: <CommunicationHubPage /> }],
+          },
+          {
+            element: <PermissionRoute permission="campaign:view" />,
+            children: [{ path: '/campaigns', element: <CampaignsPage /> }],
           },
           {
             element: <PermissionRoute permission="activity:view" />,

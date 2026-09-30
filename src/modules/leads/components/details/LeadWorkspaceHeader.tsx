@@ -21,17 +21,25 @@ export default function LeadWorkspaceHeader({
   canEdit,
   canAddActivity,
   canChangeStatus,
+  canClose,
+  canReopen,
   onEdit,
   onAddActivity,
   onChangeStatus,
+  onCloseLead,
+  onReopenLead,
 }: {
   lead: LeadRecord
   canEdit: boolean
   canAddActivity: boolean
   canChangeStatus: boolean
+  canClose?: boolean
+  canReopen?: boolean
   onEdit: () => void
   onAddActivity: () => void
   onChangeStatus: () => void
+  onCloseLead?: () => void
+  onReopenLead?: () => void
 }) {
   return (
     <section className="rounded-2xl border border-[#e7eef5] bg-surface px-4 py-4 shadow-[0_10px_28px_rgba(22,50,79,0.035)] md:px-5 dark:border-border">
@@ -106,18 +114,35 @@ export default function LeadWorkspaceHeader({
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2 xl:flex-col xl:items-end">
+          {canReopen ? (
+            <Button type="button" size="sm" onClick={onReopenLead}>
+              Reopen Lead
+            </Button>
+          ) : null}
           {canChangeStatus ? (
             <Button
               type="button"
               size="sm"
+              variant={canReopen ? 'secondary' : 'primary'}
               icon={<HugeiconsIcon icon={CheckmarkCircle02Icon} size={15} />}
               onClick={onChangeStatus}
             >
               Change Status
             </Button>
           ) : null}
+          {canClose ? (
+            <Button type="button" size="sm" variant="secondary" onClick={onCloseLead}>
+              Close Lead
+            </Button>
+          ) : null}
           {canEdit ? (
-            <Button type="button" size="sm" variant={canChangeStatus ? 'secondary' : 'primary'} icon={<HugeiconsIcon icon={PencilEdit02Icon} size={15} />} onClick={onEdit}>
+            <Button
+              type="button"
+              size="sm"
+              variant={canChangeStatus || canReopen || canClose ? 'secondary' : 'primary'}
+              icon={<HugeiconsIcon icon={PencilEdit02Icon} size={15} />}
+              onClick={onEdit}
+            >
               Edit
             </Button>
           ) : null}
