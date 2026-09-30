@@ -32,7 +32,7 @@ export default function ProfilePage() {
         subtitle="Your account details for this CRM session."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Profile' }]}
         extra={
-          <PrimaryButton variant="secondary" onClick={() => navigate('/account')}>
+          <PrimaryButton variant="outline" onClick={() => navigate('/account')}>
             Change password
           </PrimaryButton>
         }

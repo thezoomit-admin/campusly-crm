@@ -727,7 +727,7 @@ function UserViewLayout({
                           </div>
                         </div>
                         {session.active ? (
-                          <PrimaryButton size="sm" variant="secondary" onClick={() => void onRevokeSession(session.id)}>
+                          <PrimaryButton size="sm" variant="outline" onClick={() => void onRevokeSession(session.id)}>
                             Logout Session
                           </PrimaryButton>
                         ) : (
@@ -736,10 +736,10 @@ function UserViewLayout({
                       </div>
                     ))}
                     <div className={`${formActions}`}>
-                      <PrimaryButton size="sm" variant="secondary" onClick={() => void onForceLogout()}>
+                      <PrimaryButton size="sm" variant="outline" onClick={() => void onForceLogout()}>
                         Force Logout
                       </PrimaryButton>
-                      <PrimaryButton size="sm" variant="ghost" onClick={() => void onPasswordReset()}>
+                      <PrimaryButton size="sm" variant="outline" onClick={() => void onPasswordReset()}>
                         Send password reset
                       </PrimaryButton>
                     </div>
@@ -787,7 +787,7 @@ function UserViewLayout({
           </div>
 
           <div className="flex shrink-0 justify-end px-[18px] pt-3 pb-4">
-            <PrimaryButton type="button" variant="secondary" onClick={onClose}>
+            <PrimaryButton type="button" variant="outline" onClick={onClose}>
               Close
             </PrimaryButton>
           </div>
@@ -1577,7 +1577,7 @@ export default function UsersPage() {
                 <PrimaryButton type="submit" loading={formSaving}>
                   {editingId ? 'Save User' : 'Create User'}
                 </PrimaryButton>
-                <PrimaryButton type="button" variant="secondary" onClick={closeForm} disabled={formSaving}>
+                <PrimaryButton type="button" variant="outline" onClick={closeForm} disabled={formSaving}>
                   Cancel
                 </PrimaryButton>
               </div>
@@ -1639,7 +1639,7 @@ export default function UsersPage() {
                         </PrimaryButton>
                         <PrimaryButton
                           type="button"
-                          variant="secondary"
+                          variant="outline"
                           disabled={statusSaving}
                           onClick={() => setStatusPrompt(null)}
                         >

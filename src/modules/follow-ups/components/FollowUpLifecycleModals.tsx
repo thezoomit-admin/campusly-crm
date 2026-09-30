@@ -149,7 +149,7 @@ export function CompleteFollowUpModal({
           </>
         ) : null}
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="secondary" onClick={onClose}>
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
             Cancel
           </PrimaryButton>
           <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()}>
@@ -212,7 +212,7 @@ export function RescheduleFollowUpModal({
           />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="secondary" onClick={onClose}>
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
             Cancel
           </PrimaryButton>
           <PrimaryButton
@@ -267,7 +267,7 @@ export function CancelFollowUpModal({
           />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="secondary" onClick={onClose}>
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
             Keep Follow-up
           </PrimaryButton>
           <PrimaryButton type="button" loading={saving} onClick={() => void onSubmit(reason.trim())}>

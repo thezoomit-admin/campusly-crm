@@ -173,13 +173,13 @@ export default function LeadCreatePage() {
         />
         <div className={formActions}>
           <Link to={cancelTo}>
-            <PrimaryButton type="button" variant="secondary">
+            <PrimaryButton type="button" variant="outline">
               Cancel
             </PrimaryButton>
           </Link>
           <PrimaryButton
             type="button"
-            variant="secondary"
+            variant="outline"
             disabled={!canSave || saving}
             onClick={() => {
               pendingFollowUp.current = true

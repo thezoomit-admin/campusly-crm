@@ -68,7 +68,7 @@ export function FollowUpModal({
           <FormTextArea rows={3} value={notes} placeholder="Add context for this follow-up" onChange={(event) => setNotes(event.target.value)} />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="secondary" onClick={onClose}>
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
             Cancel
           </PrimaryButton>
           <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()}>
@@ -249,7 +249,7 @@ export function AddActivityModal({
           </div>
         ) : null}
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="secondary" onClick={onClose}>
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
             Cancel
           </PrimaryButton>
           <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()}>
@@ -318,7 +318,7 @@ export function QualifyLeadModal({
         ) : null}
       </div>
       <div className="mt-4 flex justify-end gap-2">
-        <PrimaryButton type="button" variant="secondary" onClick={onClose}>
+        <PrimaryButton type="button" variant="outline" onClick={onClose}>
           Cancel
         </PrimaryButton>
         <PrimaryButton type="button" loading={saving} onClick={() => void onSubmit()}>
@@ -405,7 +405,7 @@ export function AssignLeadModal({
           />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="secondary" onClick={onClose}>
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
             Cancel
           </PrimaryButton>
           <PrimaryButton type="button" loading={saving} disabled={!ownerId} onClick={() => void handleSubmit()}>
@@ -574,7 +574,7 @@ export function ChangeStatusModal({
           </label>
         ) : null}
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="secondary" onClick={requestClose}>
+          <PrimaryButton type="button" variant="outline" onClick={requestClose}>
             Cancel
           </PrimaryButton>
           <PrimaryButton
@@ -722,7 +722,7 @@ export function CloseLeadModal({
           {errors.remarks ? <InputError>{errors.remarks}</InputError> : null}
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="secondary" onClick={requestClose}>
+          <PrimaryButton type="button" variant="outline" onClick={requestClose}>
             Cancel
           </PrimaryButton>
           <PrimaryButton
@@ -844,7 +844,7 @@ export function ReopenLeadModal({
           ) : null}
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="secondary" onClick={requestClose}>
+          <PrimaryButton type="button" variant="outline" onClick={requestClose}>
             Cancel
           </PrimaryButton>
           <PrimaryButton

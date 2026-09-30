@@ -40,10 +40,10 @@ export default function DuplicateLeadModal({
           </div>
         </dl>
         <div className="mt-5 flex flex-wrap justify-end gap-2">
-          <PrimaryButton type="button" variant="secondary" onClick={onClose}>
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
             Cancel
           </PrimaryButton>
-          <PrimaryButton type="button" variant="secondary" onClick={onOpenExisting}>
+          <PrimaryButton type="button" variant="outline" onClick={onOpenExisting}>
             Open Existing Lead
           </PrimaryButton>
           {canCreateAnyway ? (

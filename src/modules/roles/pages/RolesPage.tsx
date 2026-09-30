@@ -435,7 +435,7 @@ export default function RolesPage() {
                     </label>
                   </fieldset>
                   <div className={`${formActions}`}>
-                    <PrimaryButton type="button" variant="secondary" onClick={closeForm}>
+                    <PrimaryButton type="button" variant="outline" onClick={closeForm}>
                       {formLocked ? 'Close' : 'Cancel'}
                     </PrimaryButton>
                     {!formLocked && (selected ? canEdit : canCreate) ? <PrimaryButton type="submit">Save</PrimaryButton> : null}
@@ -494,7 +494,7 @@ export default function RolesPage() {
                     </div>
                   ))}
                   <div className={`${formActions}`}>
-                    <PrimaryButton type="button" variant="secondary" onClick={closePermissions}>
+                    <PrimaryButton type="button" variant="outline" onClick={closePermissions}>
                       Cancel
                     </PrimaryButton>
                     {canConfigure ? <PrimaryButton onClick={() => void savePermissions()}>Save permissions</PrimaryButton> : null}

@@ -438,7 +438,7 @@ export default function ActivityHistoryPage() {
         extra={
           <Dropdown menu={{ items: exportItems }} trigger={['click']}>
             <span>
-              <PrimaryButton variant="secondary">
+              <PrimaryButton variant="outline">
                 Export
                 <HugeiconsIcon icon={ArrowDown01Icon} size={14} />
               </PrimaryButton>
@@ -921,7 +921,7 @@ export default function ActivityHistoryPage() {
                 </label>
               ) : null}
               <div className="flex justify-end gap-2 mt-3">
-                <PrimaryButton variant="secondary" onClick={() => setLogOpen(false)}>
+                <PrimaryButton variant="outline" onClick={() => setLogOpen(false)}>
                   Cancel
                 </PrimaryButton>
                 <PrimaryButton loading={saving} onClick={() => void submitLog()}>

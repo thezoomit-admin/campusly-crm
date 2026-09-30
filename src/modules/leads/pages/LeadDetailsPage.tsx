@@ -386,7 +386,7 @@ export default function LeadDetailsPage() {
           ]}
         />
         <p className="text-danger">Lead not found or you do not have access.</p>
-        <PrimaryButton type="button" variant="secondary" onClick={() => navigate('/leads')}>
+        <PrimaryButton type="button" variant="outline" onClick={() => navigate('/leads')}>
           Back to leads
         </PrimaryButton>
       </div>

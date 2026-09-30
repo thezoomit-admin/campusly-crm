@@ -1,7 +1,7 @@
 import { DatePicker, Form } from 'antd'
-import type { DatePickerProps } from 'antd/es/date-picker'
+import type { DatePickerProps, RangePickerProps } from 'antd/es/date-picker'
 import type { Rule } from 'antd/es/form'
-import type { RangePickerProps } from 'antd/es/date-picker'
+import type { Dayjs } from 'dayjs'
 import type { ComponentType, Dispatch, SetStateAction } from 'react'
 import InputError from './InputError'
 
@@ -13,7 +13,7 @@ type FormItemExtras = {
   setFieldError?: Dispatch<SetStateAction<Record<string, string>>>
 }
 
-type FormDatePickerProps = Omit<DatePickerProps, 'name'> & FormItemExtras
+type FormDatePickerProps = Omit<DatePickerProps<Dayjs, false>, 'name'> & FormItemExtras
 
 function SingleDatePicker({
   name,

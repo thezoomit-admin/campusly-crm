@@ -472,7 +472,7 @@ export default function EmployeesPage() {
           }))}
           onChange={(value) => setFilters((current) => ({ ...current, reportingManagerId: asSelectString(value) }))}
         />
-        <PrimaryButton variant="secondary" disabled={!hasActiveFilters} onClick={clearFilters}>
+        <PrimaryButton variant="outline" disabled={!hasActiveFilters} onClick={clearFilters}>
           Clear filters
         </PrimaryButton>
       </section>
@@ -501,11 +501,11 @@ export default function EmployeesPage() {
                     : 'Create an employee record to start managing staff in the CRM.'}
               </p>
               {error ? (
-                <PrimaryButton variant="secondary" onClick={() => void loadList()}>
+                <PrimaryButton variant="outline" onClick={() => void loadList()}>
                   Retry
                 </PrimaryButton>
               ) : hasActiveFilters ? (
-                <PrimaryButton variant="secondary" onClick={clearFilters}>
+                <PrimaryButton variant="outline" onClick={clearFilters}>
                   Clear filters
                 </PrimaryButton>
               ) : canCreate ? (
@@ -702,7 +702,7 @@ export default function EmployeesPage() {
                   <PrimaryButton loading={statusSaving} disabled={!statusPrompt.nextStatusId} onClick={() => void changeStatus()}>
                     Change Status
                   </PrimaryButton>
-                  <PrimaryButton type="button" variant="secondary" disabled={statusSaving} onClick={() => setStatusPrompt(null)}>
+                  <PrimaryButton type="button" variant="outline" disabled={statusSaving} onClick={() => setStatusPrompt(null)}>
                     Cancel
                   </PrimaryButton>
                 </div>

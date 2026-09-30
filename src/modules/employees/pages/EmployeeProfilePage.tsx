@@ -380,7 +380,7 @@ export default function EmployeeProfilePage() {
             { title: 'Profile' },
           ]}
           extra={
-            <PrimaryButton variant="secondary" onClick={() => navigate('/employees')}>
+            <PrimaryButton variant="outline" onClick={() => navigate('/employees')}>
               Back to Employees
             </PrimaryButton>
           }
@@ -388,7 +388,7 @@ export default function EmployeeProfilePage() {
         <div className={`${adminEmpty}`}>
           <strong>Employee profile unavailable</strong>
           <p>{error || 'This employee could not be found.'}</p>
-          <PrimaryButton variant="secondary" onClick={() => navigate('/employees')}>
+          <PrimaryButton variant="outline" onClick={() => navigate('/employees')}>
             Back to Employees
           </PrimaryButton>
         </div>
@@ -417,11 +417,11 @@ export default function EmployeeProfilePage() {
         extra={
           employee ? (
             <>
-              <PrimaryButton variant="secondary" onClick={() => navigate('/employees')}>
+              <PrimaryButton variant="outline" onClick={() => navigate('/employees')}>
                 Back to list
               </PrimaryButton>
               {canDocuments ? (
-                <PrimaryButton variant="secondary" onClick={() => navigate(`/documents?employeeId=${employee.id}`)}>
+                <PrimaryButton variant="outline" onClick={() => navigate(`/documents?employeeId=${employee.id}`)}>
                   Manage documents
                 </PrimaryButton>
               ) : null}

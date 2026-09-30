@@ -37,7 +37,7 @@ export default function LeadSectionCard({
           extra
         ) : canEdit && editing ? (
           <div className="flex items-center gap-2">
-            <PrimaryButton type="button" variant="secondary" size="sm" onClick={onCancel} disabled={saving}>
+            <PrimaryButton type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving}>
               Cancel
             </PrimaryButton>
             <PrimaryButton type="button" size="sm" loading={saving} onClick={onSave}>

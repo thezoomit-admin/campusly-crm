@@ -597,7 +597,7 @@ export default function AuditLogsPage() {
         extra={
           <Dropdown menu={{ items: exportItems }} trigger={['click']}>
             <span>
-              <PrimaryButton className="min-w-[132px]" variant="secondary">
+              <PrimaryButton className="min-w-[132px]" variant="outline">
                 Export Logs
                 <HugeiconsIcon icon={ArrowDown01Icon} size={14} />
               </PrimaryButton>
@@ -705,7 +705,7 @@ export default function AuditLogsPage() {
                     ? message
                     : 'Try a different search, module, user, or date range, or clear the current filters.'}
                 </p>
-                <PrimaryButton variant="secondary" onClick={clearFilters}>
+                <PrimaryButton variant="outline" onClick={clearFilters}>
                   Clear filters
                 </PrimaryButton>
               </div>

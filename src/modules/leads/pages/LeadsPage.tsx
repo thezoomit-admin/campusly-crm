@@ -61,7 +61,7 @@ export default function LeadsPage() {
           <>
             {canCreate ? (
               <PrimaryButton
-                variant="secondary"
+                variant="outline"
                 icon={<HugeiconsIcon icon={Upload04Icon} size={16} />}
                 onClick={() => toast.info('CSV import will be available in a later update.')}
               >

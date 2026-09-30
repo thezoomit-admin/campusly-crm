@@ -157,7 +157,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
               ? [{ value: '', label: field.allLabel ?? 'All' }]
               : []),
             ...field.options.map((option) => ({
-              value: option.value,
+              value: option.value as string | number,
               label: option.label,
             })),
           ]}
@@ -179,6 +179,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
 
     if (field.type === 'numberRange') {
       const rangeValue = (fieldValue as [number | null, number | null] | undefined) ?? [null, null]
+      const toNumber = (value: string | number | null) => (typeof value === 'number' ? value : null)
       return (
         <div className="grid grid-cols-2 gap-3">
           <FormInputNumber
@@ -187,7 +188,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
             max={field.max}
             placeholder={field.minPlaceholder ?? 'Min'}
             className="w-full"
-            onChange={(nextValue) => updateDraftValue(field.key, [nextValue, rangeValue[1]])}
+            onChange={(nextValue) => updateDraftValue(field.key, [toNumber(nextValue), rangeValue[1]])}
           />
           <FormInputNumber
             value={rangeValue[1]}
@@ -195,7 +196,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
             max={field.max}
             placeholder={field.maxPlaceholder ?? 'Max'}
             className="w-full"
-            onChange={(nextValue) => updateDraftValue(field.key, [rangeValue[0], nextValue])}
+            onChange={(nextValue) => updateDraftValue(field.key, [rangeValue[0], toNumber(nextValue)])}
           />
         </div>
       )
@@ -218,7 +219,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
   return (
     <>
       <PrimaryButton
-        variant="secondary"
+        variant="outline"
         icon={<HugeIcon icon={FilterIcon} size={16} />}
         onClick={openDrawer}
         className={`relative ${buttonClassName}`.trim()}

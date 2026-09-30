@@ -85,7 +85,7 @@ export default function LeadPoolFilters({
         <PrimaryButton type="button" onClick={onSearch}>
           Search
         </PrimaryButton>
-        <PrimaryButton type="button" variant="secondary" onClick={onReset}>
+        <PrimaryButton type="button" variant="outline" onClick={onReset}>
           Reset
         </PrimaryButton>
       </div>

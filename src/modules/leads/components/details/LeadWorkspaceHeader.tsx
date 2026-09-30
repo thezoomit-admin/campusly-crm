@@ -123,7 +123,7 @@ export default function LeadWorkspaceHeader({
             <PrimaryButton
               type="button"
               size="sm"
-              variant={canReopen ? 'secondary' : 'primary'}
+              variant={canReopen ? 'outline' : 'primary'}
               icon={<HugeiconsIcon icon={CheckmarkCircle02Icon} size={15} />}
               onClick={onChangeStatus}
             >
@@ -131,7 +131,7 @@ export default function LeadWorkspaceHeader({
             </PrimaryButton>
           ) : null}
           {canClose ? (
-            <PrimaryButton type="button" size="sm" variant="secondary" onClick={onCloseLead}>
+            <PrimaryButton type="button" size="sm" variant="outline" onClick={onCloseLead}>
               Close Lead
             </PrimaryButton>
           ) : null}
@@ -139,7 +139,7 @@ export default function LeadWorkspaceHeader({
             <PrimaryButton
               type="button"
               size="sm"
-              variant={canChangeStatus || canReopen || canClose ? 'secondary' : 'primary'}
+              variant={canChangeStatus || canReopen || canClose ? 'outline' : 'primary'}
               icon={<HugeiconsIcon icon={PencilEdit02Icon} size={15} />}
               onClick={onEdit}
             >
@@ -149,7 +149,7 @@ export default function LeadWorkspaceHeader({
           {canAddActivity ? (
             <PrimaryButton
               type="button"
-              variant="secondary"
+              variant="outline"
               size="sm"
               icon={<HugeiconsIcon icon={Add01Icon} size={15} />}
               onClick={onAddActivity}

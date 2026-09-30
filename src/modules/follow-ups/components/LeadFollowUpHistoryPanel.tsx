@@ -86,10 +86,10 @@ export default function LeadFollowUpHistoryPanel({
                     <PrimaryButton type="button" size="sm" onClick={() => onComplete(item)}>
                       Complete
                     </PrimaryButton>
-                    <PrimaryButton type="button" size="sm" variant="secondary" onClick={() => onReschedule(item)}>
+                    <PrimaryButton type="button" size="sm" variant="outline" onClick={() => onReschedule(item)}>
                       Reschedule
                     </PrimaryButton>
-                    <PrimaryButton type="button" size="sm" variant="secondary" onClick={() => onCancel(item)}>
+                    <PrimaryButton type="button" size="sm" variant="outline" onClick={() => onCancel(item)}>
                       Cancel
                     </PrimaryButton>
                   </div>

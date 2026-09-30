@@ -865,11 +865,11 @@ export default function EmployeeCreatePage() {
         extra={
           <>
             {isEdit && id ? (
-              <PrimaryButton variant="secondary" onClick={() => navigate(`/employees/${id}`)}>
+              <PrimaryButton variant="outline" onClick={() => navigate(`/employees/${id}`)}>
                 View profile
               </PrimaryButton>
             ) : null}
-            <PrimaryButton variant="secondary" onClick={() => navigate('/employees')}>
+            <PrimaryButton variant="outline" onClick={() => navigate('/employees')}>
               Back to Employees
             </PrimaryButton>
           </>
@@ -1389,7 +1389,7 @@ export default function EmployeeCreatePage() {
             <PrimaryButton type="submit" loading={saving} disabled={saving || !options || loading || (isEdit && !employee)}>
               {isEdit ? 'Save Employee' : 'Create Employee'}
             </PrimaryButton>
-            <PrimaryButton type="button" variant="secondary" disabled={saving} onClick={() => navigate('/employees')}>
+            <PrimaryButton type="button" variant="outline" disabled={saving} onClick={() => navigate('/employees')}>
               Cancel
             </PrimaryButton>
           </div>
@@ -1475,7 +1475,7 @@ export default function EmployeeCreatePage() {
                   <PrimaryButton loading={deletingDocument} className="ui-btn-danger" onClick={() => void confirmDeleteDocument()}>
                     Delete
                   </PrimaryButton>
-                  <PrimaryButton type="button" variant="secondary" disabled={deletingDocument} onClick={() => setDeleteTarget(null)}>
+                  <PrimaryButton type="button" variant="outline" disabled={deletingDocument} onClick={() => setDeleteTarget(null)}>
                     Cancel
                   </PrimaryButton>
                 </div>

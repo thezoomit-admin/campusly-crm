@@ -965,15 +965,15 @@ export default function MasterDataItemsPage() {
                   }
                 }}
               />
-              <PrimaryButton variant="secondary" onClick={() => fileRef.current?.click()}>
+              <PrimaryButton variant="outline" onClick={() => fileRef.current?.click()}>
                 Bulk Import
               </PrimaryButton>
             </>
           ) : null}
-          <PrimaryButton variant="secondary" onClick={() => void handleExport('csv')}>
+          <PrimaryButton variant="outline" onClick={() => void handleExport('csv')}>
             Export CSV
           </PrimaryButton>
-          <PrimaryButton variant="secondary" onClick={() => void handleExport('xlsx')}>
+          <PrimaryButton variant="outline" onClick={() => void handleExport('xlsx')}>
             Export Excel
           </PrimaryButton>
         </div>
@@ -1223,7 +1223,7 @@ export default function MasterDataItemsPage() {
                     </p>
                   ) : null}
                   <div className={`${formActions}`}>
-                    <PrimaryButton type="button" variant="secondary" onClick={() => setFormOpen(false)} disabled={formSaving}>
+                    <PrimaryButton type="button" variant="outline" onClick={() => setFormOpen(false)} disabled={formSaving}>
                       Cancel
                     </PrimaryButton>
                     {(selected ? canEdit : canCreate) ? (
@@ -1357,7 +1357,7 @@ export default function MasterDataItemsPage() {
                   </div>
                 )}
                 <div className="flex justify-end gap-2 border-t border-border px-5 py-3.5">
-                  <PrimaryButton type="button" variant="secondary" onClick={closeHistory}>
+                  <PrimaryButton type="button" variant="outline" onClick={closeHistory}>
                     Close
                   </PrimaryButton>
                 </div>
@@ -1404,7 +1404,7 @@ export default function MasterDataItemsPage() {
                   <PrimaryButton loading={deleteSaving} className="ui-btn-danger" onClick={() => void confirmDelete()}>
                     Delete
                   </PrimaryButton>
-                  <PrimaryButton type="button" variant="secondary" disabled={deleteSaving} onClick={() => setDeleteTarget(null)}>
+                  <PrimaryButton type="button" variant="outline" disabled={deleteSaving} onClick={() => setDeleteTarget(null)}>
                     Cancel
                   </PrimaryButton>
                 </div>
@@ -1438,7 +1438,7 @@ export default function MasterDataItemsPage() {
                 ) : null}
                 <div className={`${formActions}`}>
                   {importResult.errors.length > 0 ? (
-                    <PrimaryButton variant="secondary" onClick={downloadErrors}>
+                    <PrimaryButton variant="outline" onClick={downloadErrors}>
                       Export errors
                     </PrimaryButton>
                   ) : null}
