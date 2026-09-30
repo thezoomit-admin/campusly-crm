@@ -23,6 +23,14 @@ export type CommunicationEvent = {
   utmSource: string | null
   utmMedium: string | null
   utmCampaign: string | null
+  landingPageUrl?: string | null
+  phoneCountryCode?: string | null
+  whatsapp?: string | null
+  whatsappSameAsPhone?: boolean | null
+  currentLocation?: string | null
+  highestQualificationCode?: string | null
+  preferredIntakeCode?: string | null
+  preferredDegreeCode?: string | null
   direction: string
   externalId: string | null
   formName: string | null

@@ -1,73 +1,82 @@
-import { useMemo, useState } from 'react'
-import { Button, Form, Modal } from 'antd'
-import { useOutletContext } from 'react-router-dom'
-import { toast } from 'react-toastify'
-import { FormInput, FormInputNumber, FormSelect, FormTextArea } from '@/components/common/Forms'
-import { PageHeader } from '@/components/common/Navigation'
-import { PageMeta } from '@/components/common/Meta'
-import { DataTable } from '@/components/common/Tables'
-import { getApiError } from '@/lib/api'
-import { hasPermission } from '@/lib/access'
-import { useDebounce } from '@/hooks/useDebounce'
-import { statusClass } from '@/lib/statusClass'
-import type { AuthSession } from '@/types'
-import { adminCard, adminPage } from '@/styles/admin'
+import { useMemo, useState } from "react";
+import { Button, Form, Modal } from "antd";
+import { useOutletContext } from "react-router-dom";
+import { toast } from "react-toastify";
+import {
+  FormInput,
+  FormInputNumber,
+  FormSelect,
+  FormTextArea,
+} from "@/components/common/Forms";
+import { PageHeader } from "@/components/common/Navigation";
+import { PageMeta } from "@/components/common/Meta";
+import { DataTable } from "@/components/common/Tables";
+import { getApiError } from "@/lib/api";
+import { hasPermission } from "@/lib/access";
+import { useDebounce } from "@/hooks/useDebounce";
+import { statusClass } from "@/lib/statusClass";
+import type { AuthSession } from "@/types";
+import { adminCard, adminPage } from "@/styles/admin";
 import {
   useCreateCampaignMutation,
   useListCampaignsQuery,
   useUpdateCampaignMutation,
-} from '../api/campaignsApi'
-import type { CampaignFormValues, CampaignRecord, CampaignStatus } from '../../communications/types'
+} from "../api/campaignsApi";
+import type {
+  CampaignFormValues,
+  CampaignRecord,
+  CampaignStatus,
+} from "../../communications/types";
 
 const STATUS_OPTIONS: Array<{ value: CampaignStatus; label: string }> = [
-  { value: 'DRAFT', label: 'Draft' },
-  { value: 'ACTIVE', label: 'Active' },
-  { value: 'PAUSED', label: 'Paused' },
-  { value: 'COMPLETED', label: 'Completed' },
-  { value: 'ARCHIVED', label: 'Archived' },
-]
+  { value: "DRAFT", label: "Draft" },
+  { value: "ACTIVE", label: "Active" },
+  { value: "PAUSED", label: "Paused" },
+  { value: "COMPLETED", label: "Completed" },
+  { value: "ARCHIVED", label: "Archived" },
+];
 
 const CHANNEL_OPTIONS = [
-  { value: 'Website', label: 'Website' },
-  { value: 'WhatsApp', label: 'WhatsApp' },
-  { value: 'Email', label: 'Email' },
-  { value: 'Meta', label: 'Meta' },
-  { value: 'Other', label: 'Other' },
-]
+  { value: "Website", label: "Website" },
+  { value: "WhatsApp", label: "WhatsApp" },
+  { value: "Email", label: "Email" },
+  { value: "Meta", label: "Meta" },
+  { value: "Other", label: "Other" },
+];
 
 export default function CampaignsPage() {
-  const auth = useOutletContext<AuthSession>()
-  const canManage = hasPermission(auth, 'campaign:manage')
+  const auth = useOutletContext<AuthSession>();
+  const canManage = hasPermission(auth, "campaign:manage");
 
-  const [search, setSearch] = useState('')
-  const [status, setStatus] = useState<string | undefined>()
-  const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState(10)
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<CampaignRecord | null>(null)
-  const [form] = Form.useForm<CampaignFormValues>()
-  const debouncedSearch = useDebounce(search, 300)
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<string | undefined>();
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<CampaignRecord | null>(null);
+  const [form] = Form.useForm<CampaignFormValues>();
+  const debouncedSearch = useDebounce(search, 300);
 
   const { data, isFetching, isError } = useListCampaignsQuery({
     search: debouncedSearch,
     status,
     page,
     limit,
-  })
-  const [createCampaign, { isLoading: creating }] = useCreateCampaignMutation()
-  const [updateCampaign, { isLoading: updating }] = useUpdateCampaignMutation()
+  });
+  const [createCampaign, { isLoading: creating }] = useCreateCampaignMutation();
+  const [updateCampaign, { isLoading: updating }] = useUpdateCampaignMutation();
 
-  const rows = useMemo(() => data?.items || [], [data?.items])
+  const rows = useMemo(() => data?.items || [], [data?.items]);
 
   function openCreate() {
-    setEditing(null)
-    form.resetFields()
-    form.setFieldsValue({ status: 'DRAFT' })
-    setFormOpen(true)
+    setEditing(null);
+    form.resetFields();
+    form.setFieldsValue({ status: "DRAFT" });
+    setFormOpen(true);
   }
 
   function openEdit(row: CampaignRecord) {
-    setEditing(row)
+    setEditing(row);
     form.setFieldsValue({
       name: row.name,
       description: row.description || undefined,
@@ -80,61 +89,76 @@ export default function CampaignsPage() {
       utmSource: row.utmSource || undefined,
       utmMedium: row.utmMedium || undefined,
       utmCampaign: row.utmCampaign || undefined,
-    })
-    setFormOpen(true)
+    });
+    setFormOpen(true);
   }
 
   async function onSubmit() {
     try {
-      const values = await form.validateFields()
+      const values = await form.validateFields();
       if (editing) {
-        await updateCampaign({ id: editing.id, body: values }).unwrap()
-        toast.success('Campaign updated.')
+        await updateCampaign({ id: editing.id, body: values }).unwrap();
+        toast.success("Campaign updated.");
       } else {
-        await createCampaign(values).unwrap()
-        toast.success('Campaign created.')
+        await createCampaign(values).unwrap();
+        toast.success("Campaign created.");
       }
-      setFormOpen(false)
-      setEditing(null)
+      setFormOpen(false);
+      setEditing(null);
     } catch (error) {
-      if (error && typeof error === 'object' && 'errorFields' in error) return
-      toast.error(getApiError(error, 'Unable to save campaign.'))
+      if (error && typeof error === "object" && "errorFields" in error) return;
+      toast.error(getApiError(error, "Unable to save campaign."));
     }
   }
 
   const columns = [
-    { title: 'Code', dataIndex: 'code', key: 'code' },
-    { title: 'Name', dataIndex: 'name', key: 'name' },
-    { title: 'Source', dataIndex: 'sourceCode', key: 'sourceCode', render: (v: string | null) => v || '—' },
-    { title: 'Channel', dataIndex: 'channel', key: 'channel', render: (v: string | null) => v || '—' },
+    { title: "Code", dataIndex: "code", key: "code" },
+    { title: "Name", dataIndex: "name", key: "name" },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
+      title: "Source",
+      dataIndex: "sourceCode",
+      key: "sourceCode",
+      render: (v: string | null) => v || "—",
+    },
+    {
+      title: "Channel",
+      dataIndex: "channel",
+      key: "channel",
+      render: (v: string | null) => v || "—",
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
       render: (v: string) => <span className={statusClass(v)}>{v}</span>,
     },
-    { title: 'Leads', dataIndex: 'leadsCount', key: 'leadsCount' },
-    { title: 'Events', dataIndex: 'eventsCount', key: 'eventsCount' },
+    { title: "Leads", dataIndex: "leadsCount", key: "leadsCount" },
+    { title: "Events", dataIndex: "eventsCount", key: "eventsCount" },
     {
-      title: 'Budget',
-      dataIndex: 'budget',
-      key: 'budget',
-      render: (v: number | null) => (v == null ? '—' : v.toLocaleString()),
+      title: "Budget",
+      dataIndex: "budget",
+      key: "budget",
+      render: (v: number | null) => (v == null ? "—" : v.toLocaleString()),
     },
     ...(canManage
       ? [
           {
-            title: 'Actions',
-            key: 'actions',
+            title: "Actions",
+            key: "actions",
             render: (_: unknown, row: CampaignRecord) => (
-              <Button type="link" size="small" className="!px-1" onClick={() => openEdit(row)}>
+              <Button
+                type="link"
+                size="small"
+                className="!px-1"
+                onClick={() => openEdit(row)}
+              >
                 Edit
               </Button>
             ),
           },
         ]
       : []),
-  ]
+  ];
 
   return (
     <div className={adminPage}>
@@ -145,7 +169,10 @@ export default function CampaignsPage() {
       <PageHeader
         title="Lead Source & Campaigns"
         subtitle="Manage campaign master data used when attributing inbound leads."
-        breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Campaigns' }]}
+        breadcrumbs={[
+          { title: "Dashboard", path: "/dashboard" },
+          { title: "Campaigns" },
+        ]}
         extra={
           canManage ? (
             <Button type="primary" onClick={openCreate}>
@@ -162,8 +189,8 @@ export default function CampaignsPage() {
             placeholder="Search campaigns…"
             value={search}
             onChange={(e) => {
-              setSearch(e.target.value)
-              setPage(1)
+              setSearch(e.target.value);
+              setPage(1);
             }}
             className="min-w-[220px] max-w-sm flex-1"
           />
@@ -173,14 +200,16 @@ export default function CampaignsPage() {
             className="min-w-[140px]"
             value={status}
             onChange={(value) => {
-              setStatus(value || undefined)
-              setPage(1)
+              setStatus(value || undefined);
+              setPage(1);
             }}
             options={STATUS_OPTIONS}
           />
         </div>
 
-        {isError ? <p className="m-0 text-danger">Could not load campaigns.</p> : null}
+        {isError ? (
+          <p className="m-0 text-danger">Could not load campaigns.</p>
+        ) : null}
 
         <DataTable
           loading={isFetching}
@@ -192,8 +221,8 @@ export default function CampaignsPage() {
           setCurrentPage={setPage}
           limit={limit}
           setLimit={(value) => {
-            setLimit(value)
-            setPage(1)
+            setLimit(value);
+            setPage(1);
           }}
           total={data?.total || 0}
           showSizeChanger={data && data.total > 10}
@@ -201,12 +230,12 @@ export default function CampaignsPage() {
       </div>
 
       <Modal
-        title={editing ? 'Edit campaign' : 'New campaign'}
+        title={editing ? "Edit campaign" : "New campaign"}
         open={formOpen}
         onCancel={() => setFormOpen(false)}
         onOk={onSubmit}
         confirmLoading={creating || updating}
-        okText={editing ? 'Save' : 'Create'}
+        okText={editing ? "Save" : "Create"}
         destroyOnClose
         width={560}
       >
@@ -214,15 +243,28 @@ export default function CampaignsPage() {
           <FormInput
             name="name"
             label="Campaign name"
-            rules={[{ required: true, message: 'Name is required' }]}
+            rules={[{ required: true, message: "Name is required" }]}
             placeholder="Spring Intake Meta Ads"
           />
           {!editing ? (
-            <FormInput name="code" label="Code (optional)" placeholder="Auto-generated if empty" />
+            <FormInput
+              name="code"
+              label="Code (optional)"
+              placeholder="Auto-generated if empty"
+            />
           ) : null}
-          <FormSelect name="status" label="Status" rules={[{ required: true }]} options={STATUS_OPTIONS} />
+          <FormSelect
+            name="status"
+            label="Status"
+            rules={[{ required: true }]}
+            options={STATUS_OPTIONS}
+          />
           <div className="grid gap-0 sm:grid-cols-2 sm:gap-3">
-            <FormInput name="sourceCode" label="Lead source code" placeholder="META / WEBSITE / …" />
+            <FormInput
+              name="sourceCode"
+              label="Lead source code"
+              placeholder="META / WEBSITE / …"
+            />
             <FormSelect
               name="channel"
               label="Channel"
@@ -235,7 +277,12 @@ export default function CampaignsPage() {
             <FormInput name="startDate" label="Start date" type="date" />
             <FormInput name="endDate" label="End date" type="date" />
           </div>
-          <FormInputNumber name="budget" label="Budget" min={0} placeholder="Optional" />
+          <FormInputNumber
+            name="budget"
+            label="Budget"
+            min={0}
+            placeholder="Optional"
+          />
           <div className="grid gap-0 sm:grid-cols-3 sm:gap-3">
             <FormInput name="utmSource" label="UTM source" />
             <FormInput name="utmMedium" label="UTM medium" />
@@ -245,5 +292,5 @@ export default function CampaignsPage() {
         </Form>
       </Modal>
     </div>
-  )
+  );
 }

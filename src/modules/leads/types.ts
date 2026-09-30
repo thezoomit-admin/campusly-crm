@@ -186,8 +186,27 @@ export type LeadRecord = {
   specificContactTime: string | null
   source: string | null
   sourceCode: string | null
+  channelCode?: string | null
   sourceLocked: boolean
+  latestSource?: string | null
+  latestSourceCode?: string | null
+  latestChannelCode?: string | null
   campaign: string | null
+  campaignId?: string | null
+  latestCampaign?: string | null
+  latestCampaignId?: string | null
+  utmSource?: string | null
+  utmMedium?: string | null
+  utmCampaign?: string | null
+  utmContent?: string | null
+  utmTerm?: string | null
+  landingPageUrl?: string | null
+  externalLeadId?: string | null
+  sourceDetails?: string | null
+  referralBy?: string | null
+  referralDetails?: string | null
+  firstTouchAt?: string | null
+  lastEnquiryAt?: string | null
   remarks: string | null
   notes: string | null
   status: string
@@ -272,7 +291,13 @@ export type LeadFormState = {
   preferredContactTimeCode: string
   specificContactTime: string
   sourceCode: string
+  channelCode: string
   campaign: string
+  campaignId: string
+  referralBy: string
+  referralDetails: string
+  sourceDetails: string
+  externalLeadId: string
   remarks: string
   notes: string
 }
@@ -329,7 +354,13 @@ export const EMPTY_LEAD_FORM: LeadFormState = {
   preferredContactTimeCode: '',
   specificContactTime: '',
   sourceCode: '',
+  channelCode: '',
   campaign: '',
+  campaignId: '',
+  referralBy: '',
+  referralDetails: '',
+  sourceDetails: '',
+  externalLeadId: '',
   remarks: '',
   notes: '',
 }

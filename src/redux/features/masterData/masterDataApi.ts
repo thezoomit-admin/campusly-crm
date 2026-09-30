@@ -43,7 +43,7 @@ const masterDataApi = baseApi.injectEndpoints({
       providesTags: (_r, _e, params) => [{ type: 'MasterDataItems', id: params.category }],
     }),
     listMasterDataOptions: builder.query<
-      { items: Array<{ id: string; name: string; code: string | null; status: string }> },
+      { items: Array<{ id: string; name: string; code: string | null; status: string; parentId?: string | null }> },
       { category: string; parentId?: string }
     >({
       query: ({ category, parentId }) =>

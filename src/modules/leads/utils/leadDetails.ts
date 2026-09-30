@@ -7,6 +7,8 @@ export type LeadTabKey =
   | 'study'
   | 'documents'
   | 'communications'
+  | 'whatsapp'
+  | 'email'
   | 'activities'
   | 'followups'
   | 'notes'
@@ -17,6 +19,8 @@ export const LEAD_TABS: Array<{ key: LeadTabKey; label: string }> = [
   { key: 'study', label: 'Study & Visa' },
   { key: 'documents', label: 'Documents' },
   { key: 'communications', label: 'Communication' },
+  { key: 'whatsapp', label: 'WhatsApp' },
+  { key: 'email', label: 'Email' },
   { key: 'activities', label: 'Activities' },
   { key: 'followups', label: 'Follow-ups' },
   { key: 'notes', label: 'Notes' },

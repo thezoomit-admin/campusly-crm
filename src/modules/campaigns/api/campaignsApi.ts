@@ -20,7 +20,20 @@ export type CampaignOption = {
   value: string
   label: string
   code: string
+  name: string
   sourceCode: string | null
+  channel: string | null
+}
+
+export type AttributionBucket = {
+  total: number
+  converted: number
+  conversionRate: number
+}
+
+export type AttributionSummary = {
+  sources: Array<AttributionBucket & { code: string; label: string }>
+  campaigns: Array<AttributionBucket & { id: string | null; label: string }>
 }
 
 const campaignsApi = baseApi.injectEndpoints({
@@ -39,9 +52,13 @@ const campaignsApi = baseApi.injectEndpoints({
       query: (id) => `/campaigns/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'Campaigns', id }],
     }),
-    listCampaignOptions: builder.query<{ items: CampaignOption[] }, void>({
-      query: () => '/campaigns/options',
+    listCampaignOptions: builder.query<{ items: CampaignOption[] }, { sourceCode?: string } | void>({
+      query: (params) => `/campaigns/options${toQuery({ sourceCode: params?.sourceCode })}`,
       providesTags: [{ type: 'Campaigns', id: 'OPTIONS' }],
+    }),
+    attributionSummary: builder.query<AttributionSummary, void>({
+      query: () => '/campaigns/performance',
+      providesTags: [{ type: 'Campaigns', id: 'PERFORMANCE' }],
     }),
     createCampaign: builder.mutation<{ campaign: CampaignRecord; message: string }, CampaignFormValues>({
       query: (body) => ({ url: '/campaigns', method: 'POST', body }),
@@ -68,6 +85,7 @@ export const {
   useListCampaignsQuery,
   useGetCampaignQuery,
   useListCampaignOptionsQuery,
+  useAttributionSummaryQuery,
   useCreateCampaignMutation,
   useUpdateCampaignMutation,
 } = campaignsApi

@@ -151,6 +151,13 @@ export default function CommunicationHubPage() {
             <Detail label="Email" value={selected.senderEmail || '—'} />
             <Detail label="Country" value={selected.preferredCountryCode || '—'} />
             <Detail label="Campaign" value={selected.campaign?.name || selected.campaignName || '—'} />
+            <Detail
+              label="UTM"
+              value={
+                [selected.utmSource, selected.utmMedium, selected.utmCampaign].filter(Boolean).join(' / ') || '—'
+              }
+            />
+            <Detail label="Landing Page" value={selected.landingPageUrl || '—'} />
             <Detail label="Form" value={selected.formName || '—'} />
             <Detail label="Subject" value={selected.subject || '—'} />
             <Detail label="Message" value={selected.message || '—'} />

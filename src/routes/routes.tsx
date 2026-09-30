@@ -11,7 +11,10 @@ import { DocumentsPage } from '../modules/documents'
 import { EmployeesPage, EmployeeCreatePage, EmployeeProfilePage } from '../modules/employees/index'
 import { FollowUpsPage } from '../modules/follow-ups'
 import { CommunicationHubPage } from '../modules/communications'
+import { WhatsAppInboxPage } from '../modules/whatsapp'
+import { EmailInboxPage } from '../modules/email'
 import { CampaignsPage } from '../modules/campaigns'
+import { MetaLeadsPage } from '../modules/meta-leads'
 import { LeadCreatePage, LeadDetailsPage, LeadPoolPage, LeadsPage, MyLeadsPage } from '../modules/leads'
 import { MasterDataPage, MasterDataItemsPage } from '../modules/master-data'
 import { PaymentsPage } from '../modules/payments'
@@ -93,6 +96,36 @@ const routes = [
               />
             ),
             children: [{ path: '/communications', element: <CommunicationHubPage /> }],
+          },
+          {
+            element: (
+              <PermissionRoute
+                permission="communication:view"
+                deniedTitle="WhatsApp Inbox"
+                deniedMessage="You do not have permission to access this conversation."
+              />
+            ),
+            children: [{ path: '/whatsapp', element: <WhatsAppInboxPage /> }],
+          },
+          {
+            element: (
+              <PermissionRoute
+                permission="communication:view"
+                deniedTitle="Email Communication"
+                deniedMessage="You do not have permission to access this email."
+              />
+            ),
+            children: [{ path: '/email', element: <EmailInboxPage /> }],
+          },
+          {
+            element: (
+              <PermissionRoute
+                permission={['communication:view', 'campaign:view']}
+                deniedTitle="Meta Lead Ads"
+                deniedMessage="You do not have permission to view Meta leads."
+              />
+            ),
+            children: [{ path: '/meta-leads', element: <MetaLeadsPage /> }],
           },
           {
             element: <PermissionRoute permission="campaign:view" />,

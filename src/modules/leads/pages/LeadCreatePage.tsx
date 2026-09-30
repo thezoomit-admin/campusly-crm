@@ -18,6 +18,7 @@ import {
   useUpdateLeadMutation,
 } from '../api/leadsApi'
 import { EMPTY_LEAD_FORM, type DuplicateLead, type LeadFormState } from '../types'
+import { useLeadMasterOptions } from '../hooks/useLeadMasterOptions'
 import { formToPayload, recordToForm, validateLeadForm } from '../utils/leadForm'
 
 export default function LeadCreatePage() {
@@ -33,6 +34,7 @@ export default function LeadCreatePage() {
     if (!allowed) navigate('/leads', { replace: true })
   }, [allowed, navigate])
 
+  const master = useLeadMasterOptions()
   const [form, setForm] = useState<LeadFormState>(EMPTY_LEAD_FORM)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [duplicate, setDuplicate] = useState<DuplicateLead | null>(null)
@@ -87,7 +89,9 @@ export default function LeadCreatePage() {
   }
 
   async function submit(createAnyway = false, withFollowUp = false) {
-    const nextErrors = validateLeadForm(form)
+    const sourceId = master.sourceItems.find((item) => item.code === form.sourceCode)?.id
+    const channelRequired = master.channelItems.some((item) => item.parentId === sourceId)
+    const nextErrors = validateLeadForm(form, { channelRequired: !isEdit && channelRequired })
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
@@ -168,6 +172,7 @@ export default function LeadCreatePage() {
           form={form}
           errors={errors}
           sourceLocked={lead?.sourceLocked}
+          attributionLocked={isEdit}
           assignedTeamName={lead?.assignedTeam?.name}
           onChange={update}
         />
