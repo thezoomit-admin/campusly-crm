@@ -62,7 +62,7 @@ export default function PrimaryButton({
       htmlType={resolvedHtmlType}
       size={antSize}
       block={block ?? fullWidth}
-      className={className}
+      className={['rounded-lg', className].filter(Boolean).join(' ')}
       {...rest}
     />
   );

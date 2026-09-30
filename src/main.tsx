@@ -43,6 +43,13 @@ function ThemedApp() {
           colorBorder: isDark ? '#2a343e' : '#e2e8f0',
           colorText: isDark ? '#e7edf3' : '#16324f',
         },
+        components: {
+          Button: {
+            borderRadius: 8,
+            borderRadiusLG: 8,
+            borderRadiusSM: 8,
+          },
+        },
       }}
     >
       <ToastContainer
