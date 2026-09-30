@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Add01Icon, Upload04Icon } from '@hugeicons/core-free-icons'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -60,18 +60,20 @@ export default function LeadsPage() {
         extra={
           <>
             {canCreate ? (
-              <Button
-                variant="secondary"
+              <PrimaryButton
+                variant="outline"
+                label="Import"
                 icon={<HugeiconsIcon icon={Upload04Icon} size={16} />}
                 onClick={() => toast.info('CSV import will be available in a later update.')}
-              >
-                Import
-              </Button>
+              />
             ) : null}
             {canCreate ? (
-              <Button icon={<HugeiconsIcon icon={Add01Icon} size={16} />} onClick={() => navigate('/leads/new')}>
-                Add New Lead
-              </Button>
+              <PrimaryButton
+                variant="primary"
+                label="Add New Lead"
+                icon={<HugeiconsIcon icon={Add01Icon} size={16} />}
+                onClick={() => navigate('/leads/new')}
+              />
             ) : null}
           </>
         }

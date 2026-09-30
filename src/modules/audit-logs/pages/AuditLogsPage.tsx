@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { DatePicker, Dropdown } from 'antd'
+import { Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -15,8 +15,8 @@ import {
 import { useLazyListAuditLogsQuery } from '@/redux/features/auditLogs/auditLogsApi'
 import { getApiError } from '@/lib/api'
 import { readUrlSearchQuery } from '@/lib/url'
-import { Button } from '@/components/ui'
-import { FormInput, FormSelect } from '@/components/common/Forms'
+import { PrimaryButton } from '@/components/ui'
+import { FormDatePicker, FormInput, FormSelect } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { DataTable } from '@/components/common/Tables'
@@ -597,10 +597,12 @@ export default function AuditLogsPage() {
         extra={
           <Dropdown menu={{ items: exportItems }} trigger={['click']}>
             <span>
-              <Button className="min-w-[132px]" variant="secondary">
-                Export Logs
-                <HugeiconsIcon icon={ArrowDown01Icon} size={14} />
-              </Button>
+              <PrimaryButton
+                className="min-w-[132px]"
+                variant="outline"
+                label="Export Logs"
+                icon={<HugeiconsIcon icon={ArrowDown01Icon} size={14} />}
+              />
             </span>
           </Dropdown>
         }
@@ -678,7 +680,7 @@ export default function AuditLogsPage() {
             </div>
             <div className="grid grid-rows-[auto_42px] gap-1.5 min-w-0 m-0">
               <span className="text-text-muted text-[0.78rem] font-semibold leading-[1.2]">Date Range</span>
-              <DatePicker.RangePicker
+              <FormDatePicker.Range
                 allowClear
                 value={filters.from && filters.to ? [toDayjs(filters.from), toDayjs(filters.to)] : null}
                 format="D MMM YYYY"
@@ -705,9 +707,7 @@ export default function AuditLogsPage() {
                     ? message
                     : 'Try a different search, module, user, or date range, or clear the current filters.'}
                 </p>
-                <Button variant="secondary" onClick={clearFilters}>
-                  Clear filters
-                </Button>
+                <PrimaryButton variant="outline" onClick={clearFilters} label="Clear filters" />
               </div>
             ) : (
               <div className="px-2 pb-3">

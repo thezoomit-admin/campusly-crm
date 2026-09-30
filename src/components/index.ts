@@ -1,5 +1,5 @@
 export {
-  Button,
+  PrimaryButton,
   Dropdown,
   DropdownItem,
   HugeIcon,
@@ -10,7 +10,7 @@ export {
   userInitials,
   Wave,
 } from './ui'
-export type { HugeIconProps } from './ui'
+export type { HugeIconProps, PrimaryButtonProps } from './ui'
 export {
   CustomActionButton,
   PageCard,
@@ -20,9 +20,13 @@ export {
   UserDropdown,
   AdminFilterDrawer,
   countActiveFilters,
+  FormCheckbox,
   FormDatePicker,
   FormInput,
+  FormInputNumber,
+  FormRadio,
   FormSelect,
+  FormSwitch,
   FormTextArea,
   InputError,
   SwitchStatus,

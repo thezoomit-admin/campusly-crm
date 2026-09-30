@@ -1,5 +1,9 @@
 /* Ant Design overrides for Campusly CRM */
 
+.ant-btn {
+  border-radius: 0.5rem; /* rounded-lg */
+}
+
 .ant-btn-primary {
   box-shadow: none;
 }

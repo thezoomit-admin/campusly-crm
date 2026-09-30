@@ -49,11 +49,11 @@ import {
   UserPlusIcon,
   ViewIcon,
 } from '@hugeicons/core-free-icons'
-import { DatePicker, Spin, Switch } from 'antd'
+import { Spin } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { Button } from '@/components/ui'
-import { FormInput, FormSelect } from '@/components/common/Forms'
+import { PrimaryButton } from '@/components/ui'
+import { FormDatePicker, FormInput, FormSelect, FormSwitch } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
@@ -863,7 +863,7 @@ export default function MasterDataItemsPage() {
           { title: 'Master Data', path: '/master-data' },
           { title: navGroup.name },
         ]}
-        extra={canCreate ? <Button onClick={openCreate}>Add New</Button> : undefined}
+        extra={canCreate ? <PrimaryButton onClick={openCreate} label="Add New" /> : undefined}
       />
 
       <nav className="flex max-w-full gap-1 overflow-x-auto border-b border-border" aria-label="Master data categories">
@@ -916,7 +916,7 @@ export default function MasterDataItemsPage() {
             onChange={(value) => setParentId(asSelectString(value))}
           />
         ) : null}
-        <DatePicker
+        <FormDatePicker
           allowClear
           placeholder="Start date"
           aria-label="Start date"
@@ -925,7 +925,7 @@ export default function MasterDataItemsPage() {
           disabledDate={(current) => Boolean(createdTo && current.isAfter(dayjs(createdTo), 'day'))}
           onChange={(value) => setCreatedFrom(toDateString(value))}
         />
-        <DatePicker
+        <FormDatePicker
           allowClear
           placeholder="End date"
           aria-label="End date"
@@ -965,17 +965,11 @@ export default function MasterDataItemsPage() {
                   }
                 }}
               />
-              <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-                Bulk Import
-              </Button>
+              <PrimaryButton variant="outline" onClick={() => fileRef.current?.click()} label="Bulk Import" />
             </>
           ) : null}
-          <Button variant="secondary" onClick={() => void handleExport('csv')}>
-            Export CSV
-          </Button>
-          <Button variant="secondary" onClick={() => void handleExport('xlsx')}>
-            Export Excel
-          </Button>
+          <PrimaryButton variant="outline" onClick={() => void handleExport('csv')} label="Export CSV" />
+          <PrimaryButton variant="outline" onClick={() => void handleExport('xlsx')} label="Export Excel" />
         </div>
       </div>
 
@@ -1008,7 +1002,7 @@ export default function MasterDataItemsPage() {
                     <td>{item.code || '—'}</td>
                     {category?.parentCategoryKey ? <td>{item.parentName || '—'}</td> : null}
                     <td>
-                      <Switch
+                      <FormSwitch
                         checked={item.status === 'ACTIVE'}
                         checkedChildren="Active"
                         unCheckedChildren="Inactive"
@@ -1079,15 +1073,12 @@ export default function MasterDataItemsPage() {
                   <h3 id="md-modal-title">
                     {formMode === 'create' ? `Add ${category?.name || ''}` : `Edit ${category?.name || ''}`}
                   </h3>
-                  <button
+                  <PrimaryButton
                     type="button"
                     className={`${modalClose}`}
                     aria-label="Close"
                     disabled={formSaving}
-                    onClick={() => !formSaving && setFormOpen(false)}
-                  >
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </button>
+                    onClick={() => !formSaving && setFormOpen(false)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <form className={`${adminForm}`} onSubmit={(event) => void saveItem(event)}>
                   <fieldset className={`${adminFormFields}`} disabled={formSaving}>
@@ -1168,7 +1159,7 @@ export default function MasterDataItemsPage() {
                       <>
                         <label>
                           Start Date
-                          <DatePicker
+                          <FormDatePicker
                             allowClear
                             format="YYYY-MM-DD"
                             placeholder="Select start date"
@@ -1184,7 +1175,7 @@ export default function MasterDataItemsPage() {
                         </label>
                         <label>
                           End Date
-                          <DatePicker
+                          <FormDatePicker
                             allowClear
                             format="YYYY-MM-DD"
                             placeholder="Select end date"
@@ -1223,13 +1214,9 @@ export default function MasterDataItemsPage() {
                     </p>
                   ) : null}
                   <div className={`${formActions}`}>
-                    <Button type="button" variant="secondary" onClick={() => setFormOpen(false)} disabled={formSaving}>
-                      Cancel
-                    </Button>
+                    <PrimaryButton type="button" variant="outline" onClick={() => setFormOpen(false)} disabled={formSaving} label="Cancel" />
                     {(selected ? canEdit : canCreate) ? (
-                      <Button type="submit" loading={formSaving}>
-                        Save
-                      </Button>
+                      <PrimaryButton type="submit" loading={formSaving} label="Save" />
                     ) : null}
                   </div>
                 </form>
@@ -1259,9 +1246,7 @@ export default function MasterDataItemsPage() {
                       <p>Track the changes made to this record over time.</p>
                     </div>
                   </div>
-                  <button type="button" className={`${modalClose}`} aria-label="Close" onClick={closeHistory}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </button>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closeHistory} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 {historyLoading ? (
                   <div className="m-0 flex min-h-60 items-center justify-center">
@@ -1280,12 +1265,10 @@ export default function MasterDataItemsPage() {
                           const active = entry.id === historyEntryId
                           return (
                             <li key={entry.id}>
-                              <button
+                              <PrimaryButton
                                 type="button"
                                 className={`${mdHistoryEvent} ${active ? mdHistoryEventActive : ''}`}
-                                onClick={() => setHistoryEntryId(entry.id)}
-                              >
-                                <span
+                                onClick={() => setHistoryEntryId(entry.id)} label={<><span
                                   className={`mt-1 inline-flex size-2.5 shrink-0 items-center justify-center rounded-full ${historyKindTone[kind] || 'bg-[#94a3b8]'}`}
                                   aria-hidden
                                 >
@@ -1301,8 +1284,7 @@ export default function MasterDataItemsPage() {
                                     {entry.user?.fullName || 'System'}
                                     <em>{entry.user?.role || (entry.user ? 'User' : 'System')}</em>
                                   </span>
-                                </span>
-                              </button>
+                                </span></>} />
                             </li>
                           )
                         })}
@@ -1357,9 +1339,7 @@ export default function MasterDataItemsPage() {
                   </div>
                 )}
                 <div className="flex justify-end gap-2 border-t border-border px-5 py-3.5">
-                  <Button type="button" variant="secondary" onClick={closeHistory}>
-                    Close
-                  </Button>
+                  <PrimaryButton type="button" variant="outline" onClick={closeHistory} label="Close" />
                 </div>
               </div>
             </div>,
@@ -1386,27 +1366,20 @@ export default function MasterDataItemsPage() {
               >
                 <div className={`${modalHeader}`}>
                   <h3 id="md-delete-title">Delete {entityName}?</h3>
-                  <button
+                  <PrimaryButton
                     type="button"
                     className={`${modalClose}`}
                     aria-label="Close"
                     disabled={deleteSaving}
-                    onClick={() => setDeleteTarget(null)}
-                  >
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </button>
+                    onClick={() => setDeleteTarget(null)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <p className={`${statusConfirmCopy}`}>
                   Are you sure you want to delete <strong>{deleteTarget.name}</strong>? This action cannot be
                   undone.
                 </p>
                 <div className={`${formActions}`}>
-                  <Button loading={deleteSaving} className="ui-btn-danger" onClick={() => void confirmDelete()}>
-                    Delete
-                  </Button>
-                  <Button type="button" variant="secondary" disabled={deleteSaving} onClick={() => setDeleteTarget(null)}>
-                    Cancel
-                  </Button>
+                  <PrimaryButton loading={deleteSaving} className="ui-btn-danger" onClick={() => void confirmDelete()} label="Delete" />
+                  <PrimaryButton type="button" variant="outline" disabled={deleteSaving} onClick={() => setDeleteTarget(null)} label="Cancel" />
                 </div>
               </div>
             </div>,
@@ -1420,9 +1393,7 @@ export default function MasterDataItemsPage() {
               <div className={`${modalPanel}`} role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
                 <div className={`${modalHeader}`}>
                   <h3>Import result</h3>
-                  <button type="button" className={`${modalClose}`} aria-label="Close" onClick={() => setImportOpen(false)}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </button>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={() => setImportOpen(false)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <p>
                   Total {importResult.total}, Successful {importResult.successful}, Failed {importResult.failed}
@@ -1438,11 +1409,9 @@ export default function MasterDataItemsPage() {
                 ) : null}
                 <div className={`${formActions}`}>
                   {importResult.errors.length > 0 ? (
-                    <Button variant="secondary" onClick={downloadErrors}>
-                      Export errors
-                    </Button>
+                    <PrimaryButton variant="outline" onClick={downloadErrors} label="Export errors" />
                   ) : null}
-                  <Button onClick={() => setImportOpen(false)}>Close</Button>
+                  <PrimaryButton onClick={() => setImportOpen(false)} label="Close" />
                 </div>
               </div>
             </div>,

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { PencilEdit02Icon } from '@hugeicons/core-free-icons'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 
 export default function LeadSectionCard({
   title,
@@ -37,22 +37,17 @@ export default function LeadSectionCard({
           extra
         ) : canEdit && editing ? (
           <div className="flex items-center gap-2">
-            <Button type="button" variant="secondary" size="sm" onClick={onCancel} disabled={saving}>
-              Cancel
-            </Button>
-            <Button type="button" size="sm" loading={saving} onClick={onSave}>
-              Save
-            </Button>
+            <PrimaryButton type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving} label="Cancel" />
+            <PrimaryButton type="button" size="sm" loading={saving} onClick={onSave} label="Save" />
           </div>
         ) : canEdit ? (
-          <button
+          <PrimaryButton
             type="button"
             className="inline-flex cursor-pointer items-center gap-1 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[0.82rem] font-medium text-[#8b97a8] hover:bg-hover-bg hover:text-primary"
+            label={actionLabel}
+            icon={<HugeiconsIcon icon={PencilEdit02Icon} size={14} color="currentColor" strokeWidth={1.8} />}
             onClick={onEdit}
-          >
-            <HugeiconsIcon icon={PencilEdit02Icon} size={14} color="currentColor" strokeWidth={1.8} />
-            {actionLabel}
-          </button>
+          />
         ) : null}
       </header>
       {children}

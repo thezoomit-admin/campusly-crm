@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { DatePicker, Form, Input, Select } from 'antd'
+import { Form } from 'antd'
 import dayjs from 'dayjs'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
+import { FormDatePicker, FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
 import { AntModal } from '@/components/common/Modals'
 import { useListLeadsQuery } from '@/modules/leads/api/leadsApi'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -81,27 +82,27 @@ export default function FollowUpFormModal({
             Lead: {fixedLeadLabel || fixedLeadId}
           </p>
         ) : (
-          <Form.Item name="leadId" label="Lead" rules={[{ required: true, message: 'Lead is required.' }]}>
-            <Select
-              showSearch
-              filterOption={false}
-              placeholder={leadsLoading ? 'Loading leads…' : 'Search lead by name or code'}
-              options={leadOptions}
-              onSearch={setLeadSearch}
-              notFoundContent={leadsLoading ? 'Loading…' : 'No leads found'}
-            />
-          </Form.Item>
+          <FormSelect
+            name="leadId"
+            label="Lead"
+            rules={[{ required: true, message: 'Lead is required.' }]}
+            showSearch
+            filterOption={false}
+            placeholder={leadsLoading ? 'Loading leads…' : 'Search lead by name or code'}
+            options={leadOptions}
+            onSearch={setLeadSearch}
+            notFoundContent={leadsLoading ? 'Loading…' : 'No leads found'}
+          />
         )}
 
-        <Form.Item name="type" label="Activity Type" rules={[{ required: true, message: 'Activity type is required.' }]}>
-          <Select
-            showSearch
-            optionFilterProp="label"
-            className="w-full"
-            size="large"
-            options={FOLLOW_UP_TYPES.map((value) => ({ value, label: value }))}
-          />
-        </Form.Item>
+        <FormSelect
+          name="type"
+          label="Activity Type"
+          rules={[{ required: true, message: 'Activity type is required.' }]}
+          showSearch
+          optionFilterProp="label"
+          options={FOLLOW_UP_TYPES.map((value) => ({ value, label: value }))}
+        />
 
         <Form.Item
           name="dueAt"
@@ -110,70 +111,65 @@ export default function FollowUpFormModal({
           getValueFromEvent={(value) => (value ? value.toISOString() : '')}
           getValueProps={(value) => ({ value: value ? dayjs(value) : null })}
         >
-          <DatePicker showTime className="w-full" format="DD MMM YYYY hh:mm A" />
+          <FormDatePicker showTime format="DD MMM YYYY hh:mm A" />
         </Form.Item>
 
         <div className="grid gap-0 min-[481px]:grid-cols-2 min-[481px]:gap-3">
-          <Form.Item name="priority" label="Priority" rules={[{ required: true, message: 'Priority is required.' }]}>
-            <Select
-              className="w-full"
-              size="large"
-              options={FOLLOW_UP_PRIORITIES.map((value) => ({ value, label: value }))}
-            />
-          </Form.Item>
-          <Form.Item name="reminder" label="Reminder">
-            <Select
-              className="w-full"
-              size="large"
-              options={FOLLOW_UP_REMINDERS.map((value) => ({ value, label: value }))}
-            />
-          </Form.Item>
+          <FormSelect
+            name="priority"
+            label="Priority"
+            rules={[{ required: true, message: 'Priority is required.' }]}
+            options={FOLLOW_UP_PRIORITIES.map((value) => ({ value, label: value }))}
+          />
+          <FormSelect
+            name="reminder"
+            label="Reminder"
+            options={FOLLOW_UP_REMINDERS.map((value) => ({ value, label: value }))}
+          />
         </div>
 
-        <Form.Item name="purpose" label="Purpose" rules={[{ required: true, message: 'Purpose is required.' }]}>
-          <Select
-            showSearch
-            optionFilterProp="label"
-            className="w-full"
-            size="large"
-            options={FOLLOW_UP_PURPOSES.map((value) => ({ value, label: value }))}
-          />
-        </Form.Item>
+        <FormSelect
+          name="purpose"
+          label="Purpose"
+          rules={[{ required: true, message: 'Purpose is required.' }]}
+          showSearch
+          optionFilterProp="label"
+          options={FOLLOW_UP_PURPOSES.map((value) => ({ value, label: value }))}
+        />
 
         {purpose === 'Other' ? (
-          <Form.Item
+          <FormInput
             name="purposeOther"
             label="Purpose description"
             rules={[{ required: true, message: 'Please provide a reason.' }]}
-          >
-            <Input placeholder="Describe the purpose" maxLength={500} size="large" />
-          </Form.Item>
+            placeholder="Describe the purpose"
+            maxLength={500}
+            size="large"
+          />
         ) : null}
 
-        <Form.Item
+        <FormTextArea
           name="nextAction"
           label="Next Action"
           rules={[{ required: true, message: 'Please enter the next action.' }]}
-        >
-          <Input.TextArea
-            autoSize={{ minRows: 2, maxRows: 5 }}
-            maxLength={500}
-            showCount
-            placeholder="What needs to happen next?"
-          />
-        </Form.Item>
+          autoSize={{ minRows: 2, maxRows: 5 }}
+          maxLength={500}
+          showCount
+          placeholder="What needs to happen next?"
+        />
 
-        <Form.Item name="notes" label="Notes">
-          <Input.TextArea autoSize={{ minRows: 2, maxRows: 6 }} maxLength={1000} showCount placeholder="Optional notes" />
-        </Form.Item>
+        <FormTextArea
+          name="notes"
+          label="Notes"
+          autoSize={{ minRows: 2, maxRows: 6 }}
+          maxLength={1000}
+          showCount
+          placeholder="Optional notes"
+        />
 
         <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" loading={Boolean(saving)}>
-            Save Follow-up
-          </Button>
+          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+          <PrimaryButton type="submit" loading={Boolean(saving)} label="Save Follow-up" />
         </div>
       </Form>
     </AntModal>

@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { DatePicker, Switch } from 'antd'
 import dayjs from 'dayjs'
-import { Button } from '@/components/ui'
-import { FormSelect, FormTextArea } from '@/components/common/Forms'
+import { PrimaryButton } from '@/components/ui'
+import { FormDatePicker, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
 import { AntModal } from '@/components/common/Modals'
 import {
   FOLLOW_UP_OUTCOMES,
@@ -107,13 +106,13 @@ export function CompleteFollowUpModal({
         </label>
         <div className="flex items-center justify-between gap-3 rounded-lg border border-[#e7eef5] px-3 py-2.5 dark:border-border">
           <span className="text-sm text-[#17324f] dark:text-text">Create Next Follow-up</span>
-          <Switch checked={createNext} onChange={setCreateNext} />
+          <FormSwitch checked={createNext} onChange={setCreateNext} />
         </div>
         {createNext ? (
           <>
             <label className="grid gap-1.5 text-sm">
               <span>Next Follow-up Date & Time</span>
-              <DatePicker
+              <FormDatePicker
                 showTime
                 className="w-full"
                 format="DD MMM YYYY hh:mm A"
@@ -150,12 +149,8 @@ export function CompleteFollowUpModal({
           </>
         ) : null}
         <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" loading={saving} onClick={() => void handleSubmit()}>
-            {createNext ? 'Complete & Schedule' : 'Complete'}
-          </Button>
+          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+          <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()} label={createNext ? 'Complete & Schedule' : 'Complete'} />
         </div>
       </div>
     </AntModal>
@@ -194,7 +189,7 @@ export function RescheduleFollowUpModal({
         ) : null}
         <label className="grid gap-1.5 text-sm">
           <span>New Date & Time</span>
-          <DatePicker
+          <FormDatePicker
             showTime
             className="w-full"
             format="DD MMM YYYY hh:mm A"
@@ -213,16 +208,11 @@ export function RescheduleFollowUpModal({
           />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button
+          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+          <PrimaryButton
             type="button"
             loading={saving}
-            onClick={() => void onSubmit({ dueAt, reason: reason.trim() })}
-          >
-            Reschedule
-          </Button>
+            onClick={() => void onSubmit({ dueAt, reason: reason.trim() })} label="Reschedule" />
         </div>
       </div>
     </AntModal>
@@ -268,12 +258,8 @@ export function CancelFollowUpModal({
           />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Keep Follow-up
-          </Button>
-          <Button type="button" loading={saving} onClick={() => void onSubmit(reason.trim())}>
-            Cancel Follow-up
-          </Button>
+          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Keep Follow-up" />
+          <PrimaryButton type="button" loading={saving} onClick={() => void onSubmit(reason.trim())} label="Cancel Follow-up" />
         </div>
       </div>
     </AntModal>

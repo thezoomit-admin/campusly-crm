@@ -1,6 +1,6 @@
 import { accountForm, adminBanner, adminCard, adminForm, adminPage } from '../../../styles/admin'
 import { useState, type FormEvent } from 'react'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { FormInput } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
@@ -61,9 +61,7 @@ export default function AccountPage() {
           />
         </label>
         {message ? <p className={`${adminBanner}`}>{message}</p> : null}
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Saving…' : 'Change password'}
-        </Button>
+        <PrimaryButton type="submit" disabled={isLoading} label={isLoading ? 'Saving…' : 'Change password'} />
       </form>
     </div>
   )

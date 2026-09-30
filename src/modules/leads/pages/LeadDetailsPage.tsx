@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom'
 import { Breadcrumb, Skeleton } from 'antd'
 import { toast } from 'react-toastify'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { PageMeta } from '@/components/common/Meta'
 import { getApiError, getApiErrorFields } from '@/lib/api'
 import { hasPermission } from '../../../lib/access'
@@ -386,9 +386,7 @@ export default function LeadDetailsPage() {
           ]}
         />
         <p className="text-danger">Lead not found or you do not have access.</p>
-        <Button type="button" variant="secondary" onClick={() => navigate('/leads')}>
-          Back to leads
-        </Button>
+        <PrimaryButton type="button" variant="outline" onClick={() => navigate('/leads')} label="Back to leads" />
       </div>
     )
   }
@@ -440,7 +438,7 @@ export default function LeadDetailsPage() {
             {LEAD_TABS.filter((item) => item.key !== 'followups' || canViewFollowUp).map((item) => {
               const active = tab === item.key
               return (
-                <button
+                <PrimaryButton
                   key={item.key}
                   type="button"
                   className={`shrink-0 cursor-pointer border-0 border-b-2 bg-transparent px-4 py-2.5 text-[0.9rem] ${
@@ -448,20 +446,14 @@ export default function LeadDetailsPage() {
                       ? 'border-primary font-semibold text-primary'
                       : 'border-transparent text-[#7d8b9a] hover:text-text'
                   }`}
-                  onClick={() => setTab(item.key)}
-                >
-                  {item.label}
-                </button>
+                  onClick={() => setTab(item.key)} label={item.label} />
               )
             })}
             {canQualify ? (
-              <button
+              <PrimaryButton
                 type="button"
                 className="ml-auto shrink-0 cursor-pointer border-0 bg-transparent px-3 py-2.5 text-[0.82rem] font-medium text-primary hover:underline"
-                onClick={() => setQualifyOpen(true)}
-              >
-                Qualify
-              </button>
+                onClick={() => setQualifyOpen(true)} label="Qualify" />
             ) : null}
           </div>
 

@@ -21,9 +21,9 @@ import {
   PencilEdit02Icon,
   ViewIcon,
 } from '@hugeicons/core-free-icons'
-import { Spin, Switch } from 'antd'
-import { Button } from '@/components/ui'
-import { FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
+import { Spin } from 'antd'
+import { PrimaryButton } from '@/components/ui'
+import { FormCheckbox, FormInput, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
@@ -257,7 +257,7 @@ export default function RolesPage() {
         title="Roles & Permissions"
         subtitle="Configure role-wise, module-wise, and action-level access."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Roles & Permissions' }]}
-        extra={canCreate ? <Button onClick={openCreate}>Create Role</Button> : undefined}
+        extra={canCreate ? <PrimaryButton onClick={openCreate} label="Create Role" /> : undefined}
       />
 
       <section className={`${adminFilters} ${adminFiltersCompact}`}>
@@ -308,7 +308,7 @@ export default function RolesPage() {
                       <div className={`${muted}`}>{role.description}</div>
                     </td>
                     <td>
-                      <Switch
+                      <FormSwitch
                         checked={role.status === 'ACTIVE'}
                         checkedChildren="Active"
                         unCheckedChildren="Inactive"
@@ -383,9 +383,7 @@ export default function RolesPage() {
                   <h3 id="role-modal-title">
                     {formMode === 'create' ? 'Create Role' : formMode === 'view' ? 'View Role' : 'Edit Role'}
                   </h3>
-                  <button type="button" className={`${modalClose}`} aria-label="Close" onClick={closeForm}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </button>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closeForm} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <form
                   className={`${adminForm}`}
@@ -435,10 +433,8 @@ export default function RolesPage() {
                     </label>
                   </fieldset>
                   <div className={`${formActions}`}>
-                    <Button type="button" variant="secondary" onClick={closeForm}>
-                      {formLocked ? 'Close' : 'Cancel'}
-                    </Button>
-                    {!formLocked && (selected ? canEdit : canCreate) ? <Button type="submit">Save</Button> : null}
+                    <PrimaryButton type="button" variant="outline" onClick={closeForm} label={formLocked ? 'Close' : 'Cancel'} />
+                    {!formLocked && (selected ? canEdit : canCreate) ? <PrimaryButton type="submit" label="Save" /> : null}
                   </div>
                 </form>
               </div>
@@ -459,9 +455,7 @@ export default function RolesPage() {
               >
                 <div className={`${modalHeader}`}>
                   <h3 id="permission-modal-title">Permissions · {selected.name}</h3>
-                  <button type="button" className={`${modalClose}`} aria-label="Close" onClick={closePermissions}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </button>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closePermissions} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <div className={`${matrix} ${matrixModal}`}>
                   <FormInput.Search
@@ -476,8 +470,7 @@ export default function RolesPage() {
                       <div className={`${matrixActions}`}>
                         {items.map((item) => (
                           <label key={item.id}>
-                            <input
-                              type="checkbox"
+                            <FormCheckbox
                               checked={checked.includes(item.id)}
                               onChange={(event) => {
                                 setChecked((current) =>
@@ -486,18 +479,17 @@ export default function RolesPage() {
                                     : current.filter((id) => id !== item.id),
                                 )
                               }}
-                            />
-                            {item.action}
+                            >
+                              {item.action}
+                            </FormCheckbox>
                           </label>
                         ))}
                       </div>
                     </div>
                   ))}
                   <div className={`${formActions}`}>
-                    <Button type="button" variant="secondary" onClick={closePermissions}>
-                      Cancel
-                    </Button>
-                    {canConfigure ? <Button onClick={() => void savePermissions()}>Save permissions</Button> : null}
+                    <PrimaryButton type="button" variant="outline" onClick={closePermissions} label="Cancel" />
+                    {canConfigure ? <PrimaryButton onClick={() => void savePermissions()} label="Save permissions" /> : null}
                   </div>
                 </div>
               </div>

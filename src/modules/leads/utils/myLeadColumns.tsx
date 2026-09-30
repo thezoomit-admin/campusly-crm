@@ -1,5 +1,5 @@
 import type { ColumnsType } from 'antd/es/table'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import type { MyLeadRow } from '../types'
 import { countryFlag, emptyLeadValue, formatLeadCreatedOn, leadAvatarTone } from './leadList'
 import { leadInitials, priorityBadgeClass, stageBadgeClass } from './leadDetails'
@@ -31,16 +31,13 @@ export function getMyLeadColumns({ sort, order, onView }: MyLeadColumnOptions): 
       key: 'code',
       width: 120,
       render: (value: string, row) => (
-        <button
+        <PrimaryButton
           type="button"
           className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold text-[#0f9d8e] hover:underline"
           onClick={(event) => {
             event.stopPropagation()
             onView(row)
-          }}
-        >
-          {emptyLeadValue(value)}
-        </button>
+          }} label={emptyLeadValue(value)} />
       ),
     },
     {
@@ -153,9 +150,7 @@ export function getMyLeadColumns({ sort, order, onView }: MyLeadColumnOptions): 
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <Button type="button" size="sm" onClick={() => onView(row)}>
-            Open Lead Details
-          </Button>
+          <PrimaryButton type="button" size="sm" onClick={() => onView(row)} label="Open Lead Details" />
         </div>
       ),
     },

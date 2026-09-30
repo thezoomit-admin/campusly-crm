@@ -1,4 +1,5 @@
-import { Button, Input, Select } from 'antd'
+import { Button } from 'antd'
+import { FormInput, FormSelect } from '@/components/common/Forms'
 import { DataTable } from '@/components/common/Tables'
 import type { CommunicationEvent } from '../types'
 import { communicationColumns } from '../utils/communicationColumns'
@@ -89,14 +90,14 @@ export function CommunicationFilters({
 }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Input.Search
+      <FormInput.Search
         allowClear
         placeholder="Search sender, lead, campaign…"
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
         className="min-w-[220px] max-w-sm flex-1"
       />
-      <Select
+      <FormSelect
         allowClear
         placeholder="Channel"
         className="min-w-[160px]"
@@ -110,7 +111,7 @@ export function CommunicationFilters({
           { value: 'META_INSTAGRAM', label: 'Instagram' },
         ]}
       />
-      <Select
+      <FormSelect
         allowClear
         placeholder="Status"
         className="min-w-[140px]"

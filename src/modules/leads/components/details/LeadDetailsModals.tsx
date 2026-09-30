@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { DatePicker, Modal, Switch } from 'antd'
+import { Modal } from 'antd'
 import dayjs from 'dayjs'
-import { Button } from '@/components/ui'
-import { FormInput, FormSelect, FormTextArea, InputError } from '@/components/common/Forms'
+import { PrimaryButton } from '@/components/ui'
+import { FormDatePicker, FormInput, FormSelect, FormSwitch, FormTextArea, InputError } from '@/components/common/Forms'
 import { AntModal } from '@/components/common/Modals'
 import { useListLeadAssigneesQuery } from '../../api/leadsApi'
 import type { MasterOption } from '../../hooks/useLeadMasterOptions'
@@ -56,7 +56,7 @@ export function FollowUpModal({
         </label>
         <label className="grid gap-1.5 text-sm">
           <span>Due date</span>
-          <DatePicker
+          <FormDatePicker
             showTime
             className="w-full"
             value={dueAt ? dayjs(dueAt) : null}
@@ -68,12 +68,8 @@ export function FollowUpModal({
           <FormTextArea rows={3} value={notes} placeholder="Add context for this follow-up" onChange={(event) => setNotes(event.target.value)} />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" loading={saving} onClick={() => void handleSubmit()}>
-            Save follow-up
-          </Button>
+          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+          <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()} label="Save follow-up" />
         </div>
       </div>
     </AntModal>
@@ -220,13 +216,13 @@ export function AddActivityModal({
         </label>
         <div className="flex items-center justify-between gap-3 rounded-lg border border-[#e7eef5] px-3 py-2.5 dark:border-border">
           <span className="text-sm text-[#17324f] dark:text-text">Schedule Next Follow-up</span>
-          <Switch checked={createNext} onChange={setCreateNext} />
+          <FormSwitch checked={createNext} onChange={setCreateNext} />
         </div>
         {createNext ? (
           <div className="grid gap-3 min-[481px]:grid-cols-2">
             <label className="grid gap-1.5 text-sm min-[481px]:col-span-2">
               <span>Next Follow-up Date & Time</span>
-              <DatePicker
+              <FormDatePicker
                 showTime
                 className="w-full"
                 format="DD MMM YYYY hh:mm A"
@@ -249,12 +245,8 @@ export function AddActivityModal({
           </div>
         ) : null}
         <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" loading={saving} onClick={() => void handleSubmit()}>
-            {createNext ? 'Complete & Schedule Next Follow-up' : 'Save activity'}
-          </Button>
+          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+          <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()} label={createNext ? 'Complete & Schedule Next Follow-up' : 'Save activity'} />
         </div>
       </div>
     </AntModal>
@@ -318,12 +310,8 @@ export function QualifyLeadModal({
         ) : null}
       </div>
       <div className="mt-4 flex justify-end gap-2">
-        <Button type="button" variant="secondary" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button type="button" loading={saving} onClick={() => void onSubmit()}>
-          Save qualification
-        </Button>
+        <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+        <PrimaryButton type="button" loading={saving} onClick={() => void onSubmit()} label="Save qualification" />
       </div>
     </AntModal>
   )
@@ -405,12 +393,8 @@ export function AssignLeadModal({
           />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="button" loading={saving} disabled={!ownerId} onClick={() => void handleSubmit()}>
-            {currentOwnerName ? 'Reassign Lead' : 'Assign Lead'}
-          </Button>
+          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+          <PrimaryButton type="button" loading={saving} disabled={!ownerId} onClick={() => void handleSubmit()} label={currentOwnerName ? 'Reassign Lead' : 'Assign Lead'} />
         </div>
       </div>
     </AntModal>
@@ -574,10 +558,8 @@ export function ChangeStatusModal({
           </label>
         ) : null}
         <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={requestClose}>
-            Cancel
-          </Button>
-          <Button
+          <PrimaryButton type="button" variant="outline" onClick={requestClose} label="Cancel" />
+          <PrimaryButton
             type="button"
             loading={saving}
             onClick={() =>
@@ -588,10 +570,7 @@ export function ChangeStatusModal({
                 override: needsOverride,
                 overrideReason,
               })
-            }
-          >
-            Update Status
-          </Button>
+            } label="Update Status" />
         </div>
       </div>
     </AntModal>
@@ -722,16 +701,11 @@ export function CloseLeadModal({
           {errors.remarks ? <InputError>{errors.remarks}</InputError> : null}
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={requestClose}>
-            Cancel
-          </Button>
-          <Button
+          <PrimaryButton type="button" variant="outline" onClick={requestClose} label="Cancel" />
+          <PrimaryButton
             type="button"
             loading={saving}
-            onClick={() => void onSubmit({ statusCode, reasonCode, remarks })}
-          >
-            Confirm
-          </Button>
+            onClick={() => void onSubmit({ statusCode, reasonCode, remarks })} label="Confirm" />
         </div>
       </div>
     </AntModal>
@@ -819,7 +793,7 @@ export function ReopenLeadModal({
         </label>
         <label className="grid gap-1.5 text-sm">
           <span>New Follow-up Date *</span>
-          <DatePicker
+          <FormDatePicker
             showTime
             className="w-full"
             format="DD MMM YYYY hh:mm A"
@@ -844,16 +818,11 @@ export function ReopenLeadModal({
           ) : null}
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={requestClose}>
-            Cancel
-          </Button>
-          <Button
+          <PrimaryButton type="button" variant="outline" onClick={requestClose} label="Cancel" />
+          <PrimaryButton
             type="button"
             loading={saving}
-            onClick={() => void onSubmit({ reopenReason, followUpDate, ownerId })}
-          >
-            Reopen
-          </Button>
+            onClick={() => void onSubmit({ reopenReason, followUpDate, ownerId })} label="Reopen" />
         </div>
       </div>
     </AntModal>
