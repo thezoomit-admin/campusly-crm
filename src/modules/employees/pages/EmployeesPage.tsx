@@ -387,7 +387,7 @@ export default function EmployeesPage() {
         title="Employees"
         subtitle="Manage employee records, assignments, and employment status."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Employees' }]}
-        extra={canCreate ? <PrimaryButton onClick={openCreate}>Create Employee</PrimaryButton> : undefined}
+        extra={canCreate ? <PrimaryButton onClick={openCreate} label="Create Employee" /> : undefined}
       />
 
       <section className={`${adminFilters} ${adminFiltersEmployees}`}>
@@ -472,17 +472,13 @@ export default function EmployeesPage() {
           }))}
           onChange={(value) => setFilters((current) => ({ ...current, reportingManagerId: asSelectString(value) }))}
         />
-        <PrimaryButton variant="outline" disabled={!hasActiveFilters} onClick={clearFilters}>
-          Clear filters
-        </PrimaryButton>
+        <PrimaryButton variant="outline" disabled={!hasActiveFilters} onClick={clearFilters} label="Clear filters" />
       </section>
 
       {error ? (
         <p className={`${adminBanner}`}>
           {error}{' '}
-          <PrimaryButton type="button" className={`${linkBtn}`} onClick={() => void loadList()}>
-            Retry
-          </PrimaryButton>
+          <PrimaryButton type="button" className={`${linkBtn}`} onClick={() => void loadList()} label="Retry" />
         </p>
       ) : null}
 
@@ -501,15 +497,11 @@ export default function EmployeesPage() {
                     : 'Create an employee record to start managing staff in the CRM.'}
               </p>
               {error ? (
-                <PrimaryButton variant="outline" onClick={() => void loadList()}>
-                  Retry
-                </PrimaryButton>
+                <PrimaryButton variant="outline" onClick={() => void loadList()} label="Retry" />
               ) : hasActiveFilters ? (
-                <PrimaryButton variant="outline" onClick={clearFilters}>
-                  Clear filters
-                </PrimaryButton>
+                <PrimaryButton variant="outline" onClick={clearFilters} label="Clear filters" />
               ) : canCreate ? (
-                <PrimaryButton onClick={openCreate}>Create Employee</PrimaryButton>
+                <PrimaryButton onClick={openCreate} label="Create Employee" />
               ) : null}
             </div>
           ) : (
@@ -699,12 +691,8 @@ export default function EmployeesPage() {
                   ) : null}
                 </p>
                 <div className={`${formActions}`}>
-                  <PrimaryButton loading={statusSaving} disabled={!statusPrompt.nextStatusId} onClick={() => void changeStatus()}>
-                    Change Status
-                  </PrimaryButton>
-                  <PrimaryButton type="button" variant="outline" disabled={statusSaving} onClick={() => setStatusPrompt(null)}>
-                    Cancel
-                  </PrimaryButton>
+                  <PrimaryButton loading={statusSaving} disabled={!statusPrompt.nextStatusId} onClick={() => void changeStatus()} label="Change Status" />
+                  <PrimaryButton type="button" variant="outline" disabled={statusSaving} onClick={() => setStatusPrompt(null)} label="Cancel" />
                 </div>
               </div>
             </div>,

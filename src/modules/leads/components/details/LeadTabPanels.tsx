@@ -100,10 +100,7 @@ export function LeadActivitiesPanel({
           <PrimaryButton
             type="button"
             className="inline-flex cursor-pointer items-center gap-1 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[0.82rem] font-medium text-primary hover:bg-hover-bg"
-            onClick={onAdd}
-          >
-            Add
-          </PrimaryButton>
+            onClick={onAdd} label="Add" />
         ) : null
       }
     >
@@ -160,9 +157,7 @@ export function LeadNotesPanel({
       />
       {canEdit ? (
         <div className="mt-3 flex justify-end">
-          <PrimaryButton type="button" loading={saving} onClick={onSave}>
-            Save notes
-          </PrimaryButton>
+          <PrimaryButton type="button" loading={saving} onClick={onSave} label="Save notes" />
         </div>
       ) : null}
     </LeadSectionCard>

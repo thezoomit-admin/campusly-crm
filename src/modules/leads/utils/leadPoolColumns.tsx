@@ -25,10 +25,7 @@ export function getLeadPoolColumns({ now, onView, onAssign }: LeadPoolColumnOpti
           onClick={(event) => {
             event.stopPropagation()
             onView(row)
-          }}
-        >
-          {emptyLeadValue(value)}
-        </PrimaryButton>
+          }} label={emptyLeadValue(value)} />
       ),
     },
     {
@@ -110,9 +107,7 @@ export function getLeadPoolColumns({ now, onView, onAssign }: LeadPoolColumnOpti
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <PrimaryButton type="button" size="sm" onClick={() => onAssign(row)}>
-            Assign Lead
-          </PrimaryButton>
+          <PrimaryButton type="button" size="sm" onClick={() => onAssign(row)} label="Assign Lead" />
         </div>
       ),
     },

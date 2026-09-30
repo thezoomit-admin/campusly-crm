@@ -863,7 +863,7 @@ export default function MasterDataItemsPage() {
           { title: 'Master Data', path: '/master-data' },
           { title: navGroup.name },
         ]}
-        extra={canCreate ? <PrimaryButton onClick={openCreate}>Add New</PrimaryButton> : undefined}
+        extra={canCreate ? <PrimaryButton onClick={openCreate} label="Add New" /> : undefined}
       />
 
       <nav className="flex max-w-full gap-1 overflow-x-auto border-b border-border" aria-label="Master data categories">
@@ -965,17 +965,11 @@ export default function MasterDataItemsPage() {
                   }
                 }}
               />
-              <PrimaryButton variant="outline" onClick={() => fileRef.current?.click()}>
-                Bulk Import
-              </PrimaryButton>
+              <PrimaryButton variant="outline" onClick={() => fileRef.current?.click()} label="Bulk Import" />
             </>
           ) : null}
-          <PrimaryButton variant="outline" onClick={() => void handleExport('csv')}>
-            Export CSV
-          </PrimaryButton>
-          <PrimaryButton variant="outline" onClick={() => void handleExport('xlsx')}>
-            Export Excel
-          </PrimaryButton>
+          <PrimaryButton variant="outline" onClick={() => void handleExport('csv')} label="Export CSV" />
+          <PrimaryButton variant="outline" onClick={() => void handleExport('xlsx')} label="Export Excel" />
         </div>
       </div>
 
@@ -1223,13 +1217,9 @@ export default function MasterDataItemsPage() {
                     </p>
                   ) : null}
                   <div className={`${formActions}`}>
-                    <PrimaryButton type="button" variant="outline" onClick={() => setFormOpen(false)} disabled={formSaving}>
-                      Cancel
-                    </PrimaryButton>
+                    <PrimaryButton type="button" variant="outline" onClick={() => setFormOpen(false)} disabled={formSaving} label="Cancel" />
                     {(selected ? canEdit : canCreate) ? (
-                      <PrimaryButton type="submit" loading={formSaving}>
-                        Save
-                      </PrimaryButton>
+                      <PrimaryButton type="submit" loading={formSaving} label="Save" />
                     ) : null}
                   </div>
                 </form>
@@ -1283,9 +1273,7 @@ export default function MasterDataItemsPage() {
                               <PrimaryButton
                                 type="button"
                                 className={`${mdHistoryEvent} ${active ? mdHistoryEventActive : ''}`}
-                                onClick={() => setHistoryEntryId(entry.id)}
-                              >
-                                <span
+                                onClick={() => setHistoryEntryId(entry.id)} label={<><span
                                   className={`mt-1 inline-flex size-2.5 shrink-0 items-center justify-center rounded-full ${historyKindTone[kind] || 'bg-[#94a3b8]'}`}
                                   aria-hidden
                                 >
@@ -1301,8 +1289,7 @@ export default function MasterDataItemsPage() {
                                     {entry.user?.fullName || 'System'}
                                     <em>{entry.user?.role || (entry.user ? 'User' : 'System')}</em>
                                   </span>
-                                </span>
-                              </PrimaryButton>
+                                </span></>} />
                             </li>
                           )
                         })}
@@ -1357,9 +1344,7 @@ export default function MasterDataItemsPage() {
                   </div>
                 )}
                 <div className="flex justify-end gap-2 border-t border-border px-5 py-3.5">
-                  <PrimaryButton type="button" variant="outline" onClick={closeHistory}>
-                    Close
-                  </PrimaryButton>
+                  <PrimaryButton type="button" variant="outline" onClick={closeHistory} label="Close" />
                 </div>
               </div>
             </div>,
@@ -1401,12 +1386,8 @@ export default function MasterDataItemsPage() {
                   undone.
                 </p>
                 <div className={`${formActions}`}>
-                  <PrimaryButton loading={deleteSaving} className="ui-btn-danger" onClick={() => void confirmDelete()}>
-                    Delete
-                  </PrimaryButton>
-                  <PrimaryButton type="button" variant="outline" disabled={deleteSaving} onClick={() => setDeleteTarget(null)}>
-                    Cancel
-                  </PrimaryButton>
+                  <PrimaryButton loading={deleteSaving} className="ui-btn-danger" onClick={() => void confirmDelete()} label="Delete" />
+                  <PrimaryButton type="button" variant="outline" disabled={deleteSaving} onClick={() => setDeleteTarget(null)} label="Cancel" />
                 </div>
               </div>
             </div>,
@@ -1438,11 +1419,9 @@ export default function MasterDataItemsPage() {
                 ) : null}
                 <div className={`${formActions}`}>
                   {importResult.errors.length > 0 ? (
-                    <PrimaryButton variant="outline" onClick={downloadErrors}>
-                      Export errors
-                    </PrimaryButton>
+                    <PrimaryButton variant="outline" onClick={downloadErrors} label="Export errors" />
                   ) : null}
-                  <PrimaryButton onClick={() => setImportOpen(false)}>Close</PrimaryButton>
+                  <PrimaryButton onClick={() => setImportOpen(false)} label="Close" />
                 </div>
               </div>
             </div>,

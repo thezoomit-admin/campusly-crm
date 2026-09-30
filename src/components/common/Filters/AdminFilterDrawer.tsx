@@ -222,15 +222,12 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
         variant="outline"
         icon={<HugeIcon icon={FilterIcon} size={16} />}
         onClick={openDrawer}
-        className={`relative ${buttonClassName}`.trim()}
-      >
-        {buttonLabel}
+        className={`relative ${buttonClassName}`.trim()} label={<>{buttonLabel}
         {resolvedActiveCount > 0 ? (
           <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-on-primary">
             {resolvedActiveCount}
           </span>
-        ) : null}
-      </PrimaryButton>
+        ) : null}</>} />
 
       {isOpen ? (
         <div className="fixed inset-0 z-1000">
@@ -274,17 +271,11 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
               <PrimaryButton
                 type="button"
                 onClick={() => setDraftValue(defaultValue)}
-                className="h-11 flex-1 rounded-lg border border-header-border px-4 text-sm font-medium text-text-strong transition-colors hover:bg-surface"
-              >
-                Reset
-              </PrimaryButton>
+                className="h-11 flex-1 rounded-lg border border-header-border px-4 text-sm font-medium text-text-strong transition-colors hover:bg-surface" label="Reset" />
               <PrimaryButton
                 type="button"
                 onClick={applyDraft}
-                className="h-11 flex-1 rounded-lg bg-primary px-4 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-hover"
-              >
-                Show results
-              </PrimaryButton>
+                className="h-11 flex-1 rounded-lg bg-primary px-4 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-hover" label="Show results" />
             </div>
           </aside>
         </div>

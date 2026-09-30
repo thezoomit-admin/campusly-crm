@@ -380,17 +380,13 @@ export default function EmployeeProfilePage() {
             { title: 'Profile' },
           ]}
           extra={
-            <PrimaryButton variant="outline" onClick={() => navigate('/employees')}>
-              Back to Employees
-            </PrimaryButton>
+            <PrimaryButton variant="outline" onClick={() => navigate('/employees')} label="Back to Employees" />
           }
         />
         <div className={`${adminEmpty}`}>
           <strong>Employee profile unavailable</strong>
           <p>{error || 'This employee could not be found.'}</p>
-          <PrimaryButton variant="outline" onClick={() => navigate('/employees')}>
-            Back to Employees
-          </PrimaryButton>
+          <PrimaryButton variant="outline" onClick={() => navigate('/employees')} label="Back to Employees" />
         </div>
       </div>
     )
@@ -417,21 +413,15 @@ export default function EmployeeProfilePage() {
         extra={
           employee ? (
             <>
-              <PrimaryButton variant="outline" onClick={() => navigate('/employees')}>
-                Back to list
-              </PrimaryButton>
+              <PrimaryButton variant="outline" onClick={() => navigate('/employees')} label="Back to list" />
               {canDocuments ? (
-                <PrimaryButton variant="outline" onClick={() => navigate(`/documents?employeeId=${employee.id}`)}>
-                  Manage documents
-                </PrimaryButton>
+                <PrimaryButton variant="outline" onClick={() => navigate(`/documents?employeeId=${employee.id}`)} label="Manage documents" />
               ) : null}
               {canEdit ? (
-                <PrimaryButton onClick={() => navigate(`/employees/${employee.id}/edit`)}>
-                  <span className="ui-btn-icon">
+                <PrimaryButton onClick={() => navigate(`/employees/${employee.id}/edit`)} label={<><span className="ui-btn-icon">
                     <HugeiconsIcon icon={PencilEdit02Icon} size={16} color="currentColor" strokeWidth={1.6} />
                   </span>
-                  Edit profile
-                </PrimaryButton>
+                  Edit profile</>} />
               ) : null}
             </>
           ) : undefined
@@ -551,11 +541,8 @@ export default function EmployeeProfilePage() {
                       key={section.id}
                       type="button"
                       className={activeSection === section.id ? 'bg-nav-active-bg text-nav-active' : 'hover:bg-hover-bg'}
-                      onClick={() => scrollToSection(section.id)}
-                    >
-                      <HugeiconsIcon icon={section.icon} size={16} color="currentColor" strokeWidth={1.7} />
-                      <span>{section.label}</span>
-                    </PrimaryButton>
+                      onClick={() => scrollToSection(section.id)} label={<><HugeiconsIcon icon={section.icon} size={16} color="currentColor" strokeWidth={1.7} />
+                      <span>{section.label}</span></>} />
                   ))}
                 </nav>
 

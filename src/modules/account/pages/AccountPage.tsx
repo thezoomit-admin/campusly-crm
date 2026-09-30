@@ -61,9 +61,7 @@ export default function AccountPage() {
           />
         </label>
         {message ? <p className={`${adminBanner}`}>{message}</p> : null}
-        <PrimaryButton type="submit" disabled={isLoading}>
-          {isLoading ? 'Saving…' : 'Change password'}
-        </PrimaryButton>
+        <PrimaryButton type="submit" disabled={isLoading} label={isLoading ? 'Saving…' : 'Change password'} />
       </form>
     </div>
   )

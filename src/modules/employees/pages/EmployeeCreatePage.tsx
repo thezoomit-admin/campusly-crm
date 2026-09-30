@@ -865,13 +865,9 @@ export default function EmployeeCreatePage() {
         extra={
           <>
             {isEdit && id ? (
-              <PrimaryButton variant="outline" onClick={() => navigate(`/employees/${id}`)}>
-                View profile
-              </PrimaryButton>
+              <PrimaryButton variant="outline" onClick={() => navigate(`/employees/${id}`)} label="View profile" />
             ) : null}
-            <PrimaryButton variant="outline" onClick={() => navigate('/employees')}>
-              Back to Employees
-            </PrimaryButton>
+            <PrimaryButton variant="outline" onClick={() => navigate('/employees')} label="Back to Employees" />
           </>
         }
       />
@@ -1386,12 +1382,8 @@ export default function EmployeeCreatePage() {
             </div>
           </dl>
           <div className={`${formActions} ${adminFormSpan}`}>
-            <PrimaryButton type="submit" loading={saving} disabled={saving || !options || loading || (isEdit && !employee)}>
-              {isEdit ? 'Save Employee' : 'Create Employee'}
-            </PrimaryButton>
-            <PrimaryButton type="button" variant="outline" disabled={saving} onClick={() => navigate('/employees')}>
-              Cancel
-            </PrimaryButton>
+            <PrimaryButton type="submit" loading={saving} disabled={saving || !options || loading || (isEdit && !employee)} label={isEdit ? 'Save Employee' : 'Create Employee'} />
+            <PrimaryButton type="button" variant="outline" disabled={saving} onClick={() => navigate('/employees')} label="Cancel" />
           </div>
         </FormSection>
         </form>
@@ -1472,12 +1464,8 @@ export default function EmployeeCreatePage() {
                   action cannot be undone.
                 </p>
                 <div className={`${formActions}`}>
-                  <PrimaryButton loading={deletingDocument} className="ui-btn-danger" onClick={() => void confirmDeleteDocument()}>
-                    Delete
-                  </PrimaryButton>
-                  <PrimaryButton type="button" variant="outline" disabled={deletingDocument} onClick={() => setDeleteTarget(null)}>
-                    Cancel
-                  </PrimaryButton>
+                  <PrimaryButton loading={deletingDocument} className="ui-btn-danger" onClick={() => void confirmDeleteDocument()} label="Delete" />
+                  <PrimaryButton type="button" variant="outline" disabled={deletingDocument} onClick={() => setDeleteTarget(null)} label="Cancel" />
                 </div>
               </div>
             </div>,

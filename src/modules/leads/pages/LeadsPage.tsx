@@ -63,15 +63,10 @@ export default function LeadsPage() {
               <PrimaryButton
                 variant="outline"
                 icon={<HugeiconsIcon icon={Upload04Icon} size={16} />}
-                onClick={() => toast.info('CSV import will be available in a later update.')}
-              >
-                Import
-              </PrimaryButton>
+                onClick={() => toast.info('CSV import will be available in a later update.')} label="Import" />
             ) : null}
             {canCreate ? (
-              <PrimaryButton icon={<HugeiconsIcon icon={Add01Icon} size={16} />} onClick={() => navigate('/leads/new')}>
-                Add New Lead
-              </PrimaryButton>
+              <PrimaryButton icon={<HugeiconsIcon icon={Add01Icon} size={16} />} onClick={() => navigate('/leads/new')} label="Add New Lead" />
             ) : null}
           </>
         }

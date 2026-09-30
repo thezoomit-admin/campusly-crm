@@ -37,10 +37,7 @@ export function getMyLeadColumns({ sort, order, onView }: MyLeadColumnOptions): 
           onClick={(event) => {
             event.stopPropagation()
             onView(row)
-          }}
-        >
-          {emptyLeadValue(value)}
-        </PrimaryButton>
+          }} label={emptyLeadValue(value)} />
       ),
     },
     {
@@ -153,9 +150,7 @@ export function getMyLeadColumns({ sort, order, onView }: MyLeadColumnOptions): 
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <PrimaryButton type="button" size="sm" onClick={() => onView(row)}>
-            Open Lead Details
-          </PrimaryButton>
+          <PrimaryButton type="button" size="sm" onClick={() => onView(row)} label="Open Lead Details" />
         </div>
       ),
     },

@@ -115,9 +115,7 @@ export default function LeadWorkspaceHeader({
 
         <div className="flex shrink-0 flex-wrap items-center gap-2 xl:flex-col xl:items-end">
           {canReopen ? (
-            <PrimaryButton type="button" size="sm" onClick={onReopenLead}>
-              Reopen Lead
-            </PrimaryButton>
+            <PrimaryButton type="button" size="sm" onClick={onReopenLead} label="Reopen Lead" />
           ) : null}
           {canChangeStatus ? (
             <PrimaryButton
@@ -125,15 +123,10 @@ export default function LeadWorkspaceHeader({
               size="sm"
               variant={canReopen ? 'outline' : 'primary'}
               icon={<HugeiconsIcon icon={CheckmarkCircle02Icon} size={15} />}
-              onClick={onChangeStatus}
-            >
-              Change Status
-            </PrimaryButton>
+              onClick={onChangeStatus} label="Change Status" />
           ) : null}
           {canClose ? (
-            <PrimaryButton type="button" size="sm" variant="outline" onClick={onCloseLead}>
-              Close Lead
-            </PrimaryButton>
+            <PrimaryButton type="button" size="sm" variant="outline" onClick={onCloseLead} label="Close Lead" />
           ) : null}
           {canEdit ? (
             <PrimaryButton
@@ -141,10 +134,7 @@ export default function LeadWorkspaceHeader({
               size="sm"
               variant={canChangeStatus || canReopen || canClose ? 'outline' : 'primary'}
               icon={<HugeiconsIcon icon={PencilEdit02Icon} size={15} />}
-              onClick={onEdit}
-            >
-              Edit
-            </PrimaryButton>
+              onClick={onEdit} label="Edit" />
           ) : null}
           {canAddActivity ? (
             <PrimaryButton
@@ -152,10 +142,7 @@ export default function LeadWorkspaceHeader({
               variant="outline"
               size="sm"
               icon={<HugeiconsIcon icon={Add01Icon} size={15} />}
-              onClick={onAddActivity}
-            >
-              Add Activity
-            </PrimaryButton>
+              onClick={onAddActivity} label="Add Activity" />
           ) : null}
         </div>
       </div>
