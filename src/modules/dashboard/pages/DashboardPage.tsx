@@ -363,12 +363,12 @@ function CalendarCard({
   >
 
   return (
-    <article className={cx(dashCard, 'min-w-0')}>
+    <article className={cx(dashCard, 'flex h-full min-h-0 min-w-0 flex-col')}>
       <div className={cardHead}>
         <h3 className="m-0 text-base">Calendar</h3>
         <strong>{title}</strong>
       </div>
-      <div className="grid grid-cols-7 gap-1.5 text-center">
+      <div className="grid min-h-0 flex-1 grid-cols-7 content-start gap-1.5 text-center">
         {WEEKDAYS.map((day) => (
           <span key={day} className="text-[0.75rem] text-text-faint font-semibold">
             {day}
@@ -409,7 +409,7 @@ function CalendarCard({
           )
         })}
       </div>
-      <div className="flex flex-wrap gap-2.5 mt-3 text-text-muted text-[0.72rem]">
+      <div className="mt-auto flex flex-wrap gap-2.5 pt-3 text-text-muted text-[0.72rem]">
         {(
           [
             ['followup', 'Follow-ups'],
@@ -568,16 +568,16 @@ export default function DashboardPage() {
         </article>
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 gap-3 *:min-w-0 md:grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.85fr)]">
-        <article className={cx(dashCard, 'min-w-0')}>
-          <div className={cardHead}>
+      <div className="grid min-w-0 grid-cols-1 items-stretch gap-3 *:min-w-0 md:grid-cols-2 lg:h-[28rem] lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.85fr)] lg:grid-rows-1">
+        <article className={cx(dashCard, 'flex h-full min-h-0 min-w-0 flex-col overflow-hidden')}>
+          <div className={cx(cardHead, 'shrink-0')}>
             <h3 className="m-0 text-base">Recent Leads</h3>
             <PrimaryButton
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
               onClick={() => navigate('/leads')} label="View All" />
           </div>
-          <div className="overflow-x-auto">
+          <div className="min-h-0 flex-1 overflow-auto">
             <table className="w-full min-w-[620px] border-collapse">
               <thead>
                 <tr>
@@ -626,15 +626,15 @@ export default function DashboardPage() {
           </div>
         </article>
 
-        <article className={cx(dashCard, 'min-w-0')}>
-          <div className={cardHead}>
+        <article className={cx(dashCard, 'flex h-full min-h-0 min-w-0 flex-col overflow-hidden')}>
+          <div className={cx(cardHead, 'shrink-0')}>
             <h3 className="m-0 text-base">Today&apos;s Follow-ups</h3>
             <PrimaryButton
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
               onClick={() => navigate('/follow-ups')} label="View All" />
           </div>
-          <div className="mb-3 grid grid-cols-3 gap-2">
+          <div className="mb-3 grid shrink-0 grid-cols-3 gap-2">
             <div
               role="button"
               tabIndex={0}
@@ -681,7 +681,7 @@ export default function DashboardPage() {
               <strong className="mt-1 block text-[1.35rem] text-[#16a34a]">{followUpMetrics.completedToday}</strong>
             </div>
           </div>
-          <div className="mb-3 grid grid-cols-2 gap-2">
+          <div className="mb-3 grid shrink-0 grid-cols-2 gap-2">
             <div className="rounded-[14px] bg-[#f8fafc] px-3 py-2.5 dark:bg-hover-bg">
               <span className="block text-[0.72rem] text-text-muted">Completion Rate (30d)</span>
               <strong className="mt-0.5 block text-[1.1rem] text-text">{followUpMetrics.completionRate ?? 0}%</strong>
@@ -692,11 +692,11 @@ export default function DashboardPage() {
             </div>
           </div>
           {followUpMetrics.overdue > 0 ? (
-            <p className="m-0 mb-3 rounded-xl bg-[#fff5f7] px-3 py-2 text-[0.82rem] font-medium text-[#e11d48] dark:bg-rose-500/10">
+            <p className="m-0 mb-3 shrink-0 rounded-xl bg-[#fff5f7] px-3 py-2 text-[0.82rem] font-medium text-[#e11d48] dark:bg-rose-500/10">
               ⚠ Overdue Follow-ups: {followUpMetrics.overdue}
             </p>
           ) : null}
-          <ul className="list-none m-0 p-0 grid gap-2.5">
+          <ul className="m-0 grid min-h-0 flex-1 list-none gap-2.5 overflow-y-auto p-0">
             {upcomingFollowUps.length === 0 ? (
               <li className="py-8 text-center text-[0.85rem] text-text-faint">No upcoming follow-ups.</li>
             ) : null}
