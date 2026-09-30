@@ -45,11 +45,11 @@ import {
   UserCheck01Icon,
   ViewIcon,
 } from '@hugeicons/core-free-icons'
-import { DatePicker, Spin, Switch } from 'antd'
+import { Spin } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
-import { Button } from '@/components/ui'
-import { FormInput, FormSelect } from '@/components/common/Forms'
+import { PrimaryButton } from '@/components/ui'
+import { FormDatePicker, FormInput, FormSelect, FormSwitch } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
@@ -387,7 +387,7 @@ export default function EmployeesPage() {
         title="Employees"
         subtitle="Manage employee records, assignments, and employment status."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Employees' }]}
-        extra={canCreate ? <Button onClick={openCreate}>Create Employee</Button> : undefined}
+        extra={canCreate ? <PrimaryButton onClick={openCreate}>Create Employee</PrimaryButton> : undefined}
       />
 
       <section className={`${adminFilters} ${adminFiltersEmployees}`}>
@@ -446,7 +446,7 @@ export default function EmployeesPage() {
           options={options.employmentStatuses.map((item) => ({ value: item.id, label: item.name }))}
           onChange={(value) => setFilters((current) => ({ ...current, employmentStatusId: asSelectString(value) }))}
         />
-        <DatePicker
+        <FormDatePicker
           allowClear
           placeholder="Joined from"
           aria-label="Joining date from"
@@ -454,7 +454,7 @@ export default function EmployeesPage() {
           disabledDate={(current) => Boolean(filters.joiningTo && current.isAfter(dayjs(filters.joiningTo), 'day'))}
           onChange={(value) => setFilters((current) => ({ ...current, joiningFrom: toDateString(value) }))}
         />
-        <DatePicker
+        <FormDatePicker
           allowClear
           placeholder="Joined to"
           aria-label="Joining date to"
@@ -472,17 +472,17 @@ export default function EmployeesPage() {
           }))}
           onChange={(value) => setFilters((current) => ({ ...current, reportingManagerId: asSelectString(value) }))}
         />
-        <Button variant="secondary" disabled={!hasActiveFilters} onClick={clearFilters}>
+        <PrimaryButton variant="secondary" disabled={!hasActiveFilters} onClick={clearFilters}>
           Clear filters
-        </Button>
+        </PrimaryButton>
       </section>
 
       {error ? (
         <p className={`${adminBanner}`}>
           {error}{' '}
-          <button type="button" className={`${linkBtn}`} onClick={() => void loadList()}>
+          <PrimaryButton type="button" className={`${linkBtn}`} onClick={() => void loadList()}>
             Retry
-          </button>
+          </PrimaryButton>
         </p>
       ) : null}
 
@@ -501,15 +501,15 @@ export default function EmployeesPage() {
                     : 'Create an employee record to start managing staff in the CRM.'}
               </p>
               {error ? (
-                <Button variant="secondary" onClick={() => void loadList()}>
+                <PrimaryButton variant="secondary" onClick={() => void loadList()}>
                   Retry
-                </Button>
+                </PrimaryButton>
               ) : hasActiveFilters ? (
-                <Button variant="secondary" onClick={clearFilters}>
+                <PrimaryButton variant="secondary" onClick={clearFilters}>
                   Clear filters
-                </Button>
+                </PrimaryButton>
               ) : canCreate ? (
-                <Button onClick={openCreate}>Create Employee</Button>
+                <PrimaryButton onClick={openCreate}>Create Employee</PrimaryButton>
               ) : null}
             </div>
           ) : (
@@ -565,7 +565,7 @@ export default function EmployeesPage() {
                     </td>
                     <td>{formatJoiningDate(employee.joiningDate)}</td>
                     <td onClick={(event) => event.stopPropagation()}>
-                      <Switch
+                      <FormSwitch
                         checked={employee.employmentStatus?.code === 'ACTIVE'}
                         checkedChildren="Active"
                         unCheckedChildren={
@@ -664,7 +664,7 @@ export default function EmployeesPage() {
               >
                 <div className={`${modalHeader}`}>
                   <h3 id="employee-status-title">Change Status</h3>
-                  <button
+                  <PrimaryButton
                     type="button"
                     className={`${modalClose}`}
                     aria-label="Close"
@@ -672,7 +672,7 @@ export default function EmployeesPage() {
                     onClick={() => setStatusPrompt(null)}
                   >
                     <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </button>
+                  </PrimaryButton>
                 </div>
                 <p className={`${statusConfirmCopy}`}>
                   Update employment status for <strong>{statusPrompt.employee.fullName}</strong>.
@@ -699,12 +699,12 @@ export default function EmployeesPage() {
                   ) : null}
                 </p>
                 <div className={`${formActions}`}>
-                  <Button loading={statusSaving} disabled={!statusPrompt.nextStatusId} onClick={() => void changeStatus()}>
+                  <PrimaryButton loading={statusSaving} disabled={!statusPrompt.nextStatusId} onClick={() => void changeStatus()}>
                     Change Status
-                  </Button>
-                  <Button type="button" variant="secondary" disabled={statusSaving} onClick={() => setStatusPrompt(null)}>
+                  </PrimaryButton>
+                  <PrimaryButton type="button" variant="secondary" disabled={statusSaving} onClick={() => setStatusPrompt(null)}>
                     Cancel
-                  </Button>
+                  </PrimaryButton>
                 </div>
               </div>
             </div>,

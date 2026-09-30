@@ -2,7 +2,7 @@ import { adminPage, formActions } from '../../../styles/admin'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { Spinner } from '@/components/common/Loading'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
@@ -173,11 +173,11 @@ export default function LeadCreatePage() {
         />
         <div className={formActions}>
           <Link to={cancelTo}>
-            <Button type="button" variant="secondary">
+            <PrimaryButton type="button" variant="secondary">
               Cancel
-            </Button>
+            </PrimaryButton>
           </Link>
-          <Button
+          <PrimaryButton
             type="button"
             variant="secondary"
             disabled={!canSave || saving}
@@ -187,10 +187,10 @@ export default function LeadCreatePage() {
             }}
           >
             Save & Add Follow-up
-          </Button>
-          <Button type="submit" disabled={!canSave || saving} loading={saving}>
+          </PrimaryButton>
+          <PrimaryButton type="submit" disabled={!canSave || saving} loading={saving}>
             {isEdit ? 'Save Changes' : 'Save Lead'}
-          </Button>
+          </PrimaryButton>
         </div>
       </form>
 

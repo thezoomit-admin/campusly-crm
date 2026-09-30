@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Button, Form, Input, InputNumber, Modal, Select } from 'antd'
+import { Button, Form, Modal } from 'antd'
 import { useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
+import { FormInput, FormInputNumber, FormSelect, FormTextArea } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { DataTable } from '@/components/common/Tables'
@@ -156,7 +157,7 @@ export default function CampaignsPage() {
 
       <div className={`${adminCard} grid gap-3`}>
         <div className="flex flex-wrap gap-2">
-          <Input.Search
+          <FormInput.Search
             allowClear
             placeholder="Search campaigns…"
             value={search}
@@ -166,7 +167,7 @@ export default function CampaignsPage() {
             }}
             className="min-w-[220px] max-w-sm flex-1"
           />
-          <Select
+          <FormSelect
             allowClear
             placeholder="Status"
             className="min-w-[140px]"
@@ -210,50 +211,37 @@ export default function CampaignsPage() {
         width={560}
       >
         <Form form={form} layout="vertical" className="mt-2">
-          <Form.Item name="name" label="Campaign name" rules={[{ required: true, message: 'Name is required' }]}>
-            <Input placeholder="Spring Intake Meta Ads" />
-          </Form.Item>
+          <FormInput
+            name="name"
+            label="Campaign name"
+            rules={[{ required: true, message: 'Name is required' }]}
+            placeholder="Spring Intake Meta Ads"
+          />
           {!editing ? (
-            <Form.Item name="code" label="Code (optional)">
-              <Input placeholder="Auto-generated if empty" />
-            </Form.Item>
+            <FormInput name="code" label="Code (optional)" placeholder="Auto-generated if empty" />
           ) : null}
-          <Form.Item name="status" label="Status" rules={[{ required: true }]}>
-            <Select options={STATUS_OPTIONS} />
-          </Form.Item>
+          <FormSelect name="status" label="Status" rules={[{ required: true }]} options={STATUS_OPTIONS} />
           <div className="grid gap-0 sm:grid-cols-2 sm:gap-3">
-            <Form.Item name="sourceCode" label="Lead source code">
-              <Input placeholder="META / WEBSITE / …" />
-            </Form.Item>
-            <Form.Item name="channel" label="Channel">
-              <Select allowClear options={CHANNEL_OPTIONS} placeholder="Select channel" />
-            </Form.Item>
+            <FormInput name="sourceCode" label="Lead source code" placeholder="META / WEBSITE / …" />
+            <FormSelect
+              name="channel"
+              label="Channel"
+              allowClear
+              options={CHANNEL_OPTIONS}
+              placeholder="Select channel"
+            />
           </div>
           <div className="grid gap-0 sm:grid-cols-2 sm:gap-3">
-            <Form.Item name="startDate" label="Start date">
-              <Input type="date" />
-            </Form.Item>
-            <Form.Item name="endDate" label="End date">
-              <Input type="date" />
-            </Form.Item>
+            <FormInput name="startDate" label="Start date" type="date" />
+            <FormInput name="endDate" label="End date" type="date" />
           </div>
-          <Form.Item name="budget" label="Budget">
-            <InputNumber className="!w-full" min={0} placeholder="Optional" />
-          </Form.Item>
+          <FormInputNumber name="budget" label="Budget" min={0} placeholder="Optional" />
           <div className="grid gap-0 sm:grid-cols-3 sm:gap-3">
-            <Form.Item name="utmSource" label="UTM source">
-              <Input />
-            </Form.Item>
-            <Form.Item name="utmMedium" label="UTM medium">
-              <Input />
-            </Form.Item>
-            <Form.Item name="utmCampaign" label="UTM campaign">
-              <Input />
-            </Form.Item>
+            <FormInput name="utmSource" label="UTM source" />
+            <FormInput name="utmMedium" label="UTM medium" />
+            <FormInput name="utmCampaign" label="UTM campaign" />
           </div>
-          <Form.Item name="description" label="Description">
-            <Input.TextArea rows={3} />
-          </Form.Item>
+          <FormTextArea name="description" label="Description" rows={3} />
         </Form>
       </Modal>
     </div>

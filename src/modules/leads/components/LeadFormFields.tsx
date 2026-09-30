@@ -8,9 +8,8 @@ import {
   formFieldInvalid,
 } from '../../../styles/admin'
 import type { ReactNode } from 'react'
-import { DatePicker, Switch } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
-import { FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
+import { FormDatePicker, FormInput, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
 import type { LeadFormState } from '../types'
 import { useLeadMasterOptions } from '../hooks/useLeadMasterOptions'
 
@@ -145,7 +144,7 @@ export default function LeadFormFields({
         </Field>
         <Field id="whatsappSameAsPhone" label="WhatsApp same as phone">
           <div className="flex h-10 items-center">
-            <Switch
+            <FormSwitch
               checked={form.whatsappSameAsPhone}
               onChange={(checked) => onChange('whatsappSameAsPhone', checked)}
             />
@@ -169,7 +168,7 @@ export default function LeadFormFields({
           />
         </Field>
         <Field id="dateOfBirth" label="Date of Birth" error={errors.dateOfBirth}>
-          <DatePicker
+          <FormDatePicker
             id="dateOfBirth"
             allowClear
             value={toDayjs(form.dateOfBirth)}
@@ -336,7 +335,7 @@ export default function LeadFormFields({
               />
             </Field>
             <Field id="testDate" label="Test Date">
-              <DatePicker
+              <FormDatePicker
                 id="testDate"
                 allowClear
                 value={toDayjs(form.testDate)}

@@ -12,7 +12,7 @@ import {
   Mail01Icon,
   PencilEdit02Icon,
 } from '@hugeicons/core-free-icons'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import type { LeadRecord } from '../../types'
 import { leadInitials, priorityBadgeClass, stageBadgeClass } from '../../utils/leadDetails'
 
@@ -115,12 +115,12 @@ export default function LeadWorkspaceHeader({
 
         <div className="flex shrink-0 flex-wrap items-center gap-2 xl:flex-col xl:items-end">
           {canReopen ? (
-            <Button type="button" size="sm" onClick={onReopenLead}>
+            <PrimaryButton type="button" size="sm" onClick={onReopenLead}>
               Reopen Lead
-            </Button>
+            </PrimaryButton>
           ) : null}
           {canChangeStatus ? (
-            <Button
+            <PrimaryButton
               type="button"
               size="sm"
               variant={canReopen ? 'secondary' : 'primary'}
@@ -128,15 +128,15 @@ export default function LeadWorkspaceHeader({
               onClick={onChangeStatus}
             >
               Change Status
-            </Button>
+            </PrimaryButton>
           ) : null}
           {canClose ? (
-            <Button type="button" size="sm" variant="secondary" onClick={onCloseLead}>
+            <PrimaryButton type="button" size="sm" variant="secondary" onClick={onCloseLead}>
               Close Lead
-            </Button>
+            </PrimaryButton>
           ) : null}
           {canEdit ? (
-            <Button
+            <PrimaryButton
               type="button"
               size="sm"
               variant={canChangeStatus || canReopen || canClose ? 'secondary' : 'primary'}
@@ -144,10 +144,10 @@ export default function LeadWorkspaceHeader({
               onClick={onEdit}
             >
               Edit
-            </Button>
+            </PrimaryButton>
           ) : null}
           {canAddActivity ? (
-            <Button
+            <PrimaryButton
               type="button"
               variant="secondary"
               size="sm"
@@ -155,7 +155,7 @@ export default function LeadWorkspaceHeader({
               onClick={onAddActivity}
             >
               Add Activity
-            </Button>
+            </PrimaryButton>
           ) : null}
         </div>
       </div>

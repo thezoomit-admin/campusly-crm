@@ -1,5 +1,5 @@
 import type { ColumnsType } from 'antd/es/table'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import type { LeadPoolRow } from '../types'
 import { countryFlag, emptyLeadValue, formatLeadCreatedOn, leadAvatarTone } from './leadList'
 import { leadInitials } from './leadDetails'
@@ -19,7 +19,7 @@ export function getLeadPoolColumns({ now, onView, onAssign }: LeadPoolColumnOpti
       key: 'code',
       width: 120,
       render: (value: string, row) => (
-        <button
+        <PrimaryButton
           type="button"
           className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold text-[#0f9d8e] hover:underline"
           onClick={(event) => {
@@ -28,7 +28,7 @@ export function getLeadPoolColumns({ now, onView, onAssign }: LeadPoolColumnOpti
           }}
         >
           {emptyLeadValue(value)}
-        </button>
+        </PrimaryButton>
       ),
     },
     {
@@ -110,9 +110,9 @@ export function getLeadPoolColumns({ now, onView, onAssign }: LeadPoolColumnOpti
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <Button type="button" size="sm" onClick={() => onAssign(row)}>
+          <PrimaryButton type="button" size="sm" onClick={() => onAssign(row)}>
             Assign Lead
-          </Button>
+          </PrimaryButton>
         </div>
       ),
     },

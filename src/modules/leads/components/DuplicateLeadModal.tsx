@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import type { DuplicateLead } from '../types'
 
 type DuplicateLeadModalProps = {
@@ -40,16 +40,16 @@ export default function DuplicateLeadModal({
           </div>
         </dl>
         <div className="mt-5 flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <PrimaryButton type="button" variant="secondary" onClick={onClose}>
             Cancel
-          </Button>
-          <Button type="button" variant="secondary" onClick={onOpenExisting}>
+          </PrimaryButton>
+          <PrimaryButton type="button" variant="secondary" onClick={onOpenExisting}>
             Open Existing Lead
-          </Button>
+          </PrimaryButton>
           {canCreateAnyway ? (
-            <Button type="button" onClick={onCreateAnyway}>
+            <PrimaryButton type="button" onClick={onCreateAnyway}>
               Create Anyway
-            </Button>
+            </PrimaryButton>
           ) : null}
         </div>
       </div>

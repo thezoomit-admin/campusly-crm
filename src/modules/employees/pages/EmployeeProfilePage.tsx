@@ -36,7 +36,7 @@ import {
   useUploadEmployeePhotoMutation,
 } from '@/redux/features/employees/employeesApi'
 import { getApiError } from '@/lib/api'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { hasPermission } from '../../../lib/access'
@@ -380,17 +380,17 @@ export default function EmployeeProfilePage() {
             { title: 'Profile' },
           ]}
           extra={
-            <Button variant="secondary" onClick={() => navigate('/employees')}>
+            <PrimaryButton variant="secondary" onClick={() => navigate('/employees')}>
               Back to Employees
-            </Button>
+            </PrimaryButton>
           }
         />
         <div className={`${adminEmpty}`}>
           <strong>Employee profile unavailable</strong>
           <p>{error || 'This employee could not be found.'}</p>
-          <Button variant="secondary" onClick={() => navigate('/employees')}>
+          <PrimaryButton variant="secondary" onClick={() => navigate('/employees')}>
             Back to Employees
-          </Button>
+          </PrimaryButton>
         </div>
       </div>
     )
@@ -417,21 +417,21 @@ export default function EmployeeProfilePage() {
         extra={
           employee ? (
             <>
-              <Button variant="secondary" onClick={() => navigate('/employees')}>
+              <PrimaryButton variant="secondary" onClick={() => navigate('/employees')}>
                 Back to list
-              </Button>
+              </PrimaryButton>
               {canDocuments ? (
-                <Button variant="secondary" onClick={() => navigate(`/documents?employeeId=${employee.id}`)}>
+                <PrimaryButton variant="secondary" onClick={() => navigate(`/documents?employeeId=${employee.id}`)}>
                   Manage documents
-                </Button>
+                </PrimaryButton>
               ) : null}
               {canEdit ? (
-                <Button onClick={() => navigate(`/employees/${employee.id}/edit`)}>
+                <PrimaryButton onClick={() => navigate(`/employees/${employee.id}/edit`)}>
                   <span className="ui-btn-icon">
                     <HugeiconsIcon icon={PencilEdit02Icon} size={16} color="currentColor" strokeWidth={1.6} />
                   </span>
                   Edit profile
-                </Button>
+                </PrimaryButton>
               ) : null}
             </>
           ) : undefined
@@ -547,7 +547,7 @@ export default function EmployeeProfilePage() {
               <aside className="sticky top-4 z-6 grid items-start gap-4 self-start max-[1100px]:top-3 max-[1100px]:bg-page-bg max-[1100px]:pb-1 max-[960px]:top-[72px]">
                 <nav className="grid gap-1.5 rounded-2xl border border-border bg-surface p-2.5 shadow-soft max-[1100px]:grid-cols-[repeat(auto-fit,minmax(140px,1fr))] [&_button]:flex [&_button]:w-full [&_button]:cursor-pointer [&_button]:items-center [&_button]:gap-2.5 [&_button]:rounded-[10px] [&_button]:border-0 [&_button]:bg-transparent [&_button]:px-3 [&_button]:py-2.5 [&_button]:text-left [&_button]:font-[inherit] [&_button]:text-text" aria-label="Profile sections">
                   {SECTIONS.map((section) => (
-                    <button
+                    <PrimaryButton
                       key={section.id}
                       type="button"
                       className={activeSection === section.id ? 'bg-nav-active-bg text-nav-active' : 'hover:bg-hover-bg'}
@@ -555,7 +555,7 @@ export default function EmployeeProfilePage() {
                     >
                       <HugeiconsIcon icon={section.icon} size={16} color="currentColor" strokeWidth={1.7} />
                       <span>{section.label}</span>
-                    </button>
+                    </PrimaryButton>
                   ))}
                 </nav>
 

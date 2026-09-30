@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Button, Checkbox, Form } from 'antd'
+import { Button, Form } from 'antd'
 import { toast } from 'react-toastify'
-import { FormInput } from '@/components/common/Forms'
+import { FormCheckbox, FormInput } from '@/components/common/Forms'
 import { PageMeta } from '@/components/common/Meta'
 import { useAuth } from '../../../hooks/useAuth'
 import { isAuthSession } from '@/lib/auth'
@@ -136,7 +136,7 @@ export default function LoginPage() {
 
           <div className="mb-5 flex items-center justify-between gap-3">
             <Form.Item name="rememberMe" valuePropName="checked" className="mb-0!">
-              <Checkbox className="text-text-muted">Remember me</Checkbox>
+              <FormCheckbox className="text-text-muted">Remember me</FormCheckbox>
             </Form.Item>
             <Link
               to="/forgot-password"

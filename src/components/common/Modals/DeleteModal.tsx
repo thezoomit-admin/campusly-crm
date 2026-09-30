@@ -1,5 +1,5 @@
 import { CancelCircleIcon } from '@hugeicons/core-free-icons'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import HugeIcon from '@/components/ui/Icon/HugeIcon'
 import AntModal from './AntModal'
 
@@ -34,12 +34,12 @@ export default function DeleteModal({
             `This action cannot be undone. Are you sure you want to permanently delete ${itemName}?`}
         </p>
         <div className="flex w-full justify-center gap-3">
-          <Button variant="secondary" onClick={onCancel} disabled={loading}>
+          <PrimaryButton variant="secondary" onClick={onCancel} disabled={loading}>
             Cancel
-          </Button>
-          <Button onClick={onConfirm} loading={loading} className="!bg-red-500 hover:enabled:!bg-red-600">
+          </PrimaryButton>
+          <PrimaryButton onClick={onConfirm} loading={loading} className="!bg-red-500 hover:enabled:!bg-red-600">
             Delete
-          </Button>
+          </PrimaryButton>
         </div>
       </div>
     </AntModal>

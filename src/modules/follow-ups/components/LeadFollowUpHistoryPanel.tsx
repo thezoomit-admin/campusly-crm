@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import type { FollowUpRecord } from '../types'
 import { followUpStatusClass } from '../utils/followUpStatus'
 import { formatDisplayDateTime } from '@/modules/leads/utils/leadDetails'
@@ -30,13 +30,13 @@ export default function LeadFollowUpHistoryPanel({
       title="Follow-up History"
       extra={
         canCreate ? (
-          <button
+          <PrimaryButton
             type="button"
             className="inline-flex cursor-pointer items-center gap-1 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[0.82rem] font-medium text-primary hover:bg-hover-bg"
             onClick={onCreate}
           >
             + Create Follow-up
-          </button>
+          </PrimaryButton>
         ) : null
       }
     >
@@ -83,15 +83,15 @@ export default function LeadFollowUpHistoryPanel({
                 ) : null}
                 {isOpen && canEdit ? (
                   <div className="flex flex-wrap gap-2">
-                    <Button type="button" size="sm" onClick={() => onComplete(item)}>
+                    <PrimaryButton type="button" size="sm" onClick={() => onComplete(item)}>
                       Complete
-                    </Button>
-                    <Button type="button" size="sm" variant="secondary" onClick={() => onReschedule(item)}>
+                    </PrimaryButton>
+                    <PrimaryButton type="button" size="sm" variant="secondary" onClick={() => onReschedule(item)}>
                       Reschedule
-                    </Button>
-                    <Button type="button" size="sm" variant="secondary" onClick={() => onCancel(item)}>
+                    </PrimaryButton>
+                    <PrimaryButton type="button" size="sm" variant="secondary" onClick={() => onCancel(item)}>
                       Cancel
-                    </Button>
+                    </PrimaryButton>
                   </div>
                 ) : null}
               </li>

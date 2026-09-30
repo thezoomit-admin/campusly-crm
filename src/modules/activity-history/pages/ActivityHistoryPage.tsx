@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { DatePicker, Dropdown, Spin } from 'antd'
+import { Dropdown, Spin } from 'antd'
 import type { MenuProps } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
@@ -20,8 +20,8 @@ import {
   useRecordActivityExportMutation,
 } from '@/redux/features/activities/activitiesApi'
 import { getApiError } from '@/lib/api'
-import { Button, UserAvatar } from '@/components/ui'
-import { FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
+import { PrimaryButton, UserAvatar } from '@/components/ui'
+import { FormCheckbox, FormDatePicker, FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { hasPermission } from '../../../lib/access'
@@ -438,17 +438,17 @@ export default function ActivityHistoryPage() {
         extra={
           <Dropdown menu={{ items: exportItems }} trigger={['click']}>
             <span>
-              <Button variant="secondary">
+              <PrimaryButton variant="secondary">
                 Export
                 <HugeiconsIcon icon={ArrowDown01Icon} size={14} />
-              </Button>
+              </PrimaryButton>
             </span>
           </Dropdown>
         }
       />
 
       <section className="grid grid-cols-[minmax(240px,280px)_minmax(200px,1.4fr)_minmax(160px,280px)] gap-2.5 items-center py-3 px-3.5 bg-surface border border-border rounded-2xl max-[860px]:grid-cols-1 [&_.ant-picker]:w-full [&_.ant-picker]:min-w-0 [&_.ant-picker]:h-[42px] [&_.ant-picker]:rounded-xl [&_.ant-input-affix-wrapper]:w-full [&_.ant-select]:w-full">
-        <DatePicker.RangePicker
+        <FormDatePicker.Range
           allowClear={false}
           value={[dayjs(from), dayjs(to)]}
           format="D MMM YYYY"
@@ -524,7 +524,7 @@ export default function ActivityHistoryPage() {
               const activeFilter = category === item.key
               return (
                 <li key={item.key}>
-                  <button
+                  <PrimaryButton
                     type="button"
                     className={cx(
                       'w-full flex justify-between items-center gap-2 py-[9px] px-2.5 border-0 rounded-[10px] bg-transparent text-text cursor-pointer font-inherit',
@@ -544,7 +544,7 @@ export default function ActivityHistoryPage() {
                     <b className={cx('text-text-faint text-[0.78rem]', activeFilter && 'text-[#2563eb]')}>
                       {counts[item.key].toLocaleString()}
                     </b>
-                  </button>
+                  </PrimaryButton>
                 </li>
               )
             })}
@@ -563,7 +563,7 @@ export default function ActivityHistoryPage() {
               <div className={adminEmpty}>
                 <strong>No matching activities</strong>
                 {canCreate ? (
-                  <Button
+                  <PrimaryButton
                     onClick={() => {
                       setLogType('CALL')
                       setLogName('')
@@ -571,7 +571,7 @@ export default function ActivityHistoryPage() {
                     }}
                   >
                     Log activity
-                  </Button>
+                  </PrimaryButton>
                 ) : null}
               </div>
             ) : (
@@ -640,14 +640,14 @@ export default function ActivityHistoryPage() {
                     …
                   </span>
                 ) : (
-                  <button
+                  <PrimaryButton
                     key={item}
                     type="button"
                     className={cx(pageBtn, item === safePage && pageBtnActive)}
                     onClick={() => setPage(item)}
                   >
                     {item}
-                  </button>
+                  </PrimaryButton>
                 ),
               )}
             </div>
@@ -680,7 +680,7 @@ export default function ActivityHistoryPage() {
           >
             <div className={modalHeader}>
               <h3 className="m-0 flex-1">Activity Detail</h3>
-              <button
+              <PrimaryButton
                 type="button"
                 className={modalClose}
                 aria-label="Close"
@@ -690,7 +690,7 @@ export default function ActivityHistoryPage() {
                 }}
               >
                 ×
-              </button>
+              </PrimaryButton>
             </div>
             <div className="grid content-start gap-3.5">
               <div className="flex justify-between gap-2.5 items-start">
@@ -769,7 +769,7 @@ export default function ActivityHistoryPage() {
                 <>
                   <h4 className="m-0">Quick Actions</h4>
                   <div className="grid gap-2">
-                    <button
+                    <PrimaryButton
                       type="button"
                       className={quickActionBtn}
                       onClick={() => {
@@ -781,8 +781,8 @@ export default function ActivityHistoryPage() {
                       }}
                     >
                       Call Again
-                    </button>
-                    <button
+                    </PrimaryButton>
+                    <PrimaryButton
                       type="button"
                       className={quickActionBtn}
                       onClick={() => {
@@ -793,7 +793,7 @@ export default function ActivityHistoryPage() {
                       }}
                     >
                       Send Message
-                    </button>
+                    </PrimaryButton>
                   </div>
                 </>
               ) : null}
@@ -816,9 +816,9 @@ export default function ActivityHistoryPage() {
                       ? 'Email'
                       : 'Activity'}
               </h3>
-              <button type="button" className={modalClose} onClick={() => setLogOpen(false)}>
+              <PrimaryButton type="button" className={modalClose} onClick={() => setLogOpen(false)}>
                 ×
-              </button>
+              </PrimaryButton>
             </div>
             <div className={adminForm}>
               <label>
@@ -903,8 +903,7 @@ export default function ActivityHistoryPage() {
               </label>
               <label className="flex items-center justify-between gap-3">
                 <span>Schedule Next Follow-up</span>
-                <input
-                  type="checkbox"
+                <FormCheckbox
                   checked={logCreateNext}
                   onChange={(event) => setLogCreateNext(event.target.checked)}
                 />
@@ -912,7 +911,7 @@ export default function ActivityHistoryPage() {
               {logCreateNext ? (
                 <label>
                   Next Follow-up Date & Time
-                  <DatePicker
+                  <FormDatePicker
                     showTime
                     className="w-full"
                     format="DD MMM YYYY hh:mm A"
@@ -922,12 +921,12 @@ export default function ActivityHistoryPage() {
                 </label>
               ) : null}
               <div className="flex justify-end gap-2 mt-3">
-                <Button variant="secondary" onClick={() => setLogOpen(false)}>
+                <PrimaryButton variant="secondary" onClick={() => setLogOpen(false)}>
                   Cancel
-                </Button>
-                <Button loading={saving} onClick={() => void submitLog()}>
+                </PrimaryButton>
+                <PrimaryButton loading={saving} onClick={() => void submitLog()}>
                   {logCreateNext ? 'Complete & Schedule Next Follow-up' : 'Save activity'}
-                </Button>
+                </PrimaryButton>
               </div>
             </div>
           </div>

@@ -88,9 +88,9 @@ import {
   UserIcon,
   ViewIcon,
 } from '@hugeicons/core-free-icons'
-import { Skeleton, Spin, Switch } from 'antd'
-import { Button } from '@/components/ui'
-import { FormInput, FormSelect } from '@/components/common/Forms'
+import { Skeleton, Spin } from 'antd'
+import { PrimaryButton } from '@/components/ui'
+import { FormInput, FormSelect, FormSwitch } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
@@ -401,9 +401,9 @@ function UserViewLayout({
           </span>
           <h3 id="user-modal-title">View User</h3>
         </div>
-        <button type="button" className={`${modalClose}`} aria-label="Close" onClick={onClose}>
+        <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={onClose}>
           <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-        </button>
+        </PrimaryButton>
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden max-[960px]:grid-rows-none max-[960px]:overflow-auto max-[960px]:overscroll-contain min-[961px]:grid-cols-[248px_minmax(0,1fr)] min-[961px]:grid-rows-[minmax(0,1fr)]">
@@ -422,7 +422,7 @@ function UserViewLayout({
 
           <nav className="grid gap-1" aria-label="User sections">
             {VIEW_TABS.map((tab) => (
-              <button
+              <PrimaryButton
                 key={tab.id}
                 type="button"
                 className={`${userViewNavBtn} ${viewTab === tab.id ? userViewNavBtnActive : userViewNavBtnIdle}`}
@@ -430,7 +430,7 @@ function UserViewLayout({
               >
                 <HugeiconsIcon icon={tab.icon} size={16} color="currentColor" strokeWidth={1.7} />
                 <span>{tab.label}</span>
-              </button>
+              </PrimaryButton>
             ))}
           </nav>
 
@@ -671,9 +671,9 @@ function UserViewLayout({
                       ))}
                     </div>
                     <div className={`${formActions}`}>
-                      <Button size="sm" onClick={onSaveScopes} disabled={detailLoading}>
+                      <PrimaryButton size="sm" onClick={onSaveScopes} disabled={detailLoading}>
                         Save scopes
-                      </Button>
+                      </PrimaryButton>
                     </div>
                   </article>
                 ) : (
@@ -727,21 +727,21 @@ function UserViewLayout({
                           </div>
                         </div>
                         {session.active ? (
-                          <Button size="sm" variant="secondary" onClick={() => void onRevokeSession(session.id)}>
+                          <PrimaryButton size="sm" variant="secondary" onClick={() => void onRevokeSession(session.id)}>
                             Logout Session
-                          </Button>
+                          </PrimaryButton>
                         ) : (
                           <span className={`${muted}`}>{session.revokedAt ? 'Revoked' : 'Expired'}</span>
                         )}
                       </div>
                     ))}
                     <div className={`${formActions}`}>
-                      <Button size="sm" variant="secondary" onClick={() => void onForceLogout()}>
+                      <PrimaryButton size="sm" variant="secondary" onClick={() => void onForceLogout()}>
                         Force Logout
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => void onPasswordReset()}>
+                      </PrimaryButton>
+                      <PrimaryButton size="sm" variant="ghost" onClick={() => void onPasswordReset()}>
                         Send password reset
-                      </Button>
+                      </PrimaryButton>
                     </div>
                   </article>
                 ) : null}
@@ -787,9 +787,9 @@ function UserViewLayout({
           </div>
 
           <div className="flex shrink-0 justify-end px-[18px] pt-3 pb-4">
-            <Button type="button" variant="secondary" onClick={onClose}>
+            <PrimaryButton type="button" variant="secondary" onClick={onClose}>
               Close
-            </Button>
+            </PrimaryButton>
           </div>
         </section>
       </div>
@@ -1182,7 +1182,7 @@ export default function UsersPage() {
         title="Users"
         subtitle="Create users, assign roles, and control login access."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Users' }]}
-        extra={canCreate ? <Button onClick={() => void openCreate()}>Create User</Button> : undefined}
+        extra={canCreate ? <PrimaryButton onClick={() => void openCreate()}>Create User</PrimaryButton> : undefined}
       />
 
       <section className={`${adminFilters}`}>
@@ -1276,7 +1276,7 @@ export default function UsersPage() {
                     <td>{user.department?.name || '—'}</td>
                     <td>{user.team?.name || '—'}</td>
                     <td onClick={(event) => event.stopPropagation()}>
-                      <Switch
+                      <FormSwitch
                         checked={user.status === 'ACTIVE'}
                         checkedChildren="Active"
                         unCheckedChildren={user.status === 'SUSPENDED' ? 'Suspended' : 'Inactive'}
@@ -1425,9 +1425,9 @@ export default function UsersPage() {
                   <>
                 <div className={`${modalHeader}`}>
                   <h3 id="user-modal-title">{editingId ? 'Edit User' : 'Create User'}</h3>
-                  <button type="button" className={`${modalClose}`} aria-label="Close" onClick={closeForm}>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closeForm}>
                     <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </button>
+                  </PrimaryButton>
                 </div>
                 <form
                   className={`${adminForm}`}
@@ -1574,12 +1574,12 @@ export default function UsersPage() {
               </label>
               </fieldset>
               <div className={`${formActions}`}>
-                <Button type="submit" loading={formSaving}>
+                <PrimaryButton type="submit" loading={formSaving}>
                   {editingId ? 'Save User' : 'Create User'}
-                </Button>
-                <Button type="button" variant="secondary" onClick={closeForm} disabled={formSaving}>
+                </PrimaryButton>
+                <PrimaryButton type="button" variant="secondary" onClick={closeForm} disabled={formSaving}>
                   Cancel
-                </Button>
+                </PrimaryButton>
               </div>
             </form>
                   </>
@@ -1613,7 +1613,7 @@ export default function UsersPage() {
                     <>
                       <div className={`${modalHeader}`}>
                         <h3 id="status-confirm-title">{copy.title}</h3>
-                        <button
+                        <PrimaryButton
                           type="button"
                           className={`${modalClose}`}
                           aria-label="Close"
@@ -1621,7 +1621,7 @@ export default function UsersPage() {
                           onClick={() => setStatusPrompt(null)}
                         >
                           <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                        </button>
+                        </PrimaryButton>
                       </div>
                       <p className={`${statusConfirmCopy}`}>{copy.body}</p>
                       <p className={`${statusConfirmMeta}`}>
@@ -1630,21 +1630,21 @@ export default function UsersPage() {
                         New status: <strong>{statusLabel(statusPrompt.nextStatus)}</strong>
                       </p>
                       <div className={`${formActions}`}>
-                        <Button
+                        <PrimaryButton
                           loading={statusSaving}
                           className={statusPrompt.nextStatus === 'SUSPENDED' ? 'ui-btn-danger' : undefined}
                           onClick={() => void changeStatus(statusPrompt.user, statusPrompt.nextStatus)}
                         >
                           {copy.confirm}
-                        </Button>
-                        <Button
+                        </PrimaryButton>
+                        <PrimaryButton
                           type="button"
                           variant="secondary"
                           disabled={statusSaving}
                           onClick={() => setStatusPrompt(null)}
                         >
                           Cancel
-                        </Button>
+                        </PrimaryButton>
                       </div>
                     </>
                   )

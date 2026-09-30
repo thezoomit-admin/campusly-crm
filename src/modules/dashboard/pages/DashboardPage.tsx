@@ -1,7 +1,7 @@
 import { useMemo, type SVGProps } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useGetDashboardQuery } from '../api/dashboardApi'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { Spinner } from '@/components/common/Loading'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
@@ -590,7 +590,7 @@ export default function DashboardPage() {
         <aside className={cx(dashCard, 'grid min-w-0 content-start gap-2 md:col-span-2 lg:col-span-1')}>
           {QUICK_ACTIONS.map((action) =>
             action.tone === 'primary' ? (
-              <Button
+              <PrimaryButton
                 key={action.label}
                 className="min-w-0 overflow-hidden text-ellipsis !shadow-none transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px"
                 size="sm"
@@ -599,9 +599,9 @@ export default function DashboardPage() {
                 onClick={() => navigate(action.to)}
               >
                 {action.label}
-              </Button>
+              </PrimaryButton>
             ) : (
-              <button
+              <PrimaryButton
                 key={action.label}
                 type="button"
                 className={cx(
@@ -625,7 +625,7 @@ export default function DashboardPage() {
                     <small className="truncate text-[0.7rem] text-text-muted">{action.hint}</small>
                   ) : null}
                 </span>
-              </button>
+              </PrimaryButton>
             ),
           )}
         </aside>
@@ -635,13 +635,13 @@ export default function DashboardPage() {
         <article className={cx(dashCard, 'min-w-0')}>
           <div className={cardHead}>
             <h3 className="m-0 text-base">Recent Leads</h3>
-            <button
+            <PrimaryButton
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
               onClick={() => navigate('/leads')}
             >
               View All
-            </button>
+            </PrimaryButton>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[620px] border-collapse">
@@ -695,39 +695,39 @@ export default function DashboardPage() {
         <article className={cx(dashCard, 'min-w-0')}>
           <div className={cardHead}>
             <h3 className="m-0 text-base">Today&apos;s Follow-ups</h3>
-            <button
+            <PrimaryButton
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
               onClick={() => navigate('/follow-ups')}
             >
               View All
-            </button>
+            </PrimaryButton>
           </div>
           <div className="mb-3 grid grid-cols-3 gap-2">
-            <button
+            <PrimaryButton
               type="button"
               className="cursor-pointer rounded-[14px] border-0 bg-[#fff5f7] px-3 py-3 text-left dark:bg-rose-500/10"
               onClick={() => navigate('/follow-ups')}
             >
               <span className="block text-[0.72rem] font-medium text-[#e11d48]">Overdue</span>
               <strong className="mt-1 block text-[1.35rem] text-[#e11d48]">{followUpMetrics.overdue}</strong>
-            </button>
-            <button
+            </PrimaryButton>
+            <PrimaryButton
               type="button"
               className="cursor-pointer rounded-[14px] border-0 bg-[#f4f8ff] px-3 py-3 text-left dark:bg-blue-500/10"
               onClick={() => navigate('/follow-ups')}
             >
               <span className="block text-[0.72rem] font-medium text-[#2563eb]">Due Today</span>
               <strong className="mt-1 block text-[1.35rem] text-[#2563eb]">{followUpMetrics.dueToday}</strong>
-            </button>
-            <button
+            </PrimaryButton>
+            <PrimaryButton
               type="button"
               className="cursor-pointer rounded-[14px] border-0 bg-[#f3fbf6] px-3 py-3 text-left dark:bg-green-500/10"
               onClick={() => navigate('/follow-ups')}
             >
               <span className="block text-[0.72rem] font-medium text-[#16a34a]">Completed</span>
               <strong className="mt-1 block text-[1.35rem] text-[#16a34a]">{followUpMetrics.completedToday}</strong>
-            </button>
+            </PrimaryButton>
           </div>
           <div className="mb-3 grid grid-cols-2 gap-2">
             <div className="rounded-[14px] bg-[#f8fafc] px-3 py-2.5 dark:bg-hover-bg">
