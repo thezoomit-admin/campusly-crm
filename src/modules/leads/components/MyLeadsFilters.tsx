@@ -116,8 +116,12 @@ export default function MyLeadsFilters({
           options={FOLLOW_UP_STATUS_OPTIONS}
           onChange={(value) => onFiltersChange({ ...filters, followUpStatus: value || '' })}
         />
-        <PrimaryButton type="button" onClick={onSearch} label="Search" />
-        <PrimaryButton type="button" variant="outline" onClick={onReset} label="Reset" />
+        <PrimaryButton type="button" onClick={onSearch}>
+          Search
+        </PrimaryButton>
+        <PrimaryButton type="button" variant="outline" onClick={onReset}>
+          Reset
+        </PrimaryButton>
       </div>
     </div>
   )

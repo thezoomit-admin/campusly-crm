@@ -68,8 +68,12 @@ export function FollowUpModal({
           <FormTextArea rows={3} value={notes} placeholder="Add context for this follow-up" onChange={(event) => setNotes(event.target.value)} />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
-          <PrimaryButton type="button" loading={saving} onClick={() = label="void handleSubmit()}> Save follow-up" />
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </PrimaryButton>
+          <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()}>
+            Save follow-up
+          </PrimaryButton>
         </div>
       </div>
     </AntModal>
@@ -245,9 +249,12 @@ export function AddActivityModal({
           </div>
         ) : null}
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
-          <PrimaryButton type="button" loading={saving} onClick={() = label={<>void handleSubmit()}>
-            {createNext ? 'Complete & Schedule Next Follow-up' : 'Save activity'}</>} />
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </PrimaryButton>
+          <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()}>
+            {createNext ? 'Complete & Schedule Next Follow-up' : 'Save activity'}
+          </PrimaryButton>
         </div>
       </div>
     </AntModal>
@@ -311,8 +318,12 @@ export function QualifyLeadModal({
         ) : null}
       </div>
       <div className="mt-4 flex justify-end gap-2">
-        <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
-        <PrimaryButton type="button" loading={saving} onClick={() = label="void onSubmit()}> Save qualification" />
+        <PrimaryButton type="button" variant="outline" onClick={onClose}>
+          Cancel
+        </PrimaryButton>
+        <PrimaryButton type="button" loading={saving} onClick={() => void onSubmit()}>
+          Save qualification
+        </PrimaryButton>
       </div>
     </AntModal>
   )
@@ -394,9 +405,12 @@ export function AssignLeadModal({
           />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
-          <PrimaryButton type="button" loading={saving} disabled={!ownerId} onClick={() = label={<>void handleSubmit()}>
-            {currentOwnerName ? 'Reassign Lead' : 'Assign Lead'}</>} />
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </PrimaryButton>
+          <PrimaryButton type="button" loading={saving} disabled={!ownerId} onClick={() => void handleSubmit()}>
+            {currentOwnerName ? 'Reassign Lead' : 'Assign Lead'}
+          </PrimaryButton>
         </div>
       </div>
     </AntModal>
@@ -560,11 +574,14 @@ export function ChangeStatusModal({
           </label>
         ) : null}
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={requestClose} label="Cancel" />
+          <PrimaryButton type="button" variant="outline" onClick={requestClose}>
+            Cancel
+          </PrimaryButton>
           <PrimaryButton
             type="button"
             loading={saving}
-            onClick={() = label={<>void onSubmit({
+            onClick={() =>
+              void onSubmit({
                 statusCode,
                 remarks,
                 lostReasonCode,
@@ -573,7 +590,8 @@ export function ChangeStatusModal({
               })
             }
           >
-            Update Status</>} />
+            Update Status
+          </PrimaryButton>
         </div>
       </div>
     </AntModal>
@@ -704,13 +722,16 @@ export function CloseLeadModal({
           {errors.remarks ? <InputError>{errors.remarks}</InputError> : null}
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={requestClose} label="Cancel" />
+          <PrimaryButton type="button" variant="outline" onClick={requestClose}>
+            Cancel
+          </PrimaryButton>
           <PrimaryButton
             type="button"
             loading={saving}
-            onClick={() = label={<>void onSubmit({ statusCode, reasonCode, remarks })}
+            onClick={() => void onSubmit({ statusCode, reasonCode, remarks })}
           >
-            Confirm</>} />
+            Confirm
+          </PrimaryButton>
         </div>
       </div>
     </AntModal>
@@ -823,13 +844,16 @@ export function ReopenLeadModal({
           ) : null}
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={requestClose} label="Cancel" />
+          <PrimaryButton type="button" variant="outline" onClick={requestClose}>
+            Cancel
+          </PrimaryButton>
           <PrimaryButton
             type="button"
             loading={saving}
-            onClick={() = label={<>void onSubmit({ reopenReason, followUpDate, ownerId })}
+            onClick={() => void onSubmit({ reopenReason, followUpDate, ownerId })}
           >
-            Reopen</>} />
+            Reopen
+          </PrimaryButton>
         </div>
       </div>
     </AntModal>

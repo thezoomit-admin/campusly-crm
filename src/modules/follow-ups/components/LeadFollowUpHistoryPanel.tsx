@@ -33,7 +33,10 @@ export default function LeadFollowUpHistoryPanel({
           <PrimaryButton
             type="button"
             className="inline-flex cursor-pointer items-center gap-1 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[0.82rem] font-medium text-primary hover:bg-hover-bg"
-            onClick={onCreate} label="+ Create Follow-up" />
+            onClick={onCreate}
+          >
+            + Create Follow-up
+          </PrimaryButton>
         ) : null
       }
     >
@@ -80,9 +83,15 @@ export default function LeadFollowUpHistoryPanel({
                 ) : null}
                 {isOpen && canEdit ? (
                   <div className="flex flex-wrap gap-2">
-                    <PrimaryButton type="button" size="sm" onClick={() = label="onComplete(item)}> Complete" />
-                    <PrimaryButton type="button" size="sm" variant="outline" onClick={() = label="onReschedule(item)}> Reschedule" />
-                    <PrimaryButton type="button" size="sm" variant="outline" onClick={() = label="onCancel(item)}> Cancel" />
+                    <PrimaryButton type="button" size="sm" onClick={() => onComplete(item)}>
+                      Complete
+                    </PrimaryButton>
+                    <PrimaryButton type="button" size="sm" variant="outline" onClick={() => onReschedule(item)}>
+                      Reschedule
+                    </PrimaryButton>
+                    <PrimaryButton type="button" size="sm" variant="outline" onClick={() => onCancel(item)}>
+                      Cancel
+                    </PrimaryButton>
                   </div>
                 ) : null}
               </li>

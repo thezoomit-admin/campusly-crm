@@ -71,7 +71,7 @@ export default function SettingsPage() {
           </label>
 
           <div className={formActions}>
-            <PrimaryButton type="submit" label="Save changes" />
+            <PrimaryButton type="submit">Save changes</PrimaryButton>
           </div>
         </form>
       </div>

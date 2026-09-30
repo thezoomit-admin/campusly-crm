@@ -34,8 +34,12 @@ export default function DeleteModal({
             `This action cannot be undone. Are you sure you want to permanently delete ${itemName}?`}
         </p>
         <div className="flex w-full justify-center gap-3">
-          <PrimaryButton variant="outline" onClick={onCancel} disabled={loading} label="Cancel" />
-          <PrimaryButton onClick={onConfirm} loading={loading} className="!bg-red-500 hover:enabled:!bg-red-600" label="Delete" />
+          <PrimaryButton variant="outline" onClick={onCancel} disabled={loading}>
+            Cancel
+          </PrimaryButton>
+          <PrimaryButton onClick={onConfirm} loading={loading} className="!bg-red-500 hover:enabled:!bg-red-600">
+            Delete
+          </PrimaryButton>
         </div>
       </div>
     </AntModal>

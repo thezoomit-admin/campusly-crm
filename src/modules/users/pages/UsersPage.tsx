@@ -426,10 +426,11 @@ function UserViewLayout({
                 key={tab.id}
                 type="button"
                 className={`${userViewNavBtn} ${viewTab === tab.id ? userViewNavBtnActive : userViewNavBtnIdle}`}
-                onClick={() = label={<>onTabChange(tab.id)}
+                onClick={() => onTabChange(tab.id)}
               >
                 <HugeiconsIcon icon={tab.icon} size={16} color="currentColor" strokeWidth={1.7} />
-                <span>{tab.label}</span></>} />
+                <span>{tab.label}</span>
+              </PrimaryButton>
             ))}
           </nav>
 
@@ -670,7 +671,9 @@ function UserViewLayout({
                       ))}
                     </div>
                     <div className={`${formActions}`}>
-                      <PrimaryButton size="sm" onClick={onSaveScopes} disabled={detailLoading} label="Save scopes" />
+                      <PrimaryButton size="sm" onClick={onSaveScopes} disabled={detailLoading}>
+                        Save scopes
+                      </PrimaryButton>
                     </div>
                   </article>
                 ) : (
@@ -724,15 +727,21 @@ function UserViewLayout({
                           </div>
                         </div>
                         {session.active ? (
-                          <PrimaryButton size="sm" variant="outline" onClick={() = label="void onRevokeSession(session.id)}> Logout Session" />
+                          <PrimaryButton size="sm" variant="outline" onClick={() => void onRevokeSession(session.id)}>
+                            Logout Session
+                          </PrimaryButton>
                         ) : (
                           <span className={`${muted}`}>{session.revokedAt ? 'Revoked' : 'Expired'}</span>
                         )}
                       </div>
                     ))}
                     <div className={`${formActions}`}>
-                      <PrimaryButton size="sm" variant="outline" onClick={() = label="void onForceLogout()}> Force Logout" />
-                      <PrimaryButton size="sm" variant="outline" onClick={() = label="void onPasswordReset()}> Send password reset" />
+                      <PrimaryButton size="sm" variant="outline" onClick={() => void onForceLogout()}>
+                        Force Logout
+                      </PrimaryButton>
+                      <PrimaryButton size="sm" variant="outline" onClick={() => void onPasswordReset()}>
+                        Send password reset
+                      </PrimaryButton>
                     </div>
                   </article>
                 ) : null}
@@ -778,7 +787,9 @@ function UserViewLayout({
           </div>
 
           <div className="flex shrink-0 justify-end px-[18px] pt-3 pb-4">
-            <PrimaryButton type="button" variant="outline" onClick={onClose} label="Close" />
+            <PrimaryButton type="button" variant="outline" onClick={onClose}>
+              Close
+            </PrimaryButton>
           </div>
         </section>
       </div>
@@ -1171,7 +1182,7 @@ export default function UsersPage() {
         title="Users"
         subtitle="Create users, assign roles, and control login access."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Users' }]}
-        extra={canCreate ? <PrimaryButton onClick={() = label="void openCreate()}>Create User" /> : undefined}
+        extra={canCreate ? <PrimaryButton onClick={() => void openCreate()}>Create User</PrimaryButton> : undefined}
       />
 
       <section className={`${adminFilters}`}>
@@ -1563,8 +1574,12 @@ export default function UsersPage() {
               </label>
               </fieldset>
               <div className={`${formActions}`}>
-                <PrimaryButton type="submit" loading={formSaving} label={editingId ? 'Save User' : 'Create User'} />
-                <PrimaryButton type="button" variant="outline" onClick={closeForm} disabled={formSaving} label="Cancel" />
+                <PrimaryButton type="submit" loading={formSaving}>
+                  {editingId ? 'Save User' : 'Create User'}
+                </PrimaryButton>
+                <PrimaryButton type="button" variant="outline" onClick={closeForm} disabled={formSaving}>
+                  Cancel
+                </PrimaryButton>
               </div>
             </form>
                   </>
@@ -1618,14 +1633,18 @@ export default function UsersPage() {
                         <PrimaryButton
                           loading={statusSaving}
                           className={statusPrompt.nextStatus === 'SUSPENDED' ? 'ui-btn-danger' : undefined}
-                          onClick={() = label={<>void changeStatus(statusPrompt.user, statusPrompt.nextStatus)}
+                          onClick={() => void changeStatus(statusPrompt.user, statusPrompt.nextStatus)}
                         >
-                          {copy.confirm}</>} />
+                          {copy.confirm}
+                        </PrimaryButton>
                         <PrimaryButton
                           type="button"
                           variant="outline"
                           disabled={statusSaving}
-                          onClick={() = label="setStatusPrompt(null)} > Cancel" />
+                          onClick={() => setStatusPrompt(null)}
+                        >
+                          Cancel
+                        </PrimaryButton>
                       </div>
                     </>
                   )

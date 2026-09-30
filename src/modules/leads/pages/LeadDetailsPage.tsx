@@ -386,7 +386,9 @@ export default function LeadDetailsPage() {
           ]}
         />
         <p className="text-danger">Lead not found or you do not have access.</p>
-        <PrimaryButton type="button" variant="outline" onClick={() = label="navigate('/leads')}> Back to leads" />
+        <PrimaryButton type="button" variant="outline" onClick={() => navigate('/leads')}>
+          Back to leads
+        </PrimaryButton>
       </div>
     )
   }
@@ -446,16 +448,20 @@ export default function LeadDetailsPage() {
                       ? 'border-primary font-semibold text-primary'
                       : 'border-transparent text-[#7d8b9a] hover:text-text'
                   }`}
-                  onClick={() = label={<>setTab(item.key)}
+                  onClick={() => setTab(item.key)}
                 >
-                  {item.label}</>} />
+                  {item.label}
+                </PrimaryButton>
               )
             })}
             {canQualify ? (
               <PrimaryButton
                 type="button"
                 className="ml-auto shrink-0 cursor-pointer border-0 bg-transparent px-3 py-2.5 text-[0.82rem] font-medium text-primary hover:underline"
-                onClick={() = label="setQualifyOpen(true)} > Qualify" />
+                onClick={() => setQualifyOpen(true)}
+              >
+                Qualify
+              </PrimaryButton>
             ) : null}
           </div>
 

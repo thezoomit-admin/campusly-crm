@@ -37,15 +37,22 @@ export default function LeadSectionCard({
           extra
         ) : canEdit && editing ? (
           <div className="flex items-center gap-2">
-            <PrimaryButton type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving} label="Cancel" />
-            <PrimaryButton type="button" size="sm" loading={saving} onClick={onSave} label="Save" />
+            <PrimaryButton type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving}>
+              Cancel
+            </PrimaryButton>
+            <PrimaryButton type="button" size="sm" loading={saving} onClick={onSave}>
+              Save
+            </PrimaryButton>
           </div>
         ) : canEdit ? (
           <PrimaryButton
             type="button"
             className="inline-flex cursor-pointer items-center gap-1 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[0.82rem] font-medium text-[#8b97a8] hover:bg-hover-bg hover:text-primary"
-            onClick={onEdit} label={<><HugeiconsIcon icon={PencilEdit02Icon} size={14} color="currentColor" strokeWidth={1.8} />
-            {actionLabel}</>} />
+            onClick={onEdit}
+          >
+            <HugeiconsIcon icon={PencilEdit02Icon} size={14} color="currentColor" strokeWidth={1.8} />
+            {actionLabel}
+          </PrimaryButton>
         ) : null}
       </header>
       {children}

@@ -22,11 +22,13 @@ export function getLeadPoolColumns({ now, onView, onAssign }: LeadPoolColumnOpti
         <PrimaryButton
           type="button"
           className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold text-[#0f9d8e] hover:underline"
-          onClick={(event) = label={event.stopPropagation()
+          onClick={(event) => {
+            event.stopPropagation()
             onView(row)
           }}
         >
-          {emptyLeadValue(value)} />
+          {emptyLeadValue(value)}
+        </PrimaryButton>
       ),
     },
     {
@@ -108,7 +110,9 @@ export function getLeadPoolColumns({ now, onView, onAssign }: LeadPoolColumnOpti
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <PrimaryButton type="button" size="sm" onClick={() = label="onAssign(row)}> Assign Lead" />
+          <PrimaryButton type="button" size="sm" onClick={() => onAssign(row)}>
+            Assign Lead
+          </PrimaryButton>
         </div>
       ),
     },

@@ -149,9 +149,12 @@ export function CompleteFollowUpModal({
           </>
         ) : null}
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
-          <PrimaryButton type="button" loading={saving} onClick={() = label={<>void handleSubmit()}>
-            {createNext ? 'Complete & Schedule' : 'Complete'}</>} />
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </PrimaryButton>
+          <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()}>
+            {createNext ? 'Complete & Schedule' : 'Complete'}
+          </PrimaryButton>
         </div>
       </div>
     </AntModal>
@@ -209,13 +212,16 @@ export function RescheduleFollowUpModal({
           />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
+            Cancel
+          </PrimaryButton>
           <PrimaryButton
             type="button"
             loading={saving}
-            onClick={() = label={<>void onSubmit({ dueAt, reason: reason.trim() })}
+            onClick={() => void onSubmit({ dueAt, reason: reason.trim() })}
           >
-            Reschedule</>} />
+            Reschedule
+          </PrimaryButton>
         </div>
       </div>
     </AntModal>
@@ -261,8 +267,12 @@ export function CancelFollowUpModal({
           />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Keep Follow-up" />
-          <PrimaryButton type="button" loading={saving} onClick={() = label="void onSubmit(reason.trim())}> Cancel Follow-up" />
+          <PrimaryButton type="button" variant="outline" onClick={onClose}>
+            Keep Follow-up
+          </PrimaryButton>
+          <PrimaryButton type="button" loading={saving} onClick={() => void onSubmit(reason.trim())}>
+            Cancel Follow-up
+          </PrimaryButton>
         </div>
       </div>
     </AntModal>

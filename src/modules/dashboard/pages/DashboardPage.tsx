@@ -594,11 +594,12 @@ export default function DashboardPage() {
                 key={action.label}
                 className="min-w-0 overflow-hidden text-ellipsis !shadow-none transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px"
                 size="sm"
-                icon={<Icon name={action.icon} / label={<>}
+                icon={<Icon name={action.icon} />}
                 fullWidth
                 onClick={() => navigate(action.to)}
               >
-                {action.label}</>} />
+                {action.label}
+              </PrimaryButton>
             ) : (
               <PrimaryButton
                 key={action.label}
@@ -608,7 +609,7 @@ export default function DashboardPage() {
                   'transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:-translate-y-0.5',
                   actionBtnTone[action.tone] || 'bg-surface hover:bg-hover-bg',
                 )}
-                onClick={() = label={<>navigate(action.to)}
+                onClick={() => navigate(action.to)}
               >
                 <span
                   className={cx(
@@ -623,7 +624,8 @@ export default function DashboardPage() {
                   {action.hint ? (
                     <small className="truncate text-[0.7rem] text-text-muted">{action.hint}</small>
                   ) : null}
-                </span></>} />
+                </span>
+              </PrimaryButton>
             ),
           )}
         </aside>
@@ -636,7 +638,10 @@ export default function DashboardPage() {
             <PrimaryButton
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
-              onClick={() = label="navigate('/leads')} > View All" />
+              onClick={() => navigate('/leads')}
+            >
+              View All
+            </PrimaryButton>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[620px] border-collapse">
@@ -693,30 +698,36 @@ export default function DashboardPage() {
             <PrimaryButton
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
-              onClick={() = label="navigate('/follow-ups')} > View All" />
+              onClick={() => navigate('/follow-ups')}
+            >
+              View All
+            </PrimaryButton>
           </div>
           <div className="mb-3 grid grid-cols-3 gap-2">
             <PrimaryButton
               type="button"
               className="cursor-pointer rounded-[14px] border-0 bg-[#fff5f7] px-3 py-3 text-left dark:bg-rose-500/10"
-              onClick={() = label={<>navigate('/follow-ups')}
+              onClick={() => navigate('/follow-ups')}
             >
               <span className="block text-[0.72rem] font-medium text-[#e11d48]">Overdue</span>
-              <strong className="mt-1 block text-[1.35rem] text-[#e11d48]">{followUpMetrics.overdue}</strong></>} />
+              <strong className="mt-1 block text-[1.35rem] text-[#e11d48]">{followUpMetrics.overdue}</strong>
+            </PrimaryButton>
             <PrimaryButton
               type="button"
               className="cursor-pointer rounded-[14px] border-0 bg-[#f4f8ff] px-3 py-3 text-left dark:bg-blue-500/10"
-              onClick={() = label={<>navigate('/follow-ups')}
+              onClick={() => navigate('/follow-ups')}
             >
               <span className="block text-[0.72rem] font-medium text-[#2563eb]">Due Today</span>
-              <strong className="mt-1 block text-[1.35rem] text-[#2563eb]">{followUpMetrics.dueToday}</strong></>} />
+              <strong className="mt-1 block text-[1.35rem] text-[#2563eb]">{followUpMetrics.dueToday}</strong>
+            </PrimaryButton>
             <PrimaryButton
               type="button"
               className="cursor-pointer rounded-[14px] border-0 bg-[#f3fbf6] px-3 py-3 text-left dark:bg-green-500/10"
-              onClick={() = label={<>navigate('/follow-ups')}
+              onClick={() => navigate('/follow-ups')}
             >
               <span className="block text-[0.72rem] font-medium text-[#16a34a]">Completed</span>
-              <strong className="mt-1 block text-[1.35rem] text-[#16a34a]">{followUpMetrics.completedToday}</strong></>} />
+              <strong className="mt-1 block text-[1.35rem] text-[#16a34a]">{followUpMetrics.completedToday}</strong>
+            </PrimaryButton>
           </div>
           <div className="mb-3 grid grid-cols-2 gap-2">
             <div className="rounded-[14px] bg-[#f8fafc] px-3 py-2.5 dark:bg-hover-bg">
