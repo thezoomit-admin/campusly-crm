@@ -3,7 +3,7 @@ import { toast } from 'react-toastify'
 import { Globe02Icon } from '@hugeicons/core-free-icons'
 import { getApiError } from '@/lib/api'
 import { FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { useListCampaignOptionsQuery } from '@/modules/campaigns/api/campaignsApi'
 import {
   useCorrectLeadCampaignMutation,
@@ -111,14 +111,14 @@ export default function LeadMarketingPanel({
       )}
       <div className="mt-4 flex flex-wrap gap-2">
         {canChangeSource ? (
-          <Button type="button" variant="secondary" onClick={() => setSourceOpen((open) => !open)}>
+          <PrimaryButton type="button" variant="outline" onClick={() => setSourceOpen((open) => !open)}>
             Correct source
-          </Button>
+          </PrimaryButton>
         ) : null}
         {canChangeCampaign ? (
-          <Button type="button" variant="secondary" onClick={() => setCampaignOpen((open) => !open)}>
+          <PrimaryButton type="button" variant="outline" onClick={() => setCampaignOpen((open) => !open)}>
             Correct campaign
-          </Button>
+          </PrimaryButton>
         ) : null}
       </div>
       {sourceOpen ? (
@@ -146,9 +146,9 @@ export default function LeadMarketingPanel({
             <FormInput value={referralBy} placeholder="Referral by" onChange={(event) => setReferralBy(event.target.value)} />
           ) : null}
           <FormTextArea value={reason} rows={2} placeholder="Reason for the correction" onChange={(event) => setReason(event.target.value)} />
-          <Button type="button" disabled={savingSource || !reason.trim() || !sourceCode} onClick={saveSource}>
+          <PrimaryButton type="button" disabled={savingSource || !reason.trim() || !sourceCode} onClick={saveSource}>
             Save source correction
-          </Button>
+          </PrimaryButton>
         </div>
       ) : null}
       {campaignOpen ? (
@@ -167,9 +167,9 @@ export default function LeadMarketingPanel({
             placeholder="Reason for the correction"
             onChange={(event) => setCampaignReason(event.target.value)}
           />
-          <Button type="button" disabled={savingCampaign || !campaignReason.trim() || !campaignId} onClick={saveCampaign}>
+          <PrimaryButton type="button" disabled={savingCampaign || !campaignReason.trim() || !campaignId} onClick={saveCampaign}>
             Save campaign correction
-          </Button>
+          </PrimaryButton>
         </div>
       ) : null}
       {history?.items.length ? (

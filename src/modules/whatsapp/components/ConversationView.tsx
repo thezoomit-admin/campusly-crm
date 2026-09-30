@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent } fr
 import { Link } from 'react-router-dom'
 import { Dropdown, Input, Select, Spin, Tooltip } from 'antd'
 import { toast } from 'react-toastify'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { getApiError, getApiErrorFields } from '@/lib/api'
 import { statusClass } from '@/lib/statusClass'
 import {
@@ -213,14 +213,14 @@ export default function ConversationView({ conversationId, settings, embedded = 
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {!conversation.identified && canManage ? (
-            <Button size="sm" onClick={() => setConvertOpen(true)}>
+            <PrimaryButton size="sm" onClick={() => setConvertOpen(true)}>
               Convert to Lead
-            </Button>
+            </PrimaryButton>
           ) : null}
           {canManage ? (
-            <Button size="sm" variant="secondary" onClick={() => setAssignOpen(true)}>
+            <PrimaryButton size="sm" variant="outline" onClick={() => setAssignOpen(true)}>
               Assign
-            </Button>
+            </PrimaryButton>
           ) : null}
           <Dropdown
             trigger={['click']}
@@ -235,9 +235,9 @@ export default function ConversationView({ conversationId, settings, embedded = 
               onClick: ({ key }) => void onStatus(key as WhatsAppConversationStatus),
             }}
           >
-            <Button size="sm" variant="secondary" loading={statusSaving}>
+            <PrimaryButton size="sm" variant="outline" loading={statusSaving}>
               Status ▾
-            </Button>
+            </PrimaryButton>
           </Dropdown>
         </div>
       </header>
@@ -281,9 +281,9 @@ export default function ConversationView({ conversationId, settings, embedded = 
               The 24-hour WhatsApp reply window is closed. Send an approved template message to restart the
               conversation.
             </span>
-            <Button size="sm" loading={sendingTemplate} onClick={() => void onSendTemplate()}>
+            <PrimaryButton size="sm" loading={sendingTemplate} onClick={() => void onSendTemplate()}>
               Send template
-            </Button>
+            </PrimaryButton>
           </div>
         ) : null}
 
@@ -327,14 +327,14 @@ export default function ConversationView({ conversationId, settings, embedded = 
             }}
           />
           <Tooltip title="Attach file">
-            <Button
-              variant="secondary"
+            <PrimaryButton
+              variant="outline"
               aria-label="Attach file"
               disabled={!conversation.replyWindowOpen}
               onClick={() => fileRef.current?.click()}
             >
               📎
-            </Button>
+            </PrimaryButton>
           </Tooltip>
           <Input.TextArea
             value={text}
@@ -345,13 +345,13 @@ export default function ConversationView({ conversationId, settings, embedded = 
             disabled={!conversation.replyWindowOpen}
             placeholder={file ? 'Add a caption (optional)' : 'Type a message'}
           />
-          <Button
+          <PrimaryButton
             loading={sending}
             disabled={!conversation.replyWindowOpen || (!text.trim() && !file)}
             onClick={() => void onSend()}
           >
             Send
-          </Button>
+          </PrimaryButton>
         </div>
       </footer>
 

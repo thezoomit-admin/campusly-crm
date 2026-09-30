@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Select, Spin } from 'antd'
 import { toast } from 'react-toastify'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { getApiError } from '@/lib/api'
 import LeadSectionCard from '@/modules/leads/components/details/LeadSectionCard'
 import { useGetWhatsAppSettingsQuery, useListLeadWhatsAppQuery, useStartLeadWhatsAppMutation } from '../api/whatsappApi'
@@ -46,9 +46,9 @@ export default function LeadWhatsAppPanel({ leadId, hasWhatsAppNumber }: Props) 
             Messages from this student's WhatsApp number appear here automatically. You can also start the
             conversation with an approved template message.
           </p>
-          <Button size="sm" loading={starting} disabled={!hasWhatsAppNumber} onClick={() => void onStart()}>
+          <PrimaryButton size="sm" loading={starting} disabled={!hasWhatsAppNumber} onClick={() => void onStart()}>
             Start WhatsApp conversation
-          </Button>
+          </PrimaryButton>
           {!hasWhatsAppNumber ? (
             <p className="m-0 text-[0.78rem] text-text-muted">Add a phone or WhatsApp number to this lead first.</p>
           ) : null}

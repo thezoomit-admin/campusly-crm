@@ -4,7 +4,7 @@ import { Input, Select } from 'antd'
 import { toast } from 'react-toastify'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { useDebounce } from '@/hooks/useDebounce'
 import { getApiError } from '@/lib/api'
 import { adminBanner, adminCard, adminPage } from '@/styles/admin'
@@ -78,9 +78,9 @@ export default function EmailInboxPage() {
         extra={
           <div className="flex items-center gap-2">
             {settings?.mockMode && settings.canManage ? (
-              <Button size="sm" onClick={() => setSimulateOpen(true)}>
+              <PrimaryButton size="sm" onClick={() => setSimulateOpen(true)}>
                 Receive test email
-              </Button>
+              </PrimaryButton>
             ) : null}
             {data?.summary.unread ? (
               <span className="rounded-full bg-primary px-3 py-1 text-[0.8rem] font-semibold text-on-primary">

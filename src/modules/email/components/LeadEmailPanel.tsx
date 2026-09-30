@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Spin } from 'antd'
 import { toast } from 'react-toastify'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { getApiError } from '@/lib/api'
 import LeadSectionCard from '@/modules/leads/components/details/LeadSectionCard'
 import { useGetEmailSettingsQuery, useListLeadEmailQuery, useStartLeadEmailMutation } from '../api/emailApi'
@@ -46,9 +46,9 @@ export default function LeadEmailPanel({ leadId, hasEmail }: Props) {
             Emails from this student's address appear here automatically. You can also write the first message from the
             CRM.
           </p>
-          <Button size="sm" loading={starting} disabled={!hasEmail} onClick={() => void onStart()}>
+          <PrimaryButton size="sm" loading={starting} disabled={!hasEmail} onClick={() => void onStart()}>
             Send email
-          </Button>
+          </PrimaryButton>
           {!hasEmail ? (
             <p className="m-0 text-[0.78rem] text-text-muted">Add an email address to this lead first.</p>
           ) : null}

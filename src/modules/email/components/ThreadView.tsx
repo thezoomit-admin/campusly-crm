@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent } fr
 import { Link, useOutletContext } from 'react-router-dom'
 import { Dropdown, Input, Select, Spin } from 'antd'
 import { toast } from 'react-toastify'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { getApiError, getApiErrorFields } from '@/lib/api'
 import { statusClass } from '@/lib/statusClass'
 import type { AuthSession } from '@/types'
@@ -202,14 +202,14 @@ export default function ThreadView({ threadId, settings, embedded = false, class
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {!thread.identified && canManage ? (
-            <Button size="sm" onClick={() => setConvertOpen(true)}>
+            <PrimaryButton size="sm" onClick={() => setConvertOpen(true)}>
               Create lead
-            </Button>
+            </PrimaryButton>
           ) : null}
           {canManage ? (
-            <Button size="sm" variant="secondary" onClick={() => setAssignOpen(true)}>
+            <PrimaryButton size="sm" variant="outline" onClick={() => setAssignOpen(true)}>
               Assign
-            </Button>
+            </PrimaryButton>
           ) : null}
           <Dropdown
             trigger={['click']}
@@ -221,9 +221,9 @@ export default function ThreadView({ threadId, settings, embedded = false, class
               onClick: ({ key }) => void onStatus(key as EmailThreadStatus),
             }}
           >
-            <Button size="sm" variant="secondary" loading={statusSaving}>
+            <PrimaryButton size="sm" variant="outline" loading={statusSaving}>
               Status
-            </Button>
+            </PrimaryButton>
           </Dropdown>
         </div>
       </header>
@@ -319,13 +319,13 @@ export default function ThreadView({ threadId, settings, embedded = false, class
                 event.target.value = ''
               }}
             />
-            <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
+            <PrimaryButton variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
               Attach file
-            </Button>
+            </PrimaryButton>
           </div>
-          <Button loading={sending} disabled={!text.trim() || !subject.trim() || !to.trim()} onClick={() => void onSend()}>
+          <PrimaryButton loading={sending} disabled={!text.trim() || !subject.trim() || !to.trim()} onClick={() => void onSend()}>
             Send
-          </Button>
+          </PrimaryButton>
         </div>
       </footer>
 

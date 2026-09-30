@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { DataTable } from '@/components/common/Tables'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { getApiError } from '@/lib/api'
 import { hasPermission } from '@/lib/access'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -119,9 +119,9 @@ export default function MetaLeadsPage() {
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Meta Lead Ads' }]}
         extra={
           canReceive && settings?.mockMode ? (
-            <Button size="sm" onClick={() => setReceiveOpen(true)}>
+            <PrimaryButton size="sm" onClick={() => setReceiveOpen(true)}>
               Receive test lead
-            </Button>
+            </PrimaryButton>
           ) : null
         }
       />
@@ -230,9 +230,9 @@ export default function MetaLeadsPage() {
             className="min-w-40"
           />
           {campaign ? (
-            <Button size="sm" onClick={() => setCampaign(undefined)}>
+            <PrimaryButton size="sm" onClick={() => setCampaign(undefined)}>
               Campaign: {campaign}
-            </Button>
+            </PrimaryButton>
           ) : null}
         </div>
         {isError ? <p className="m-0 text-danger">Unable to load Meta leads.</p> : null}
