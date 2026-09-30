@@ -24,6 +24,11 @@
   --color-nav-hover-bg: color-mix(in srgb, #35ad0b 10%, transparent);
   --color-nav-active-bg: #e4f6dc;
   --color-nav-active: #2b8e09;
+  --color-section-tab-bg: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  --color-section-tab-hover-bg: color-mix(in srgb, var(--color-primary) 22%, var(--color-surface));
+  --color-section-tab-active-bg: var(--color-primary);
+  --color-section-tab-fg: var(--color-primary-active);
+  --color-section-tab-active-fg: var(--color-on-primary);
   --color-nav: #3a4650;
   --color-icon: #4a5560;
   --color-nav-group: #5c6a75;

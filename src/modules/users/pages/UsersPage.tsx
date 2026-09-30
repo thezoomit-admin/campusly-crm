@@ -420,12 +420,16 @@ function UserViewLayout({
 
           <nav className="grid gap-1" aria-label="User sections">
             {VIEW_TABS.map((tab) => (
-              <PrimaryButton
+              <button
                 key={tab.id}
                 type="button"
                 className={`${userViewNavBtn} ${viewTab === tab.id ? userViewNavBtnActive : userViewNavBtnIdle}`}
-                onClick={() => onTabChange(tab.id)} label={<><HugeiconsIcon icon={tab.icon} size={16} color="currentColor" strokeWidth={1.7} />
-                <span>{tab.label}</span></>} />
+                aria-current={viewTab === tab.id ? 'true' : undefined}
+                onClick={() => onTabChange(tab.id)}
+              >
+                <HugeiconsIcon icon={tab.icon} size={16} color="currentColor" strokeWidth={1.7} />
+                <span>{tab.label}</span>
+              </button>
             ))}
           </nav>
 

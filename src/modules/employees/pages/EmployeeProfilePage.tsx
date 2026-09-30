@@ -393,7 +393,7 @@ export default function EmployeeProfilePage() {
   }
 
   return (
-    <div className={`${adminPage} gap-5 overflow-visible [&_.ant-spin-nested-loading]:grid [&_.ant-spin-nested-loading]:gap-6 [&_.ant-spin-nested-loading]:overflow-visible [&_.ant-spin-container]:grid [&_.ant-spin-container]:gap-6 [&_.ant-spin-container]:overflow-visible`}>
+    <div className={`grid min-w-0 max-w-full gap-5 overflow-x-clip [&_.ant-spin-nested-loading]:grid [&_.ant-spin-nested-loading]:gap-6 [&_.ant-spin-nested-loading]:overflow-visible [&_.ant-spin-container]:grid [&_.ant-spin-container]:gap-6 [&_.ant-spin-container]:overflow-visible`}>
       <PageMeta
         title={employee?.fullName ? `${employee.fullName} — Employee` : 'Employee Profile'}
         description={
@@ -537,15 +537,27 @@ export default function EmployeeProfilePage() {
 
             <div className="grid grid-cols-1 items-start gap-x-8 gap-y-5 min-[1101px]:grid-cols-[220px_minmax(0,1fr)]">
               <aside className="sticky top-4 z-6 grid items-start gap-4 self-start max-[1100px]:top-3 max-[1100px]:bg-page-bg max-[1100px]:pb-1 max-[960px]:top-[72px]">
-                <nav className="grid gap-1.5 rounded-2xl border border-border bg-surface p-2.5 shadow-soft max-[1100px]:grid-cols-[repeat(auto-fit,minmax(140px,1fr))] [&_button]:flex [&_button]:w-full [&_button]:cursor-pointer [&_button]:items-center [&_button]:gap-2.5 [&_button]:rounded-[10px] [&_button]:border-0 [&_button]:bg-transparent [&_button]:px-3 [&_button]:py-2.5 [&_button]:text-left [&_button]:font-[inherit] [&_button]:text-text" aria-label="Profile sections">
-                  {SECTIONS.map((section) => (
-                    <PrimaryButton
-                      key={section.id}
-                      type="button"
-                      className={activeSection === section.id ? 'bg-nav-active-bg text-nav-active' : 'hover:bg-hover-bg'}
-                      onClick={() => scrollToSection(section.id)} label={<><HugeiconsIcon icon={section.icon} size={16} color="currentColor" strokeWidth={1.7} />
-                      <span>{section.label}</span></>} />
-                  ))}
+                <nav className="grid gap-1.5 rounded-2xl border border-border bg-surface p-2.5 shadow-soft max-[1100px]:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]" aria-label="Profile sections">
+                  {SECTIONS.map((section) => {
+                    const active = activeSection === section.id
+                    return (
+                      <button
+                        key={section.id}
+                        type="button"
+                        className={[
+                          'flex w-full cursor-pointer items-center gap-2.5 rounded-[10px] border-0 px-3 py-2.5 text-left font-[inherit] transition-colors',
+                          active
+                            ? 'bg-section-tab-active-bg font-semibold text-section-tab-active-fg'
+                            : 'bg-section-tab-bg text-section-tab-fg hover:bg-section-tab-hover-bg',
+                        ].join(' ')}
+                        aria-current={active ? 'true' : undefined}
+                        onClick={() => scrollToSection(section.id)}
+                      >
+                        <HugeiconsIcon icon={section.icon} size={16} color="currentColor" strokeWidth={1.7} />
+                        <span>{section.label}</span>
+                      </button>
+                    )
+                  })}
                 </nav>
 
                 <div className="rounded-2xl border border-border bg-surface p-4 [&_h4]:mb-3.5 [&_h4]:mt-0 [&_h4]:text-[0.86rem] [&_p]:mb-3 [&_p]:mt-0 [&_p]:flex [&_p]:items-start [&_p]:gap-2.5 [&_p]:text-[0.84rem] [&_p]:text-text-muted [&_p:last-child]:mb-0 [&_a]:text-inherit [&_a]:no-underline hover:[&_a]:text-primary">
