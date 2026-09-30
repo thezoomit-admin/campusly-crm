@@ -34,7 +34,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { DatePicker, Spin, Switch } from 'antd'
+import { Spin } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import {
@@ -63,8 +63,8 @@ import {
   useUploadEmployeePhotoMutation,
 } from '@/redux/features/employees/employeesApi'
 import { getApiError, getApiErrorFields } from '@/lib/api'
-import { Button } from '@/components/ui'
-import { FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
+import { PrimaryButton } from '@/components/ui'
+import { FormDatePicker, FormInput, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { hasPermission } from '../../../lib/access'
@@ -865,13 +865,9 @@ export default function EmployeeCreatePage() {
         extra={
           <>
             {isEdit && id ? (
-              <Button variant="secondary" onClick={() => navigate(`/employees/${id}`)}>
-                View profile
-              </Button>
+              <PrimaryButton variant="outline" onClick={() => navigate(`/employees/${id}`)} label="View profile" />
             ) : null}
-            <Button variant="secondary" onClick={() => navigate('/employees')}>
-              Back to Employees
-            </Button>
+            <PrimaryButton variant="outline" onClick={() => navigate('/employees')} label="Back to Employees" />
           </>
         }
       />
@@ -952,7 +948,7 @@ export default function EmployeeCreatePage() {
             />
           </Field>
           <Field id="dateOfBirth" label="Date of birth" error={errors.dateOfBirth}>
-            <DatePicker
+            <FormDatePicker
               id="dateOfBirth"
               allowClear
               value={toDayjs(form.dateOfBirth)}
@@ -1061,7 +1057,7 @@ export default function EmployeeCreatePage() {
 
         <FormSection id="employment" title="Employment Information" errors={sectionErrors('employment', errors)}>
           <Field id="joiningDate" label="Joining date" required error={errors.joiningDate}>
-            <DatePicker
+            <FormDatePicker
               id="joiningDate"
               allowClear={false}
               value={toDayjs(form.joiningDate)}
@@ -1165,7 +1161,7 @@ export default function EmployeeCreatePage() {
                 </span>
                 <p>Creates a user login using the official email, department, and team above.</p>
               </div>
-              <Switch
+              <FormSwitch
                 checked={form.createCrmAccount}
                 aria-labelledby="createCrmAccountLabel"
                 onChange={(checked) => {
@@ -1302,15 +1298,12 @@ export default function EmployeeCreatePage() {
                         </span>
                       ) : (
                         <span className="flex items-center gap-1">
-                          <button
+                          <PrimaryButton
                             type="button"
                             className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-icon hover:bg-hover-bg"
                             aria-label={`View ${item.label}`}
-                            onClick={() => void openDocumentPreview(item)}
-                          >
-                            <HugeiconsIcon icon={ViewIcon} size={15} color="currentColor" strokeWidth={1.8} />
-                          </button>
-                          <button
+                            onClick={() => void openDocumentPreview(item)} icon={<HugeiconsIcon icon={ViewIcon} size={15} color="currentColor" strokeWidth={1.8} />} />
+                          <PrimaryButton
                             type="button"
                             className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-icon hover:bg-hover-bg text-danger hover:bg-[color-mix(in_srgb,var(--color-danger)_16%,var(--color-surface))]"
                             aria-label={`Delete ${item.label}`}
@@ -1321,10 +1314,7 @@ export default function EmployeeCreatePage() {
                                 fileName: file?.name || existing?.fileName || item.label,
                                 documentId: existing?.id,
                               })
-                            }
-                          >
-                            <HugeiconsIcon icon={Delete02Icon} size={15} color="currentColor" strokeWidth={1.8} />
-                          </button>
+                            } icon={<HugeiconsIcon icon={Delete02Icon} size={15} color="currentColor" strokeWidth={1.8} />} />
                         </span>
                       )}
                     </div>
@@ -1386,12 +1376,8 @@ export default function EmployeeCreatePage() {
             </div>
           </dl>
           <div className={`${formActions} ${adminFormSpan}`}>
-            <Button type="submit" loading={saving} disabled={saving || !options || loading || (isEdit && !employee)}>
-              {isEdit ? 'Save Employee' : 'Create Employee'}
-            </Button>
-            <Button type="button" variant="secondary" disabled={saving} onClick={() => navigate('/employees')}>
-              Cancel
-            </Button>
+            <PrimaryButton type="submit" loading={saving} disabled={saving || !options || loading || (isEdit && !employee)} label={isEdit ? 'Save Employee' : 'Create Employee'} />
+            <PrimaryButton type="button" variant="outline" disabled={saving} onClick={() => navigate('/employees')} label="Cancel" />
           </div>
         </FormSection>
         </form>
@@ -1412,9 +1398,7 @@ export default function EmployeeCreatePage() {
                     <h3 id="document-preview-title">{preview.title}</h3>
                     <p className="m-0 text-[0.92rem] font-semibold text-text">{preview.fileName}</p>
                   </div>
-                  <button type="button" className={`${modalClose}`} aria-label="Close" onClick={closePreview}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </button>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closePreview} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <div className="overflow-hidden rounded-xl border border-border bg-[color-mix(in_srgb,var(--color-page-bg)_70%,var(--color-surface))] [&_img]:mx-auto [&_img]:max-h-[60vh] [&_img]:max-w-full [&_img]:object-contain [&_iframe]:h-[60vh] [&_iframe]:w-full [&_iframe]:border-0">
                   {preview.loading ? (
@@ -1457,27 +1441,20 @@ export default function EmployeeCreatePage() {
               >
                 <div className={`${modalHeader}`}>
                   <h3 id="document-delete-title">Delete document?</h3>
-                  <button
+                  <PrimaryButton
                     type="button"
                     className={`${modalClose}`}
                     aria-label="Close"
                     disabled={deletingDocument}
-                    onClick={() => setDeleteTarget(null)}
-                  >
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </button>
+                    onClick={() => setDeleteTarget(null)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <p className={`${statusConfirmCopy}`}>
                   Are you sure you want to delete <strong>{deleteTarget.fileName}</strong> from {deleteTarget.label}? This
                   action cannot be undone.
                 </p>
                 <div className={`${formActions}`}>
-                  <Button loading={deletingDocument} className="ui-btn-danger" onClick={() => void confirmDeleteDocument()}>
-                    Delete
-                  </Button>
-                  <Button type="button" variant="secondary" disabled={deletingDocument} onClick={() => setDeleteTarget(null)}>
-                    Cancel
-                  </Button>
+                  <PrimaryButton loading={deletingDocument} className="ui-btn-danger" onClick={() => void confirmDeleteDocument()} label="Delete" />
+                  <PrimaryButton type="button" variant="outline" disabled={deletingDocument} onClick={() => setDeleteTarget(null)} label="Cancel" />
                 </div>
               </div>
             </div>,

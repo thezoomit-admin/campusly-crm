@@ -1,7 +1,7 @@
-import { Input } from 'antd'
 import { Search01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { AdminFilterDrawer, countActiveFilters } from '@/components/common/Filters'
+import { FormInput } from '@/components/common/Forms'
 import { useListMasterDataOptionsQuery } from '@/redux/features/masterData/masterDataApi'
 
 export type LeadFilterValues = {
@@ -42,7 +42,7 @@ export default function LeadFilters({
 
   return (
     <div className="ml-auto flex h-[58px] shrink-0 items-center gap-2">
-      <Input
+      <FormInput
         allowClear
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}

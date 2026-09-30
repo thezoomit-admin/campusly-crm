@@ -1,7 +1,7 @@
 import { useMemo, type SVGProps } from 'react'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useGetDashboardQuery } from '../api/dashboardApi'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { Spinner } from '@/components/common/Loading'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
@@ -590,26 +590,32 @@ export default function DashboardPage() {
         <aside className={cx(dashCard, 'grid min-w-0 content-start gap-2 md:col-span-2 lg:col-span-1')}>
           {QUICK_ACTIONS.map((action) =>
             action.tone === 'primary' ? (
-              <Button
+              <PrimaryButton
                 key={action.label}
                 className="min-w-0 overflow-hidden text-ellipsis !shadow-none transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px"
                 size="sm"
                 icon={<Icon name={action.icon} />}
                 fullWidth
+                label={action.label}
                 onClick={() => navigate(action.to)}
-              >
-                {action.label}
-              </Button>
+              />
             ) : (
-              <button
+              <div
                 key={action.label}
-                type="button"
+                role="button"
+                tabIndex={0}
                 className={cx(
-                  'flex min-w-0 w-full cursor-pointer items-center gap-2.5 overflow-hidden rounded-[12px] border-0 px-2.5 py-2 text-left text-text shadow-none',
+                  'flex min-w-0 w-full cursor-pointer items-center gap-2.5 overflow-hidden rounded-[12px] border-0 px-2.5 py-2 text-left text-text',
                   'transition-[background-color,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform hover:-translate-y-0.5',
                   actionBtnTone[action.tone] || 'bg-surface hover:bg-hover-bg',
                 )}
                 onClick={() => navigate(action.to)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    navigate(action.to)
+                  }
+                }}
               >
                 <span
                   className={cx(
@@ -625,7 +631,7 @@ export default function DashboardPage() {
                     <small className="truncate text-[0.7rem] text-text-muted">{action.hint}</small>
                   ) : null}
                 </span>
-              </button>
+              </div>
             ),
           )}
         </aside>
@@ -635,13 +641,10 @@ export default function DashboardPage() {
         <article className={cx(dashCard, 'min-w-0')}>
           <div className={cardHead}>
             <h3 className="m-0 text-base">Recent Leads</h3>
-            <button
+            <PrimaryButton
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
-              onClick={() => navigate('/leads')}
-            >
-              View All
-            </button>
+              onClick={() => navigate('/leads')} label="View All" />
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[620px] border-collapse">
@@ -695,39 +698,57 @@ export default function DashboardPage() {
         <article className={cx(dashCard, 'min-w-0')}>
           <div className={cardHead}>
             <h3 className="m-0 text-base">Today&apos;s Follow-ups</h3>
-            <button
+            <PrimaryButton
               type="button"
               className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
-              onClick={() => navigate('/follow-ups')}
-            >
-              View All
-            </button>
+              onClick={() => navigate('/follow-ups')} label="View All" />
           </div>
           <div className="mb-3 grid grid-cols-3 gap-2">
-            <button
-              type="button"
-              className="cursor-pointer rounded-[14px] border-0 bg-[#fff5f7] px-3 py-3 text-left dark:bg-rose-500/10"
+            <div
+              role="button"
+              tabIndex={0}
+              className="cursor-pointer rounded-[14px] bg-[#fff5f7] px-3 py-3 text-left dark:bg-rose-500/10"
               onClick={() => navigate('/follow-ups')}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  navigate('/follow-ups')
+                }
+              }}
             >
               <span className="block text-[0.72rem] font-medium text-[#e11d48]">Overdue</span>
               <strong className="mt-1 block text-[1.35rem] text-[#e11d48]">{followUpMetrics.overdue}</strong>
-            </button>
-            <button
-              type="button"
-              className="cursor-pointer rounded-[14px] border-0 bg-[#f4f8ff] px-3 py-3 text-left dark:bg-blue-500/10"
+            </div>
+            <div
+              role="button"
+              tabIndex={0}
+              className="cursor-pointer rounded-[14px] bg-[#f4f8ff] px-3 py-3 text-left dark:bg-blue-500/10"
               onClick={() => navigate('/follow-ups')}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  navigate('/follow-ups')
+                }
+              }}
             >
               <span className="block text-[0.72rem] font-medium text-[#2563eb]">Due Today</span>
               <strong className="mt-1 block text-[1.35rem] text-[#2563eb]">{followUpMetrics.dueToday}</strong>
-            </button>
-            <button
-              type="button"
-              className="cursor-pointer rounded-[14px] border-0 bg-[#f3fbf6] px-3 py-3 text-left dark:bg-green-500/10"
+            </div>
+            <div
+              role="button"
+              tabIndex={0}
+              className="cursor-pointer rounded-[14px] bg-[#f3fbf6] px-3 py-3 text-left dark:bg-green-500/10"
               onClick={() => navigate('/follow-ups')}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  navigate('/follow-ups')
+                }
+              }}
             >
               <span className="block text-[0.72rem] font-medium text-[#16a34a]">Completed</span>
               <strong className="mt-1 block text-[1.35rem] text-[#16a34a]">{followUpMetrics.completedToday}</strong>
-            </button>
+            </div>
           </div>
           <div className="mb-3 grid grid-cols-2 gap-2">
             <div className="rounded-[14px] bg-[#f8fafc] px-3 py-2.5 dark:bg-hover-bg">

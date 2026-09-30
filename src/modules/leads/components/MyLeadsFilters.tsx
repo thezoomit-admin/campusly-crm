@@ -1,7 +1,7 @@
-import { Input, Select } from 'antd'
 import { Search01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
+import { FormInput, FormSelect } from '@/components/common/Forms'
 import { useListMasterDataOptionsQuery } from '@/redux/features/masterData/masterDataApi'
 
 export type MyLeadFilterValues = {
@@ -56,7 +56,7 @@ export default function MyLeadsFilters({
 
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
-      <Input
+      <FormInput
         allowClear
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
@@ -66,7 +66,7 @@ export default function MyLeadsFilters({
         className="leads-list-search w-full max-w-xl"
       />
       <div className="flex flex-wrap items-center gap-2">
-        <Select
+        <FormSelect
           allowClear
           showSearch
           optionFilterProp="label"
@@ -76,7 +76,7 @@ export default function MyLeadsFilters({
           options={statusOptions}
           onChange={(value) => onFiltersChange({ ...filters, status: value || '' })}
         />
-        <Select
+        <FormSelect
           allowClear
           showSearch
           optionFilterProp="label"
@@ -86,7 +86,7 @@ export default function MyLeadsFilters({
           options={countryOptions}
           onChange={(value) => onFiltersChange({ ...filters, country: value || '' })}
         />
-        <Select
+        <FormSelect
           allowClear
           showSearch
           optionFilterProp="label"
@@ -96,7 +96,7 @@ export default function MyLeadsFilters({
           options={sourceOptions}
           onChange={(value) => onFiltersChange({ ...filters, source: value || '' })}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="Priority"
           className="min-w-[140px] flex-1"
@@ -108,7 +108,7 @@ export default function MyLeadsFilters({
           ]}
           onChange={(value) => onFiltersChange({ ...filters, priority: value || '' })}
         />
-        <Select
+        <FormSelect
           allowClear
           placeholder="Follow-up Status"
           className="min-w-[180px] flex-1"
@@ -116,12 +116,8 @@ export default function MyLeadsFilters({
           options={FOLLOW_UP_STATUS_OPTIONS}
           onChange={(value) => onFiltersChange({ ...filters, followUpStatus: value || '' })}
         />
-        <Button type="button" onClick={onSearch}>
-          Search
-        </Button>
-        <Button type="button" variant="secondary" onClick={onReset}>
-          Reset
-        </Button>
+        <PrimaryButton type="button" onClick={onSearch} label="Search" />
+        <PrimaryButton type="button" variant="outline" onClick={onReset} label="Reset" />
       </div>
     </div>
   )

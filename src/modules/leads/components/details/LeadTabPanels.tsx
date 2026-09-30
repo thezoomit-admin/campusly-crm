@@ -1,7 +1,7 @@
 import { HugeiconsIcon } from '@hugeicons/react'
 import { File01Icon } from '@hugeicons/core-free-icons'
 import { FormTextArea } from '@/components/common/Forms'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
 import { statusClass } from '@/lib/statusClass'
 import type { ActivityFeedItem } from '@/types'
 import type { CommunicationEvent } from '@/modules/communications/types'
@@ -97,13 +97,10 @@ export function LeadActivitiesPanel({
       title="Activities"
       extra={
         canAdd ? (
-          <button
+          <PrimaryButton
             type="button"
             className="inline-flex cursor-pointer items-center gap-1 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[0.82rem] font-medium text-primary hover:bg-hover-bg"
-            onClick={onAdd}
-          >
-            Add
-          </button>
+            onClick={onAdd} label="Add" />
         ) : null
       }
     >
@@ -160,9 +157,7 @@ export function LeadNotesPanel({
       />
       {canEdit ? (
         <div className="mt-3 flex justify-end">
-          <Button type="button" loading={saving} onClick={onSave}>
-            Save notes
-          </Button>
+          <PrimaryButton type="button" loading={saving} onClick={onSave} label="Save notes" />
         </div>
       ) : null}
     </LeadSectionCard>

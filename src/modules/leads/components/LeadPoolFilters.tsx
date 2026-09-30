@@ -1,11 +1,9 @@
-import { DatePicker, Input, Select } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { Search01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Button } from '@/components/ui'
+import { PrimaryButton } from '@/components/ui'
+import { FormDatePicker, FormInput, FormSelect } from '@/components/common/Forms'
 import { useListMasterDataOptionsQuery } from '@/redux/features/masterData/masterDataApi'
-
-const { RangePicker } = DatePicker
 
 export type LeadPoolFilterValues = {
   country: string
@@ -48,7 +46,7 @@ export default function LeadPoolFilters({
 
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
-      <Input
+      <FormInput
         allowClear
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
@@ -58,7 +56,7 @@ export default function LeadPoolFilters({
         className="leads-list-search w-full max-w-xl"
       />
       <div className="flex flex-wrap items-center gap-2">
-        <Select
+        <FormSelect
           allowClear
           showSearch
           optionFilterProp="label"
@@ -68,7 +66,7 @@ export default function LeadPoolFilters({
           options={countryOptions}
           onChange={(value) => onFiltersChange({ ...filters, country: value || '' })}
         />
-        <Select
+        <FormSelect
           allowClear
           showSearch
           optionFilterProp="label"
@@ -78,18 +76,14 @@ export default function LeadPoolFilters({
           options={sourceOptions}
           onChange={(value) => onFiltersChange({ ...filters, source: value || '' })}
         />
-        <RangePicker
+        <FormDatePicker.Range
           allowClear
           className="min-w-[240px] flex-1"
           value={filters.createdRange}
           onChange={(dates) => onFiltersChange({ ...filters, createdRange: dates })}
         />
-        <Button type="button" onClick={onSearch}>
-          Search
-        </Button>
-        <Button type="button" variant="secondary" onClick={onReset}>
-          Reset
-        </Button>
+        <PrimaryButton type="button" onClick={onSearch} label="Search" />
+        <PrimaryButton type="button" variant="outline" onClick={onReset} label="Reset" />
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import { adminCard, adminPage } from '../../../styles/admin'
 import { useNavigate, useOutletContext } from 'react-router-dom'
-import { Button, UserAvatar } from '@/components/ui'
+import { PrimaryButton, UserAvatar } from '@/components/ui'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import type { AuthSession } from '../../../types'
@@ -32,9 +32,7 @@ export default function ProfilePage() {
         subtitle="Your account details for this CRM session."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Profile' }]}
         extra={
-          <Button variant="secondary" onClick={() => navigate('/account')}>
-            Change password
-          </Button>
+          <PrimaryButton variant="outline" onClick={() => navigate('/account')} label="Change password" />
         }
       />
 

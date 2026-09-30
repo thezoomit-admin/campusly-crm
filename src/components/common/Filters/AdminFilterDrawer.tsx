@@ -1,12 +1,9 @@
-import { DatePicker, InputNumber, Select, Switch } from 'antd'
 import type { Dayjs } from 'dayjs'
 import { Cancel01Icon, FilterIcon } from '@hugeicons/core-free-icons'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import HugeIcon from '@/components/ui/Icon/HugeIcon'
-import { Button } from '@/components/ui'
-
-const { RangePicker } = DatePicker
-const { Option } = Select
+import { PrimaryButton } from '@/components/ui'
+import { FormDatePicker, FormInputNumber, FormSelect, FormSwitch } from '@/components/common/Forms'
 
 export type FilterValue =
   | string
@@ -146,7 +143,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
 
     if (field.type === 'select') {
       return (
-        <Select
+        <FormSelect
           placeholder={field.loading ? 'Loading...' : field.placeholder}
           value={isEmptyValue(fieldValue) ? undefined : fieldValue}
           onChange={(nextValue) => updateDraftValue(field.key, nextValue)}
@@ -155,20 +152,22 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
           allowClear={field.allowClear ?? true}
           optionFilterProp="label"
           loading={field.loading}
-        >
-          {field.includeAllOption ? <Option value="" label={field.allLabel ?? 'All'}>{field.allLabel ?? 'All'}</Option> : null}
-          {field.options.map((option) => (
-            <Option key={String(option.value)} value={option.value} label={option.searchLabel ?? String(option.label)}>
-              {option.label}
-            </Option>
-          ))}
-        </Select>
+          options={[
+            ...(field.includeAllOption
+              ? [{ value: '', label: field.allLabel ?? 'All' }]
+              : []),
+            ...field.options.map((option) => ({
+              value: option.value as string | number,
+              label: option.label,
+            })),
+          ]}
+        />
       )
     }
 
     if (field.type === 'dateRange') {
       return (
-        <RangePicker
+        <FormDatePicker.Range
           value={(fieldValue as [Dayjs | null, Dayjs | null] | undefined) ?? null}
           onChange={(dates) => updateDraftValue(field.key, dates)}
           className="w-full"
@@ -180,23 +179,24 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
 
     if (field.type === 'numberRange') {
       const rangeValue = (fieldValue as [number | null, number | null] | undefined) ?? [null, null]
+      const toNumber = (value: string | number | null) => (typeof value === 'number' ? value : null)
       return (
         <div className="grid grid-cols-2 gap-3">
-          <InputNumber
+          <FormInputNumber
             value={rangeValue[0]}
             min={field.min}
             max={field.max}
             placeholder={field.minPlaceholder ?? 'Min'}
             className="w-full"
-            onChange={(nextValue) => updateDraftValue(field.key, [nextValue, rangeValue[1]])}
+            onChange={(nextValue) => updateDraftValue(field.key, [toNumber(nextValue), rangeValue[1]])}
           />
-          <InputNumber
+          <FormInputNumber
             value={rangeValue[1]}
             min={field.min}
             max={field.max}
             placeholder={field.maxPlaceholder ?? 'Max'}
             className="w-full"
-            onChange={(nextValue) => updateDraftValue(field.key, [rangeValue[0], nextValue])}
+            onChange={(nextValue) => updateDraftValue(field.key, [rangeValue[0], toNumber(nextValue)])}
           />
         </div>
       )
@@ -208,7 +208,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
           <span className="text-sm text-text-muted">
             {fieldValue ? field.checkedLabel ?? 'Enabled' : field.uncheckedLabel ?? 'Disabled'}
           </span>
-          <Switch checked={Boolean(fieldValue)} onChange={(checked) => updateDraftValue(field.key, checked)} />
+          <FormSwitch checked={Boolean(fieldValue)} onChange={(checked) => updateDraftValue(field.key, checked)} />
         </div>
       )
     }
@@ -218,23 +218,23 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
 
   return (
     <>
-      <Button
-        variant="secondary"
+      <PrimaryButton
+        variant="outline"
         icon={<HugeIcon icon={FilterIcon} size={16} />}
         onClick={openDrawer}
         className={`relative ${buttonClassName}`.trim()}
+        label={buttonLabel}
       >
-        {buttonLabel}
         {resolvedActiveCount > 0 ? (
           <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-on-primary">
             {resolvedActiveCount}
           </span>
         ) : null}
-      </Button>
+      </PrimaryButton>
 
       {isOpen ? (
         <div className="fixed inset-0 z-1000">
-          <button
+          <PrimaryButton
             type="button"
             className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ease-out ${isPanelVisible ? 'opacity-100' : 'opacity-0'}`}
             aria-label="Close filters"
@@ -248,14 +248,11 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
                 <h2 className="text-lg leading-snug font-semibold text-text-strong">{title}</h2>
                 {description ? <p className="mt-1.5 text-sm leading-relaxed text-text-muted">{description}</p> : null}
               </div>
-              <button
+              <PrimaryButton
                 type="button"
                 onClick={closeDrawer}
                 className="-mt-0.5 -mr-1 shrink-0 rounded-full p-2 text-text-muted transition-colors hover:bg-hover-bg hover:text-text-strong"
-                aria-label="Close filters"
-              >
-                <HugeIcon icon={Cancel01Icon} size={18} />
-              </button>
+                aria-label="Close filters" icon={<HugeIcon icon={Cancel01Icon} size={18} />} />
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">
@@ -271,20 +268,14 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
             </div>
 
             <div className="flex items-center gap-3 border-t border-border-subtle bg-page-bg px-5 py-4 sm:px-6">
-              <button
+              <PrimaryButton
                 type="button"
                 onClick={() => setDraftValue(defaultValue)}
-                className="h-11 flex-1 rounded-lg border border-header-border px-4 text-sm font-medium text-text-strong transition-colors hover:bg-surface"
-              >
-                Reset
-              </button>
-              <button
+                className="h-11 flex-1 rounded-lg border border-header-border px-4 text-sm font-medium text-text-strong transition-colors hover:bg-surface" label="Reset" />
+              <PrimaryButton
                 type="button"
                 onClick={applyDraft}
-                className="h-11 flex-1 rounded-lg bg-primary px-4 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-hover"
-              >
-                Show results
-              </button>
+                className="h-11 flex-1 rounded-lg bg-primary px-4 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-hover" label="Show results" />
             </div>
           </aside>
         </div>

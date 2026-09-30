@@ -7,9 +7,13 @@ export type { RowActionItem } from './Dropdowns'
 export { AdminFilterDrawer, countActiveFilters } from './Filters'
 export type { FilterField, FilterOption, FilterValue, FilterValues } from './Filters'
 export {
+  FormCheckbox,
   FormDatePicker,
   FormInput,
+  FormInputNumber,
+  FormRadio,
   FormSelect,
+  FormSwitch,
   FormTextArea,
   InputError,
   SwitchStatus,

@@ -1,4 +1,5 @@
-export { default as Button } from './Button/Button'
+export { default as PrimaryButton } from './Button/PrimaryButton'
+export type { PrimaryButtonProps } from './Button/PrimaryButton'
 export { Dropdown } from './dropdown/Dropdown'
 export { DropdownItem } from './dropdown/DropdownItem'
 export { default as HugeIcon } from './Icon/HugeIcon'
