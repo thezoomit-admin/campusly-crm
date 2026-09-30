@@ -82,12 +82,8 @@ export default function LeadPoolFilters({
           value={filters.createdRange}
           onChange={(dates) => onFiltersChange({ ...filters, createdRange: dates })}
         />
-        <PrimaryButton type="button" onClick={onSearch}>
-          Search
-        </PrimaryButton>
-        <PrimaryButton type="button" variant="outline" onClick={onReset}>
-          Reset
-        </PrimaryButton>
+        <PrimaryButton type="button" onClick={onSearch} label="Search" />
+        <PrimaryButton type="button" variant="outline" onClick={onReset} label="Reset" />
       </div>
     </div>
   )

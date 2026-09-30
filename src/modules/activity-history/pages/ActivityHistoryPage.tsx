@@ -438,10 +438,8 @@ export default function ActivityHistoryPage() {
         extra={
           <Dropdown menu={{ items: exportItems }} trigger={['click']}>
             <span>
-              <PrimaryButton variant="outline">
-                Export
-                <HugeiconsIcon icon={ArrowDown01Icon} size={14} />
-              </PrimaryButton>
+              <PrimaryButton variant="outline" label={<>Export
+                <HugeiconsIcon icon={ArrowDown01Icon} size={14} /></>} />
             </span>
           </Dropdown>
         }
@@ -530,7 +528,7 @@ export default function ActivityHistoryPage() {
                       'w-full flex justify-between items-center gap-2 py-[9px] px-2.5 border-0 rounded-[10px] bg-transparent text-text cursor-pointer font-inherit',
                       activeFilter && 'bg-[#eef4ff] dark:bg-blue-500/15',
                     )}
-                    onClick={() => applyCategory(item.key)}
+                    onClick={() = label={<>applyCategory(item.key)}
                   >
                     <span
                       className={cx(
@@ -543,8 +541,7 @@ export default function ActivityHistoryPage() {
                     </span>
                     <b className={cx('text-text-faint text-[0.78rem]', activeFilter && 'text-[#2563eb]')}>
                       {counts[item.key].toLocaleString()}
-                    </b>
-                  </PrimaryButton>
+                    </b></>} />
                 </li>
               )
             })}
@@ -564,14 +561,13 @@ export default function ActivityHistoryPage() {
                 <strong>No matching activities</strong>
                 {canCreate ? (
                   <PrimaryButton
-                    onClick={() => {
+                    onClick={() = label={<>{
                       setLogType('CALL')
                       setLogName('')
                       setLogOpen(true)
                     }}
                   >
-                    Log activity
-                  </PrimaryButton>
+                    Log activity</>} />
                 ) : null}
               </div>
             ) : (
@@ -644,10 +640,9 @@ export default function ActivityHistoryPage() {
                     key={item}
                     type="button"
                     className={cx(pageBtn, item === safePage && pageBtnActive)}
-                    onClick={() => setPage(item)}
+                    onClick={() = label={<>setPage(item)}
                   >
-                    {item}
-                  </PrimaryButton>
+                    {item}</>} />
                 ),
               )}
             </div>
@@ -772,7 +767,7 @@ export default function ActivityHistoryPage() {
                     <PrimaryButton
                       type="button"
                       className={quickActionBtn}
-                      onClick={() => {
+                      onClick={() = label={<>{
                         setLogType('CALL')
                         setLogName(active.relatedName || '')
                         setLogOutcome('Connected')
@@ -780,20 +775,18 @@ export default function ActivityHistoryPage() {
                         setLogOpen(true)
                       }}
                     >
-                      Call Again
-                    </PrimaryButton>
+                      Call Again</>} />
                     <PrimaryButton
                       type="button"
                       className={quickActionBtn}
-                      onClick={() => {
+                      onClick={() = label={<>{
                         setLogType('WHATSAPP')
                         setLogName(active.relatedName || '')
                         setLogOutcome('Completed')
                         setLogOpen(true)
                       }}
                     >
-                      Send Message
-                    </PrimaryButton>
+                      Send Message</>} />
                   </div>
                 </>
               ) : null}
@@ -816,9 +809,7 @@ export default function ActivityHistoryPage() {
                       ? 'Email'
                       : 'Activity'}
               </h3>
-              <PrimaryButton type="button" className={modalClose} onClick={() => setLogOpen(false)}>
-                ×
-              </PrimaryButton>
+              <PrimaryButton type="button" className={modalClose} onClick={() = label="setLogOpen(false)}> ×" />
             </div>
             <div className={adminForm}>
               <label>
@@ -921,12 +912,9 @@ export default function ActivityHistoryPage() {
                 </label>
               ) : null}
               <div className="flex justify-end gap-2 mt-3">
-                <PrimaryButton variant="outline" onClick={() => setLogOpen(false)}>
-                  Cancel
-                </PrimaryButton>
-                <PrimaryButton loading={saving} onClick={() => void submitLog()}>
-                  {logCreateNext ? 'Complete & Schedule Next Follow-up' : 'Save activity'}
-                </PrimaryButton>
+                <PrimaryButton variant="outline" onClick={() = label="setLogOpen(false)}> Cancel" />
+                <PrimaryButton loading={saving} onClick={() = label={<>void submitLog()}>
+                  {logCreateNext ? 'Complete & Schedule Next Follow-up' : 'Save activity'}</>} />
               </div>
             </div>
           </div>

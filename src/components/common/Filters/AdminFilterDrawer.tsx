@@ -220,7 +220,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
     <>
       <PrimaryButton
         variant="outline"
-        icon={<HugeIcon icon={FilterIcon} size={16} />}
+        icon={<HugeIcon icon={FilterIcon} size={16} / label={<>}
         onClick={openDrawer}
         className={`relative ${buttonClassName}`.trim()}
       >
@@ -229,8 +229,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
           <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-on-primary">
             {resolvedActiveCount}
           </span>
-        ) : null}
-      </PrimaryButton>
+        ) : null}</>} />
 
       {isOpen ? (
         <div className="fixed inset-0 z-1000">
@@ -273,18 +272,11 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
             <div className="flex items-center gap-3 border-t border-border-subtle bg-page-bg px-5 py-4 sm:px-6">
               <PrimaryButton
                 type="button"
-                onClick={() => setDraftValue(defaultValue)}
-                className="h-11 flex-1 rounded-lg border border-header-border px-4 text-sm font-medium text-text-strong transition-colors hover:bg-surface"
-              >
-                Reset
-              </PrimaryButton>
+                onClick={() = label="setDraftValue(defaultValue)} className="h-11 flex-1 rounded-lg border border-header-border px-4 text-sm font-medium text-text-strong transition-colors hover:bg-surface" > Reset" />
               <PrimaryButton
                 type="button"
                 onClick={applyDraft}
-                className="h-11 flex-1 rounded-lg bg-primary px-4 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-hover"
-              >
-                Show results
-              </PrimaryButton>
+                className="h-11 flex-1 rounded-lg bg-primary px-4 text-sm font-semibold text-on-primary transition-colors hover:bg-primary-hover" label="Show results" />
             </div>
           </aside>
         </div>

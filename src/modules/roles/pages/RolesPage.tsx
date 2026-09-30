@@ -257,7 +257,7 @@ export default function RolesPage() {
         title="Roles & Permissions"
         subtitle="Configure role-wise, module-wise, and action-level access."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Roles & Permissions' }]}
-        extra={canCreate ? <PrimaryButton onClick={openCreate}>Create Role</PrimaryButton> : undefined}
+        extra={canCreate ? <PrimaryButton onClick={openCreate} label="Create Role" /> : undefined}
       />
 
       <section className={`${adminFilters} ${adminFiltersCompact}`}>
@@ -435,10 +435,8 @@ export default function RolesPage() {
                     </label>
                   </fieldset>
                   <div className={`${formActions}`}>
-                    <PrimaryButton type="button" variant="outline" onClick={closeForm}>
-                      {formLocked ? 'Close' : 'Cancel'}
-                    </PrimaryButton>
-                    {!formLocked && (selected ? canEdit : canCreate) ? <PrimaryButton type="submit">Save</PrimaryButton> : null}
+                    <PrimaryButton type="button" variant="outline" onClick={closeForm} label={formLocked ? 'Close' : 'Cancel'} />
+                    {!formLocked && (selected ? canEdit : canCreate) ? <PrimaryButton type="submit" label="Save" /> : null}
                   </div>
                 </form>
               </div>
@@ -494,10 +492,8 @@ export default function RolesPage() {
                     </div>
                   ))}
                   <div className={`${formActions}`}>
-                    <PrimaryButton type="button" variant="outline" onClick={closePermissions}>
-                      Cancel
-                    </PrimaryButton>
-                    {canConfigure ? <PrimaryButton onClick={() => void savePermissions()}>Save permissions</PrimaryButton> : null}
+                    <PrimaryButton type="button" variant="outline" onClick={closePermissions} label="Cancel" />
+                    {canConfigure ? <PrimaryButton onClick={() = label="void savePermissions()}>Save permissions" /> : null}
                   </div>
                 </div>
               </div>

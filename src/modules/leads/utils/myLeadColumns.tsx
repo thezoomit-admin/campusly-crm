@@ -34,13 +34,11 @@ export function getMyLeadColumns({ sort, order, onView }: MyLeadColumnOptions): 
         <PrimaryButton
           type="button"
           className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold text-[#0f9d8e] hover:underline"
-          onClick={(event) => {
-            event.stopPropagation()
+          onClick={(event) = label={event.stopPropagation()
             onView(row)
           }}
         >
-          {emptyLeadValue(value)}
-        </PrimaryButton>
+          {emptyLeadValue(value)} />
       ),
     },
     {
@@ -153,9 +151,7 @@ export function getMyLeadColumns({ sort, order, onView }: MyLeadColumnOptions): 
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <PrimaryButton type="button" size="sm" onClick={() => onView(row)}>
-            Open Lead Details
-          </PrimaryButton>
+          <PrimaryButton type="button" size="sm" onClick={() = label="onView(row)}> Open Lead Details" />
         </div>
       ),
     },

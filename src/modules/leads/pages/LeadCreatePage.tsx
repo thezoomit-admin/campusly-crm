@@ -173,24 +173,19 @@ export default function LeadCreatePage() {
         />
         <div className={formActions}>
           <Link to={cancelTo}>
-            <PrimaryButton type="button" variant="outline">
-              Cancel
-            </PrimaryButton>
+            <PrimaryButton type="button" variant="outline" label="Cancel" />
           </Link>
           <PrimaryButton
             type="button"
             variant="outline"
             disabled={!canSave || saving}
-            onClick={() => {
+            onClick={() = label={<>{
               pendingFollowUp.current = true
               void submit(false, true)
             }}
           >
-            Save & Add Follow-up
-          </PrimaryButton>
-          <PrimaryButton type="submit" disabled={!canSave || saving} loading={saving}>
-            {isEdit ? 'Save Changes' : 'Save Lead'}
-          </PrimaryButton>
+            Save & Add Follow-up</>} />
+          <PrimaryButton type="submit" disabled={!canSave || saving} loading={saving} label={isEdit ? 'Save Changes' : 'Save Lead'} />
         </div>
       </form>
 

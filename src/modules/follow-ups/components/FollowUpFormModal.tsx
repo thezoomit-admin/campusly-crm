@@ -168,12 +168,8 @@ export default function FollowUpFormModal({
         />
 
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={onClose}>
-            Cancel
-          </PrimaryButton>
-          <PrimaryButton type="submit" loading={Boolean(saving)}>
-            Save Follow-up
-          </PrimaryButton>
+          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+          <PrimaryButton type="submit" loading={Boolean(saving)} label="Save Follow-up" />
         </div>
       </Form>
     </AntModal>
