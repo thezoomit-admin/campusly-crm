@@ -222,12 +222,15 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
         variant="outline"
         icon={<HugeIcon icon={FilterIcon} size={16} />}
         onClick={openDrawer}
-        className={`relative ${buttonClassName}`.trim()} label={<>{buttonLabel}
+        className={`relative ${buttonClassName}`.trim()}
+        label={buttonLabel}
+      >
         {resolvedActiveCount > 0 ? (
           <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] text-on-primary">
             {resolvedActiveCount}
           </span>
-        ) : null}</>} />
+        ) : null}
+      </PrimaryButton>
 
       {isOpen ? (
         <div className="fixed inset-0 z-1000">
