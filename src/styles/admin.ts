@@ -213,12 +213,13 @@ export const formFieldInvalid =
   "[&_.ant-select-selector]:!border-[#ff4d4f] [&_.ant-input]:!border-[#ff4d4f] [&_.ant-picker]:!border-[#ff4d4f] [&_.file-input]:!border-[#ff4d4f]";
 
 export const userViewNavBtn =
-  "flex w-full cursor-pointer items-center gap-2.5 rounded-xl border-0 bg-transparent px-3 py-2.5 text-left text-[#667085]";
+  "flex w-full cursor-pointer items-center gap-2.5 rounded-xl border-0 px-3 py-2.5 text-left font-[inherit] transition-colors";
 
 export const userViewNavBtnActive =
-  "bg-[#eef1ff] font-semibold text-[#4f5de4] dark:bg-[rgba(91,103,232,0.18)] dark:text-[#aab3ff]";
+  "bg-section-tab-active-bg font-semibold text-section-tab-active-fg";
 
-export const userViewNavBtnIdle = "hover:bg-[#f5f7fb]";
+export const userViewNavBtnIdle =
+  "bg-section-tab-bg text-section-tab-fg hover:bg-section-tab-hover-bg";
 
 export const userViewActivity =
   "m-0 grid list-none p-0 [&_li]:grid [&_li]:grid-cols-[34px_minmax(0,1fr)_auto] [&_li]:items-center [&_li]:gap-2.5 [&_li]:border-b [&_li]:border-[#eef2f8] [&_li]:py-2.5 [&_li:last-child]:border-b-0 [&_strong]:block [&_strong]:text-[0.88rem] [&_strong]:text-[#24324d] dark:[&_strong]:text-text-strong [&_p]:m-0 [&_p]:text-[0.76rem] [&_p]:text-[#7b8498] [&_time]:whitespace-nowrap [&_time]:text-[0.76rem] [&_time]:text-[#8b97a8]";

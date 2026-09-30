@@ -525,24 +525,29 @@ export default function ActivityHistoryPage() {
               const activeFilter = category === item.key
               return (
                 <li key={item.key}>
-                  <PrimaryButton
+                  <button
                     type="button"
                     className={cx(
-                      'w-full flex justify-between items-center gap-2 py-[9px] px-2.5 border-0 rounded-[10px] bg-transparent text-text cursor-pointer font-inherit',
-                      activeFilter && 'bg-[#eef4ff] dark:bg-blue-500/15',
+                      'w-full flex justify-between items-center gap-2 py-[9px] px-2.5 border-0 rounded-[10px] text-text cursor-pointer font-inherit transition-colors',
+                      activeFilter
+                        ? 'bg-nav-active-bg hover:bg-nav-active-bg'
+                        : 'bg-transparent hover:bg-nav-hover-bg',
                     )}
-                    onClick={() => applyCategory(item.key)} label={<><span
+                    onClick={() => applyCategory(item.key)}
+                  >
+                    <span
                       className={cx(
-                        'flex items-center gap-2 text-text-muted',
-                        activeFilter && 'text-[#2563eb]',
+                        'flex items-center gap-2',
+                        activeFilter ? 'font-semibold text-nav-active' : 'text-text-muted',
                       )}
                     >
                       <HugeiconsIcon icon={item.icon} size={16} />
                       {item.label}
                     </span>
-                    <b className={cx('text-text-faint text-[0.78rem]', activeFilter && 'text-[#2563eb]')}>
+                    <b className={cx('text-[0.78rem] font-semibold', activeFilter ? 'text-nav-active' : 'text-text-faint')}>
                       {counts[item.key].toLocaleString()}
-                    </b></>} />
+                    </b>
+                  </button>
                 </li>
               )
             })}
