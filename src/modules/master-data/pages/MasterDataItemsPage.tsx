@@ -1078,10 +1078,7 @@ export default function MasterDataItemsPage() {
                     className={`${modalClose}`}
                     aria-label="Close"
                     disabled={formSaving}
-                    onClick={() => !formSaving && setFormOpen(false)}
-                  >
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </PrimaryButton>
+                    onClick={() => !formSaving && setFormOpen(false)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <form className={`${adminForm}`} onSubmit={(event) => void saveItem(event)}>
                   <fieldset className={`${adminFormFields}`} disabled={formSaving}>
@@ -1249,9 +1246,7 @@ export default function MasterDataItemsPage() {
                       <p>Track the changes made to this record over time.</p>
                     </div>
                   </div>
-                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closeHistory}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </PrimaryButton>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closeHistory} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 {historyLoading ? (
                   <div className="m-0 flex min-h-60 items-center justify-center">
@@ -1376,10 +1371,7 @@ export default function MasterDataItemsPage() {
                     className={`${modalClose}`}
                     aria-label="Close"
                     disabled={deleteSaving}
-                    onClick={() => setDeleteTarget(null)}
-                  >
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </PrimaryButton>
+                    onClick={() => setDeleteTarget(null)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <p className={`${statusConfirmCopy}`}>
                   Are you sure you want to delete <strong>{deleteTarget.name}</strong>? This action cannot be
@@ -1401,9 +1393,7 @@ export default function MasterDataItemsPage() {
               <div className={`${modalPanel}`} role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
                 <div className={`${modalHeader}`}>
                   <h3>Import result</h3>
-                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={() => setImportOpen(false)}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </PrimaryButton>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={() => setImportOpen(false)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <p>
                   Total {importResult.total}, Successful {importResult.successful}, Failed {importResult.failed}

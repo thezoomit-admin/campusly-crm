@@ -401,9 +401,7 @@ function UserViewLayout({
           </span>
           <h3 id="user-modal-title">View User</h3>
         </div>
-        <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={onClose}>
-          <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-        </PrimaryButton>
+        <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={onClose} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
       </div>
 
       <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden max-[960px]:grid-rows-none max-[960px]:overflow-auto max-[960px]:overscroll-contain min-[961px]:grid-cols-[248px_minmax(0,1fr)] min-[961px]:grid-rows-[minmax(0,1fr)]">
@@ -1412,9 +1410,7 @@ export default function UsersPage() {
                   <>
                 <div className={`${modalHeader}`}>
                   <h3 id="user-modal-title">{editingId ? 'Edit User' : 'Create User'}</h3>
-                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closeForm}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </PrimaryButton>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closeForm} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <form
                   className={`${adminForm}`}
@@ -1601,10 +1597,7 @@ export default function UsersPage() {
                           className={`${modalClose}`}
                           aria-label="Close"
                           disabled={statusSaving}
-                          onClick={() => setStatusPrompt(null)}
-                        >
-                          <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                        </PrimaryButton>
+                          onClick={() => setStatusPrompt(null)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                       </div>
                       <p className={`${statusConfirmCopy}`}>{copy.body}</p>
                       <p className={`${statusConfirmMeta}`}>

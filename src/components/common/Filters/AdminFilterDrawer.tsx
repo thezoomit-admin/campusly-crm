@@ -252,10 +252,7 @@ export default function AdminFilterDrawer<TValues extends FilterValues>({
                 type="button"
                 onClick={closeDrawer}
                 className="-mt-0.5 -mr-1 shrink-0 rounded-full p-2 text-text-muted transition-colors hover:bg-hover-bg hover:text-text-strong"
-                aria-label="Close filters"
-              >
-                <HugeIcon icon={Cancel01Icon} size={18} />
-              </PrimaryButton>
+                aria-label="Close filters" icon={<HugeIcon icon={Cancel01Icon} size={18} />} />
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">

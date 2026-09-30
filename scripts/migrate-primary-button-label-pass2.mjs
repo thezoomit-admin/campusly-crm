@@ -51,6 +51,10 @@ function findOpenTagEnd(source, startIdx) {
   return -1
 }
 
+function hasProp(attrs, name) {
+  return new RegExp(`(^|[\\s/])${name}\\s*=`).test(attrs)
+}
+
 let conversions = 0
 
 function transform(content) {
@@ -92,13 +96,12 @@ function transform(content) {
     const nextAttrs = attrs.trimEnd()
     const space = nextAttrs.length ? (nextAttrs.endsWith('\n') ? '' : ' ') : ' '
 
-    if (/\blabel\s*=/.test(attrs) || /\bicon\s*=/.test(attrs)) {
+    if (hasProp(attrs, 'label') || hasProp(attrs, 'icon')) {
       result += content.slice(start, closeIdx + closeTag.length)
       cursor = closeIdx + closeTag.length
       continue
     }
 
-    // Any single self-closing icon component as children
     const iconOnly = trimmed.match(/^<(HugeiconsIcon|HugeIcon)\b([\s\S]*)\/>$/)
     if (iconOnly) {
       conversions += 1
@@ -107,7 +110,6 @@ function transform(content) {
       continue
     }
 
-    // Pure text (including ×)
     if (trimmed.length > 0 && !trimmed.includes('<') && !trimmed.includes('{')) {
       conversions += 1
       result += `<PrimaryButton${nextAttrs}${space}label="${trimmed}" />`

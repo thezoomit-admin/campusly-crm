@@ -1302,10 +1302,7 @@ export default function EmployeeCreatePage() {
                             type="button"
                             className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-icon hover:bg-hover-bg"
                             aria-label={`View ${item.label}`}
-                            onClick={() => void openDocumentPreview(item)}
-                          >
-                            <HugeiconsIcon icon={ViewIcon} size={15} color="currentColor" strokeWidth={1.8} />
-                          </PrimaryButton>
+                            onClick={() => void openDocumentPreview(item)} icon={<HugeiconsIcon icon={ViewIcon} size={15} color="currentColor" strokeWidth={1.8} />} />
                           <PrimaryButton
                             type="button"
                             className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-icon hover:bg-hover-bg text-danger hover:bg-[color-mix(in_srgb,var(--color-danger)_16%,var(--color-surface))]"
@@ -1317,10 +1314,7 @@ export default function EmployeeCreatePage() {
                                 fileName: file?.name || existing?.fileName || item.label,
                                 documentId: existing?.id,
                               })
-                            }
-                          >
-                            <HugeiconsIcon icon={Delete02Icon} size={15} color="currentColor" strokeWidth={1.8} />
-                          </PrimaryButton>
+                            } icon={<HugeiconsIcon icon={Delete02Icon} size={15} color="currentColor" strokeWidth={1.8} />} />
                         </span>
                       )}
                     </div>
@@ -1404,9 +1398,7 @@ export default function EmployeeCreatePage() {
                     <h3 id="document-preview-title">{preview.title}</h3>
                     <p className="m-0 text-[0.92rem] font-semibold text-text">{preview.fileName}</p>
                   </div>
-                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closePreview}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </PrimaryButton>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closePreview} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <div className="overflow-hidden rounded-xl border border-border bg-[color-mix(in_srgb,var(--color-page-bg)_70%,var(--color-surface))] [&_img]:mx-auto [&_img]:max-h-[60vh] [&_img]:max-w-full [&_img]:object-contain [&_iframe]:h-[60vh] [&_iframe]:w-full [&_iframe]:border-0">
                   {preview.loading ? (
@@ -1454,10 +1446,7 @@ export default function EmployeeCreatePage() {
                     className={`${modalClose}`}
                     aria-label="Close"
                     disabled={deletingDocument}
-                    onClick={() => setDeleteTarget(null)}
-                  >
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </PrimaryButton>
+                    onClick={() => setDeleteTarget(null)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <p className={`${statusConfirmCopy}`}>
                   Are you sure you want to delete <strong>{deleteTarget.fileName}</strong> from {deleteTarget.label}? This

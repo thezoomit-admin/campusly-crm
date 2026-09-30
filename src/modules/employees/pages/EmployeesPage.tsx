@@ -661,10 +661,7 @@ export default function EmployeesPage() {
                     className={`${modalClose}`}
                     aria-label="Close"
                     disabled={statusSaving}
-                    onClick={() => setStatusPrompt(null)}
-                  >
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </PrimaryButton>
+                    onClick={() => setStatusPrompt(null)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <p className={`${statusConfirmCopy}`}>
                   Update employment status for <strong>{statusPrompt.employee.fullName}</strong>.

@@ -383,9 +383,7 @@ export default function RolesPage() {
                   <h3 id="role-modal-title">
                     {formMode === 'create' ? 'Create Role' : formMode === 'view' ? 'View Role' : 'Edit Role'}
                   </h3>
-                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closeForm}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </PrimaryButton>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closeForm} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <form
                   className={`${adminForm}`}
@@ -457,9 +455,7 @@ export default function RolesPage() {
               >
                 <div className={`${modalHeader}`}>
                   <h3 id="permission-modal-title">Permissions · {selected.name}</h3>
-                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closePermissions}>
-                    <HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />
-                  </PrimaryButton>
+                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closePermissions} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
                 </div>
                 <div className={`${matrix} ${matrixModal}`}>
                   <FormInput.Search

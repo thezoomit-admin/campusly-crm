@@ -676,10 +676,7 @@ export default function ActivityHistoryPage() {
                 onClick={() => {
                   setDetailOpen(false)
                   setActiveId(null)
-                }}
-              >
-                ×
-              </PrimaryButton>
+                }} label="×" />
             </div>
             <div className="grid content-start gap-3.5">
               <div className="flex justify-between gap-2.5 items-start">
