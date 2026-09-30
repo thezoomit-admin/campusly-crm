@@ -102,6 +102,9 @@ export const baseApi = createApi({
     'FollowUps',
     'Reports',
     'Dashboard',
+    'Notifications',
+    'Communications',
+    'Campaigns',
   ],
   endpoints: () => ({}),
 })

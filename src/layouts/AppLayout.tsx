@@ -22,6 +22,8 @@ import { useAuth } from "../hooks/useAuth";
 import { hasPermission } from "../lib/access";
 import type { AuthSession } from "../types";
 
+import NotificationBell from "../modules/notifications/components/NotificationBell";
+
 const ICON_BTN =
   "relative grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-icon hover:bg-hover-bg";
 
@@ -196,14 +198,16 @@ export default function AppLayout() {
           key={item.to}
           to={item.to}
           className={({ isActive }) => {
-            const nestedLeadPages = ['/leads/pool', '/leads/mine']
+            const nestedLeadPages = ["/leads/pool", "/leads/mine"];
             const active =
-              item.to === '/leads'
+              item.to === "/leads"
                 ? isActive &&
                   !nestedLeadPages.some(
-                    (path) => location.pathname === path || location.pathname.startsWith(`${path}/`),
+                    (path) =>
+                      location.pathname === path ||
+                      location.pathname.startsWith(`${path}/`),
                   )
-                : isActive
+                : isActive;
             return navLinkClass({ isActive: active, collapsed });
           }}
           title={item.label}
@@ -367,25 +371,7 @@ export default function AppLayout() {
 
           <div className="flex items-center gap-2.5 max-[960px]:order-2 max-[960px]:pr-3 max-[640px]:gap-1 max-[640px]:pr-2">
             <ThemeToggle className={ICON_BTN} />
-            <button
-              type="button"
-              className={ICON_BTN}
-              aria-label="Notifications"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              </svg>
-              <i className="absolute top-[9px] right-2.5 size-2 rounded-full bg-red-500" />
-            </button>
-
+            <NotificationBell auth={auth} />
             <UserDropdown auth={auth} displayName={name} />
           </div>
         </div>

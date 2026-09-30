@@ -1,13 +1,22 @@
 import type { LeadRecord } from '../types'
 import type { MasterOption } from '../hooks/useLeadMasterOptions'
 
-export type LeadTabKey = 'overview' | 'academic' | 'study' | 'documents' | 'activities' | 'followups' | 'notes'
+export type LeadTabKey =
+  | 'overview'
+  | 'academic'
+  | 'study'
+  | 'documents'
+  | 'communications'
+  | 'activities'
+  | 'followups'
+  | 'notes'
 
 export const LEAD_TABS: Array<{ key: LeadTabKey; label: string }> = [
   { key: 'overview', label: 'Overview' },
   { key: 'academic', label: 'Academic' },
   { key: 'study', label: 'Study & Visa' },
   { key: 'documents', label: 'Documents' },
+  { key: 'communications', label: 'Communication' },
   { key: 'activities', label: 'Activities' },
   { key: 'followups', label: 'Follow-ups' },
   { key: 'notes', label: 'Notes' },

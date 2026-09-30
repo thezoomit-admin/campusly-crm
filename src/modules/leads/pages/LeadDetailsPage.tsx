@@ -10,14 +10,17 @@ import type { AuthSession } from '../../../types'
 import { useLeadMasterOptions } from '../hooks/useLeadMasterOptions'
 import {
   useAssignLeadMutation,
+  useCloseLeadMutation,
   useGetLeadQuery,
   useListLeadAssignmentsQuery,
   useListLeadStatusHistoryQuery,
+  useReopenLeadMutation,
   useUpdateLeadMutation,
   useUpdateLeadQualificationMutation,
   useUpdateLeadStatusMutation,
 } from '../api/leadsApi'
 import { useCreateActivityMutation, useListActivityFeedQuery } from '@/redux/features/activities/activitiesApi'
+import { useListLeadCommunicationsQuery } from '@/modules/communications/api/communicationsApi'
 import {
   useCancelFollowUpMutation,
   useCompleteFollowUpMutation,
@@ -42,12 +45,14 @@ import { LEAD_TABS, type LeadTabKey } from '../utils/leadDetails'
 import LeadWorkspaceHeader from '../components/details/LeadWorkspaceHeader'
 import LeadDetailsSidebar from '../components/details/LeadDetailsSidebar'
 import LeadOverviewPanels, { LeadAcademicPanel, LeadStudyVisaPanel } from '../components/details/LeadOverviewPanels'
-import { LeadActivitiesPanel, LeadDocumentsPanel, LeadNotesPanel } from '../components/details/LeadTabPanels'
+import { LeadActivitiesPanel, LeadCommunicationsPanel, LeadDocumentsPanel, LeadNotesPanel } from '../components/details/LeadTabPanels'
 import {
   AddActivityModal,
   ChangeOwnerModal,
   ChangeStatusModal,
+  CloseLeadModal,
   QualifyLeadModal,
+  ReopenLeadModal,
 } from '../components/details/LeadDetailsModals'
 import { adminPage } from '../../../styles/admin'
 
@@ -61,6 +66,8 @@ export default function LeadDetailsPage() {
   const [updateLead] = useUpdateLeadMutation()
   const [updateQualification, { isLoading: qualifying }] = useUpdateLeadQualificationMutation()
   const [updateStatus, { isLoading: statusSaving }] = useUpdateLeadStatusMutation()
+  const [closeLead, { isLoading: closeSaving }] = useCloseLeadMutation()
+  const [reopenLead, { isLoading: reopenSaving }] = useReopenLeadMutation()
   const [createFollowUp, { isLoading: followUpSaving }] = useCreateFollowUpMutation()
   const [createActivity, { isLoading: activitySaving }] = useCreateActivityMutation()
   const [assignLead, { isLoading: ownerSaving }] = useAssignLeadMutation()
@@ -72,12 +79,18 @@ export default function LeadDetailsPage() {
   const canEdit = hasPermission(auth, 'lead:edit')
   const canQualify = hasPermission(auth, 'lead:qualify')
   const canUpdateStatus = hasPermission(auth, 'lead:update_status')
+  const canClosePermission = hasPermission(auth, 'lead:close')
+  const canReopenPermission = hasPermission(auth, 'lead:reopen')
   const canChangeStatus = Boolean(canUpdateStatus && lead?.statusChange?.canUpdate)
+  const canClose = Boolean(canClosePermission && lead?.statusChange?.canClose)
+  const canReopen = Boolean(canReopenPermission && lead?.statusChange?.canReopen)
   const canFollowUp = hasPermission(auth, 'follow_up:create')
   const canEditFollowUp = hasPermission(auth, 'follow_up:edit')
   const canViewFollowUp = hasPermission(auth, 'follow_up:view')
   const canViewActivity = hasPermission(auth, 'activity:view')
   const canAddActivity = hasPermission(auth, 'activity:create')
+  const canViewCommunications =
+    hasPermission(auth, 'communication:view') || hasPermission(auth, 'lead:view')
   const canAssign = hasPermission(auth, 'lead:assign')
   const canReassign = hasPermission(auth, 'lead:reassign')
   const canChangeOwner = Boolean(lead?.owner?.id ? canReassign : canAssign)
@@ -86,12 +99,16 @@ export default function LeadDetailsPage() {
     { relatedId: id },
     { skip: !id || !canViewActivity },
   )
+  const { data: communicationsData, isFetching: communicationsLoading } = useListLeadCommunicationsQuery(id, {
+    skip: !id || !canViewCommunications,
+  })
   const { data: historyData } = useListLeadStatusHistoryQuery(id, { skip: !id })
   const { data: assignmentData } = useListLeadAssignmentsQuery(id, { skip: !id })
   const { data: followUpData, isFetching: followUpsLoading } = useListLeadFollowUpsQuery(id, {
     skip: !id || !canViewFollowUp,
   })
   const activities = activityData?.items || []
+  const communications = communicationsData?.items || []
   const statusHistory = historyData?.items || []
   const assignmentHistory = assignmentData?.items || []
   const followUps = followUpData?.items || []
@@ -104,6 +121,10 @@ export default function LeadDetailsPage() {
   const [qualifyOpen, setQualifyOpen] = useState(false)
   const [statusOpen, setStatusOpen] = useState(false)
   const [statusErrors, setStatusErrors] = useState<Record<string, string>>({})
+  const [closeOpen, setCloseOpen] = useState(false)
+  const [closeErrors, setCloseErrors] = useState<Record<string, string>>({})
+  const [reopenOpen, setReopenOpen] = useState(false)
+  const [reopenErrors, setReopenErrors] = useState<Record<string, string>>({})
   const [ownerOpen, setOwnerOpen] = useState(false)
   const [selectedFollowUp, setSelectedFollowUp] = useState<FollowUpRecord | null>(null)
   const [completeOpen, setCompleteOpen] = useState(false)
@@ -194,6 +215,34 @@ export default function LeadDetailsPage() {
       const fields = getApiErrorFields(error)
       if (Object.keys(fields).length > 0) setStatusErrors(fields)
       toast.error(getApiError(error, 'Unable to update the lead status. Please try again.'))
+    }
+  }
+
+  async function onCloseLead(body: { statusCode: string; reasonCode: string; remarks: string }) {
+    if (!canClose || !id) return
+    setCloseErrors({})
+    try {
+      await closeLead({ id, body }).unwrap()
+      toast.success('Lead closed successfully.')
+      setCloseOpen(false)
+    } catch (error) {
+      const fields = getApiErrorFields(error)
+      if (Object.keys(fields).length > 0) setCloseErrors(fields)
+      toast.error(getApiError(error, 'Unable to complete this action. Please try again.'))
+    }
+  }
+
+  async function onReopenLead(body: { reopenReason: string; followUpDate: string; ownerId: string }) {
+    if (!canReopen || !id) return
+    setReopenErrors({})
+    try {
+      await reopenLead({ id, body }).unwrap()
+      toast.success('Lead reopened successfully.')
+      setReopenOpen(false)
+    } catch (error) {
+      const fields = getApiErrorFields(error)
+      if (Object.keys(fields).length > 0) setReopenErrors(fields)
+      toast.error(getApiError(error, 'Unable to complete this action. Please try again.'))
     }
   }
 
@@ -369,11 +418,21 @@ export default function LeadDetailsPage() {
             canEdit={canEdit}
             canAddActivity={canAddActivity}
             canChangeStatus={canChangeStatus}
+            canClose={canClose}
+            canReopen={canReopen}
             onEdit={() => navigate(`/leads/${id}/edit`)}
             onAddActivity={() => setActivityOpen(true)}
             onChangeStatus={() => {
               setStatusErrors({})
               setStatusOpen(true)
+            }}
+            onCloseLead={() => {
+              setCloseErrors({})
+              setCloseOpen(true)
+            }}
+            onReopenLead={() => {
+              setReopenErrors({})
+              setReopenOpen(true)
             }}
           />
 
@@ -412,6 +471,9 @@ export default function LeadDetailsPage() {
               {tab === 'academic' ? <LeadAcademicPanel lead={lead} options={options} /> : null}
               {tab === 'study' ? <LeadStudyVisaPanel lead={lead} options={options} /> : null}
               {tab === 'documents' ? <LeadDocumentsPanel /> : null}
+              {tab === 'communications' && canViewCommunications ? (
+                <LeadCommunicationsPanel items={communications} loading={communicationsLoading} />
+              ) : null}
               {tab === 'activities' ? (
                 <LeadActivitiesPanel activities={activities} canAdd={canAddActivity} onAdd={() => setActivityOpen(true)} />
               ) : null}
@@ -446,6 +508,8 @@ export default function LeadDetailsPage() {
               canFollowUp={canFollowUp}
               canEditFollowUp={canEditFollowUp}
               canChangeStatus={canChangeStatus}
+              canClose={canClose}
+              canReopen={canReopen}
               canChangeOwner={canChangeOwner}
               onViewCompletion={() => setTab('overview')}
               onViewActivities={() => setTab('activities')}
@@ -457,6 +521,14 @@ export default function LeadDetailsPage() {
               onChangeStatus={() => {
                 setStatusErrors({})
                 setStatusOpen(true)
+              }}
+              onCloseLead={() => {
+                setCloseErrors({})
+                setCloseOpen(true)
+              }}
+              onReopenLead={() => {
+                setReopenErrors({})
+                setReopenOpen(true)
               }}
               onCompleteNextFollowUp={() => {
                 const next =
@@ -545,6 +617,27 @@ export default function LeadDetailsPage() {
         errors={statusErrors}
         onClose={() => setStatusOpen(false)}
         onSubmit={onUpdateStatus}
+      />
+      <CloseLeadModal
+        open={closeOpen && canClose}
+        saving={closeSaving}
+        currentStatus={lead?.status || ''}
+        options={lead?.statusChange?.closeOptions || []}
+        lostReasons={options.lostReason}
+        closeReasons={options.closeReason}
+        errors={closeErrors}
+        onClose={() => setCloseOpen(false)}
+        onSubmit={onCloseLead}
+      />
+      <ReopenLeadModal
+        open={reopenOpen && canReopen}
+        saving={reopenSaving}
+        leadName={lead?.name}
+        currentOwnerId={lead?.owner?.id || null}
+        assignedTeamId={lead?.assignedTeam?.id || null}
+        errors={reopenErrors}
+        onClose={() => setReopenOpen(false)}
+        onSubmit={onReopenLead}
       />
       <ChangeOwnerModal
         open={ownerOpen && canChangeOwner}

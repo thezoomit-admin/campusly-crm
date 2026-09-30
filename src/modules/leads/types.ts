@@ -88,17 +88,22 @@ export type LeadStatusOption = {
   behaviorKey: string | null
   remarksRequired: boolean
   lostReasonRequired: boolean
+  closeReasonRequired?: boolean
+  reasonCategory?: 'LEAD_LOST_REASON' | 'LEAD_CLOSE_REASON' | null
   requiresOverride: boolean
   processGated: boolean
 }
 
 export type LeadStatusChange = {
   canUpdate: boolean
+  canClose?: boolean
+  canReopen?: boolean
   locked: boolean
   lockedReason: string | null
   canOverride: boolean
   current: { code: string; name: string; behaviorKey: string | null; sortOrder: number } | null
   options: LeadStatusOption[]
+  closeOptions?: LeadStatusOption[]
 }
 
 export type LeadStatusHistoryItem = {
@@ -110,6 +115,8 @@ export type LeadStatusHistoryItem = {
   remarks: string | null
   lostReasonCode: string | null
   lostReason: string | null
+  closeReasonCode?: string | null
+  closeReason?: string | null
   isOverride: boolean
   overrideReason: string | null
   updatedBy: { id: string; name: string } | null
@@ -186,6 +193,7 @@ export type LeadRecord = {
   status: string
   statusCode: string | null
   lostReasonCode: string | null
+  closeReasonCode?: string | null
   academicFitCode: string | null
   englishReadinessCode: string | null
   countryIntakeFitCode: string | null

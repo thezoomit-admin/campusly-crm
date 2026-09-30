@@ -20,6 +20,7 @@ import '@/modules/payments/api/paymentsApi'
 import '@/modules/follow-ups/api/followUpsApi'
 import '@/modules/reports/api/reportsApi'
 import '@/modules/dashboard/api/dashboardApi'
+import '@/modules/notifications/api/notificationsApi'
 
 export const store = configureStore({
   reducer,

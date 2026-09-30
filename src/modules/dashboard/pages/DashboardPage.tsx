@@ -461,6 +461,8 @@ export default function DashboardPage() {
     dueToday: 0,
     completedToday: 0,
     pending: 0,
+    completionRate: 0,
+    onTimeRate: 0,
   }
   const leadTotal = leadSources.reduce((sum, source) => sum + source.value, 0)
   const dateLabel = new Intl.DateTimeFormat('en-US', {
@@ -726,6 +728,16 @@ export default function DashboardPage() {
               <span className="block text-[0.72rem] font-medium text-[#16a34a]">Completed</span>
               <strong className="mt-1 block text-[1.35rem] text-[#16a34a]">{followUpMetrics.completedToday}</strong>
             </button>
+          </div>
+          <div className="mb-3 grid grid-cols-2 gap-2">
+            <div className="rounded-[14px] bg-[#f8fafc] px-3 py-2.5 dark:bg-hover-bg">
+              <span className="block text-[0.72rem] text-text-muted">Completion Rate (30d)</span>
+              <strong className="mt-0.5 block text-[1.1rem] text-text">{followUpMetrics.completionRate ?? 0}%</strong>
+            </div>
+            <div className="rounded-[14px] bg-[#f8fafc] px-3 py-2.5 dark:bg-hover-bg">
+              <span className="block text-[0.72rem] text-text-muted">On-time Rate (30d)</span>
+              <strong className="mt-0.5 block text-[1.1rem] text-text">{followUpMetrics.onTimeRate ?? 0}%</strong>
+            </div>
           </div>
           {followUpMetrics.overdue > 0 ? (
             <p className="m-0 mb-3 rounded-xl bg-[#fff5f7] px-3 py-2 text-[0.82rem] font-medium text-[#e11d48] dark:bg-rose-500/10">
