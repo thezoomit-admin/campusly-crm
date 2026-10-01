@@ -80,7 +80,7 @@ export default function LeadsPage() {
       />
 
       <div className="overflow-hidden rounded-[20px] border border-border bg-surface shadow-soft">
-        <div className="leads-toolbar flex flex-wrap items-center gap-x-3 border-b border-border px-4">
+        <div className="leads-toolbar flex min-w-0 max-w-full flex-col gap-4 border-b border-border px-3 min-[961px]:flex-row min-[961px]:flex-nowrap min-[961px]:items-center min-[961px]:gap-x-3 min-[961px]:gap-y-0 min-[961px]:px-4">
           <LeadStatusTabs
             value={status}
             summary={data?.summary}

@@ -85,6 +85,24 @@ function navLinkClass({
     .join(" ");
 }
 
+const NESTED_LEAD_PAGES = ["/leads/pool", "/leads/mine"];
+
+function matchesPath(pathname: string, to: string): boolean {
+  if (pathname !== to && !pathname.startsWith(`${to}/`)) {
+    return false;
+  }
+  if (to === "/leads") {
+    return !NESTED_LEAD_PAGES.some((path) => matchesPath(pathname, path));
+  }
+  return true;
+}
+
+function menuContainsPath(item: NavItem, pathname: string) {
+  return (
+    item.children?.some((child) => matchesPath(pathname, child.to)) ?? false
+  );
+}
+
 export default function AppLayout() {
   const auth = useOutletContext<AuthSession>();
   const navigate = useNavigate();
@@ -99,7 +117,7 @@ export default function AppLayout() {
     Object.fromEntries(
       APP_NAV_GROUPS.flatMap((group) => group.items)
         .filter((item) => item.children?.length)
-        .map((item) => [item.to, location.pathname.startsWith(item.to)]),
+        .map((item) => [item.to, menuContainsPath(item, location.pathname)]),
     ),
   );
   const name = useMemo(() => displayName(auth), [auth]);
@@ -159,7 +177,7 @@ export default function AppLayout() {
       const next = { ...current };
       for (const group of APP_NAV_GROUPS) {
         for (const item of group.items) {
-          if (item.children?.length && location.pathname.startsWith(item.to)) {
+          if (menuContainsPath(item, location.pathname)) {
             next[item.to] = true;
           }
         }
@@ -197,19 +215,12 @@ export default function AppLayout() {
         <NavLink
           key={item.to}
           to={item.to}
-          className={({ isActive }) => {
-            const nestedLeadPages = ["/leads/pool", "/leads/mine"];
-            const active =
-              item.to === "/leads"
-                ? isActive &&
-                  !nestedLeadPages.some(
-                    (path) =>
-                      location.pathname === path ||
-                      location.pathname.startsWith(`${path}/`),
-                  )
-                : isActive;
-            return navLinkClass({ isActive: active, collapsed });
-          }}
+          className={() =>
+            navLinkClass({
+              isActive: matchesPath(location.pathname, item.to),
+              collapsed,
+            })
+          }
           title={item.label}
         >
           <NavIcon name={item.icon} />
@@ -218,10 +229,8 @@ export default function AppLayout() {
       );
     }
 
-    const childActive = children.some(
-      (child) =>
-        location.pathname === child.to ||
-        location.pathname.startsWith(`${child.to}/`),
+    const childActive = children.some((child) =>
+      matchesPath(location.pathname, child.to),
     );
     const isOpen = collapsed || openMenus[item.to];
 
@@ -230,9 +239,7 @@ export default function AppLayout() {
         <NavLink
           key={item.to}
           to={children[0].to}
-          className={({ isActive }) =>
-            navLinkClass({ isActive: isActive || childActive, collapsed })
-          }
+          className={() => navLinkClass({ isActive: childActive, collapsed })}
           title={item.label}
         >
           <NavIcon name={item.icon} />
@@ -274,8 +281,11 @@ export default function AppLayout() {
               <NavLink
                 key={child.to}
                 to={child.to}
-                className={({ isActive }) =>
-                  navLinkClass({ isActive, sub: true })
+                className={() =>
+                  navLinkClass({
+                    isActive: matchesPath(location.pathname, child.to),
+                    sub: true,
+                  })
                 }
                 title={child.label}
               >
@@ -298,14 +308,14 @@ export default function AppLayout() {
         "h-screen min-h-screen overflow-hidden transition-[grid-template-columns] duration-200 ease-in-out",
         "grid grid-rows-[auto_minmax(0,1fr)]",
         shellCols,
-        "max-[960px]:flex max-[960px]:h-auto max-[960px]:min-h-screen max-[960px]:overflow-visible max-[960px]:grid-cols-none",
+        "max-[960px]:flex max-[960px]:flex-col max-[960px]:h-auto max-[960px]:min-h-screen max-[960px]:overflow-visible max-[960px]:grid-cols-none",
       ].join(" ")}
     >
       <header
         className={[
           "relative z-30 col-span-full grid min-h-16 overflow-visible border-b border-header-border bg-surface",
           shellCols,
-          "max-[960px]:sticky max-[960px]:top-0 max-[960px]:z-50 max-[960px]:flex max-[960px]:flex-wrap max-[960px]:items-center max-[960px]:grid-cols-none",
+          "max-[960px]:sticky max-[960px]:top-0 max-[960px]:z-50 max-[960px]:flex max-[960px]:w-full max-[960px]:flex-wrap max-[960px]:items-center max-[960px]:grid-cols-none",
         ].join(" ")}
       >
         <div

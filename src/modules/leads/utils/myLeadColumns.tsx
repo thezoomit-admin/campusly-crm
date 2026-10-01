@@ -150,7 +150,7 @@ export function getMyLeadColumns({ sort, order, onView }: MyLeadColumnOptions): 
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <PrimaryButton type="button" size="sm" onClick={() => onView(row)} label="Open Lead Details" />
+          <PrimaryButton type="button" size="sm" className="!cursor-pointer" onClick={() => onView(row)} label="Open Lead Details" />
         </div>
       ),
     },

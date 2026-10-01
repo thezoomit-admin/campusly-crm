@@ -70,7 +70,7 @@ export default function LeadTableActions({ row, canEdit, onView, onEdit }: LeadT
           type="button"
           aria-label={`View ${row.name}`}
           onClick={() => onView(row)}
-          className="grid size-8 place-items-center rounded-lg border border-[#d1d5db] text-[#6b7280] transition-colors hover:border-primary hover:text-primary"
+          className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-[#6b7280] transition-colors hover:border-primary hover:text-primary"
         >
           <HugeiconsIcon icon={ViewIcon} size={15} color="currentColor" strokeWidth={1.7} />
         </button>
@@ -81,7 +81,7 @@ export default function LeadTableActions({ row, canEdit, onView, onEdit }: LeadT
             type="button"
             aria-label={`Edit ${row.name}`}
             onClick={() => onEdit(row)}
-            className="grid size-8 place-items-center rounded-lg border border-[#d1d5db] text-[#6b7280] transition-colors hover:border-primary hover:text-primary"
+            className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-[#6b7280] transition-colors hover:border-primary hover:text-primary"
           >
             <HugeiconsIcon icon={PencilEdit02Icon} size={15} color="currentColor" strokeWidth={1.7} />
           </button>
@@ -91,7 +91,7 @@ export default function LeadTableActions({ row, canEdit, onView, onEdit }: LeadT
         <button
           type="button"
           aria-label={`More actions for ${row.name}`}
-          className="grid size-8 place-items-center rounded-lg border border-[#d1d5db] text-[#6b7280] transition-colors hover:border-primary hover:text-primary"
+          className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-[#6b7280] transition-colors hover:border-primary hover:text-primary"
         >
           <HugeiconsIcon icon={MoreVerticalIcon} size={15} color="currentColor" strokeWidth={1.7} />
         </button>

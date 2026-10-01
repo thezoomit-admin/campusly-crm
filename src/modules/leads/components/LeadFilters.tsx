@@ -41,20 +41,20 @@ export default function LeadFilters({
   const activeCount = countActiveFilters(filters)
 
   return (
-    <div className="ml-auto flex h-[58px] shrink-0 items-center gap-2">
+    <div className="leads-filters flex w-full min-w-0 items-center gap-2 pb-3 min-[961px]:ml-auto min-[961px]:h-[58px] min-[961px]:w-auto min-[961px]:shrink-0 min-[961px]:pb-0">
       <FormInput
         allowClear
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
         placeholder="Search by name, phone, email..."
         prefix={<HugeiconsIcon icon={Search01Icon} size={16} color="currentColor" strokeWidth={1.7} />}
-        className="leads-list-search w-[280px] max-w-[42vw]"
+        className="leads-list-search min-w-0 flex-1 min-[961px]:w-[280px] min-[961px]:max-w-[42vw] min-[961px]:flex-none"
       />
       <AdminFilterDrawer
         title="Filters"
         description="Narrow the pipeline by source, priority, or destination country."
         buttonLabel="Filters"
-        buttonClassName="leads-filter-btn"
+        buttonClassName="leads-filter-btn shrink-0"
         value={filters}
         defaultValue={EMPTY_LEAD_FILTERS}
         activeCount={activeCount}

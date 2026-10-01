@@ -438,7 +438,7 @@ export default function LeadDetailsPage() {
             }}
           />
 
-          <div className="flex gap-1 overflow-x-auto border-b border-[#e6eef6] dark:border-border">
+          <div className="flex gap-1.5 overflow-x-auto">
             {LEAD_TABS.filter(
               (item) =>
                 (item.key !== 'followups' || canViewFollowUp) &&
@@ -447,22 +447,29 @@ export default function LeadDetailsPage() {
             ).map((item) => {
               const active = tab === item.key
               return (
-                <PrimaryButton
+                <button
                   key={item.key}
                   type="button"
-                  className={`shrink-0 cursor-pointer border-0 border-b-2 bg-transparent px-4 py-2.5 text-[0.9rem] ${
+                  aria-current={active ? 'page' : undefined}
+                  className={`shrink-0 cursor-pointer rounded-lg border-0 px-4 py-2 text-[0.9rem] transition-colors ${
                     active
-                      ? 'border-primary font-semibold text-primary'
-                      : 'border-transparent text-[#7d8b9a] hover:text-text'
+                      ? 'bg-section-tab-active-bg font-semibold text-section-tab-active-fg'
+                      : 'bg-section-tab-bg text-section-tab-fg hover:bg-section-tab-hover-bg'
                   }`}
-                  onClick={() => setTab(item.key)} label={item.label} />
+                  onClick={() => setTab(item.key)}
+                >
+                  {item.label}
+                </button>
               )
             })}
             {canQualify ? (
               <PrimaryButton
                 type="button"
-                className="ml-auto shrink-0 cursor-pointer border-0 bg-transparent px-3 py-2.5 text-[0.82rem] font-medium text-primary hover:underline"
-                onClick={() => setQualifyOpen(true)} label="Qualify" />
+                variant="text"
+                className="ml-auto shrink-0"
+                onClick={() => setQualifyOpen(true)}
+                label="Qualify"
+              />
             ) : null}
           </div>
 

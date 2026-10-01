@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
-import { Button, Form, Modal } from "antd";
+import { Button, Form, Modal, Tooltip } from "antd";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { PencilEdit02Icon } from "@hugeicons/core-free-icons";
 import { useOutletContext } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -146,14 +148,21 @@ export default function CampaignsPage() {
             title: "Actions",
             key: "actions",
             render: (_: unknown, row: CampaignRecord) => (
-              <Button
-                type="link"
-                size="small"
-                className="!px-1"
-                onClick={() => openEdit(row)}
-              >
-                Edit
-              </Button>
+              <Tooltip title="Edit">
+                <button
+                  type="button"
+                  aria-label={`Edit ${row.name}`}
+                  className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-[#6b7280] transition-colors hover:border-primary hover:text-primary"
+                  onClick={() => openEdit(row)}
+                >
+                  <HugeiconsIcon
+                    icon={PencilEdit02Icon}
+                    size={15}
+                    color="currentColor"
+                    strokeWidth={1.7}
+                  />
+                </button>
+              </Tooltip>
             ),
           },
         ]

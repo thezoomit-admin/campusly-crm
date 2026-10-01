@@ -33,44 +33,72 @@ export type NavGroup = {
 
 export const APP_NAV_GROUPS: NavGroup[] = [
   {
-    id: 'dashboards',
-    label: 'Dashboards',
-    items: [{ to: '/dashboard', label: 'Overview', icon: 'grid' }],
+    id: 'overview',
+    label: 'Overview',
+    items: [{ to: '/dashboard', label: 'Dashboard', icon: 'grid' }],
   },
   {
-    id: 'pipeline',
-    label: 'Pipeline',
+    id: 'crm',
+    label: 'CRM',
     items: [
-      { to: '/leads', label: 'Leads', icon: 'users', permission: 'lead:view' },
-      { to: '/leads/mine', label: 'My Leads', icon: 'users', permission: 'lead:view' },
-      { to: '/leads/pool', label: 'Lead Pool', icon: 'users', permission: 'lead:assign' },
+      {
+        to: '/leads',
+        label: 'Leads',
+        icon: 'users',
+        permission: 'lead:view',
+        children: [
+          { to: '/leads', label: 'All Leads', icon: 'users', permission: 'lead:view' },
+          { to: '/leads/mine', label: 'My Leads', icon: 'users', permission: 'lead:view' },
+          { to: '/leads/pool', label: 'Lead Pool', icon: 'users', permission: 'lead:assign' },
+        ],
+      },
       { to: '/applications', label: 'Applications', icon: 'file', permission: 'lead:convert' },
       { to: '/students', label: 'Students', icon: 'graduate', permission: 'lead:convert' },
-      { to: '/documents', label: 'Documents', icon: 'folder', permission: 'document:view' },
-      { to: '/payments', label: 'Payments', icon: 'card', permission: 'payment:view' },
+    ],
+  },
+  {
+    id: 'engagement',
+    label: 'Engagement',
+    items: [
       { to: '/follow-ups', label: 'Follow-ups', icon: 'bell', permission: 'follow_up:view' },
-      { to: '/communications', label: 'Communication Hub', icon: 'message', permission: 'communication:view' },
-      { to: '/whatsapp', label: 'WhatsApp Inbox', icon: 'message', permission: 'communication:view' },
-      { to: '/email', label: 'Email Communication', icon: 'message', permission: 'communication:view' },
+      {
+        to: '/communications',
+        label: 'Communication',
+        icon: 'message',
+        permission: 'communication:view',
+        children: [
+          { to: '/communications', label: 'Communication Hub', icon: 'message', permission: 'communication:view' },
+          { to: '/whatsapp', label: 'WhatsApp', icon: 'message', permission: 'communication:view' },
+          { to: '/email', label: 'Email', icon: 'message', permission: 'communication:view' },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'marketing',
+    label: 'Marketing',
+    items: [
       { to: '/campaigns', label: 'Campaigns', icon: 'chart', permission: 'campaign:view' },
       { to: '/meta-leads', label: 'Meta Lead Ads', icon: 'chart', permission: 'communication:view' },
-      { to: '/activity-history', label: 'Activity History', icon: 'activity', permission: 'activity:view' },
     ],
   },
   {
     id: 'operations',
     label: 'Operations',
     items: [
+      { to: '/documents', label: 'Documents', icon: 'folder', permission: 'document:view' },
+      { to: '/payments', label: 'Payments', icon: 'card', permission: 'payment:view' },
+      { to: '/activity-history', label: 'Activity History', icon: 'activity', permission: 'activity:view' },
       { to: '/reports', label: 'Reports', icon: 'chart', permission: 'report:view' },
-      { to: '/employees', label: 'Employees', icon: 'id', permission: 'employee:view' },
     ],
   },
   {
     id: 'admin',
-    label: 'Admin',
+    label: 'Administration',
     items: [
+      { to: '/employees', label: 'Employees', icon: 'id', permission: 'employee:view' },
       { to: '/users', label: 'Users', icon: 'user', permission: 'user:view' },
-      { to: '/roles', label: 'Roles', icon: 'shield', permission: 'role:view' },
+      { to: '/roles', label: 'Roles & Permissions', icon: 'shield', permission: 'role:view' },
       { to: '/audit-logs', label: 'Audit Log', icon: 'file', permission: 'audit:view' },
       {
         to: '/master-data',
@@ -134,18 +162,20 @@ export function flattenSearchablePages(): SearchablePage[] {
   for (const group of APP_NAV_GROUPS) {
     for (const item of group.items) {
       if (item.children?.length) {
-        pages.push({
-          to: item.to,
-          label: item.label,
-          group: group.label,
-          keywords: PAGE_KEYWORDS[item.to] ?? [],
-        })
+        if (!item.children.some((child) => child.to === item.to)) {
+          pages.push({
+            to: item.to,
+            label: item.label,
+            group: group.label,
+            keywords: PAGE_KEYWORDS[item.to] ?? [],
+          })
+        }
         for (const child of item.children) {
           pages.push({
             to: child.to,
             label: child.label,
             group: item.label,
-            keywords: [item.label, group.label],
+            keywords: [...(PAGE_KEYWORDS[child.to] ?? []), item.label, group.label],
           })
         }
       } else {

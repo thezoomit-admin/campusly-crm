@@ -214,7 +214,7 @@ export default function DataTable(props: DataTableProps) {
               <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
                 <button
                   type="button"
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg border border-[#C7CACF] transition-all duration-400 hover:border-primary hover:bg-gray-100 hover:text-primary ${
+                  className={`flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[#C7CACF] transition-all duration-400 hover:border-primary hover:bg-gray-100 hover:text-primary ${
                     actionsAlign === 'left' ? 'ml-0' : ''
                   }`}
                   onClick={(e) => e.stopPropagation()}

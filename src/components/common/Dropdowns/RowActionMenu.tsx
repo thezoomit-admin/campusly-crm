@@ -85,7 +85,7 @@ export default function RowActionMenu({ items }: { items: RowActionItem[] }) {
       <button
         ref={buttonRef}
         type="button"
-        className={`${rowActionBtn} inline-flex min-h-[34px] items-center justify-center rounded-(--radius-btn) border-0 bg-transparent px-3 py-1.5 text-[0.82rem] font-semibold text-primary hover:bg-primary/10`}
+        className={`${rowActionBtn} inline-flex min-h-[34px] cursor-pointer items-center justify-center rounded-(--radius-btn) border-0 bg-transparent px-3 py-1.5 text-[0.82rem] font-semibold text-primary hover:bg-primary/10`}
         title="Actions"
         aria-label="Actions"
         aria-expanded={open}

@@ -9,7 +9,7 @@ type LeadStatusTabsProps = {
 
 export default function LeadStatusTabs({ value, summary, onChange }: LeadStatusTabsProps) {
   return (
-    <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+    <div className="leads-status-tabs flex w-full min-w-0 items-center gap-1 overflow-x-auto min-[961px]:w-auto min-[961px]:flex-1">
       {LEAD_PIPELINE_TABS.map((tab) => {
         const active = value === tab.key
         const count = tabCount(summary, tab.key)
