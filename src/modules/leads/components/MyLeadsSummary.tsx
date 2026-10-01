@@ -13,8 +13,6 @@ type SummaryKey = keyof MyLeadsSummaryData
 
 type MyLeadsSummaryProps = {
   summary?: MyLeadsSummaryData
-  activeKey?: SummaryKey | null
-  onSelect?: (key: SummaryKey) => void
 }
 
 const CARDS: Array<{
@@ -30,32 +28,25 @@ const CARDS: Array<{
   { key: 'overdueFollowUps', label: 'Overdue Follow-ups', tone: 'amber', icon: Alert02Icon },
 ]
 
-export default function MyLeadsSummary({ summary, activeKey, onSelect }: MyLeadsSummaryProps) {
+export default function MyLeadsSummary({ summary }: MyLeadsSummaryProps) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-      {CARDS.map((card) => {
-        const active = activeKey === card.key
-        return (
-          <button
-            key={card.key}
-            type="button"
-            onClick={() => onSelect?.(card.key)}
-            className={`flex items-start gap-3 rounded-[20px] border bg-surface p-4 text-left shadow-soft transition-colors ${
-              active ? 'border-primary' : 'border-border hover:border-primary/40'
-            }`}
-          >
-            <span className={`grid size-[42px] shrink-0 place-items-center rounded-xl ${LEAD_STAT_ICON_TONE[card.tone]}`}>
-              <HugeiconsIcon icon={card.icon} size={18} />
-            </span>
-            <div className="min-w-0">
-              <p className="m-0 text-[0.82rem] text-text-muted">{card.label}</p>
-              <strong className="mt-0.5 block text-[1.45rem] leading-[1.15] tracking-[-0.03em] text-text">
-                {(summary?.[card.key] || 0).toLocaleString()}
-              </strong>
-            </div>
-          </button>
-        )
-      })}
+      {CARDS.map((card) => (
+        <div
+          key={card.key}
+          className="flex items-start gap-3 rounded-[20px] border border-border bg-surface p-4 text-left shadow-soft"
+        >
+          <span className={`grid size-[42px] shrink-0 place-items-center rounded-xl ${LEAD_STAT_ICON_TONE[card.tone]}`}>
+            <HugeiconsIcon icon={card.icon} size={18} />
+          </span>
+          <div className="min-w-0">
+            <p className="m-0 text-[0.82rem] text-text-muted">{card.label}</p>
+            <strong className="mt-0.5 block text-[1.45rem] leading-[1.15] tracking-[-0.03em] text-text">
+              {(summary?.[card.key] || 0).toLocaleString()}
+            </strong>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

@@ -1,5 +1,7 @@
+import { Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { PrimaryButton } from '@/components/ui'
+import { UserAdd01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import type { LeadPoolRow } from '../types'
 import { countryFlag, emptyLeadValue, formatLeadCreatedOn, leadAvatarTone } from './leadList'
 import { leadInitials } from './leadDetails'
@@ -7,25 +9,18 @@ import { formatWaitingTime } from './waitingTime'
 
 type LeadPoolColumnOptions = {
   now: number
-  onView: (row: LeadPoolRow) => void
   onAssign: (row: LeadPoolRow) => void
 }
 
-export function getLeadPoolColumns({ now, onView, onAssign }: LeadPoolColumnOptions): ColumnsType<LeadPoolRow> {
+export function getLeadPoolColumns({ now, onAssign }: LeadPoolColumnOptions): ColumnsType<LeadPoolRow> {
   return [
     {
       title: 'Lead ID',
       dataIndex: 'code',
       key: 'code',
       width: 120,
-      render: (value: string, row) => (
-        <PrimaryButton
-          type="button"
-          className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold text-[#0f9d8e] hover:underline"
-          onClick={(event) => {
-            event.stopPropagation()
-            onView(row)
-          }} label={emptyLeadValue(value)} />
+      render: (value: string) => (
+        <span className="text-[13px] font-semibold text-[#0f9d8e]">{emptyLeadValue(value)}</span>
       ),
     },
     {
@@ -98,16 +93,25 @@ export function getLeadPoolColumns({ now, onView, onAssign }: LeadPoolColumnOpti
     {
       title: 'Actions',
       key: 'actions',
-      width: 130,
-      align: 'right',
+      width: 88,
+      align: 'center',
       fixed: 'right',
       render: (_value, row) => (
         <div
-          className="flex justify-end"
+          className="flex justify-center"
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <PrimaryButton type="button" size="sm" onClick={() => onAssign(row)} label="Assign Lead" />
+          <Tooltip title="Assign Lead">
+            <button
+              type="button"
+              aria-label="Assign Lead"
+              onClick={() => onAssign(row)}
+              className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-[#6b7280] transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
+            >
+              <HugeiconsIcon icon={UserAdd01Icon} size={16} color="currentColor" strokeWidth={1.7} />
+            </button>
+          </Tooltip>
         </div>
       ),
     },

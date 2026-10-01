@@ -66,7 +66,7 @@ export function CompleteFollowUpModal({
   }
 
   return (
-    <AntModal open={open} onClose={onClose} title="Complete Follow-up" width={560}>
+    <AntModal open={open} onClose={onClose} title="Complete Follow-up" width={680}>
       <div className="grid gap-3">
         {followUp ? (
           <p className="m-0 rounded-lg bg-[#f7fafc] px-3 py-2 text-sm text-[#3d5166] dark:bg-hover-bg dark:text-text">

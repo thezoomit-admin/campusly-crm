@@ -320,6 +320,13 @@
   }
 }
 
+/* Action-column controls keep a pointer on hover and press. */
+table tbody td:last-child :is(button, .ant-btn, a):not(:disabled):not(.ant-btn-disabled):not([disabled]),
+table tbody td:last-child :is(button, .ant-btn, a):not(:disabled):not(.ant-btn-disabled):not([disabled]):hover,
+table tbody td:last-child :is(button, .ant-btn, a):not(:disabled):not(.ant-btn-disabled):not([disabled]):active {
+  cursor: pointer !important;
+}
+
 @keyframes status-pill-flash {
   0% {
     transform: scale(1);

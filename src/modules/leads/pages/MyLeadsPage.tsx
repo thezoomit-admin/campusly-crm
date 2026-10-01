@@ -12,10 +12,7 @@ import MyLeadsFilters, {
 } from '../components/MyLeadsFilters'
 import MyLeadsSummary from '../components/MyLeadsSummary'
 import MyLeadsTable from '../components/MyLeadsTable'
-import type { MyLeadsSummary as MyLeadsSummaryData } from '../types'
 import '../leadsList.css'
-
-type SummaryKey = keyof MyLeadsSummaryData
 
 export default function MyLeadsPage() {
   useOutletContext<AuthSession>()
@@ -63,15 +60,6 @@ export default function MyLeadsPage() {
       )
     : ''
 
-  const activeSummaryKey = useMemo<SummaryKey | null>(() => {
-    if (applied.priority === 'High' && !applied.followUpStatus) return 'highPriority'
-    if (applied.followUpStatus === 'pending') return 'pendingFollowUps'
-    if (applied.followUpStatus === 'today') return 'todayFollowUps'
-    if (applied.followUpStatus === 'overdue') return 'overdueFollowUps'
-    if (!hasActiveFilters) return 'totalAssigned'
-    return null
-  }, [applied.followUpStatus, applied.priority, hasActiveFilters])
-
   function applyFilters(next = { search: searchDraft.trim(), ...filterDraft }) {
     setApplied(next)
     setPage(1)
@@ -84,22 +72,6 @@ export default function MyLeadsPage() {
     setSort('assigned')
     setOrder('desc')
     setPage(1)
-  }
-
-  function onSelectSummary(key: SummaryKey) {
-    if (key === 'totalAssigned') {
-      resetFilters()
-      return
-    }
-    const nextFilters = {
-      ...EMPTY_MY_LEAD_FILTERS,
-      priority: key === 'highPriority' ? 'High' : '',
-      followUpStatus:
-        key === 'pendingFollowUps' ? 'pending' : key === 'todayFollowUps' ? 'today' : key === 'overdueFollowUps' ? 'overdue' : '',
-    }
-    setSearchDraft('')
-    setFilterDraft(nextFilters)
-    applyFilters({ search: '', ...nextFilters })
   }
 
   return (
@@ -115,7 +87,7 @@ export default function MyLeadsPage() {
         showDivider={false}
       />
 
-      <MyLeadsSummary summary={data?.summary} activeKey={activeSummaryKey} onSelect={onSelectSummary} />
+      <MyLeadsSummary summary={data?.summary} />
 
       <div className="overflow-hidden rounded-[20px] border border-border bg-surface shadow-soft">
         <MyLeadsFilters

@@ -32,7 +32,7 @@ export default function LeadPoolTable({
       className="leads-table-shell"
       loading={loading}
       data={data}
-      columns={getLeadPoolColumns({ now, onView, onAssign })}
+      columns={getLeadPoolColumns({ now, onAssign })}
       rowKey="id"
       isPaginate
       alwaysShowPagination
