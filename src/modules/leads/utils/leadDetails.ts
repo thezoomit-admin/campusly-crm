@@ -12,6 +12,8 @@ export type LeadTabKey =
   | 'activities'
   | 'followups'
   | 'notes'
+  | 'services'
+  | 'payments'
 
 export const LEAD_TABS: Array<{ key: LeadTabKey; label: string }> = [
   { key: 'overview', label: 'Overview' },
@@ -24,6 +26,8 @@ export const LEAD_TABS: Array<{ key: LeadTabKey; label: string }> = [
   { key: 'activities', label: 'Activities' },
   { key: 'followups', label: 'Follow-ups' },
   { key: 'notes', label: 'Notes' },
+  { key: 'services', label: 'Service & Charges' },
+  { key: 'payments', label: 'Payment History' },
 ]
 
 export function leadInitials(name: string) {
@@ -198,6 +202,7 @@ export function completionRows(lead: LeadRecord): CompletionRow[] {
 
 export function activityTitle(action: string, details?: string | null) {
   const text = `${action} ${details || ''}`.toLowerCase()
+  if (text.includes('handed over') || text.includes('handover')) return 'Handed over'
   if (text.includes('status')) return 'Status updated'
   if (text.includes('created') || action.toLowerCase() === 'lead created') return 'Lead created'
   if (text.includes('follow-up') || text.includes('follow up')) return 'Follow-up scheduled'

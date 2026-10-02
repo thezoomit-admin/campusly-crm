@@ -89,6 +89,8 @@ export const baseApi = createApi({
     'MasterDataCategories',
     'MasterDataItems',
     'MasterDataHistory',
+    'ServiceItems',
+    'ServiceItem',
     'Departments',
     'Activities',
     'AuditLogs',

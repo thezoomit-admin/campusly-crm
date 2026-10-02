@@ -23,11 +23,13 @@ export default function LeadWorkspaceHeader({
   canChangeStatus,
   canClose,
   canReopen,
+  canHandover,
   onEdit,
   onAddActivity,
   onChangeStatus,
   onCloseLead,
   onReopenLead,
+  onHandover,
 }: {
   lead: LeadRecord
   canEdit: boolean
@@ -35,11 +37,13 @@ export default function LeadWorkspaceHeader({
   canChangeStatus: boolean
   canClose?: boolean
   canReopen?: boolean
+  canHandover?: boolean
   onEdit: () => void
   onAddActivity: () => void
   onChangeStatus: () => void
   onCloseLead?: () => void
   onReopenLead?: () => void
+  onHandover?: () => void
 }) {
   return (
     <section className="rounded-2xl border border-[#e7eef5] bg-surface px-4 py-4 shadow-[0_10px_28px_rgba(22,50,79,0.035)] md:px-5 dark:border-border">
@@ -114,6 +118,9 @@ export default function LeadWorkspaceHeader({
         </div>
 
         <div className="flex shrink-0 flex-wrap items-center gap-2 xl:flex-col xl:items-end">
+          {canHandover ? (
+            <PrimaryButton type="button" size="sm" onClick={onHandover} label="Hand over" />
+          ) : null}
           {canReopen ? (
             <PrimaryButton type="button" size="sm" onClick={onReopenLead} label="Reopen Lead" />
           ) : null}
