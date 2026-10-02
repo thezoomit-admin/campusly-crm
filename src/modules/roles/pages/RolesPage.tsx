@@ -1,7 +1,30 @@
-import { adminCard, adminFilters, adminFiltersCompact, adminForm, adminFormFields, adminFormSpan, adminPage, adminTable, appToastClass, formActions, matrix, matrixActions, matrixGroup, matrixModal, modalBackdrop, modalClose, modalHeader, modalPanel, modalPanelWide, muted, rowActions, tableWrap } from '../../../styles/admin'
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { createPortal } from 'react-dom'
-import { useOutletContext, useLocation } from 'react-router-dom'
+import {
+  adminCard,
+  adminFilters,
+  adminFiltersCompact,
+  adminForm,
+  adminFormFields,
+  adminFormSpan,
+  adminPage,
+  adminTable,
+  appToastClass,
+  formActions,
+  matrix,
+  matrixActions,
+  matrixGroup,
+  matrixModal,
+  modalBackdrop,
+  modalClose,
+  modalHeader,
+  modalPanel,
+  modalPanelWide,
+  muted,
+  rowActions,
+  tableWrap,
+} from "../../../styles/admin";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
+import { useOutletContext, useLocation } from "react-router-dom";
 import {
   useCreateRoleMutation,
   useDeleteRoleMutation,
@@ -10,240 +33,279 @@ import {
   useSetRolePermissionsMutation,
   useUpdateRoleMutation,
   useUpdateRoleStatusMutation,
-} from '@/redux/features/roles/rolesApi'
-import { getApiError } from '@/lib/api'
-import { HugeiconsIcon } from '@hugeicons/react'
-import type { IconSvgElement } from '@hugeicons/react'
+} from "@/redux/features/roles/rolesApi";
+import { getApiError } from "@/lib/api";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { IconSvgElement } from "@hugeicons/react";
 import {
   Cancel01Icon,
   Delete02Icon,
   Key01Icon,
   PencilEdit02Icon,
   ViewIcon,
-} from '@hugeicons/core-free-icons'
-import { Spin } from 'antd'
-import { PrimaryButton } from '@/components/ui'
-import { FormCheckbox, FormInput, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
-import { PageHeader } from '@/components/common/Navigation'
-import { PageMeta } from '@/components/common/Meta'
-import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
-import { hasPermission } from '../../../lib/access'
-import { readUrlSearchQuery } from '@/lib/url'
-import type { AuthSession, PermissionRecord, RecordStatus, RoleRecord } from '../../../types'
-type FormMode = 'create' | 'view' | 'edit'
-type ToastState = { text: string; type: 'success' | 'error' }
+} from "@hugeicons/core-free-icons";
+import { Spin } from "antd";
+import { PrimaryButton } from "@/components/ui";
+import {
+  FormCheckbox,
+  FormInput,
+  FormSelect,
+  FormSwitch,
+  FormTextArea,
+} from "@/components/common/Forms";
+import { PageHeader } from "@/components/common/Navigation";
+import { PageMeta } from "@/components/common/Meta";
+import {
+  RowActionMenu,
+  type RowActionItem,
+} from "@/components/common/Dropdowns";
+import { hasPermission } from "../../../lib/access";
+import { readUrlSearchQuery } from "@/lib/url";
+import type {
+  AuthSession,
+  PermissionRecord,
+  RecordStatus,
+  RoleRecord,
+} from "../../../types";
+type FormMode = "create" | "view" | "edit";
+type ToastState = { text: string; type: "success" | "error" };
 
 function ActionIcon({ icon }: { icon: IconSvgElement }) {
-  return <HugeiconsIcon icon={icon} size={16} color="currentColor" strokeWidth={1.5} />
+  return (
+    <HugeiconsIcon
+      icon={icon}
+      size={16}
+      color="currentColor"
+      strokeWidth={1.5}
+    />
+  );
 }
 
 type RoleForm = {
-  name: string
-  description: string
-  status: RecordStatus
-}
+  name: string;
+  description: string;
+  status: RecordStatus;
+};
 
-const EMPTY_FORM: RoleForm = { name: '', description: '', status: 'ACTIVE' }
+const EMPTY_FORM: RoleForm = { name: "", description: "", status: "ACTIVE" };
 
 function formFromRole(role: RoleRecord): RoleForm {
   return {
-    name: role.name || '',
-    description: role.description || '',
-    status: role.status || 'ACTIVE',
-  }
+    name: role.name || "",
+    description: role.description || "",
+    status: role.status || "ACTIVE",
+  };
 }
 
 function asSelectString(value: unknown) {
-  return typeof value === 'string' ? value : ''
+  return typeof value === "string" ? value : "";
 }
 
 export default function RolesPage() {
-  const auth = useOutletContext<AuthSession>()
-  const location = useLocation()
-  const canCreate = hasPermission(auth, 'role:create')
-  const canEdit = hasPermission(auth, 'role:edit')
-  const canDelete = hasPermission(auth, 'role:delete')
-  const canConfigure = hasPermission(auth, 'permission:configure')
+  const auth = useOutletContext<AuthSession>();
+  const location = useLocation();
+  const canCreate = hasPermission(auth, "role:create");
+  const canEdit = hasPermission(auth, "role:edit");
+  const canDelete = hasPermission(auth, "role:delete");
+  const canConfigure = hasPermission(auth, "permission:configure");
 
-  const [roles, setRoles] = useState<RoleRecord[]>([])
-  const [permissions, setPermissions] = useState<PermissionRecord[]>([])
-  const [search, setSearch] = useState(() => readUrlSearchQuery(location.search))
-  const [permissionSearch, setPermissionSearch] = useState('')
-  const [status, setStatus] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [formOpen, setFormOpen] = useState(false)
-  const [formMode, setFormMode] = useState<FormMode>('create')
-  const [permissionOpen, setPermissionOpen] = useState(false)
-  const [selected, setSelected] = useState<RoleRecord | null>(null)
-  const [form, setForm] = useState<RoleForm>(EMPTY_FORM)
-  const [checked, setChecked] = useState<string[]>([])
-  const [toast, setToast] = useState<ToastState | null>(null)
-  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const syncedSearch = useRef(false)
-  const formLocked = formMode === 'view'
+  const [roles, setRoles] = useState<RoleRecord[]>([]);
+  const [permissions, setPermissions] = useState<PermissionRecord[]>([]);
+  const [search, setSearch] = useState(() =>
+    readUrlSearchQuery(location.search),
+  );
+  const [permissionSearch, setPermissionSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [formOpen, setFormOpen] = useState(false);
+  const [formMode, setFormMode] = useState<FormMode>("create");
+  const [permissionOpen, setPermissionOpen] = useState(false);
+  const [selected, setSelected] = useState<RoleRecord | null>(null);
+  const [form, setForm] = useState<RoleForm>(EMPTY_FORM);
+  const [checked, setChecked] = useState<string[]>([]);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncedSearch = useRef(false);
+  const formLocked = formMode === "view";
 
-  const [listRoles] = useLazyListRolesQuery()
-  const [listPermissions] = useLazyListPermissionsQuery()
-  const [createRole] = useCreateRoleMutation()
-  const [updateRole] = useUpdateRoleMutation()
-  const [updateRoleStatus] = useUpdateRoleStatusMutation()
-  const [deleteRole] = useDeleteRoleMutation()
-  const [setRolePermissions] = useSetRolePermissionsMutation()
+  const [listRoles] = useLazyListRolesQuery();
+  const [listPermissions] = useLazyListPermissionsQuery();
+  const [createRole] = useCreateRoleMutation();
+  const [updateRole] = useUpdateRoleMutation();
+  const [updateRoleStatus] = useUpdateRoleStatusMutation();
+  const [deleteRole] = useDeleteRoleMutation();
+  const [setRolePermissions] = useSetRolePermissionsMutation();
 
   const grouped = useMemo(() => {
-    const query = permissionSearch.trim().toLowerCase()
-    const map = new Map<string, PermissionRecord[]>()
+    const query = permissionSearch.trim().toLowerCase();
+    const map = new Map<string, PermissionRecord[]>();
     for (const permission of permissions) {
-      if (query && !`${permission.module} ${permission.key} ${permission.description}`.toLowerCase().includes(query)) {
-        continue
+      if (
+        query &&
+        !`${permission.module} ${permission.key} ${permission.description}`
+          .toLowerCase()
+          .includes(query)
+      ) {
+        continue;
       }
-      const list = map.get(permission.module) || []
-      list.push(permission)
-      map.set(permission.module, list)
+      const list = map.get(permission.module) || [];
+      list.push(permission);
+      map.set(permission.module, list);
     }
-    return [...map.entries()]
-  }, [permissions, permissionSearch])
+    return [...map.entries()];
+  }, [permissions, permissionSearch]);
 
-  function showToast(text: string, type: ToastState['type'] = 'success') {
-    setToast({ text, type })
+  function showToast(text: string, type: ToastState["type"] = "success") {
+    setToast({ text, type });
     if (toastTimer.current) {
-      clearTimeout(toastTimer.current)
+      clearTimeout(toastTimer.current);
     }
-    toastTimer.current = setTimeout(() => setToast(null), 2800)
+    toastTimer.current = setTimeout(() => setToast(null), 2800);
   }
 
   async function load(options?: { silent?: boolean; search?: string }) {
     if (!options?.silent) {
-      setLoading(true)
+      setLoading(true);
     }
     try {
-      const data = await listRoles({ search: options?.search ?? search, status }).unwrap()
-      setRoles(data.roles)
+      const data = await listRoles({
+        search: options?.search ?? search,
+        status,
+      }).unwrap();
+      setRoles(data.roles);
     } catch (err) {
-      showToast(getApiError(err, 'Unable to load roles.'), 'error')
+      showToast(getApiError(err, "Unable to load roles."), "error");
     }
     if (!options?.silent) {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    void load()
-  }, [status])
+    void load();
+  }, [status]);
 
   useEffect(() => {
-    const next = readUrlSearchQuery(location.search)
-    setSearch(next)
+    const next = readUrlSearchQuery(location.search);
+    setSearch(next);
     if (syncedSearch.current) {
-      void load({ search: next })
+      void load({ search: next });
     }
-    syncedSearch.current = true
-  }, [location.search])
+    syncedSearch.current = true;
+  }, [location.search]);
 
   useEffect(() => {
     void listPermissions()
       .unwrap()
       .then((data) => setPermissions(data.permissions))
-      .catch(() => undefined)
-  }, [listPermissions])
+      .catch(() => undefined);
+  }, [listPermissions]);
 
   useEffect(
     () => () => {
       if (toastTimer.current) {
-        clearTimeout(toastTimer.current)
+        clearTimeout(toastTimer.current);
       }
     },
     [],
-  )
+  );
 
   function openCreate() {
-    setSelected(null)
-    setForm(EMPTY_FORM)
-    setFormMode('create')
-    setFormOpen(true)
+    setSelected(null);
+    setForm(EMPTY_FORM);
+    setFormMode("create");
+    setFormOpen(true);
   }
 
   function openRole(role: RoleRecord, mode: FormMode) {
-    setSelected(role)
-    setForm(formFromRole(role))
-    setFormMode(mode)
-    setFormOpen(true)
+    setSelected(role);
+    setForm(formFromRole(role));
+    setFormMode(mode);
+    setFormOpen(true);
   }
 
   function openPermissions(role: RoleRecord) {
-    setSelected(role)
-    setChecked(role.permissionIds || [])
-    setPermissionSearch('')
-    setPermissionOpen(true)
+    setSelected(role);
+    setChecked(role.permissionIds || []);
+    setPermissionSearch("");
+    setPermissionOpen(true);
   }
 
   function closeForm() {
-    setFormOpen(false)
+    setFormOpen(false);
   }
 
   function closePermissions() {
-    setPermissionOpen(false)
+    setPermissionOpen(false);
   }
 
   async function saveRole(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+    event.preventDefault();
     try {
       if (selected) {
-        await updateRole({ id: selected.id, body: form }).unwrap()
+        await updateRole({ id: selected.id, body: form }).unwrap();
       } else {
-        await createRole(form).unwrap()
+        await createRole(form).unwrap();
       }
-      showToast(selected ? 'Role updated.' : 'Role created.')
-      setFormOpen(false)
-      await load()
+      showToast(selected ? "Role updated." : "Role created.");
+      setFormOpen(false);
+      await load();
     } catch (err) {
-      showToast(getApiError(err, 'Unable to save role.'), 'error')
+      showToast(getApiError(err, "Unable to save role."), "error");
     }
   }
 
   async function removeRole(role: RoleRecord) {
     try {
-      await deleteRole(role.id).unwrap()
-      showToast('Role deleted.')
+      await deleteRole(role.id).unwrap();
+      showToast("Role deleted.");
       if (selected?.id === role.id) {
-        setSelected(null)
-        setFormOpen(false)
-        setPermissionOpen(false)
+        setSelected(null);
+        setFormOpen(false);
+        setPermissionOpen(false);
       }
-      await load()
+      await load();
     } catch (err) {
-      showToast(getApiError(err, 'This role is currently assigned to users.'), 'error')
+      showToast(
+        getApiError(err, "This role is currently assigned to users."),
+        "error",
+      );
     }
   }
 
   async function setRoleActive(role: RoleRecord, next: RecordStatus) {
     if (statusUpdatingId) {
-      return
+      return;
     }
-    setStatusUpdatingId(role.id)
+    setStatusUpdatingId(role.id);
     try {
-      await updateRoleStatus({ id: role.id, status: next }).unwrap()
-      showToast(`Role successfully ${next === 'ACTIVE' ? 'activated' : 'deactivated'}.`)
-      await load({ silent: true })
+      await updateRoleStatus({ id: role.id, status: next }).unwrap();
+      showToast(
+        `Role successfully ${next === "ACTIVE" ? "activated" : "deactivated"}.`,
+      );
+      await load({ silent: true });
     } catch (err) {
-      showToast(getApiError(err, 'Unable to update status.'), 'error')
+      showToast(getApiError(err, "Unable to update status."), "error");
     } finally {
-      setStatusUpdatingId(null)
+      setStatusUpdatingId(null);
     }
   }
 
   async function savePermissions() {
     if (!selected) {
-      return
+      return;
     }
     try {
-      await setRolePermissions({ id: selected.id, permissionIds: checked }).unwrap()
-      showToast('Permissions saved. Changes apply on the next request.')
-      setPermissionOpen(false)
-      await load()
+      await setRolePermissions({
+        id: selected.id,
+        permissionIds: checked,
+      }).unwrap();
+      showToast("Permissions saved. Changes apply on the next request.");
+      setPermissionOpen(false);
+      await load();
     } catch (err) {
-      showToast(getApiError(err, 'Unable to save permissions.'), 'error')
+      showToast(getApiError(err, "Unable to save permissions."), "error");
     }
   }
 
@@ -256,8 +318,15 @@ export default function RolesPage() {
       <PageHeader
         title="Roles & Permissions"
         subtitle="Configure role-wise, module-wise, and action-level access."
-        breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Roles & Permissions' }]}
-        extra={canCreate ? <PrimaryButton onClick={openCreate} label="Create Role" /> : undefined}
+        breadcrumbs={[
+          { title: "Dashboard", path: "/dashboard" },
+          { title: "Roles & Permissions" },
+        ]}
+        extra={
+          canCreate ? (
+            <PrimaryButton onClick={openCreate} label="Create Role" />
+          ) : undefined
+        }
       />
 
       <section className={`${adminFilters} ${adminFiltersCompact}`}>
@@ -269,7 +338,7 @@ export default function RolesPage() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           onSearch={() => {
-            void load()
+            void load();
           }}
         />
         <FormSelect
@@ -277,8 +346,8 @@ export default function RolesPage() {
           placeholder="All statuses"
           value={status || undefined}
           options={[
-            { value: 'ACTIVE', label: 'Active' },
-            { value: 'INACTIVE', label: 'Inactive' },
+            { value: "ACTIVE", label: "Active" },
+            { value: "INACTIVE", label: "Inactive" },
           ]}
           onChange={(value) => setStatus(asSelectString(value))}
         />
@@ -309,13 +378,16 @@ export default function RolesPage() {
                     </td>
                     <td>
                       <FormSwitch
-                        checked={role.status === 'ACTIVE'}
+                        checked={role.status === "ACTIVE"}
                         checkedChildren="Active"
                         unCheckedChildren="Inactive"
                         disabled={!canEdit || role.isSystem}
                         loading={statusUpdatingId === role.id}
                         onChange={(checked) => {
-                          void setRoleActive(role, checked ? 'ACTIVE' : 'INACTIVE')
+                          void setRoleActive(
+                            role,
+                            checked ? "ACTIVE" : "INACTIVE",
+                          );
                         }}
                       />
                     </td>
@@ -325,35 +397,35 @@ export default function RolesPage() {
                         items={(
                           [
                             {
-                              key: 'view',
-                              label: 'View',
+                              key: "view",
+                              label: "View",
                               icon: <ActionIcon icon={ViewIcon} />,
-                              onSelect: () => openRole(role, 'view'),
+                              onSelect: () => openRole(role, "view"),
                             },
                             canEdit
                               ? {
-                                  key: 'edit',
-                                  label: 'Edit',
+                                  key: "edit",
+                                  label: "Edit",
                                   icon: <ActionIcon icon={PencilEdit02Icon} />,
-                                  onSelect: () => openRole(role, 'edit'),
+                                  onSelect: () => openRole(role, "edit"),
                                 }
                               : null,
                             canConfigure
                               ? {
-                                  key: 'permission',
-                                  label: 'Permission',
+                                  key: "permission",
+                                  label: "Permission",
                                   icon: <ActionIcon icon={Key01Icon} />,
                                   onSelect: () => openPermissions(role),
                                 }
                               : null,
                             canDelete && !role.isSystem
                               ? {
-                                  key: 'delete',
-                                  label: 'Delete',
+                                  key: "delete",
+                                  label: "Delete",
                                   icon: <ActionIcon icon={Delete02Icon} />,
                                   danger: true,
                                   onSelect: () => {
-                                    void removeRole(role)
+                                    void removeRole(role);
                                   },
                                 }
                               : null,
@@ -381,26 +453,51 @@ export default function RolesPage() {
               >
                 <div className={`${modalHeader}`}>
                   <h3 id="role-modal-title">
-                    {formMode === 'create' ? 'Create Role' : formMode === 'view' ? 'View Role' : 'Edit Role'}
+                    {formMode === "create"
+                      ? "Create Role"
+                      : formMode === "view"
+                        ? "View Role"
+                        : "Edit Role"}
                   </h3>
-                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closeForm} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
+                  <PrimaryButton
+                    type="button"
+                    className={`${modalClose}`}
+                    aria-label="Close"
+                    onClick={closeForm}
+                    icon={
+                      <HugeiconsIcon
+                        icon={Cancel01Icon}
+                        size={18}
+                        color="currentColor"
+                        strokeWidth={1.5}
+                      />
+                    }
+                  />
                 </div>
                 <form
                   className={`${adminForm}`}
                   onSubmit={(event) => {
                     if (formLocked) {
-                      event.preventDefault()
-                      return
+                      event.preventDefault();
+                      return;
                     }
-                    void saveRole(event)
+                    void saveRole(event);
                   }}
                 >
-                  <fieldset className={`${adminFormFields}`} disabled={formLocked}>
+                  <fieldset
+                    className={`${adminFormFields}`}
+                    disabled={formLocked}
+                  >
                     <label>
                       Role Name
                       <FormInput
                         value={form.name}
-                        onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            name: event.target.value,
+                          }))
+                        }
                         required
                         disabled={formLocked}
                       />
@@ -410,13 +507,14 @@ export default function RolesPage() {
                       <FormSelect
                         value={form.status}
                         options={[
-                          { value: 'ACTIVE', label: 'Active' },
-                          { value: 'INACTIVE', label: 'Inactive' },
+                          { value: "ACTIVE", label: "Active" },
+                          { value: "INACTIVE", label: "Inactive" },
                         ]}
                         onChange={(value) =>
                           setForm((current) => ({
                             ...current,
-                            status: (asSelectString(value) || 'ACTIVE') as RecordStatus,
+                            status: (asSelectString(value) ||
+                              "ACTIVE") as RecordStatus,
                           }))
                         }
                         disabled={formLocked}
@@ -427,14 +525,26 @@ export default function RolesPage() {
                       <FormTextArea
                         rows={3}
                         value={form.description}
-                        onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+                        onChange={(event) =>
+                          setForm((current) => ({
+                            ...current,
+                            description: event.target.value,
+                          }))
+                        }
                         disabled={formLocked}
                       />
                     </label>
                   </fieldset>
                   <div className={`${formActions}`}>
-                    <PrimaryButton type="button" variant="outline" onClick={closeForm} label={formLocked ? 'Close' : 'Cancel'} />
-                    {!formLocked && (selected ? canEdit : canCreate) ? <PrimaryButton type="submit" label="Save" /> : null}
+                    <PrimaryButton
+                      type="button"
+                      variant="outline"
+                      onClick={closeForm}
+                      label={formLocked ? "Close" : "Cancel"}
+                    />
+                    {!formLocked && (selected ? canEdit : canCreate) ? (
+                      <PrimaryButton type="submit" label="Save" />
+                    ) : null}
                   </div>
                 </form>
               </div>
@@ -454,15 +564,32 @@ export default function RolesPage() {
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className={`${modalHeader}`}>
-                  <h3 id="permission-modal-title">Permissions · {selected.name}</h3>
-                  <PrimaryButton type="button" className={`${modalClose}`} aria-label="Close" onClick={closePermissions} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
+                  <h3 id="permission-modal-title">
+                    Permissions · {selected.name}
+                  </h3>
+                  <PrimaryButton
+                    type="button"
+                    className={`${modalClose}`}
+                    aria-label="Close"
+                    onClick={closePermissions}
+                    icon={
+                      <HugeiconsIcon
+                        icon={Cancel01Icon}
+                        size={18}
+                        color="currentColor"
+                        strokeWidth={1.5}
+                      />
+                    }
+                  />
                 </div>
                 <div className={`${matrix} ${matrixModal}`}>
                   <FormInput.Search
                     allowClear
                     placeholder="Search permissions, e.g. Lead"
                     value={permissionSearch}
-                    onChange={(event) => setPermissionSearch(event.target.value)}
+                    onChange={(event) =>
+                      setPermissionSearch(event.target.value)
+                    }
                   />
                   {grouped.map(([moduleName, items]) => (
                     <div key={moduleName} className={`${matrixGroup}`}>
@@ -477,7 +604,7 @@ export default function RolesPage() {
                                   event.target.checked
                                     ? [...current, item.id]
                                     : current.filter((id) => id !== item.id),
-                                )
+                                );
                               }}
                             >
                               {item.action}
@@ -488,8 +615,18 @@ export default function RolesPage() {
                     </div>
                   ))}
                   <div className={`${formActions}`}>
-                    <PrimaryButton type="button" variant="outline" onClick={closePermissions} label="Cancel" />
-                    {canConfigure ? <PrimaryButton onClick={() => void savePermissions()} label="Save permissions" /> : null}
+                    <PrimaryButton
+                      type="button"
+                      variant="outline"
+                      onClick={closePermissions}
+                      label="Cancel"
+                    />
+                    {canConfigure ? (
+                      <PrimaryButton
+                        onClick={() => void savePermissions()}
+                        label="Save permissions"
+                      />
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -507,5 +644,5 @@ export default function RolesPage() {
           )
         : null}
     </div>
-  )
+  );
 }

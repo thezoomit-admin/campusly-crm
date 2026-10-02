@@ -57,11 +57,32 @@ export type LeadAssignee = {
   team: { id: string; name: string } | null
 }
 
+export type LeadHandoverNote = {
+  studentRequirement?: string | null
+  preferredCountryCode?: string | null
+  preferredCountry?: string | null
+  preferredIntakeCode?: string | null
+  preferredIntake?: string | null
+  academicBackground?: string | null
+  conversationSummary?: string | null
+  importantConcern?: string | null
+  snapshot?: {
+    profileCompletion?: number
+    leadScore?: number
+    priority?: string | null
+    qualificationResultCode?: string | null
+  } | null
+}
+
+export type LeadAssignmentKind = 'POOL_ASSIGN' | 'REASSIGN' | 'HANDOVER' | 'REOPEN'
+
 export type LeadAssignmentHistoryItem = {
   id: string
   fromOwner: { id: string; name: string } | null
   toOwner: { id: string; name: string } | null
+  kind?: LeadAssignmentKind
   reason: string | null
+  handoverNote?: LeadHandoverNote | null
   assignedBy: { id: string; name: string } | null
   createdAt: string
 }

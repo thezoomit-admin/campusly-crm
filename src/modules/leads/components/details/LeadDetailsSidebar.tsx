@@ -12,7 +12,7 @@ import {
   UserSwitchIcon,
 } from '@hugeicons/core-free-icons'
 import type { ActivityFeedItem } from '@/types'
-import type { LeadAssignmentHistoryItem, LeadRecord, LeadStatusHistoryItem } from '../../types'
+import type { LeadAssignmentHistoryItem, LeadHandoverNote, LeadRecord, LeadStatusHistoryItem } from '../../types'
 import {
   activityTitle,
   completionRows,
@@ -236,7 +236,14 @@ export default function LeadDetailsSidebar({
                   {formatDisplayDateTime(item.createdAt)}
                   {item.assignedBy?.name ? ` · ${item.assignedBy.name}` : ''}
                 </p>
-                {item.reason ? <p className="m-0 mt-0.5 text-[0.78rem] text-[#5b6b7c]">{item.reason}</p> : null}
+                {item.kind === 'HANDOVER' ? (
+                  <p className="m-0 mt-0.5 text-[0.72rem] font-medium text-primary">Handover</p>
+                ) : null}
+                {item.kind === 'HANDOVER' && item.handoverNote ? (
+                  <HandoverNoteLines note={item.handoverNote} />
+                ) : item.reason ? (
+                  <p className="m-0 mt-0.5 text-[0.78rem] text-[#5b6b7c]">{item.reason}</p>
+                ) : null}
               </li>
             ))}
           </ol>
@@ -295,6 +302,25 @@ export default function LeadDetailsSidebar({
         </div>
       </section>
     </aside>
+  )
+}
+
+function HandoverNoteLines({ note }: { note: LeadHandoverNote }) {
+  const lines = [
+    note.studentRequirement ? `Requirement: ${note.studentRequirement}` : '',
+    note.preferredCountry ? `Country: ${note.preferredCountry}` : '',
+    note.preferredIntake ? `Intake: ${note.preferredIntake}` : '',
+    note.academicBackground ? `Academic: ${note.academicBackground}` : '',
+    note.conversationSummary ? `Conversation: ${note.conversationSummary}` : '',
+    note.importantConcern ? `Concern: ${note.importantConcern}` : '',
+  ].filter(Boolean)
+  if (lines.length === 0) return null
+  return (
+    <ul className="m-0 mt-1 grid list-none gap-0.5 p-0 text-[0.75rem] text-[#5b6b7c]">
+      {lines.map((line) => (
+        <li key={line}>{line}</li>
+      ))}
+    </ul>
   )
 }
 

@@ -54,6 +54,7 @@ export const APP_NAV_GROUPS: NavGroup[] = [
       },
       { to: '/applications', label: 'Applications', icon: 'file', permission: 'lead:convert' },
       { to: '/students', label: 'Students', icon: 'graduate', permission: 'lead:convert' },
+      { to: '/service-items', label: 'Service Items', icon: 'card', permission: 'service:view' },
     ],
   },
   {
@@ -133,6 +134,7 @@ const PAGE_KEYWORDS: Record<string, string[]> = {
   '/leads/pool': ['unassigned', 'queue', 'assign', 'distribution'],
   '/applications': ['admission', 'apply'],
   '/students': ['learner', 'client'],
+  '/service-items': ['services', 'catalog', 'pricing', 'offer', 'package'],
   '/documents': ['files', 'papers'],
   '/payments': ['invoice', 'fee', 'billing'],
   '/follow-ups': ['reminder', 'task'],

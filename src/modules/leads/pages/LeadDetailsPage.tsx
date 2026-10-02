@@ -10,6 +10,7 @@ import type { AuthSession } from '../../../types'
 import { useLeadMasterOptions } from '../hooks/useLeadMasterOptions'
 import {
   useAssignLeadMutation,
+  useHandoverLeadMutation,
   useCloseLeadMutation,
   useGetLeadQuery,
   useListLeadAssignmentsQuery,
@@ -47,10 +48,11 @@ import { LEAD_TABS, type LeadTabKey } from '../utils/leadDetails'
 import LeadWorkspaceHeader from '../components/details/LeadWorkspaceHeader'
 import LeadDetailsSidebar from '../components/details/LeadDetailsSidebar'
 import LeadOverviewPanels, { LeadAcademicPanel, LeadStudyVisaPanel } from '../components/details/LeadOverviewPanels'
-import { LeadActivitiesPanel, LeadCommunicationsPanel, LeadDocumentsPanel, LeadNotesPanel } from '../components/details/LeadTabPanels'
+import { LeadActivitiesPanel, LeadCommunicationsPanel, LeadDocumentsPanel, LeadNotesPanel, LeadPaymentsPanel, LeadServicesPanel } from '../components/details/LeadTabPanels'
 import {
   AddActivityModal,
   ChangeOwnerModal,
+  HandoverLeadModal,
   ChangeStatusModal,
   CloseLeadModal,
   QualifyLeadModal,
@@ -64,7 +66,7 @@ export default function LeadDetailsPage() {
   const auth = useOutletContext<AuthSession>()
   const navigate = useNavigate()
   const options = useLeadMasterOptions()
-  const { data, isFetching, isError } = useGetLeadQuery(id, { skip: !id })
+  const { data, isFetching, isError, error } = useGetLeadQuery(id, { skip: !id })
   const [updateLead] = useUpdateLeadMutation()
   const [updateQualification, { isLoading: qualifying }] = useUpdateLeadQualificationMutation()
   const [updateStatus, { isLoading: statusSaving }] = useUpdateLeadStatusMutation()
@@ -73,6 +75,7 @@ export default function LeadDetailsPage() {
   const [createFollowUp, { isLoading: followUpSaving }] = useCreateFollowUpMutation()
   const [createActivity, { isLoading: activitySaving }] = useCreateActivityMutation()
   const [assignLead, { isLoading: ownerSaving }] = useAssignLeadMutation()
+  const [handoverLead, { isLoading: handoverSaving }] = useHandoverLeadMutation()
   const [completeFollowUp, { isLoading: completing }] = useCompleteFollowUpMutation()
   const [rescheduleFollowUp, { isLoading: rescheduling }] = useRescheduleFollowUpMutation()
   const [cancelFollowUp, { isLoading: cancelling }] = useCancelFollowUpMutation()
@@ -98,6 +101,11 @@ export default function LeadDetailsPage() {
   const canAssign = hasPermission(auth, 'lead:assign')
   const canReassign = hasPermission(auth, 'lead:reassign')
   const canChangeOwner = Boolean(lead?.owner?.id ? canReassign : canAssign)
+  const canViewServices = hasPermission(auth, 'service:view')
+  const canViewPayments = hasPermission(auth, 'payment:view')
+  const qualified =
+    (lead?.statusCode || '').toUpperCase() === 'QUALIFIED' || (lead?.status || '').trim().toLowerCase() === 'qualified'
+  const canHandover = Boolean(hasPermission(auth, 'lead:handover') && qualified && !lead?.statusChange?.locked)
 
   const { data: activityData } = useListActivityFeedQuery(
     { relatedId: id },
@@ -130,6 +138,7 @@ export default function LeadDetailsPage() {
   const [reopenOpen, setReopenOpen] = useState(false)
   const [reopenErrors, setReopenErrors] = useState<Record<string, string>>({})
   const [ownerOpen, setOwnerOpen] = useState(false)
+  const [handoverOpen, setHandoverOpen] = useState(false)
   const [selectedFollowUp, setSelectedFollowUp] = useState<FollowUpRecord | null>(null)
   const [completeOpen, setCompleteOpen] = useState(false)
   const [rescheduleOpen, setRescheduleOpen] = useState(false)
@@ -366,6 +375,29 @@ export default function LeadDetailsPage() {
     }
   }
 
+  async function saveHandover(body: {
+    counsellorId: string
+    note: {
+      studentRequirement?: string
+      preferredCountryCode?: string
+      preferredIntakeCode?: string
+      academicBackground?: string
+      conversationSummary?: string
+      importantConcern?: string
+    }
+  }) {
+    if (!id || !canHandover) return
+    try {
+      const result = await handoverLead({ id, body }).unwrap()
+      toast.success(result.message || 'Lead handed over successfully.')
+      setHandoverOpen(false)
+      const stillVisible = auth.dataScopes.lead !== 'OWN' || result.ownerId === auth.user.id
+      if (!stillVisible) navigate('/leads/mine')
+    } catch (error) {
+      toast.error(getApiError(error, 'Unable to assign the lead to the selected Counsellor. Please try again.'))
+    }
+  }
+
   function openNotes() {
     setTab('notes')
   }
@@ -389,7 +421,7 @@ export default function LeadDetailsPage() {
             { title: <span className="font-medium text-primary">Lead Details</span> },
           ]}
         />
-        <p className="text-danger">Lead not found or you do not have access.</p>
+        <p className="text-danger">{getApiError(error, 'You do not have permission to access this lead\'s workspace.')}</p>
         <PrimaryButton type="button" variant="outline" onClick={() => navigate('/leads')} label="Back to leads" />
       </div>
     )
@@ -422,6 +454,8 @@ export default function LeadDetailsPage() {
             canChangeStatus={canChangeStatus}
             canClose={canClose}
             canReopen={canReopen}
+            canHandover={canHandover}
+            onHandover={() => setHandoverOpen(true)}
             onEdit={() => navigate(`/leads/${id}/edit`)}
             onAddActivity={() => setActivityOpen(true)}
             onChangeStatus={() => {
@@ -443,7 +477,9 @@ export default function LeadDetailsPage() {
               (item) =>
                 (item.key !== 'followups' || canViewFollowUp) &&
                 (item.key !== 'whatsapp' || canViewWhatsApp) &&
-                (item.key !== 'email' || canViewEmail),
+                (item.key !== 'email' || canViewEmail) &&
+                (item.key !== 'services' || canViewServices) &&
+                (item.key !== 'payments' || canViewPayments),
             ).map((item) => {
               const active = tab === item.key
               return (
@@ -519,6 +555,8 @@ export default function LeadDetailsPage() {
                   onSave={() => void saveNotes()}
                 />
               ) : null}
+              {tab === 'services' && canViewServices ? <LeadServicesPanel /> : null}
+              {tab === 'payments' && canViewPayments ? <LeadPaymentsPanel /> : null}
             </div>
 
             <LeadDetailsSidebar
@@ -659,6 +697,16 @@ export default function LeadDetailsPage() {
         errors={reopenErrors}
         onClose={() => setReopenOpen(false)}
         onSubmit={onReopenLead}
+      />
+      <HandoverLeadModal
+        open={handoverOpen && canHandover}
+        lead={lead || null}
+        countryOptions={options.country}
+        intakeOptions={options.intake}
+        resultOptions={options.result}
+        saving={handoverSaving}
+        onClose={() => setHandoverOpen(false)}
+        onSubmit={saveHandover}
       />
       <ChangeOwnerModal
         open={ownerOpen && canChangeOwner}

@@ -163,3 +163,34 @@ export function LeadNotesPanel({
     </LeadSectionCard>
   )
 }
+
+function EmptyWorkspacePanel({ title, heading, body }: { title: string; heading: string; body: string }) {
+  return (
+    <LeadSectionCard title={title}>
+      <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-[#dbe4ee] bg-[#f8fafc] px-4 py-10 text-center dark:border-border dark:bg-transparent">
+        <p className="m-0 text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">{heading}</p>
+        <p className="m-0 max-w-md text-[0.84rem] text-[#8b97a8]">{body}</p>
+      </div>
+    </LeadSectionCard>
+  )
+}
+
+export function LeadServicesPanel() {
+  return (
+    <EmptyWorkspacePanel
+      title="Service & Charges"
+      heading="No service offer yet"
+      body="Service items, charges, discounts, and the fee offer for this lead will appear here once counselling moves into an offer."
+    />
+  )
+}
+
+export function LeadPaymentsPanel() {
+  return (
+    <EmptyWorkspacePanel
+      title="Payment History"
+      heading="No payments recorded"
+      body="Receipts and amounts collected against this lead's offer will appear here. Outstanding balance stays visible beside the counselling notes."
+    />
+  )
+}

@@ -190,11 +190,12 @@ const leadsApi = baseApi.injectEndpoints({
         })}`,
       providesTags: [{ type: 'Leads', id: 'MINE' }],
     }),
-    listLeadAssignees: builder.query<{ items: LeadAssignee[] }, { teamId?: string; search?: string } | void>({
+    listLeadAssignees: builder.query<{ items: LeadAssignee[] }, { teamId?: string; search?: string; role?: string } | void>({
       query: (params) =>
         `/leads/assignees${toQuery({
           teamId: params?.teamId,
           search: params?.search,
+          role: params?.role,
         })}`,
     }),
     listLeadAssignments: builder.query<{ items: LeadAssignmentHistoryItem[] }, string>({
@@ -228,6 +229,34 @@ const leadsApi = baseApi.injectEndpoints({
     >({
       query: (id) => `/leads/${id}/attribution-changes`,
       providesTags: (_r, _e, id) => [{ type: 'Leads', id }],
+    }),
+    handoverLead: builder.mutation<
+      { message: string; leadId: string; ownerId: string },
+      {
+        id: string
+        body: {
+          counsellorId: string
+          note?: {
+            studentRequirement?: string
+            preferredCountryCode?: string
+            preferredIntakeCode?: string
+            academicBackground?: string
+            conversationSummary?: string
+            importantConcern?: string
+          }
+        }
+      }
+    >({
+      query: ({ id, body }) => ({ url: `/leads/${id}/handover`, method: 'POST', body }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Leads', id },
+        ...LEAD_COLLECTION_TAGS,
+        'Activities',
+        'Dashboard',
+        'Pipeline',
+        'Notifications',
+        'FollowUps',
+      ],
     }),
     assignLead: builder.mutation<
       { lead: LeadRecord; message?: string },
@@ -263,6 +292,7 @@ export const {
   useListMyLeadsQuery,
   useListLeadAssigneesQuery,
   useListLeadAssignmentsQuery,
+  useHandoverLeadMutation,
   useAssignLeadMutation,
   useCorrectLeadSourceMutation,
   useCorrectLeadCampaignMutation,

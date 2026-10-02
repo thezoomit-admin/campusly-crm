@@ -7,6 +7,7 @@ import { AntModal } from '@/components/common/Modals'
 import { useListLeadAssigneesQuery } from '../../api/leadsApi'
 import type { MasterOption } from '../../hooks/useLeadMasterOptions'
 import type { LeadRecord, LeadStatusOption } from '../../types'
+import { optionLabel } from '../../utils/leadDetails'
 import {
   ACTIVITY_TYPE_OPTIONS,
   outcomesForActivityType,
@@ -395,6 +396,169 @@ export function AssignLeadModal({
         <div className="mt-2 flex justify-end gap-2">
           <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
           <PrimaryButton type="button" loading={saving} disabled={!ownerId} onClick={() => void handleSubmit()} label={currentOwnerName ? 'Reassign Lead' : 'Assign Lead'} />
+        </div>
+      </div>
+    </AntModal>
+  )
+}
+
+export function HandoverLeadModal({
+  open,
+  lead,
+  countryOptions,
+  intakeOptions,
+  resultOptions,
+  saving,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean
+  lead: LeadRecord | null
+  countryOptions: MasterOption[]
+  intakeOptions: MasterOption[]
+  resultOptions: MasterOption[]
+  saving: boolean
+  onClose: () => void
+  onSubmit: (body: {
+    counsellorId: string
+    note: {
+      studentRequirement?: string
+      preferredCountryCode?: string
+      preferredIntakeCode?: string
+      academicBackground?: string
+      conversationSummary?: string
+      importantConcern?: string
+    }
+  }) => Promise<void>
+}) {
+  const [counsellorId, setCounsellorId] = useState('')
+  const [studentRequirement, setStudentRequirement] = useState('')
+  const [preferredCountryCode, setPreferredCountryCode] = useState('')
+  const [preferredIntakeCode, setPreferredIntakeCode] = useState('')
+  const [academicBackground, setAcademicBackground] = useState('')
+  const [conversationSummary, setConversationSummary] = useState('')
+  const [importantConcern, setImportantConcern] = useState('')
+  const { data, isFetching } = useListLeadAssigneesQuery({ role: 'counsellor' }, { skip: !open })
+  const options = (data?.items || []).map((user) => ({
+    value: user.id,
+    label: [user.name, user.role?.name, user.team?.name].filter(Boolean).join(' · '),
+  }))
+
+  useEffect(() => {
+    if (!open || !lead) return
+    setCounsellorId('')
+    setStudentRequirement(lead.preferredCourse || '')
+    setPreferredCountryCode(lead.preferredCountryCode || '')
+    setPreferredIntakeCode(lead.preferredIntakeCode || '')
+    setAcademicBackground(
+      [lead.institutionName, lead.resultCgpa ? `CGPA ${lead.resultCgpa}` : '', lead.passingYear ? String(lead.passingYear) : '']
+        .filter(Boolean)
+        .join(', '),
+    )
+    setConversationSummary('')
+    setImportantConcern('')
+  }, [open, lead])
+
+  async function handleSubmit() {
+    if (!counsellorId) return
+    await onSubmit({
+      counsellorId,
+      note: {
+        studentRequirement: studentRequirement.trim() || undefined,
+        preferredCountryCode: preferredCountryCode || undefined,
+        preferredIntakeCode: preferredIntakeCode || undefined,
+        academicBackground: academicBackground.trim() || undefined,
+        conversationSummary: conversationSummary.trim() || undefined,
+        importantConcern: importantConcern.trim() || undefined,
+      },
+    })
+  }
+
+  return (
+    <AntModal open={open} onClose={onClose} title="Hand over to Counsellor" width={560}>
+      <div className="grid gap-3">
+        <p className="m-0 text-sm text-text-muted">
+          {lead ? `Hand ${lead.name} from the Call Center to a Counsellor. Qualification data stays as it is.` : 'Select a Counsellor.'}
+        </p>
+        {lead ? (
+          <dl className="m-0 grid grid-cols-2 gap-2 rounded-xl bg-[#f8fafc] px-3 py-2 text-sm dark:bg-hover-bg">
+            <div>
+              <dt className="text-xs text-text-muted">Profile completion</dt>
+              <dd className="m-0 font-medium">{lead.profileCompletion ?? 0}%</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-text-muted">Lead score</dt>
+              <dd className="m-0 font-medium">{lead.leadScore ?? 0}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-text-muted">Priority</dt>
+              <dd className="m-0 font-medium">{lead.priority || 'None'}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-text-muted">Qualification</dt>
+              <dd className="m-0 font-medium">{optionLabel(resultOptions, lead.qualificationResultCode) || '—'}</dd>
+            </div>
+          </dl>
+        ) : null}
+        <label className="grid gap-1.5 text-sm">
+          <span>Counsellor</span>
+          <FormSelect
+            showSearch
+            optionFilterProp="label"
+            placeholder={isFetching ? 'Loading counsellors...' : 'Select a Counsellor'}
+            value={counsellorId || undefined}
+            options={options}
+            onChange={(value) => setCounsellorId(asSelectString(value))}
+          />
+          {!isFetching && options.length === 0 ? (
+            <span className="text-xs text-text-muted">No counsellors are available for this handover.</span>
+          ) : null}
+        </label>
+        <label className="grid gap-1.5 text-sm">
+          <span>Student requirement</span>
+          <FormTextArea rows={2} value={studentRequirement} placeholder="What the student is looking for" onChange={(event) => setStudentRequirement(event.target.value)} />
+        </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="grid gap-1.5 text-sm">
+            <span>Preferred country</span>
+            <FormSelect
+              showSearch
+              optionFilterProp="label"
+              allowClear
+              placeholder="Preferred country"
+              value={preferredCountryCode || undefined}
+              options={countryOptions}
+              onChange={(value) => setPreferredCountryCode(asSelectString(value))}
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm">
+            <span>Preferred intake</span>
+            <FormSelect
+              showSearch
+              optionFilterProp="label"
+              allowClear
+              placeholder="Preferred intake"
+              value={preferredIntakeCode || undefined}
+              options={intakeOptions}
+              onChange={(value) => setPreferredIntakeCode(asSelectString(value))}
+            />
+          </label>
+        </div>
+        <label className="grid gap-1.5 text-sm">
+          <span>Academic background</span>
+          <FormTextArea rows={2} value={academicBackground} placeholder="Degree, institution, result" onChange={(event) => setAcademicBackground(event.target.value)} />
+        </label>
+        <label className="grid gap-1.5 text-sm">
+          <span>Initial conversation summary</span>
+          <FormTextArea rows={2} value={conversationSummary} placeholder="What was discussed" onChange={(event) => setConversationSummary(event.target.value)} />
+        </label>
+        <label className="grid gap-1.5 text-sm">
+          <span>Important concern</span>
+          <FormTextArea rows={2} value={importantConcern} placeholder="Anything the counsellor should know first" onChange={(event) => setImportantConcern(event.target.value)} />
+        </label>
+        <div className="mt-2 flex justify-end gap-2">
+          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+          <PrimaryButton type="button" loading={saving} disabled={!counsellorId} onClick={() => void handleSubmit()} label="Hand over" />
         </div>
       </div>
     </AntModal>
