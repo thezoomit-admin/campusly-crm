@@ -1,22 +1,23 @@
 import {
   adminCard,
   adminFilters,
-  adminFiltersCompact,
   adminForm,
   adminFormFields,
   adminFormSpan,
   adminPage,
   adminTable,
-  appToastClass,
   formActions,
   matrix,
   matrixActions,
   matrixGroup,
   matrixModal,
   modalBackdrop,
+  modalBody,
   modalClose,
+  modalFooter,
   modalHeader,
   modalPanel,
+  modalPanelFlex,
   modalPanelWide,
   muted,
   rowActions,
@@ -25,6 +26,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { useOutletContext, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 import {
   useCreateRoleMutation,
   useDeleteRoleMutation,
@@ -34,7 +36,7 @@ import {
   useUpdateRoleMutation,
   useUpdateRoleStatusMutation,
 } from "@/redux/features/roles/rolesApi";
-import { getApiError } from "@/lib/api";
+import { getApiError, isGloballyToastedApiError } from "@/lib/api";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
 import {
@@ -49,10 +51,12 @@ import { PrimaryButton } from "@/components/ui";
 import {
   FormCheckbox,
   FormInput,
+  FormInputNumber,
   FormSelect,
   FormSwitch,
   FormTextArea,
 } from "@/components/common/Forms";
+import { DeleteModal } from "@/components/common/Modals";
 import { PageHeader } from "@/components/common/Navigation";
 import { PageMeta } from "@/components/common/Meta";
 import {
@@ -68,7 +72,13 @@ import type {
   RoleRecord,
 } from "../../../types";
 type FormMode = "create" | "view" | "edit";
-type ToastState = { text: string; type: "success" | "error" };
+
+function showApiError(err: unknown, fallback: string) {
+  if (isGloballyToastedApiError(err)) {
+    return;
+  }
+  toast.error(getApiError(err, fallback));
+}
 
 function ActionIcon({ icon }: { icon: IconSvgElement }) {
   return (
@@ -116,6 +126,7 @@ export default function RolesPage() {
   );
   const [permissionSearch, setPermissionSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [userCount, setUserCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<FormMode>("create");
@@ -123,9 +134,10 @@ export default function RolesPage() {
   const [selected, setSelected] = useState<RoleRecord | null>(null);
   const [form, setForm] = useState<RoleForm>(EMPTY_FORM);
   const [checked, setChecked] = useState<string[]>([]);
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<RoleRecord | null>(null);
+  const [deleteSaving, setDeleteSaving] = useState(false);
+  const [permissionSaving, setPermissionSaving] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const syncedSearch = useRef(false);
   const formLocked = formMode === "view";
 
@@ -156,14 +168,6 @@ export default function RolesPage() {
     return [...map.entries()];
   }, [permissions, permissionSearch]);
 
-  function showToast(text: string, type: ToastState["type"] = "success") {
-    setToast({ text, type });
-    if (toastTimer.current) {
-      clearTimeout(toastTimer.current);
-    }
-    toastTimer.current = setTimeout(() => setToast(null), 2800);
-  }
-
   async function load(options?: { silent?: boolean; search?: string }) {
     if (!options?.silent) {
       setLoading(true);
@@ -172,10 +176,11 @@ export default function RolesPage() {
       const data = await listRoles({
         search: options?.search ?? search,
         status,
+        assignedUserCount: userCount === null ? undefined : String(userCount),
       }).unwrap();
       setRoles(data.roles);
     } catch (err) {
-      showToast(getApiError(err, "Unable to load roles."), "error");
+      showApiError(err, "Unable to load roles.");
     }
     if (!options?.silent) {
       setLoading(false);
@@ -184,7 +189,7 @@ export default function RolesPage() {
 
   useEffect(() => {
     void load();
-  }, [status]);
+  }, [status, userCount]);
 
   useEffect(() => {
     const next = readUrlSearchQuery(location.search);
@@ -201,15 +206,6 @@ export default function RolesPage() {
       .then((data) => setPermissions(data.permissions))
       .catch(() => undefined);
   }, [listPermissions]);
-
-  useEffect(
-    () => () => {
-      if (toastTimer.current) {
-        clearTimeout(toastTimer.current);
-      }
-    },
-    [],
-  );
 
   function openCreate() {
     setSelected(null);
@@ -237,6 +233,9 @@ export default function RolesPage() {
   }
 
   function closePermissions() {
+    if (permissionSaving) {
+      return;
+    }
     setPermissionOpen(false);
   }
 
@@ -248,29 +247,37 @@ export default function RolesPage() {
       } else {
         await createRole(form).unwrap();
       }
-      showToast(selected ? "Role updated." : "Role created.");
+      toast.success(selected ? "Role updated." : "Role created.");
       setFormOpen(false);
       await load();
     } catch (err) {
-      showToast(getApiError(err, "Unable to save role."), "error");
+      showApiError(err, "Unable to save role.");
     }
   }
 
-  async function removeRole(role: RoleRecord) {
+  function askDelete(role: RoleRecord) {
+    setDeleteTarget(role);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget || deleteSaving) {
+      return;
+    }
+    setDeleteSaving(true);
     try {
-      await deleteRole(role.id).unwrap();
-      showToast("Role deleted.");
-      if (selected?.id === role.id) {
+      await deleteRole(deleteTarget.id).unwrap();
+      toast.success("Role deleted.");
+      if (selected?.id === deleteTarget.id) {
         setSelected(null);
         setFormOpen(false);
         setPermissionOpen(false);
       }
+      setDeleteTarget(null);
       await load();
     } catch (err) {
-      showToast(
-        getApiError(err, "This role is currently assigned to users."),
-        "error",
-      );
+      showApiError(err, "Unable to delete role.");
+    } finally {
+      setDeleteSaving(false);
     }
   }
 
@@ -281,31 +288,34 @@ export default function RolesPage() {
     setStatusUpdatingId(role.id);
     try {
       await updateRoleStatus({ id: role.id, status: next }).unwrap();
-      showToast(
+      toast.success(
         `Role successfully ${next === "ACTIVE" ? "activated" : "deactivated"}.`,
       );
       await load({ silent: true });
     } catch (err) {
-      showToast(getApiError(err, "Unable to update status."), "error");
+      showApiError(err, "Unable to update status.");
     } finally {
       setStatusUpdatingId(null);
     }
   }
 
   async function savePermissions() {
-    if (!selected) {
+    if (!selected || permissionSaving) {
       return;
     }
+    setPermissionSaving(true);
     try {
       await setRolePermissions({
         id: selected.id,
         permissionIds: checked,
       }).unwrap();
-      showToast("Permissions saved. Changes apply on the next request.");
+      toast.success("Permissions saved. Changes apply on the next request.");
       setPermissionOpen(false);
       await load();
     } catch (err) {
-      showToast(getApiError(err, "Unable to save permissions."), "error");
+      showApiError(err, "Unable to save permissions.");
+    } finally {
+      setPermissionSaving(false);
     }
   }
 
@@ -329,7 +339,9 @@ export default function RolesPage() {
         }
       />
 
-      <section className={`${adminFilters} ${adminFiltersCompact}`}>
+      <section
+        className={`${adminFilters} min-[961px]:!grid-cols-[minmax(220px,1.6fr)_minmax(160px,240px)_minmax(150px,200px)]`}
+      >
         <FormInput.Search
           allowClear
           enterButton="Search"
@@ -350,6 +362,13 @@ export default function RolesPage() {
             { value: "INACTIVE", label: "Inactive" },
           ]}
           onChange={(value) => setStatus(asSelectString(value))}
+        />
+        <FormInputNumber
+          min={0}
+          precision={0}
+          placeholder="Assigned users"
+          value={userCount ?? undefined}
+          onChange={(value) => setUserCount(typeof value === "number" ? value : null)}
         />
       </section>
 
@@ -424,9 +443,7 @@ export default function RolesPage() {
                                   label: "Delete",
                                   icon: <ActionIcon icon={Delete02Icon} />,
                                   danger: true,
-                                  onSelect: () => {
-                                    void removeRole(role);
-                                  },
+                                  onSelect: () => askDelete(role),
                                 }
                               : null,
                           ] satisfies Array<RowActionItem | null>
@@ -557,7 +574,7 @@ export default function RolesPage() {
         ? createPortal(
             <div className={`${modalBackdrop}`} onClick={closePermissions}>
               <div
-                className={`${modalPanel} ${modalPanelWide}`}
+                className={`${modalPanelFlex} ${modalPanelWide}`}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="permission-modal-title"
@@ -572,6 +589,7 @@ export default function RolesPage() {
                     className={`${modalClose}`}
                     aria-label="Close"
                     onClick={closePermissions}
+                    disabled={permissionSaving}
                     icon={
                       <HugeiconsIcon
                         icon={Cancel01Icon}
@@ -582,7 +600,7 @@ export default function RolesPage() {
                     }
                   />
                 </div>
-                <div className={`${matrix} ${matrixModal}`}>
+                <div className={`${modalBody} ${matrix} ${matrixModal}`}>
                   <FormInput.Search
                     allowClear
                     placeholder="Search permissions, e.g. Lead"
@@ -599,6 +617,7 @@ export default function RolesPage() {
                           <label key={item.id}>
                             <FormCheckbox
                               checked={checked.includes(item.id)}
+                              disabled={permissionSaving}
                               onChange={(event) => {
                                 setChecked((current) =>
                                   event.target.checked
@@ -614,20 +633,22 @@ export default function RolesPage() {
                       </div>
                     </div>
                   ))}
-                  <div className={`${formActions}`}>
+                </div>
+                <div className={`${modalFooter} ${formActions}`}>
+                  <PrimaryButton
+                    type="button"
+                    variant="outline"
+                    onClick={closePermissions}
+                    disabled={permissionSaving}
+                    label="Cancel"
+                  />
+                  {canConfigure ? (
                     <PrimaryButton
-                      type="button"
-                      variant="outline"
-                      onClick={closePermissions}
-                      label="Cancel"
+                      onClick={() => void savePermissions()}
+                      loading={permissionSaving}
+                      label="Save permissions"
                     />
-                    {canConfigure ? (
-                      <PrimaryButton
-                        onClick={() => void savePermissions()}
-                        label="Save permissions"
-                      />
-                    ) : null}
-                  </div>
+                  ) : null}
                 </div>
               </div>
             </div>,
@@ -635,14 +656,14 @@ export default function RolesPage() {
           )
         : null}
 
-      {toast
-        ? createPortal(
-            <div className={appToastClass(toast.type)} role="status">
-              {toast.text}
-            </div>,
-            document.body,
-          )
-        : null}
+      <DeleteModal
+        open={Boolean(deleteTarget)}
+        loading={deleteSaving}
+        title="Delete Role?"
+        itemName={deleteTarget?.name || "this role"}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => void confirmDelete()}
+      />
     </div>
   );
 }

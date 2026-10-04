@@ -22,6 +22,15 @@ export function getApiError(err: unknown, fallback: string): string {
   return fallback
 }
 
+/** Statuses already toasted globally by `baseApi` — skip local duplicate toasts. */
+export function isGloballyToastedApiError(err: unknown): boolean {
+  if (!err || typeof err !== 'object' || !('status' in err)) {
+    return false
+  }
+  const status = (err as { status: unknown }).status
+  return status === 401 || status === 403 || status === 404 || status === 409
+}
+
 export function getApiErrorFields(err: unknown): Record<string, string> {
   if (err && typeof err === 'object') {
     const data = (err as { data?: unknown }).data

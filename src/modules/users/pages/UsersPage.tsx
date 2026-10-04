@@ -6,7 +6,6 @@ import {
   adminFormSpan,
   adminPage,
   adminTable,
-  appToastClass,
   fieldHint,
   fieldLabelClass,
   formActions,
@@ -43,6 +42,7 @@ import {
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useOutletContext, useLocation } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import {
   useAdminPasswordResetMutation,
   useCreateUserMutation,
@@ -57,9 +57,9 @@ import {
   useUpdateUserStatusMutation,
   type UserPayload,
 } from '@/redux/features/users/usersApi'
-import { useLazyListRolesQuery } from '@/redux/features/roles/rolesApi'
+import { useLazyListRoleOptionsQuery } from '@/redux/features/roles/rolesApi'
 import { useLazyListDepartmentsQuery } from '@/redux/features/masterData/masterDataApi'
-import { getApiError } from '@/lib/api'
+import { getApiError, isGloballyToastedApiError } from '@/lib/api'
 import { patchCurrentAuthUser } from '@/lib/auth'
 import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
@@ -101,7 +101,7 @@ import type {
   AuthSession,
   DataScopeLevel,
   Department,
-  RoleRecord,
+  RoleOption,
   ScopeMap,
   UserActivity,
   UserSession,
@@ -109,7 +109,13 @@ import type {
 } from '../../../types'
 type FormMode = 'create' | 'view' | 'edit'
 type ViewTab = 'overview' | 'permissions' | 'leads' | 'applications' | 'documents' | 'performance'
-type ToastState = { text: string; type: 'success' | 'error' }
+
+function showApiError(err: unknown, fallback: string) {
+  if (isGloballyToastedApiError(err)) {
+    return
+  }
+  toast.error(getApiError(err, fallback))
+}
 
 function ActionIcon({ icon }: { icon: IconSvgElement }) {
   return <HugeiconsIcon icon={icon} size={16} color="currentColor" strokeWidth={1.5} />
@@ -360,7 +366,7 @@ function UserViewLayout({
 }: {
   form: UserForm
   selected: AdminUser | null
-  roles: RoleRecord[]
+  roles: RoleOption[]
   departments: Department[]
   activity: UserActivity[]
   sessions: UserSession[]
@@ -822,7 +828,7 @@ export default function UsersPage() {
   const canOverride = hasPermission(auth, 'permission:configure')
 
   const [users, setUsers] = useState<AdminUser[]>([])
-  const [roles, setRoles] = useState<RoleRecord[]>([])
+  const [roles, setRoles] = useState<RoleOption[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [filters, setFilters] = useState({
     search: readUrlSearchQuery(location.search),
@@ -840,8 +846,6 @@ export default function UsersPage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState('')
   const photoPreviewUrl = useRef('')
-  const [toast, setToast] = useState<ToastState | null>(null)
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const detailRequestId = useRef(0)
   const syncedSearch = useRef(false)
   const [selected, setSelected] = useState<AdminUser | null>(null)
@@ -867,7 +871,7 @@ export default function UsersPage() {
   const [revokeUserSession] = useRevokeUserSessionMutation()
   const [forceLogoutUser] = useForceLogoutUserMutation()
   const [adminPasswordReset] = useAdminPasswordResetMutation()
-  const [listRoles] = useLazyListRolesQuery()
+  const [listRoleOptions] = useLazyListRoleOptionsQuery()
   const [listDepartments] = useLazyListDepartmentsQuery()
 
   const filterTeams = useMemo(() => {
@@ -881,14 +885,6 @@ export default function UsersPage() {
     () => departments.find((item) => item.id === form.departmentId)?.teams ?? [],
     [departments, form.departmentId],
   )
-
-  function showToast(text: string, type: ToastState['type'] = 'success') {
-    setToast({ text, type })
-    if (toastTimer.current) {
-      clearTimeout(toastTimer.current)
-    }
-    toastTimer.current = setTimeout(() => setToast(null), 4000)
-  }
 
   function clearPhotoPreview() {
     if (photoPreviewUrl.current.startsWith('blob:')) {
@@ -914,7 +910,7 @@ export default function UsersPage() {
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      showToast('Profile photo must be 5 MB or smaller.', 'error')
+      toast.error('Profile photo must be 5 MB or smaller.')
       return
     }
     setPhotoFile(file)
@@ -932,7 +928,7 @@ export default function UsersPage() {
       const data = await listUsers({ ...filters, search: options?.search ?? filters.search }).unwrap()
       setUsers(data.users)
     } catch (err) {
-      showToast(getApiError(err, 'Unable to load users.'), 'error')
+      showApiError(err, 'Unable to load users.')
     } finally {
       if (!options?.silent) {
         setLoading(false)
@@ -944,7 +940,7 @@ export default function UsersPage() {
   }
 
   useEffect(() => {
-    void listRoles()
+    void listRoleOptions()
       .unwrap()
       .then((data) => setRoles(data.roles))
       .catch(() => undefined)
@@ -952,7 +948,7 @@ export default function UsersPage() {
       .unwrap()
       .then((data) => setDepartments(data.departments))
       .catch(() => undefined)
-  }, [listRoles, listDepartments])
+  }, [listRoleOptions, listDepartments])
 
   useEffect(() => {
     void loadList(readUrlSearchQuery(location.search) ? { fromSearch: true, search: readUrlSearchQuery(location.search) } : undefined)
@@ -969,9 +965,6 @@ export default function UsersPage() {
 
   useEffect(
     () => () => {
-      if (toastTimer.current) {
-        clearTimeout(toastTimer.current)
-      }
       if (statusFlashTimer.current) {
         clearTimeout(statusFlashTimer.current)
       }
@@ -1041,7 +1034,7 @@ export default function UsersPage() {
         return
       }
       setDetailLoading(false)
-      showToast(getApiError(err, 'Unable to load user.'), 'error')
+      showApiError(err, 'Unable to load user.')
     }
   }
 
@@ -1051,7 +1044,7 @@ export default function UsersPage() {
       return
     }
     if (!form.roleId) {
-      showToast('Please select a role.', 'error')
+      toast.error('Please select a role.')
       return
     }
     const payload: UserPayload = {
@@ -1076,9 +1069,9 @@ export default function UsersPage() {
         : await createUser({ body }).unwrap()
 
       if (!editingId && data.reset?.devResetPath) {
-        showToast(`User created. Dev reset link: ${data.reset.devResetPath}`)
+        toast.success(`User created. Dev reset link: ${data.reset.devResetPath}`)
       } else {
-        showToast(editingId ? 'User updated.' : 'User created.')
+        toast.success(editingId ? 'User updated.' : 'User created.')
       }
       if (editingId === auth.user.id && data.user) {
         const saved = data.user
@@ -1098,7 +1091,7 @@ export default function UsersPage() {
       closeForm()
     } catch (err) {
       setFormSaving(false)
-      showToast(getApiError(err, 'Unable to save user.'), 'error')
+      showApiError(err, 'Unable to save user.')
     }
   }
 
@@ -1130,12 +1123,12 @@ export default function UsersPage() {
 
       const copy = statusChangeCopy(user, nextStatus)
       const hiddenByFilter = Boolean(filters.status && filters.status !== nextStatus)
-      showToast(hiddenByFilter ? `${copy.success} Hidden by the current status filter.` : copy.success)
+      toast.success(hiddenByFilter ? `${copy.success} Hidden by the current status filter.` : copy.success)
       flashStatusRow(user.id)
       setStatusPrompt(null)
       await loadList({ silent: true })
     } catch (err) {
-      showToast(getApiError(err, 'Unable to update status.'), 'error')
+      showApiError(err, 'Unable to update status.')
     }
     setStatusSaving(false)
     setStatusUpdatingId(null)
@@ -1154,10 +1147,10 @@ export default function UsersPage() {
     }
     try {
       const data = await setUserScopes({ id: selected.id, scopes: scopeDraft }).unwrap()
-      showToast('Data scope saved.')
+      toast.success('Data scope saved.')
       setSelected(data.user)
     } catch (err) {
-      showToast(getApiError(err, 'Unable to save data scope.'), 'error')
+      showApiError(err, 'Unable to save data scope.')
     }
   }
 
@@ -1372,11 +1365,11 @@ export default function UsersPage() {
                       }
                       try {
                         await revokeUserSession({ userId: selected.id, sessionId }).unwrap()
-                        showToast('Session terminated.')
+                        toast.success('Session terminated.')
                         const refreshed = await listUserSessions(selected.id).unwrap()
                         setSessions(refreshed.sessions)
                       } catch (err) {
-                        showToast(getApiError(err, 'Unable to terminate the selected session.'), 'error')
+                        showApiError(err, 'Unable to terminate the selected session.')
                       }
                     }}
                     onForceLogout={async () => {
@@ -1385,9 +1378,9 @@ export default function UsersPage() {
                       }
                       try {
                         await forceLogoutUser(selected.id).unwrap()
-                        showToast('All sessions terminated.')
+                        toast.success('All sessions terminated.')
                       } catch (err) {
-                        showToast(getApiError(err, 'Unable to terminate the selected session.'), 'error')
+                        showApiError(err, 'Unable to terminate the selected session.')
                       }
                     }}
                     onPasswordReset={async () => {
@@ -1396,13 +1389,13 @@ export default function UsersPage() {
                       }
                       try {
                         const data = await adminPasswordReset(selected.id).unwrap()
-                        showToast(
+                        toast.success(
                           data.devResetPath
                             ? `Reset created. Dev link: ${data.devResetPath}`
                             : data.message || 'Password reset started.',
                         )
                       } catch (err) {
-                        showToast(getApiError(err, 'Unable to start password reset.'), 'error')
+                        showApiError(err, 'Unable to start password reset.')
                       }
                     }}
                     onScopeChange={(resource, value) =>
@@ -1629,14 +1622,6 @@ export default function UsersPage() {
           )
         : null}
 
-      {toast
-        ? createPortal(
-            <div className={appToastClass(toast.type)} role="status">
-              {toast.text}
-            </div>,
-            document.body,
-          )
-        : null}
     </div>
   )
 }

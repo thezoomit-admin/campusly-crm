@@ -83,6 +83,13 @@ export type Department = NamedRef & {
   teams: Array<NamedRef & { key?: string }>
 }
 
+export type RoleOption = {
+  id: string
+  key: string
+  name: string
+  status: RecordStatus
+}
+
 export type RoleRecord = {
   id: string
   key: string
