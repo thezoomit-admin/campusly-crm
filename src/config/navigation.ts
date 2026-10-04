@@ -54,7 +54,7 @@ export const APP_NAV_GROUPS: NavGroup[] = [
       },
       { to: '/applications', label: 'Applications', icon: 'file', permission: 'lead:convert' },
       { to: '/students', label: 'Students', icon: 'graduate', permission: 'lead:convert' },
-      { to: '/service-items', label: 'Service Items', icon: 'card', permission: 'service:view' },
+      { to: '/service-items', label: 'Services & Packages', icon: 'card', permission: 'service:view' },
     ],
   },
   {

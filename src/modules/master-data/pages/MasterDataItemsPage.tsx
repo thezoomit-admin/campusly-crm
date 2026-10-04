@@ -53,7 +53,7 @@ import { Spin } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { PrimaryButton } from '@/components/ui'
-import { FormDatePicker, FormInput, FormSelect, FormSwitch } from '@/components/common/Forms'
+import { FormDatePicker, FormInput, FormInputNumber, FormSelect, FormSwitch } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
@@ -153,6 +153,7 @@ type ItemForm = {
   behaviorKey: string
   startDate: string
   endDate: string
+  fileOpeningCharge: number | null
 }
 
 const EMPTY_FORM: ItemForm = {
@@ -164,6 +165,12 @@ const EMPTY_FORM: ItemForm = {
   behaviorKey: '',
   startDate: '',
   endDate: '',
+  fileOpeningCharge: null,
+}
+
+function extraAmount(extras: Record<string, unknown> | null, key: string) {
+  const value = Number(extras?.[key])
+  return extras?.[key] != null && extras?.[key] !== '' && Number.isFinite(value) ? value : null
 }
 
 function extraText(extras: Record<string, unknown> | null, key: string) {
@@ -181,6 +188,7 @@ function formFromItem(item: MasterDataItem): ItemForm {
     behaviorKey: item.behaviorKey || '',
     startDate: extraText(item.extras, 'startDate'),
     endDate: extraText(item.extras, 'endDate'),
+    fileOpeningCharge: extraAmount(item.extras, 'fileOpeningCharge'),
   }
 }
 
@@ -692,6 +700,7 @@ export default function MasterDataItemsPage() {
       behaviorKey: form.behaviorKey || null,
       startDate: form.startDate,
       endDate: form.endDate,
+      fileOpeningCharge: form.fileOpeningCharge,
     }
     setFormSaving(true)
     try {
@@ -1152,6 +1161,24 @@ export default function MasterDataItemsPage() {
                           ]}
                           onChange={(value) => setForm((current) => ({ ...current, behaviorKey: asSelectString(value) }))}
                           disabled={Boolean(selected?.isSystem)}
+                        />
+                      </label>
+                    ) : null}
+                    {category?.extraFields === 'country' ? (
+                      <label>
+                        File Opening Charge (BDT)
+                        <FormInputNumber
+                          min={0}
+                          precision={2}
+                          prefix="৳"
+                          placeholder="Default charge for offers"
+                          value={form.fileOpeningCharge ?? undefined}
+                          onChange={(value) =>
+                            setForm((current) => ({
+                              ...current,
+                              fileOpeningCharge: typeof value === 'number' ? value : null,
+                            }))
+                          }
                         />
                       </label>
                     ) : null}

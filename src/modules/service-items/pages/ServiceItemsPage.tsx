@@ -1,7 +1,7 @@
 import { Button, Form, Modal, Popconfirm, Space, Tag, Tooltip } from "antd";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { PencilEdit02Icon, ViewIcon } from "@hugeicons/core-free-icons";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -28,6 +28,7 @@ import {
   useUpdateServiceItemStatusMutation,
 } from "../api/serviceItemsApi";
 import type { ServiceItemFormValues, ServiceItemRecord } from "../types";
+import type { CatalogCreateAction } from "./ServiceCatalogPage";
 
 type FormMode = "create" | "view" | "edit";
 
@@ -56,7 +57,13 @@ function mergeOptions(
   return [...values.values()].sort((a, b) => a.label.localeCompare(b.label));
 }
 
-export default function ServiceItemsPage() {
+export default function ServiceItemsPage({
+  embedded = false,
+  onCreateAction,
+}: {
+  embedded?: boolean;
+  onCreateAction?: (action: CatalogCreateAction | null) => void;
+}) {
   const auth = useOutletContext<AuthSession>();
   const canCreate = hasPermission(auth, "service:create");
   const canEdit = hasPermission(auth, "service:edit");
@@ -113,14 +120,20 @@ export default function ServiceItemsPage() {
     setPage(1);
   }
 
-  function openCreate() {
+  const openCreate = useCallback(() => {
     setSelected(null);
     setFormMode("create");
     setFieldErrors({});
     form.resetFields();
     form.setFieldsValue({ status: "ACTIVE", countryIds: [] });
     setFormOpen(true);
-  }
+  }, [form]);
+
+  useEffect(() => {
+    if (!onCreateAction) return;
+    onCreateAction(canCreate ? { label: "Add service item", onClick: openCreate } : null);
+    return () => onCreateAction(null);
+  }, [canCreate, onCreateAction, openCreate]);
 
   function openItem(item: ServiceItemRecord, mode: "view" | "edit") {
     setSelected(item);
@@ -299,78 +312,86 @@ export default function ServiceItemsPage() {
   const readOnly = formMode === "view";
 
   return (
-    <div className={adminPage}>
-      <PageMeta
-        title="Service Items"
-        description="Manage the services available for lead offers and packages."
-      />
-      <PageHeader
-        title="Service Items"
-        subtitle="Maintain service categories, country scope, and suggested BDT prices."
-        breadcrumbs={[
-          { title: "Dashboard", path: "/dashboard" },
-          { title: "Service Items" },
-        ]}
-        extra={
-          canCreate ? (
-            <Button type="primary" onClick={openCreate}>
-              Add service item
-            </Button>
-          ) : null
-        }
-      />
+    <div className={embedded ? "grid min-w-0 gap-3" : adminPage}>
+      {embedded ? null : (
+        <>
+          <PageMeta
+            title="Service Items"
+            description="Manage the services available for lead offers and packages."
+          />
+          <PageHeader
+            title="Service Items"
+            subtitle="Maintain service categories, country scope, and suggested BDT prices."
+            breadcrumbs={[
+              { title: "Dashboard", path: "/dashboard" },
+              { title: "Service Items" },
+            ]}
+            extra={
+              canCreate ? (
+                <Button type="primary" onClick={openCreate}>
+                  Add service item
+                </Button>
+              ) : null
+            }
+          />
+        </>
+      )}
 
       <div className={`${adminCard} grid gap-3`}>
-        <div className="flex flex-wrap gap-2">
-          <FormInput.Search
-            allowClear
-            placeholder="Search service items…"
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              resetPage();
-            }}
-            className="min-w-[220px] max-w-sm flex-1"
-          />
-          <FormSelect
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Category"
-            loading={categoriesLoading}
-            value={categoryId}
-            options={categoryOptions}
-            className="min-w-[180px]"
-            onChange={(value) => {
-              setCategoryId(value);
-              resetPage();
-            }}
-          />
-          <FormSelect
-            allowClear
-            showSearch
-            optionFilterProp="label"
-            placeholder="Country"
-            loading={countriesLoading}
-            value={countryId}
-            options={countryOptions}
-            className="min-w-[180px]"
-            onChange={(value) => {
-              setCountryId(value);
-              resetPage();
-            }}
-          />
-          <FormSelect
-            allowClear
-            placeholder="Status"
-            value={status}
-            options={STATUS_OPTIONS}
-            className="min-w-[140px]"
-            onChange={(value) => {
-              setStatus(value);
-              resetPage();
-            }}
-          />
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="min-w-0 flex-[2]">
+            <FormInput.Search
+              allowClear
+              placeholder="Search service items…"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                resetPage();
+              }}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <FormSelect
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder="Category"
+              loading={categoriesLoading}
+              value={categoryId}
+              options={categoryOptions}
+              onChange={(value) => {
+                setCategoryId(value);
+                resetPage();
+              }}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <FormSelect
+              allowClear
+              showSearch
+              optionFilterProp="label"
+              placeholder="Country"
+              loading={countriesLoading}
+              value={countryId}
+              options={countryOptions}
+              onChange={(value) => {
+                setCountryId(value);
+                resetPage();
+              }}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <FormSelect
+              allowClear
+              placeholder="Status"
+              value={status}
+              options={STATUS_OPTIONS}
+              onChange={(value) => {
+                setStatus(value);
+                resetPage();
+              }}
+            />
+          </div>
         </div>
 
         {isError ? (
