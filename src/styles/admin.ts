@@ -122,10 +122,18 @@ export const modalBackdrop =
 export const modalPanel =
   "max-h-[min(90vh,860px)] w-[min(100%,720px)] overflow-auto overflow-anchor-none rounded-2xl bg-surface p-6 text-text shadow-card [&_h3]:mb-4 [&_h3]:mt-0";
 
+export const modalPanelFlex =
+  "flex max-h-[min(90vh,860px)] w-[min(100%,720px)] flex-col overflow-hidden overflow-anchor-none rounded-2xl bg-surface p-6 text-text shadow-card [&_h3]:mb-4 [&_h3]:mt-0";
+
 export const modalPanelWide = "w-[min(100%,880px)]";
 
 export const modalHeader =
-  "mb-4 flex items-start justify-between gap-3 [&_h3]:m-0 [&_h3]:flex-1";
+  "mb-4 flex shrink-0 items-start justify-between gap-3 [&_h3]:m-0 [&_h3]:flex-1";
+
+export const modalBody = "min-h-0 flex-1 overflow-y-auto";
+
+export const modalFooter =
+  "mt-4 shrink-0 border-t border-border-subtle pt-4";
 
 export const modalClose =
   "mt-[-4px] mr-[-6px] inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-icon hover:bg-hover-bg hover:text-text-strong";

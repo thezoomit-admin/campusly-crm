@@ -1,10 +1,11 @@
 import { baseApi } from '../../api/baseApi'
 import { toQuery } from '@/lib/api'
-import type { PermissionRecord, RoleRecord } from '@/types'
+import type { PermissionRecord, RoleOption, RoleRecord } from '@/types'
 
 export type RoleListParams = {
   search?: string
   status?: string
+  assignedUserCount?: string
 }
 
 export type RolePayload = {
@@ -25,6 +26,10 @@ const rolesApi = baseApi.injectEndpoints({
             ]
           : [{ type: 'Roles', id: 'LIST' }],
     }),
+    listRoleOptions: builder.query<{ roles: RoleOption[] }, void>({
+      query: () => '/roles/options',
+      providesTags: [{ type: 'Roles', id: 'OPTIONS' }],
+    }),
     getRole: builder.query<{ role: RoleRecord }, string>({
       query: (id) => `/roles/${id}`,
       providesTags: (_r, _e, id) => [{ type: 'Role', id }],
@@ -35,7 +40,10 @@ const rolesApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: [{ type: 'Roles', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'Roles', id: 'LIST' },
+        { type: 'Roles', id: 'OPTIONS' },
+      ],
     }),
     updateRole: builder.mutation<{ role: RoleRecord }, { id: string; body: RolePayload }>({
       query: ({ id, body }) => ({
@@ -46,6 +54,7 @@ const rolesApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { id }) => [
         { type: 'Role', id },
         { type: 'Roles', id: 'LIST' },
+        { type: 'Roles', id: 'OPTIONS' },
       ],
     }),
     updateRoleStatus: builder.mutation<
@@ -60,6 +69,7 @@ const rolesApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { id }) => [
         { type: 'Role', id },
         { type: 'Roles', id: 'LIST' },
+        { type: 'Roles', id: 'OPTIONS' },
       ],
     }),
     deleteRole: builder.mutation<null, string>({
@@ -67,7 +77,10 @@ const rolesApi = baseApi.injectEndpoints({
         url: `/roles/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: [{ type: 'Roles', id: 'LIST' }],
+      invalidatesTags: [
+        { type: 'Roles', id: 'LIST' },
+        { type: 'Roles', id: 'OPTIONS' },
+      ],
     }),
     setRolePermissions: builder.mutation<
       { role: RoleRecord },
@@ -90,6 +103,8 @@ const rolesApi = baseApi.injectEndpoints({
 export const {
   useListRolesQuery,
   useLazyListRolesQuery,
+  useListRoleOptionsQuery,
+  useLazyListRoleOptionsQuery,
   useGetRoleQuery,
   useCreateRoleMutation,
   useUpdateRoleMutation,
