@@ -44,11 +44,15 @@ export const crmAccessEnabled =
 export const crmAccessDisabled =
   "bg-[#f3f4f6] text-[#4b5563] dark:bg-[#24303a] dark:text-[#cbd5e1]";
 
+export const crmAccessInvited =
+  "bg-[#fff7ed] text-[#c2410c] dark:bg-[rgba(194,65,12,0.22)] dark:text-[#fdba74]";
+
 export function userStatusPillClass(status: string) {
   const key = status.toLowerCase();
   if (key === "active") return `${statusPill} ${statusActive}`;
   if (key === "inactive") return `${statusPill} ${statusInactive}`;
   if (key === "suspended") return `${statusPill} ${statusSuspended}`;
+  if (key === "invited") return `${statusPill} ${crmAccessInvited}`;
   return `${statusPill} ${statusInactive}`;
 }
 
@@ -64,6 +68,7 @@ export function employmentStatusPillClass(code?: string | null) {
 export function crmAccessPillClass(access: string) {
   const key = access.toLowerCase();
   if (key === "enabled") return `${statusPill} ${crmAccessEnabled}`;
+  if (key === "invited") return `${statusPill} ${crmAccessInvited}`;
   return `${statusPill} ${crmAccessDisabled}`;
 }
 
@@ -251,28 +256,37 @@ export const userViewPanel =
   "flex h-[min(92vh,860px)] max-h-[min(92vh,860px)] w-[min(100%,1120px)] min-h-0 flex-col overflow-hidden bg-[#f7f8fd] p-0 dark:bg-[#151b22]";
 
 export const mdTab =
-  "shrink-0 whitespace-nowrap border-0 border-b-2 border-transparent bg-transparent px-3 py-2 font-[inherit] text-[0.88rem] text-text-muted no-underline hover:text-text";
+  "shrink-0 whitespace-nowrap border-0 border-b-2 border-transparent bg-transparent px-3 py-2 font-[inherit] text-[0.88rem] font-medium text-text-muted no-underline hover:text-text";
 
-export const mdTabActive = "border-primary font-semibold text-primary";
+export const mdTabActive =
+  "!border-primary !font-bold !text-primary hover:!text-primary";
 
 export const mdHistoryEvent =
-  "flex w-full cursor-pointer items-start gap-2.5 rounded-xl border-0 bg-transparent px-2 py-2 text-left";
+  "group relative flex w-full cursor-pointer items-start gap-3 rounded-xl border-0 bg-transparent py-2.5 pr-2.5 pl-0 text-left font-[inherit] transition-colors hover:bg-[color-mix(in_srgb,var(--color-text)_3%,transparent)]";
 
 export const mdHistoryEventActive =
-  "bg-[color-mix(in_srgb,#2f6fed_10%,var(--color-surface))] dark:bg-[color-mix(in_srgb,#2f6fed_18%,var(--color-surface))]";
+  "bg-[color-mix(in_srgb,#2f6fed_8%,var(--color-surface))] hover:bg-[color-mix(in_srgb,#2f6fed_10%,var(--color-surface))] dark:bg-[color-mix(in_srgb,#2f6fed_14%,var(--color-surface))] dark:hover:bg-[color-mix(in_srgb,#2f6fed_18%,var(--color-surface))]";
 
 export const mdHistoryDetailIcon =
-  "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eef2f7] text-[#64748b]";
+  "inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#f1f5f9] text-[#475569] dark:bg-[color-mix(in_srgb,var(--color-text)_8%,transparent)]";
 
 export const mdHistoryRole =
-  "rounded-full bg-[color-mix(in_srgb,#2f6fed_12%,var(--color-surface))] px-2 py-0.5 text-[0.72rem] font-semibold dark:bg-[color-mix(in_srgb,#2f6fed_18%,var(--color-surface))]";
+  "inline-flex items-center rounded-md bg-[color-mix(in_srgb,#2f6fed_10%,var(--color-surface))] px-1.5 py-0.5 text-[0.68rem] font-semibold not-italic text-[#2f6fed] dark:bg-[color-mix(in_srgb,#2f6fed_18%,var(--color-surface))]";
 
 export const historyKindTone: Record<string, string> = {
-  updated: "bg-[#2f6fed] text-white",
-  created: "bg-[#17824b] text-white",
-  status: "bg-[#d46b08] text-white",
-  assigned: "bg-[#4f5de4] text-white",
-  deleted: "bg-[#b42318] text-white",
+  updated: "bg-[#2f6fed] text-white shadow-[0_0_0_3px_rgba(47,111,237,0.15)]",
+  created: "bg-[#17824b] text-white shadow-[0_0_0_3px_rgba(23,130,75,0.15)]",
+  status: "bg-[#d46b08] text-white shadow-[0_0_0_3px_rgba(212,107,8,0.15)]",
+  assigned: "bg-[#4f5de4] text-white shadow-[0_0_0_3px_rgba(79,93,228,0.15)]",
+  deleted: "bg-[#b42318] text-white shadow-[0_0_0_3px_rgba(180,35,24,0.15)]",
+};
+
+export const historyKindToneSoft: Record<string, string> = {
+  updated: "bg-[color-mix(in_srgb,#2f6fed_12%,var(--color-surface))] text-[#2f6fed]",
+  created: "bg-[color-mix(in_srgb,#17824b_12%,var(--color-surface))] text-[#17824b]",
+  status: "bg-[color-mix(in_srgb,#d46b08_12%,var(--color-surface))] text-[#d46b08]",
+  assigned: "bg-[color-mix(in_srgb,#4f5de4_12%,var(--color-surface))] text-[#4f5de4]",
+  deleted: "bg-[color-mix(in_srgb,#b42318_12%,var(--color-surface))] text-[#b42318]",
 };
 
 export const employeeAvatar =

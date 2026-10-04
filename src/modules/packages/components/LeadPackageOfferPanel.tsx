@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Input, Modal, Popconfirm, Tag } from "antd";
 import { toast } from "react-toastify";
 import { PrimaryButton } from "@/components/ui";
+import { DeleteModal } from "@/components/common/Modals";
 import { getApiError } from "@/lib/api";
 import LeadSectionCard from "@/modules/leads/components/details/LeadSectionCard";
 import {
@@ -239,6 +240,7 @@ export default function LeadPackageOfferPanel({ leadId, canOffer }: { leadId: st
   const [expanded, setExpanded] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<ReasonPrompt | null>(null);
   const [reason, setReason] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<ServiceOfferRecord | null>(null);
 
   const offers = data?.offers || [];
   const canRecordPayment = Boolean(context?.permissions.canRecordPayment);
@@ -258,8 +260,13 @@ export default function LeadPackageOfferPanel({ leadId, canOffer }: { leadId: st
     void run(() => generateOffer({ leadId, offerId: offer.id }).unwrap(), "Unable to save the service offer. Please try again.");
   }
 
-  function remove(offer: ServiceOfferRecord) {
-    void run(() => deleteOffer({ leadId, offerId: offer.id }).unwrap(), "Unable to delete the draft offer. Please try again.");
+  async function confirmDelete() {
+    if (!deleteTarget || deleting) return;
+    const ok = await run(
+      () => deleteOffer({ leadId, offerId: deleteTarget.id }).unwrap(),
+      "Unable to delete the draft offer. Please try again.",
+    );
+    if (ok) setDeleteTarget(null);
   }
 
   function transition(offer: ServiceOfferRecord, action: OfferStatusAction, withReason?: string) {
@@ -381,9 +388,15 @@ export default function LeadPackageOfferPanel({ leadId, canOffer }: { leadId: st
     }
     if (offer.status === "DRAFT" && !offer.revisedFrom && !offer.generatedAt) {
       buttons.push(
-        <Popconfirm key="delete" title="Delete this draft offer?" okText="Delete" onConfirm={() => remove(offer)}>
-          <PrimaryButton type="button" size="sm" variant="text" label="Delete" loading={deleting} />
-        </Popconfirm>,
+        <PrimaryButton
+          key="delete"
+          type="button"
+          size="sm"
+          variant="text"
+          label="Delete"
+          loading={deleting && deleteTarget?.id === offer.id}
+          onClick={() => setDeleteTarget(offer)}
+        />,
       );
     } else if (allows("CANCELLED")) {
       buttons.push(
@@ -508,6 +521,15 @@ export default function LeadPackageOfferPanel({ leadId, canOffer }: { leadId: st
           onChange={(event) => setReason(event.target.value)}
         />
       </Modal>
+
+      <DeleteModal
+        open={Boolean(deleteTarget)}
+        loading={deleting}
+        title="Delete draft offer?"
+        itemName={deleteTarget ? `Offer V${deleteTarget.offerVersion}` : "this draft offer"}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => void confirmDelete()}
+      />
     </LeadSectionCard>
   );
 }

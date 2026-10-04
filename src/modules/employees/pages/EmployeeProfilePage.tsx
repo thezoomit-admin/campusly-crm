@@ -10,11 +10,12 @@ import {
   statusPill,
 } from '../../../styles/admin'
 import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react'
-import { Link, useNavigate, useOutletContext, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import { Spin } from 'antd'
 import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
 import {
+  AnalyticsUpIcon,
   Briefcase01Icon,
   Building03Icon,
   Calendar03Icon,
@@ -32,15 +33,25 @@ import {
   UserGroupIcon,
 } from '@hugeicons/core-free-icons'
 import {
+  useLazyGetEmployeePerformanceQuery,
   useLazyGetEmployeeQuery,
+  useLazyListEmployeeAuditLogsQuery,
   useUploadEmployeePhotoMutation,
 } from '@/redux/features/employees/employeesApi'
+import { useAdminPasswordResetMutation } from '@/redux/features/users/usersApi'
 import { getApiError } from '@/lib/api'
+import { toast } from 'react-toastify'
 import { PrimaryButton } from '@/components/ui'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { hasPermission } from '../../../lib/access'
-import type { AuthSession, EmployeeCrmAccess, EmployeeRecord } from '../../../types'
+import type {
+  AuthSession,
+  EmployeeAuditLog,
+  EmployeeCrmAccess,
+  EmployeePerformanceSummary,
+  EmployeeRecord,
+} from '../../../types'
 type ProfileSection = {
   id: string
   label: string
@@ -55,7 +66,36 @@ const SECTIONS: ProfileSection[] = [
   { id: 'crm', label: 'CRM access', icon: Shield01Icon },
   { id: 'emergency', label: 'Emergency', icon: Call02Icon },
   { id: 'documents', label: 'Documents', icon: File01Icon },
+  { id: 'performance', label: 'Performance', icon: AnalyticsUpIcon },
+  { id: 'history', label: 'Audit history', icon: Clock01Icon },
 ]
+
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  EMPLOYEE_CREATED: 'Employee created',
+  EMPLOYEE_UPDATED: 'Profile updated',
+  EMPLOYEE_STATUS_CHANGED: 'Status changed',
+  EMPLOYEE_PHOTO_UPDATED: 'Profile photo updated',
+  EMPLOYEE_DOCUMENT_UPLOADED: 'Document uploaded',
+  EMPLOYEE_DOCUMENT_DELETED: 'Document deleted',
+}
+
+function formatAuditSummary(log: EmployeeAuditLog) {
+  const meta = (log.metadata || {}) as Record<string, unknown>
+  if (log.action === 'EMPLOYEE_STATUS_CHANGED') {
+    const fromStatus = typeof meta.fromStatus === 'string' ? meta.fromStatus : null
+    const toStatus = typeof meta.toStatus === 'string' ? meta.toStatus : null
+    if (fromStatus && toStatus) {
+      return `Status: ${fromStatus} → ${toStatus}`
+    }
+  }
+  if (typeof meta.type === 'string' && typeof meta.fileName === 'string') {
+    return `${meta.type}: ${meta.fileName}`
+  }
+  if (typeof meta.employeeCode === 'string') {
+    return meta.employeeCode
+  }
+  return AUDIT_ACTION_LABELS[log.action] || log.action
+}
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024
 const PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/jpg'])
@@ -88,6 +128,7 @@ const USER_STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Active',
   INACTIVE: 'Inactive',
   SUSPENDED: 'Suspended',
+  INVITED: 'Invited',
 }
 
 function displayValue(value?: string | null) {
@@ -191,6 +232,9 @@ function crmAccessLabel(access: EmployeeCrmAccess) {
   if (access === 'ENABLED') {
     return 'Enabled'
   }
+  if (access === 'INVITED') {
+    return 'Invited'
+  }
   if (access === 'DISABLED') {
     return 'Disabled'
   }
@@ -259,8 +303,12 @@ export default function EmployeeProfilePage() {
   const { id } = useParams()
   const auth = useOutletContext<AuthSession>()
   const navigate = useNavigate()
+  const location = useLocation()
   const canEdit = hasPermission(auth, 'employee:edit')
-  const canDocuments = hasPermission(auth, 'document:view')
+  const canManageEmployeeDocs = hasPermission(auth, 'employee_document:manage')
+  const canViewPerformance = hasPermission(auth, 'employee_performance:view')
+  const canViewAudit = hasPermission(auth, ['audit:view', 'employee:view', 'employee:edit'])
+  const canResendInvite = hasPermission(auth, 'user:configure')
 
   const [employee, setEmployee] = useState<EmployeeRecord | null>(null)
   const [loading, setLoading] = useState(true)
@@ -269,8 +317,16 @@ export default function EmployeeProfilePage() {
   const [photoUploading, setPhotoUploading] = useState(false)
   const [photoError, setPhotoError] = useState('')
   const [localPhotoPreview, setLocalPhotoPreview] = useState('')
+  const [inviteSending, setInviteSending] = useState(false)
+  const [auditLogs, setAuditLogs] = useState<EmployeeAuditLog[]>([])
+  const [auditLoading, setAuditLoading] = useState(false)
+  const [performance, setPerformance] = useState<EmployeePerformanceSummary | null>(null)
+  const [performanceLoading, setPerformanceLoading] = useState(false)
   const [getEmployee] = useLazyGetEmployeeQuery()
+  const [listEmployeeAuditLogs] = useLazyListEmployeeAuditLogsQuery()
+  const [getEmployeePerformance] = useLazyGetEmployeePerformanceQuery()
   const [uploadEmployeePhoto] = useUploadEmployeePhotoMutation()
+  const [adminPasswordReset] = useAdminPasswordResetMutation()
 
   useEffect(() => {
     let cancelled = false
@@ -305,9 +361,82 @@ export default function EmployeeProfilePage() {
     }
   }, [id, getEmployee])
 
+  useEffect(() => {
+    let cancelled = false
+    async function loadExtras() {
+      if (!id) {
+        return
+      }
+      if (canViewAudit) {
+        setAuditLoading(true)
+        try {
+          const data = await listEmployeeAuditLogs(id).unwrap()
+          if (!cancelled) {
+            setAuditLogs(data.logs)
+          }
+        } catch {
+          if (!cancelled) {
+            setAuditLogs([])
+          }
+        }
+        if (!cancelled) {
+          setAuditLoading(false)
+        }
+      }
+      if (canViewPerformance) {
+        setPerformanceLoading(true)
+        try {
+          const data = await getEmployeePerformance(id).unwrap()
+          if (!cancelled) {
+            setPerformance(data.performance)
+          }
+        } catch {
+          if (!cancelled) {
+            setPerformance(null)
+          }
+        }
+        if (!cancelled) {
+          setPerformanceLoading(false)
+        }
+      }
+    }
+    void loadExtras()
+    return () => {
+      cancelled = true
+    }
+  }, [id, canViewAudit, canViewPerformance, listEmployeeAuditLogs, getEmployeePerformance])
+
+  useEffect(() => {
+    if (!location.hash || !employee?.id) {
+      return
+    }
+    const sectionId = location.hash.replace('#', '')
+    if (!SECTIONS.some((item) => item.id === sectionId)) {
+      return
+    }
+    const timer = window.setTimeout(() => {
+      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      setActiveSection(sectionId)
+    }, 160)
+    return () => window.clearTimeout(timer)
+  }, [location.hash, employee?.id])
+
   const age = useMemo(() => ageFromDate(employee?.dateOfBirth), [employee?.dateOfBirth])
   const photo = localPhotoPreview || (employee ? photoSrc(employee) : '')
   const documents = employee?.documents ?? []
+  const visibleSections = useMemo(
+    () =>
+      SECTIONS.filter((section) => {
+        if (section.id === 'performance') {
+          return canViewPerformance
+        }
+        if (section.id === 'history') {
+          return canViewAudit
+        }
+        return true
+      }),
+    [canViewPerformance, canViewAudit],
+  )
 
   useEffect(
     () => () => {
@@ -414,8 +543,18 @@ export default function EmployeeProfilePage() {
           employee ? (
             <>
               <PrimaryButton variant="outline" onClick={() => navigate('/employees')} label="Back to list" />
-              {canDocuments ? (
-                <PrimaryButton variant="outline" onClick={() => navigate(`/documents?employeeId=${employee.id}`)} label="Manage documents" />
+              {canManageEmployeeDocs ? (
+                <PrimaryButton
+                  variant="outline"
+                  onClick={() => navigate(`/employees/${employee.id}/edit#documents`)}
+                  label="Manage documents"
+                />
+              ) : employee.canViewDocuments !== false ? (
+                <PrimaryButton
+                  variant="outline"
+                  onClick={() => scrollToSection('documents')}
+                  label="View documents"
+                />
               ) : null}
               {canEdit ? (
                 <PrimaryButton
@@ -538,7 +677,7 @@ export default function EmployeeProfilePage() {
             <div className="grid grid-cols-1 items-start gap-x-8 gap-y-5 min-[1101px]:grid-cols-[220px_minmax(0,1fr)]">
               <aside className="sticky top-4 z-6 grid items-start gap-4 self-start max-[1100px]:top-3 max-[1100px]:bg-page-bg max-[1100px]:pb-1 max-[960px]:top-[72px]">
                 <nav className="grid gap-1.5 rounded-2xl border border-border bg-surface p-2.5 shadow-soft max-[1100px]:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]" aria-label="Profile sections">
-                  {SECTIONS.map((section) => {
+                  {visibleSections.map((section) => {
                     const active = activeSection === section.id
                     return (
                       <button
@@ -592,7 +731,11 @@ export default function EmployeeProfilePage() {
                       {age != null ? <span className="font-medium text-text-muted"> ({age} years)</span> : null}
                     </Field>
                     <Field label="Nationality">{displayValue(employee.nationality)}</Field>
-                    <Field label="NID / Passport no.">{displayValue(employee.identityNumber)}</Field>
+                    <Field label="NID / Passport no.">
+                      {employee.canViewSensitive === false
+                        ? 'Restricted'
+                        : displayValue(employee.identityNumber)}
+                    </Field>
                     <Field label="Marital status">
                       {employee.maritalStatus ? MARITAL_LABELS[employee.maritalStatus] || employee.maritalStatus : '—'}
                     </Field>
@@ -626,6 +769,15 @@ export default function EmployeeProfilePage() {
                     <Field label="Employment status">{displayValue(employee.employmentStatus?.name)}</Field>
                     <Field label="Joining date">{formatPrettyDate(employee.joiningDate)}</Field>
                     <Field label="Tenure">{formatTenure(employee.joiningDate)}</Field>
+                    <Field label="Resignation date">{formatPrettyDate(employee.resignationDate)}</Field>
+                    <Field label="Termination date">{formatPrettyDate(employee.terminationDate)}</Field>
+                    {employee.canViewSensitive !== false ? (
+                      <>
+                        <Field label="Termination reason">{displayValue(employee.terminationReason)}</Field>
+                        <Field label="Termination remarks">{displayValue(employee.terminationRemarks)}</Field>
+                      </>
+                    ) : null}
+                    <Field label="Rejoining date">{formatPrettyDate(employee.rejoiningDate)}</Field>
                   </dl>
                 </ProfileCard>
 
@@ -657,25 +809,64 @@ export default function EmployeeProfilePage() {
                     </Field>
                     <Field label="Role key">{displayValue(employee.role?.key)}</Field>
                   </dl>
+                  {canResendInvite && employee.user?.status === 'INVITED' ? (
+                    <div className="mt-5">
+                      <PrimaryButton
+                        size="sm"
+                        variant="outline"
+                        loading={inviteSending}
+                        label="Resend setup invite"
+                        onClick={() => {
+                          void (async () => {
+                            if (!employee.user?.id) {
+                              return
+                            }
+                            setInviteSending(true)
+                            try {
+                              const data = await adminPasswordReset(employee.user.id).unwrap()
+                              toast.success(
+                                data.devResetPath
+                                  ? `Invite resent. Dev link: ${data.devResetPath}`
+                                  : data.message || `Invite resent to ${employee.officialEmail}.`,
+                              )
+                            } catch (err) {
+                              toast.error(getApiError(err, 'Unable to resend invite.'))
+                            } finally {
+                              setInviteSending(false)
+                            }
+                          })()
+                        }}
+                      />
+                      <p className="mt-2 mb-0 text-[0.82rem] text-text-muted">
+                        Sends a fresh password-setup link to {employee.officialEmail}.
+                      </p>
+                    </div>
+                  ) : null}
                 </ProfileCard>
 
                 <ProfileCard id="emergency" title="Emergency contact" icon={Call02Icon}>
-                  <dl className="m-0 grid grid-cols-1 gap-x-10 gap-y-5 min-[721px]:grid-cols-2 [&_dt]:text-[0.76rem] [&_dt]:tracking-[0.03em] [&_dt]:text-text-muted [&_dt]:uppercase [&_dd]:mt-1.5 [&_dd]:break-words [&_dd]:text-text [&_a]:text-primary [&_a]:no-underline hover:[&_a]:underline">
-                    <Field label="Contact name">{displayValue(employee.emergencyName)}</Field>
-                    <Field label="Relationship">{displayValue(employee.emergencyRelationship)}</Field>
-                    <Field label="Mobile">
-                      {employee.emergencyMobile ? (
-                        <a href={`tel:${employee.emergencyMobile}`}>{employee.emergencyMobile}</a>
-                      ) : (
-                        '—'
-                      )}
-                    </Field>
-                    <Field label="Address">{displayValue(employee.emergencyAddress)}</Field>
-                  </dl>
+                  {employee.canViewSensitive === false ? (
+                    <p className="m-0 text-text-muted">Sensitive emergency contact details are restricted for your role.</p>
+                  ) : (
+                    <dl className="m-0 grid grid-cols-1 gap-x-10 gap-y-5 min-[721px]:grid-cols-2 [&_dt]:text-[0.76rem] [&_dt]:tracking-[0.03em] [&_dt]:text-text-muted [&_dt]:uppercase [&_dd]:mt-1.5 [&_dd]:break-words [&_dd]:text-text [&_a]:text-primary [&_a]:no-underline hover:[&_a]:underline">
+                      <Field label="Contact name">{displayValue(employee.emergencyName)}</Field>
+                      <Field label="Relationship">{displayValue(employee.emergencyRelationship)}</Field>
+                      <Field label="Mobile">
+                        {employee.emergencyMobile ? (
+                          <a href={`tel:${employee.emergencyMobile}`}>{employee.emergencyMobile}</a>
+                        ) : (
+                          '—'
+                        )}
+                      </Field>
+                      <Field label="Address">{displayValue(employee.emergencyAddress)}</Field>
+                    </dl>
+                  )}
                 </ProfileCard>
 
                 <ProfileCard id="documents" title="Documents" icon={File01Icon}>
-                  {documents.length === 0 ? (
+                  {employee.canViewDocuments === false ? (
+                    <p className="m-0 text-text-muted">Employee documents are restricted for your role.</p>
+                  ) : documents.length === 0 ? (
                     <p className="m-0 text-text-muted">No documents have been uploaded for this employee.</p>
                   ) : (
                     <ul className="m-0 grid list-none gap-3 p-0 [&_li]:flex [&_li]:items-center [&_li]:justify-between [&_li]:gap-3 [&_li]:rounded-xl [&_li]:border [&_li]:border-border-subtle [&_li]:bg-[color-mix(in_srgb,var(--color-page-bg)_70%,var(--color-surface))] [&_li]:px-3.5 [&_li]:py-3 max-[720px]:[&_li]:grid [&_strong]:block [&_span]:block [&_span]:text-[0.8rem] [&_span]:text-text-muted">
@@ -700,7 +891,90 @@ export default function EmployeeProfilePage() {
                       ))}
                     </ul>
                   )}
+                  {canManageEmployeeDocs ? (
+                    <div className="mt-4">
+                      <PrimaryButton
+                        size="sm"
+                        variant="outline"
+                        label="Manage documents"
+                        onClick={() => navigate(`/employees/${employee.id}/edit#documents`)}
+                      />
+                    </div>
+                  ) : null}
                 </ProfileCard>
+
+                {canViewPerformance ? (
+                  <ProfileCard id="performance" title="Performance" icon={AnalyticsUpIcon}>
+                    {performanceLoading ? (
+                      <Spin size="small" />
+                    ) : !performance?.available ? (
+                      <p className="m-0 text-text-muted">
+                        {performance?.message || 'Performance metrics are not available for this employee.'}
+                      </p>
+                    ) : (
+                      <>
+                        <dl className="m-0 grid grid-cols-2 gap-x-10 gap-y-5 min-[721px]:grid-cols-3 [&_dt]:text-[0.76rem] [&_dt]:tracking-[0.03em] [&_dt]:text-text-muted [&_dt]:uppercase [&_dd]:mt-1.5 [&_dd]:break-words [&_dd]:text-text">
+                          <Field label="Follow-ups due">{performance.summary?.due ?? 0}</Field>
+                          <Field label="Completed">{performance.summary?.completed ?? 0}</Field>
+                          <Field label="On time">{performance.summary?.onTime ?? 0}</Field>
+                          <Field label="Overdue">{performance.summary?.overdue ?? 0}</Field>
+                          <Field label="Completion rate">{`${performance.summary?.completionRate ?? 0}%`}</Field>
+                          <Field label="On-time rate">{`${performance.summary?.onTimeRate ?? 0}%`}</Field>
+                        </dl>
+                        <div className="mt-4">
+                          <PrimaryButton
+                            size="sm"
+                            variant="outline"
+                            label="View Performance"
+                            onClick={() =>
+                              navigate(
+                                employee.user?.id
+                                  ? `/reports?employeeId=${employee.id}&ownerId=${employee.user.id}`
+                                  : '/reports',
+                              )
+                            }
+                          />
+                        </div>
+                        <p className="mt-2 mb-0 text-[0.8rem] text-text-muted">
+                          Linked by Employee ID {employee.employeeCode}
+                          {performance.from && performance.to
+                            ? ` · Last 30 days (${formatPrettyDate(performance.from.slice(0, 10))} – ${formatPrettyDate(performance.to.slice(0, 10))})`
+                            : null}
+                        </p>
+                      </>
+                    )}
+                  </ProfileCard>
+                ) : null}
+
+                {canViewAudit ? (
+                  <ProfileCard id="history" title="Audit history" icon={Clock01Icon}>
+                    {auditLoading ? (
+                      <Spin size="small" />
+                    ) : auditLogs.length === 0 ? (
+                      <p className="m-0 text-text-muted">No profile changes have been recorded yet.</p>
+                    ) : (
+                      <ul className="m-0 grid list-none gap-3 p-0">
+                        {auditLogs.map((log) => (
+                          <li
+                            key={log.id}
+                            className="rounded-xl border border-border-subtle bg-[color-mix(in_srgb,var(--color-page-bg)_70%,var(--color-surface))] px-3.5 py-3"
+                          >
+                            <strong className="block text-[0.92rem]">
+                              {AUDIT_ACTION_LABELS[log.action] || log.action}
+                            </strong>
+                            <span className="mt-1 block text-[0.82rem] text-text-muted">
+                              {formatAuditSummary(log)}
+                            </span>
+                            <span className="mt-1 block text-[0.78rem] text-text-muted">
+                              {formatDateTime(log.createdAt)}
+                              {log.user ? ` · Changed by ${log.user.fullName}` : ''}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </ProfileCard>
+                ) : null}
 
                 <p className="m-0 text-[0.8rem] text-text-muted">
                   Record created {formatDateTime(employee.createdAt)} · Last updated {formatDateTime(employee.updatedAt)}

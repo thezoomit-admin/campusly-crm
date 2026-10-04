@@ -89,6 +89,7 @@ export const MASTER_DATA_NAV_GROUPS: MasterDataNavGroup[] = [
     categories: [
       { key: 'ACTIVITY_TYPE', name: 'Activity Type' },
       { key: 'FOLLOW_UP_TYPE', name: 'Follow-up Type' },
+      { key: 'CONVERSATION_CHANNEL', name: 'Note Channel' },
       { key: 'CONTACT_METHOD', name: 'Contact Method' },
       { key: 'CONTACT_TIME', name: 'Contact Time' },
       { key: 'CONTACT_RESULT', name: 'Contact Result' },

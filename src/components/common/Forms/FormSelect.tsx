@@ -23,11 +23,20 @@ export default function FormSelect({
   setFieldError,
   className,
   onChange,
+  mode,
   ...rest
 }: FormSelectProps) {
+  const isMultiple = mode === 'multiple' || mode === 'tags'
   const control = (
     <Select
-      className={['w-full', className].filter(Boolean).join(' ')}
+      mode={mode}
+      className={[
+        'w-full',
+        isMultiple ? '!min-h-[42px] !rounded-[10px]' : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
       size="large"
       placeholder={placeholder}
       allowClear={allowClear}

@@ -10,6 +10,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import router from './routes/routes'
 import { persistor, store } from './redux/features/store'
 import AuthSessionProvider from './providers/AuthSessionProvider'
+import SocketRealtimeProvider from './providers/SocketRealtimeProvider'
 import { ThemeProvider, useTheme } from './theme/ThemeProvider'
 import { PageLoader } from '@/components/common/Loading'
 import './index.css'
@@ -76,7 +77,9 @@ createRoot(root).render(
         <PersistGate loading={<PageLoader />} persistor={persistor}>
           <ThemeProvider>
             <AuthSessionProvider>
-              <ThemedApp />
+              <SocketRealtimeProvider>
+                <ThemedApp />
+              </SocketRealtimeProvider>
             </AuthSessionProvider>
           </ThemeProvider>
         </PersistGate>

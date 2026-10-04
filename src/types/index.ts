@@ -1,4 +1,4 @@
-export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'INVITED'
 export type RecordStatus = 'ACTIVE' | 'INACTIVE'
 export type DataScopeLevel = 'OWN' | 'TEAM' | 'DEPARTMENT' | 'ALL'
 export type ScopeMap = Record<string, DataScopeLevel>
@@ -184,7 +184,7 @@ export type MasterDataCategory = {
   name: string
   recordCount: number
   parentCategoryKey?: string
-  extraFields?: 'none' | 'intake' | 'leadStatus' | 'country'
+  extraFields?: 'none' | 'intake' | 'leadStatus' | 'country' | 'conversationChannel'
   codePolicy?: 'optional' | 'recommended' | 'required'
 }
 
@@ -228,7 +228,7 @@ export type MasterDataImportResult = {
   errors: Array<{ row: number; message: string }>
 }
 
-export type EmployeeCrmAccess = 'ENABLED' | 'DISABLED' | 'NONE'
+export type EmployeeCrmAccess = 'ENABLED' | 'DISABLED' | 'INVITED' | 'NONE'
 
 export type EmployeeRef = {
   id: string
@@ -260,6 +260,9 @@ export type EmployeeRecord = {
   emergencyMobile?: string | null
   emergencyAddress?: string | null
   documents?: Array<{ id: string; type: string; fileName: string; mimeType: string; fileSize: number }>
+  canViewDocuments?: boolean
+  canManageDocuments?: boolean
+  canViewSensitive?: boolean
   designation: NamedRef | null
   department: NamedRef | null
   team: NamedRef | null
@@ -268,10 +271,42 @@ export type EmployeeRecord = {
   employmentStatus: EmployeeStatusRef | null
   reportingManager: EmployeeRef | null
   joiningDate: string
+  resignationDate?: string | null
+  terminationDate?: string | null
+  terminationReason?: string | null
+  terminationRemarks?: string | null
+  rejoiningDate?: string | null
   crmAccess: EmployeeCrmAccess
   user: { id: string; status: UserStatus; username?: string } | null
   createdAt?: string | Date
   updatedAt?: string | Date
+}
+
+export type EmployeeAuditLog = {
+  id: string
+  action: string
+  entityType: string | null
+  entityId: string | null
+  metadata: Record<string, unknown> | null
+  createdAt: string | Date
+  user: { id: string; fullName: string; email: string } | null
+}
+
+export type EmployeePerformanceSummary = {
+  employee: { id: string; employeeCode: string; fullName: string; userId: string | null }
+  available: boolean
+  message?: string
+  from?: string
+  to?: string
+  summary: {
+    due: number
+    completed: number
+    onTime: number
+    overdue: number
+    completionRate: number
+    onTimeRate: number
+  } | null
+  row: unknown
 }
 
 export type EmployeeOption = NamedRef & {

@@ -45,7 +45,10 @@ const usersApi = baseApi.injectEndpoints({
       providesTags: (_r, _e, id) => [{ type: 'User', id }],
     }),
     createUser: builder.mutation<
-      { user?: AdminUser; reset?: { devResetPath?: string } },
+      {
+        user?: AdminUser
+        reset?: { message?: string; devResetPath?: string; setupPath?: string; inviteSent?: boolean; email?: string }
+      },
       { body: UserPayload | FormData }
     >({
       query: ({ body }) => ({
@@ -56,7 +59,10 @@ const usersApi = baseApi.injectEndpoints({
       invalidatesTags: [{ type: 'Users', id: 'LIST' }],
     }),
     updateUser: builder.mutation<
-      { user: AdminUser; reset?: { devResetPath?: string } },
+      {
+        user: AdminUser
+        reset?: { message?: string; devResetPath?: string; setupPath?: string; inviteSent?: boolean; email?: string }
+      },
       { id: string; body: UserPayload | FormData }
     >({
       query: ({ id, body }) => ({
@@ -97,9 +103,21 @@ const usersApi = baseApi.injectEndpoints({
         method: 'POST',
       }),
     }),
-    adminPasswordReset: builder.mutation<{ message?: string; devResetPath?: string }, string>({
+    adminPasswordReset: builder.mutation<
+      { message?: string; devResetPath?: string; setupPath?: string; inviteSent?: boolean; email?: string },
+      string
+    >({
       query: (id) => ({
         url: `/users/${id}/password-reset`,
+        method: 'POST',
+      }),
+    }),
+    resendUserInvite: builder.mutation<
+      { message?: string; devResetPath?: string; setupPath?: string; inviteSent?: boolean; email?: string },
+      string
+    >({
+      query: (id) => ({
+        url: `/users/${id}/resend-invite`,
         method: 'POST',
       }),
     }),
@@ -138,6 +156,7 @@ export const {
   useRevokeUserSessionMutation,
   useForceLogoutUserMutation,
   useAdminPasswordResetMutation,
+  useResendUserInviteMutation,
   useSetUserOverridesMutation,
   useSetUserScopesMutation,
   useListUserActivityQuery,

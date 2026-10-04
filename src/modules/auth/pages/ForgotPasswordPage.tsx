@@ -70,8 +70,8 @@ export default function ForgotPasswordPage() {
               Forgot password
             </h1>
             <p className="m-0 text-[0.92rem] text-text-muted">
-              Enter your email or username. A reset link will be created for an
-              active account.
+              Enter your email or username. If an account exists, we will email a
+              secure setup or reset link.
             </p>
           </div>
 

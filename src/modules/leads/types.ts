@@ -11,6 +11,7 @@ export type LeadRow = {
   status: string
   priority?: string
   score?: string
+  nextFollowUpAt?: string | null
   updated: string
   createdAt?: string
 }
@@ -85,6 +86,15 @@ export type LeadAssignmentHistoryItem = {
   handoverNote?: LeadHandoverNote | null
   assignedBy: { id: string; name: string } | null
   createdAt: string
+}
+
+export type LeadDocumentItem = {
+  id: string
+  fileName: string
+  mimeType: string
+  fileSize: number
+  createdAt: string
+  uploadedBy: { id: string; name: string } | null
 }
 
 export type LeadListSummaryStat = {

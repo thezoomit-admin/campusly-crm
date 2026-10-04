@@ -1,63 +1,94 @@
-import { Link } from 'react-router-dom'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  Add01Icon,
-  Analytics01Icon,
-  ArrowLeft01Icon,
   Call02Icon,
-  CheckmarkCircle02Icon,
   Flag01Icon,
-  Home01Icon,
+  Globe02Icon,
   Location01Icon,
   Mail01Icon,
+  Mortarboard01Icon,
   PencilEdit02Icon,
+  UserIcon,
 } from '@hugeicons/core-free-icons'
 import { PrimaryButton } from '@/components/ui'
 import type { LeadRecord } from '../../types'
-import { leadInitials, priorityBadgeClass, stageBadgeClass } from '../../utils/leadDetails'
+import { leadInitials, optionLabel, priorityBadgeClass, stageBadgeClass } from '../../utils/leadDetails'
+import type { MasterOption } from '../../hooks/useLeadMasterOptions'
 
 export default function LeadWorkspaceHeader({
   lead,
+  degreeOptions = [],
+  countryOptions = [],
   canEdit,
-  canAddActivity,
   canChangeStatus,
   canClose,
   canReopen,
   canHandover,
   onEdit,
-  onAddActivity,
   onChangeStatus,
   onCloseLead,
   onReopenLead,
   onHandover,
 }: {
   lead: LeadRecord
+  degreeOptions?: MasterOption[]
+  countryOptions?: MasterOption[]
   canEdit: boolean
-  canAddActivity: boolean
   canChangeStatus: boolean
   canClose?: boolean
   canReopen?: boolean
   canHandover?: boolean
   onEdit: () => void
-  onAddActivity: () => void
   onChangeStatus: () => void
   onCloseLead?: () => void
   onReopenLead?: () => void
   onHandover?: () => void
 }) {
+  const studyLevel =
+    optionLabel(degreeOptions, lead.preferredDegreeCode) || lead.preferredCourse || '—'
+  const country =
+    optionLabel(countryOptions, lead.preferredCountryCode) || lead.country || '—'
+  const score = Math.max(0, Math.min(100, lead.leadScore ?? 0))
+
+  const showActions = canHandover || canReopen || canChangeStatus || canClose || canEdit
+
   return (
     <section className="rounded-2xl border border-[#e7eef5] bg-surface px-4 py-4 shadow-[0_10px_28px_rgba(22,50,79,0.035)] md:px-5 dark:border-border">
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-center">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <Link
-            to="/leads"
-            className="mt-1 grid size-8 shrink-0 cursor-pointer place-items-center rounded-full text-[#7d8b9a] no-underline hover:bg-hover-bg hover:text-text"
-            aria-label="Back to leads"
-          >
-            <HugeiconsIcon icon={ArrowLeft01Icon} size={18} color="currentColor" strokeWidth={1.8} />
-          </Link>
+      {showActions ? (
+        <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+          {canHandover ? (
+            <PrimaryButton type="button" size="sm" onClick={onHandover} label="Hand over" />
+          ) : null}
+          {canReopen ? (
+            <PrimaryButton type="button" size="sm" onClick={onReopenLead} label="Reopen Lead" />
+          ) : null}
+          {canChangeStatus ? (
+            <PrimaryButton
+              type="button"
+              size="sm"
+              variant={canReopen ? 'outline' : 'primary'}
+              onClick={onChangeStatus}
+              label="Change Status"
+            />
+          ) : null}
+          {canClose ? (
+            <PrimaryButton type="button" size="sm" variant="outline" onClick={onCloseLead} label="Close Lead" />
+          ) : null}
+          {canEdit ? (
+            <PrimaryButton
+              type="button"
+              size="sm"
+              variant={canChangeStatus || canReopen || canClose ? 'outline' : 'primary'}
+              icon={<HugeiconsIcon icon={PencilEdit02Icon} size={15} />}
+              onClick={onEdit}
+              label="Edit"
+            />
+          ) : null}
+        </div>
+      ) : null}
 
-          <span className="grid size-14 shrink-0 place-items-center rounded-full bg-[#e7f8ef] text-[1.05rem] font-bold tracking-wide text-primary ring-4 ring-[#f3fbf6] dark:bg-[color-mix(in_srgb,var(--color-primary)_18%,transparent)] dark:ring-transparent">
+      <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-center">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <span className="grid size-14 shrink-0 place-items-center rounded-full bg-primary text-[1.05rem] font-bold tracking-wide text-on-primary ring-4 ring-[color-mix(in_srgb,var(--color-primary)_14%,transparent)]">
             {leadInitials(lead.name)}
           </span>
 
@@ -97,82 +128,91 @@ export default function LeadWorkspaceHeader({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-stretch gap-4 sm:gap-6 xl:pl-2">
-          <HeaderStat
-            icon={Home01Icon}
-            label="Owner"
+        <div className="grid min-w-0 flex-[1.4] grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4">
+          <HeaderMeta icon={Globe02Icon} label="Lead Source" value={lead.source || '—'} />
+          <HeaderMeta icon={Flag01Icon} label="Preferred Country" value={country} />
+          <HeaderMeta icon={Mortarboard01Icon} label="Study Level" value={studyLevel} />
+          <HeaderMeta
+            icon={UserIcon}
+            label="Assigned To"
             value={lead.owner?.name || 'Unassigned'}
+            hint={lead.owner?.name ? 'Counsellor' : undefined}
           />
-          <HeaderStat icon={Analytics01Icon} label="Score" value={String(lead.leadScore ?? 0)} />
-          <div className="min-w-[88px]">
-            <p className="mb-1 flex items-center gap-1.5 text-[0.75rem] text-[#8b97a8]">
-              <HugeiconsIcon icon={Flag01Icon} size={14} color="currentColor" strokeWidth={1.7} />
-              Priority
-            </p>
-            <span
-              className={`inline-flex rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold ${priorityBadgeClass(lead.priority)}`}
-            >
-              {lead.priority || 'None'}
-            </span>
-          </div>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center gap-2 xl:flex-col xl:items-end">
-          {canHandover ? (
-            <PrimaryButton type="button" size="sm" onClick={onHandover} label="Hand over" />
-          ) : null}
-          {canReopen ? (
-            <PrimaryButton type="button" size="sm" onClick={onReopenLead} label="Reopen Lead" />
-          ) : null}
-          {canChangeStatus ? (
-            <PrimaryButton
-              type="button"
-              size="sm"
-              variant={canReopen ? 'outline' : 'primary'}
-              icon={<HugeiconsIcon icon={CheckmarkCircle02Icon} size={15} />}
-              onClick={onChangeStatus} label="Change Status" />
-          ) : null}
-          {canClose ? (
-            <PrimaryButton type="button" size="sm" variant="outline" onClick={onCloseLead} label="Close Lead" />
-          ) : null}
-          {canEdit ? (
-            <PrimaryButton
-              type="button"
-              size="sm"
-              variant={canChangeStatus || canReopen || canClose ? 'outline' : 'primary'}
-              icon={<HugeiconsIcon icon={PencilEdit02Icon} size={15} />}
-              onClick={onEdit} label="Edit" />
-          ) : null}
-          {canAddActivity ? (
-            <PrimaryButton
-              type="button"
-              variant="outline"
-              size="sm"
-              icon={<HugeiconsIcon icon={Add01Icon} size={15} />}
-              onClick={onAddActivity} label="Add Activity" />
-          ) : null}
+        <div className="flex shrink-0 items-center gap-3 rounded-xl border border-[#e7eef5] bg-input-bg px-3.5 py-2.5 dark:border-border dark:bg-hover-bg">
+          <ScoreRing score={score} />
+          <div>
+            <p className="m-0 text-[0.72rem] text-[#8b97a8]">Lead Score</p>
+            <p className="m-0 text-[0.95rem] font-bold text-[#17324f] dark:text-text-strong">
+              {score}
+              <span className="font-medium text-[#8b97a8]"> / 100</span>
+            </p>
+            <span
+              className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[0.68rem] font-semibold ${priorityBadgeClass(lead.priority)}`}
+            >
+              {lead.priority ? `${lead.priority} Priority` : 'No Priority'}
+            </span>
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
-function HeaderStat({
+function HeaderMeta({
   icon,
   label,
   value,
+  hint,
 }: {
-  icon: typeof Home01Icon
+  icon: typeof Globe02Icon
   label: string
   value: string
+  hint?: string
 }) {
   return (
-    <div className="min-w-[88px] border-r border-[#edf2f7] pr-4 last:border-r-0 last:pr-0 dark:border-border-subtle">
-      <p className="mb-1 flex items-center gap-1.5 text-[0.75rem] text-[#8b97a8]">
-        <HugeiconsIcon icon={icon} size={14} color="currentColor" strokeWidth={1.7} />
+    <div className="min-w-0">
+      <p className="mb-1 flex items-center gap-1.5 text-[0.72rem] text-[#8b97a8]">
+        <HugeiconsIcon icon={icon} size={13} color="currentColor" strokeWidth={1.7} />
         {label}
       </p>
-      <p className="m-0 text-[0.92rem] font-semibold text-[#17324f] dark:text-text-strong">{value}</p>
+      <p className="m-0 truncate text-[0.88rem] font-semibold text-[#17324f] dark:text-text-strong">{value}</p>
+      {hint ? <p className="m-0 text-[0.7rem] text-[#8b97a8]">{hint}</p> : null}
     </div>
+  )
+}
+
+function ScoreRing({ score }: { score: number }) {
+  const radius = 18
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (score / 100) * circumference
+
+  return (
+    <svg width="52" height="52" viewBox="0 0 44 44" className="shrink-0">
+      <circle cx="22" cy="22" r={radius} fill="none" stroke="#e6eef6" strokeWidth="4" />
+      <circle
+        cx="22"
+        cy="22"
+        r={radius}
+        fill="none"
+        stroke="var(--color-primary)"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        transform="rotate(-90 22 22)"
+      />
+      <text
+        x="22"
+        y="23"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill="var(--color-primary)"
+        style={{ fontSize: '10px', fontWeight: 700 }}
+      >
+        {score}
+      </text>
+    </svg>
   )
 }

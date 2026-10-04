@@ -13,6 +13,7 @@ import {
 import { baseApi } from '@/redux/api/baseApi'
 import { clearAuthPersistStorage, notifyServerLogout } from '@/lib/auth'
 import { hasPermission as checkPermission } from '@/lib/access'
+import { disconnectSocket } from '@/lib/socket'
 import type { AuthSession, AuthUser } from '@/types'
 
 /**
@@ -27,6 +28,7 @@ export function clearClientAuthState(
   if (options?.notifyServer !== false) {
     notifyServerLogout()
   }
+  disconnectSocket()
   dispatch(clearSession())
   dispatch(baseApi.util.resetApiState())
   clearAuthPersistStorage()

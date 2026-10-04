@@ -19,7 +19,7 @@ export type NotificationListResponse = {
   unreadCount: number
 }
 
-const notificationsApi = baseApi.injectEndpoints({
+export const notificationsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     listNotifications: builder.query<NotificationListResponse, { limit?: number; unreadOnly?: boolean } | void>({
       query: (params) =>

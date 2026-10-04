@@ -4,6 +4,7 @@ import type {
   DuplicateLead,
   LeadAssignee,
   LeadAssignmentHistoryItem,
+  LeadDocumentItem,
   LeadListSummary,
   LeadPoolRow,
   LeadRecord,
@@ -202,6 +203,58 @@ const leadsApi = baseApi.injectEndpoints({
       query: (id) => `/leads/${id}/assignments`,
       providesTags: (_r, _e, id) => [{ type: 'Leads', id }],
     }),
+    listLeadDocuments: builder.query<{ items: LeadDocumentItem[] }, string>({
+      query: (id) => `/leads/${id}/documents`,
+      providesTags: (_r, _e, id) => [{ type: 'Leads', id: `${id}-documents` }],
+    }),
+    uploadLeadDocument: builder.mutation<
+      { document: LeadDocumentItem },
+      { id: string; fileName: string; file: File }
+    >({
+      query: ({ id, fileName, file }) => {
+        const body = new FormData()
+        body.set('fileName', fileName)
+        body.set('file', file)
+        return {
+          url: `/leads/${id}/documents`,
+          method: 'POST',
+          body,
+        }
+      },
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Leads', id: `${id}-documents` },
+        { type: 'Leads', id },
+        'Activities',
+        'Documents',
+      ],
+    }),
+    deleteLeadDocument: builder.mutation<{ message: string }, { id: string; documentId: string }>({
+      query: ({ id, documentId }) => ({
+        url: `/leads/${id}/documents/${documentId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Leads', id: `${id}-documents` },
+        { type: 'Leads', id },
+        'Activities',
+        'Documents',
+      ],
+    }),
+    fetchLeadDocumentBlob: builder.query<
+      { blob: Blob; mimeType: string },
+      { id: string; documentId: string }
+    >({
+      query: ({ id, documentId }) => ({
+        url: `/leads/${id}/documents/${documentId}`,
+        responseHandler: async (response) => {
+          const blob = await response.blob()
+          return {
+            blob,
+            mimeType: response.headers.get('content-type') || blob.type,
+          }
+        },
+      }),
+    }),
     correctLeadSource: builder.mutation<
       { message: string },
       { id: string; body: { sourceCode: string; channelCode?: string; referralBy?: string; referralDetails?: string; reason: string } }
@@ -292,6 +345,10 @@ export const {
   useListMyLeadsQuery,
   useListLeadAssigneesQuery,
   useListLeadAssignmentsQuery,
+  useListLeadDocumentsQuery,
+  useUploadLeadDocumentMutation,
+  useDeleteLeadDocumentMutation,
+  useLazyFetchLeadDocumentBlobQuery,
   useHandoverLeadMutation,
   useAssignLeadMutation,
   useCorrectLeadSourceMutation,

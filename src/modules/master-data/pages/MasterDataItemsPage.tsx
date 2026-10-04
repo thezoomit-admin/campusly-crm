@@ -11,6 +11,7 @@ import {
   fieldLabelClass,
   formActions,
   historyKindTone,
+  historyKindToneSoft,
   mdHistoryDetailIcon,
   mdHistoryEvent,
   mdHistoryEventActive,
@@ -23,8 +24,6 @@ import {
   modalPanel,
   muted,
   rowActions,
-  statusConfirmCopy,
-  statusConfirmPanel,
   tableWrap,
 } from '../../../styles/admin'
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
@@ -42,6 +41,7 @@ import {
   HistoryIcon,
   Key01Icon,
   Link01Icon,
+  InformationCircleIcon,
   Note01Icon,
   PencilEdit02Icon,
   TextIcon,
@@ -49,11 +49,12 @@ import {
   UserPlusIcon,
   ViewIcon,
 } from '@hugeicons/core-free-icons'
-import { Spin } from 'antd'
+import { Pagination, Spin, Tooltip } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { PrimaryButton } from '@/components/ui'
-import { FormDatePicker, FormInput, FormInputNumber, FormSelect, FormSwitch } from '@/components/common/Forms'
+import { FormDatePicker, FormInput, FormInputNumber, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
+import { DeleteModal } from '@/components/common/Modals'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
@@ -83,7 +84,7 @@ import type {
 type FormMode = 'create' | 'edit'
 type ToastState = { text: string; type: 'success' | 'error' }
 
-const DESCRIPTION_MAX = 100
+const PAGE_SIZE = 10
 
 const DATE_PICKER_OVERFLOW = {
   adjustX: true,
@@ -154,7 +155,13 @@ type ItemForm = {
   startDate: string
   endDate: string
   fileOpeningCharge: number | null
+  icon: string
+  activityType: string
+  sortOrder: number
 }
+
+const DESCRIPTION_MAX = 100
+const NOTE_CHANNEL_DESCRIPTION_MAX = 500
 
 const EMPTY_FORM: ItemForm = {
   name: '',
@@ -166,6 +173,42 @@ const EMPTY_FORM: ItemForm = {
   startDate: '',
   endDate: '',
   fileOpeningCharge: null,
+  icon: '',
+  activityType: 'OTHER',
+  sortOrder: 0,
+}
+
+function slugCodeFromName(name: string) {
+  return (
+    name
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 32) || 'CHANNEL'
+  )
+}
+
+function activityTypeFromChannelCode(code: string) {
+  const normalized = code.trim().toUpperCase()
+  if (['CALL', 'WHATSAPP', 'EMAIL', 'SMS', 'MEETING'].includes(normalized)) return normalized
+  if (normalized === 'IN_PERSON') return 'MEETING'
+  return 'OTHER'
+}
+
+function FaIconPreview({ iconClass, className }: { iconClass: string; className?: string }) {
+  const value = iconClass.trim().replace(/\s+/g, ' ')
+  return (
+    <span
+      className={
+        className ||
+        'inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#e6eef6] bg-surface text-[1rem] text-[#3d5166] dark:border-border dark:text-text'
+      }
+      aria-hidden={!value}
+    >
+      {value ? <i className={value} /> : <span className="text-[0.72rem] text-[#a0aab8]">—</span>}
+    </span>
+  )
 }
 
 function extraAmount(extras: Record<string, unknown> | null, key: string) {
@@ -189,6 +232,9 @@ function formFromItem(item: MasterDataItem): ItemForm {
     startDate: extraText(item.extras, 'startDate'),
     endDate: extraText(item.extras, 'endDate'),
     fileOpeningCharge: extraAmount(item.extras, 'fileOpeningCharge'),
+    icon: extraText(item.extras, 'icon'),
+    activityType: extraText(item.extras, 'activityType') || activityTypeFromChannelCode(item.code || ''),
+    sortOrder: item.sortOrder ?? 0,
   }
 }
 
@@ -408,29 +454,45 @@ function HistoryFieldList({
   rows: HistoryChangeRow[]
   valueKey: 'from' | 'to'
 }) {
-  const showHead = valueKey === 'to'
+  const isNew = valueKey === 'to'
   return (
-    <section className="rounded-2xl border border-border bg-surface p-4 shadow-soft [&_h4]:mb-3 [&_h4]:mt-0 [&_h4]:text-[0.72rem] [&_h4]:font-bold [&_h4]:tracking-[0.04em] [&_h4]:text-[#8b97a8] [&_h4]:uppercase">
-      <h4>{title}</h4>
-      <div>
-        {showHead ? (
-          <div className="grid grid-cols-3 gap-2 border-b border-border-subtle px-1 pb-2 text-[0.72rem] font-bold tracking-[0.04em] text-text-muted uppercase">
-            <span>Field</span>
-            <span>New Value</span>
-          </div>
+    <section className="min-w-0">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
+        <h4 className="m-0 text-[0.72rem] font-bold tracking-[0.06em] text-[#8b97a8] uppercase">{title}</h4>
+        {rows.length > 0 ? (
+          <span className="text-[0.72rem] font-medium text-text-faint">
+            {rows.length} field{rows.length === 1 ? '' : 's'}
+          </span>
         ) : null}
+      </div>
+      <div className="overflow-hidden rounded-2xl border border-border/80 bg-[color-mix(in_srgb,var(--color-surface)_92%,#f1f5f9)] dark:bg-[color-mix(in_srgb,var(--color-text)_3%,var(--color-surface))]">
         {rows.length === 0 ? (
-          <p className="py-6 text-center text-text-muted">No field changes recorded.</p>
+          <p className="m-0 px-4 py-7 text-center text-[0.86rem] text-text-muted">No field changes recorded.</p>
         ) : (
-          rows.map((row) => (
-            <div key={`${title}-${row.key}`} className="grid grid-cols-3 gap-2 border-b border-border-subtle px-1 py-2.5 last:border-b-0 [&_span]:text-[0.82rem] [&_span]:text-text-muted [&_strong]:text-[0.88rem] [&_strong]:text-text">
-              <span>
-                <HugeiconsIcon icon={fieldIcon(row.key)} size={14} color="currentColor" strokeWidth={1.5} />
-                {row.label}
-              </span>
-              <strong>{row[valueKey]}</strong>
-            </div>
-          ))
+          <ul className="m-0 list-none divide-y divide-border/70 p-0">
+            {rows.map((row) => (
+              <li
+                key={`${title}-${row.key}`}
+                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] items-center gap-3 px-3.5 py-3"
+              >
+                <span className="inline-flex min-w-0 items-center gap-2 text-[0.82rem] text-text-muted">
+                  <span className="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-surface text-text-faint shadow-[inset_0_0_0_1px_var(--color-border)]">
+                    <HugeiconsIcon icon={fieldIcon(row.key)} size={14} color="currentColor" strokeWidth={1.5} />
+                  </span>
+                  <span className="truncate font-medium">{row.label}</span>
+                </span>
+                <strong
+                  className={`min-w-0 truncate justify-self-end rounded-lg px-2.5 py-1 text-right text-[0.84rem] font-semibold ${
+                    isNew
+                      ? 'bg-[color-mix(in_srgb,#17824b_10%,var(--color-surface))] text-[#17824b]'
+                      : 'bg-[color-mix(in_srgb,var(--color-text)_5%,var(--color-surface))] text-text'
+                  }`}
+                >
+                  {row[valueKey]}
+                </strong>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </section>
@@ -449,6 +511,7 @@ export default function MasterDataItemsPage() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [category, setCategory] = useState<MasterDataCategory | null>(null)
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
   const [metaLoading, setMetaLoading] = useState(true)
   const [items, setItems] = useState<MasterDataItem[]>([])
   const [parents, setParents] = useState<Array<{ id: string; name: string }>>([])
@@ -460,6 +523,7 @@ export default function MasterDataItemsPage() {
   const [createdFrom, setCreatedFrom] = useState('')
   const [createdTo, setCreatedTo] = useState('')
   const [sortBy, setSortBy] = useState('sortOrder')
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [searching, setSearching] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
@@ -524,27 +588,44 @@ export default function MasterDataItemsPage() {
     }
   }
 
-  async function loadCategory() {
-    setMetaLoading(true)
-    setParents([])
+  async function loadCategory(options?: { quiet?: boolean }) {
+    const quiet = options?.quiet === true
+    if (!quiet) {
+      setMetaLoading(true)
+      setParents([])
+    }
     try {
       const data = await listMasterDataCategories().unwrap()
-      const match = data.groups.flatMap((group) => group.categories).find((item) => item.key === categoryKey)
-      if (match?.parentCategoryKey) {
-        setParentsLoading(true)
-      } else {
+      const allCategories = data.groups.flatMap((group) => group.categories)
+      const counts: Record<string, number> = {}
+      for (const item of allCategories) {
+        counts[item.key] = item.recordCount
+      }
+      setCategoryCounts(counts)
+      const match = allCategories.find((item) => item.key === categoryKey)
+      if (!quiet) {
+        if (match?.parentCategoryKey) {
+          setParentsLoading(true)
+        } else {
+          setParentsLoading(false)
+        }
+        setCategory(match || null)
+        await loadParents(match?.parentCategoryKey)
+      } else if (match) {
+        setCategory(match)
+      }
+    } catch (err) {
+      if (!quiet) {
+        showToast(getApiError(err, 'You are not authorized to manage master data.'), 'error')
         setParentsLoading(false)
       }
-      setCategory(match || null)
-      await loadParents(match?.parentCategoryKey)
-    } catch (err) {
-      showToast(getApiError(err, 'You are not authorized to manage master data.'), 'error')
-      setParentsLoading(false)
     }
-    setMetaLoading(false)
+    if (!quiet) {
+      setMetaLoading(false)
+    }
   }
 
-  async function loadItems(fromSearch = false, searchValue = search) {
+  async function loadItems(fromSearch = false, searchValue = search, resetPage = true) {
     if (fromSearch) {
       setSearching(true)
     }
@@ -561,6 +642,9 @@ export default function MasterDataItemsPage() {
         sortDir: 'asc',
       }).unwrap()
       setItems(data.items)
+      if (resetPage) {
+        setPage(1)
+      }
     } catch (err) {
       showToast(getApiError(err, 'Unable to process the request. Please try again.'), 'error')
     } finally {
@@ -576,6 +660,7 @@ export default function MasterDataItemsPage() {
     setParentId('')
     setCreatedFrom('')
     setCreatedTo('')
+    setPage(1)
     setFormOpen(false)
   }, [categoryKey])
 
@@ -593,6 +678,13 @@ export default function MasterDataItemsPage() {
     }
     syncedSearch.current = true
   }, [location.search])
+
+  const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageItems = useMemo(
+    () => items.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [items, safePage],
+  )
 
   useEffect(
     () => () => {
@@ -668,11 +760,17 @@ export default function MasterDataItemsPage() {
     if (formSaving) {
       return
     }
+    const isNoteChannel = category?.extraFields === 'conversationChannel'
+    const descriptionMax = isNoteChannel ? NOTE_CHANNEL_DESCRIPTION_MAX : DESCRIPTION_MAX
     if (!form.name.trim()) {
-      showToast('Name is required.', 'error')
+      showToast(isNoteChannel ? 'Channel name is required.' : 'Name is required.', 'error')
       return
     }
-    if (category?.codePolicy === 'required' && !form.code.trim()) {
+    const resolvedCode =
+      isNoteChannel && formMode === 'create' && !form.code.trim()
+        ? slugCodeFromName(form.name)
+        : form.code.trim()
+    if (category?.codePolicy === 'required' && !resolvedCode) {
       showToast('Please enter a valid unique code.', 'error')
       return
     }
@@ -685,22 +783,30 @@ export default function MasterDataItemsPage() {
       )
       return
     }
-    if (form.description.length > DESCRIPTION_MAX) {
-      showToast(`Description cannot exceed ${DESCRIPTION_MAX} characters.`, 'error')
+    if (form.description.length > descriptionMax) {
+      showToast(`Description cannot exceed ${descriptionMax} characters.`, 'error')
+      return
+    }
+    if (isNoteChannel && !form.icon.trim()) {
+      showToast('Please enter an icon class.', 'error')
       return
     }
     const payload = {
       categoryKey,
       name: form.name,
-      code: form.code,
-      description: form.description.slice(0, DESCRIPTION_MAX),
+      code: resolvedCode,
+      description: form.description.slice(0, descriptionMax),
       status: form.status,
-      sortOrder: selected?.sortOrder ?? 0,
+      sortOrder: isNoteChannel ? form.sortOrder : selected?.sortOrder ?? 0,
       parentId: form.parentId || null,
       behaviorKey: form.behaviorKey || null,
       startDate: form.startDate,
       endDate: form.endDate,
       fileOpeningCharge: form.fileOpeningCharge,
+      icon: form.icon.trim(),
+      activityType: isNoteChannel
+        ? activityTypeFromChannelCode(resolvedCode)
+        : form.activityType,
     }
     setFormSaving(true)
     try {
@@ -711,7 +817,7 @@ export default function MasterDataItemsPage() {
       }
       showToast(`${entityName} successfully ${selected ? 'updated' : 'created'}.`)
       setFormOpen(false)
-      await loadItems()
+      await Promise.all([loadItems(false, search, !selected), loadCategory({ quiet: true })])
     } catch (err) {
       showToast(getApiError(err, 'Unable to process the request. Please try again.'), 'error')
     } finally {
@@ -741,7 +847,7 @@ export default function MasterDataItemsPage() {
         },
       }).unwrap()
       showToast(`${entityName} successfully ${next === 'ACTIVE' ? 'activated' : 'deactivated'}.`)
-      await loadItems()
+      await loadItems(false, search, false)
     } catch (err) {
       showToast(getApiError(err, 'Unable to process the request. Please try again.'), 'error')
     } finally {
@@ -762,7 +868,7 @@ export default function MasterDataItemsPage() {
       await deleteMasterDataItem({ id: deleteTarget.id, category: categoryKey }).unwrap()
       showToast(`${entityName} successfully deleted.`)
       setDeleteTarget(null)
-      await loadItems()
+      await Promise.all([loadItems(false, search, false), loadCategory({ quiet: true })])
     } catch (err) {
       showToast(getApiError(err, 'This value is already being used and cannot be deleted.'), 'error')
     } finally {
@@ -786,7 +892,7 @@ export default function MasterDataItemsPage() {
       setImportResult(data)
       setImportOpen(true)
       showToast(`Imported ${data.successful} of ${data.total} records.`)
-      await loadItems()
+      await Promise.all([loadItems(), loadCategory({ quiet: true })])
     } catch (err) {
       showToast(getApiError(err, 'Unable to import the selected data.'), 'error')
     }
@@ -883,6 +989,9 @@ export default function MasterDataItemsPage() {
             className={({ isActive }) => `${mdTab}${isActive ? ` ${mdTabActive}` : ''}`}
           >
             {tab.name}
+            <span className="ml-1.5 tabular-nums opacity-80">
+              ({categoryCounts[tab.key] ?? 0})
+            </span>
           </NavLink>
         ))}
       </nav>
@@ -988,76 +1097,142 @@ export default function MasterDataItemsPage() {
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Code</th>
+                {category?.extraFields === 'conversationChannel' ? <th>Icon</th> : <th>Code</th>}
+                {category?.extraFields === 'conversationChannel' ? <th>Description</th> : null}
                 {category?.parentCategoryKey ? <th>{parentCategoryName(category.parentCategoryKey)}</th> : null}
-                <th>Status</th>
+                {category?.extraFields === 'conversationChannel' ? null : <th>Status</th>}
                 <th>Sort</th>
-                <th>Used by</th>
+                {category?.extraFields === 'conversationChannel' ? <th>Status</th> : <th>Used by</th>}
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {!loading && items.length === 0 ? (
                 <tr>
-                  <td colSpan={category?.parentCategoryKey ? 7 : 6}>No master data found.</td>
+                  <td
+                    colSpan={
+                      category?.extraFields === 'conversationChannel'
+                        ? 6
+                        : category?.parentCategoryKey
+                          ? 7
+                          : 6
+                    }
+                  >
+                    No master data found.
+                  </td>
                 </tr>
               ) : (
-                items.map((item) => (
+                pageItems.map((item) => (
                   <tr key={item.id}>
                     <td>
                       <strong>{item.name}</strong>
-                      {item.description ? <div className={`${muted}`}>{item.description}</div> : null}
+                      {category?.extraFields === 'conversationChannel' || !item.description ? null : (
+                        <div className={`${muted}`}>{item.description}</div>
+                      )}
                     </td>
-                    <td>{item.code || '—'}</td>
+                    {category?.extraFields === 'conversationChannel' ? (
+                      <td>
+                        <FaIconPreview iconClass={extraText(item.extras, 'icon')} />
+                      </td>
+                    ) : (
+                      <td>{item.code || '—'}</td>
+                    )}
+                    {category?.extraFields === 'conversationChannel' ? (
+                      <td className="max-w-[280px]">
+                        <span className="line-clamp-2 text-[#5b6b7c]">{item.description || '—'}</span>
+                      </td>
+                    ) : null}
                     {category?.parentCategoryKey ? <td>{item.parentName || '—'}</td> : null}
-                    <td>
-                      <FormSwitch
-                        checked={item.status === 'ACTIVE'}
-                        checkedChildren="Active"
-                        unCheckedChildren="Inactive"
-                        disabled={!canEdit || item.isSystem}
-                        loading={statusUpdatingId === item.id}
-                        onChange={(checked) => {
-                          void setItemStatus(item, checked ? 'ACTIVE' : 'INACTIVE')
-                        }}
-                      />
-                    </td>
+                    {category?.extraFields === 'conversationChannel' ? null : (
+                      <td>
+                        <FormSwitch
+                          checked={item.status === 'ACTIVE'}
+                          checkedChildren="Active"
+                          unCheckedChildren="Inactive"
+                          disabled={!canEdit || item.isSystem}
+                          loading={statusUpdatingId === item.id}
+                          onChange={(checked) => {
+                            void setItemStatus(item, checked ? 'ACTIVE' : 'INACTIVE')
+                          }}
+                        />
+                      </td>
+                    )}
                     <td>{item.sortOrder}</td>
-                    <td>{item.usageCount > 0 ? `Used by: ${item.usageCount}` : '—'}</td>
+                    {category?.extraFields === 'conversationChannel' ? (
+                      <td>
+                        <FormSwitch
+                          checked={item.status === 'ACTIVE'}
+                          checkedChildren="Active"
+                          unCheckedChildren="Inactive"
+                          disabled={!canEdit || item.isSystem}
+                          loading={statusUpdatingId === item.id}
+                          onChange={(checked) => {
+                            void setItemStatus(item, checked ? 'ACTIVE' : 'INACTIVE')
+                          }}
+                        />
+                      </td>
+                    ) : (
+                      <td>{item.usageCount > 0 ? `Used by: ${item.usageCount}` : '—'}</td>
+                    )}
                     <td className={`${rowActions}`}>
-                      <RowActionMenu
-                        items={(
-                          [
-                            {
-                              key: 'history',
-                              label: 'History',
-                              icon: <ActionIcon icon={ViewIcon} />,
-                              onSelect: () => {
-                                void openHistory(item)
+                      {category?.extraFields === 'conversationChannel' ? (
+                        <div className="flex items-center gap-2">
+                          {canEdit ? (
+                            <PrimaryButton
+                              type="button"
+                              variant="outline"
+                              aria-label="Edit"
+                              className="!min-w-0 !border-primary !px-2 !text-primary"
+                              onClick={() => openItem(item, 'edit')}
+                              icon={<ActionIcon icon={PencilEdit02Icon} />}
+                            />
+                          ) : null}
+                          {canDelete && item.usageCount === 0 && !item.isSystem ? (
+                            <PrimaryButton
+                              type="button"
+                              variant="outline"
+                              aria-label="Delete"
+                              className="!min-w-0 !border-danger !px-2 !text-danger"
+                              onClick={() => askDelete(item)}
+                              icon={<ActionIcon icon={Delete02Icon} />}
+                            />
+                          ) : null}
+                        </div>
+                      ) : (
+                        <RowActionMenu
+                          items={(
+                            [
+                              {
+                                key: 'history',
+                                label: 'History',
+                                icon: <ActionIcon icon={ViewIcon} />,
+                                onSelect: () => {
+                                  void openHistory(item)
+                                },
                               },
-                            },
-                            canEdit
-                              ? {
-                                  key: 'edit',
-                                  label: 'Edit',
-                                  icon: <ActionIcon icon={PencilEdit02Icon} />,
-                                  onSelect: () => openItem(item, 'edit'),
-                                }
-                              : null,
-                            canDelete && item.usageCount === 0 && !item.isSystem
-                              ? {
-                                  key: 'delete',
-                                  label: 'Delete',
-                                  icon: <ActionIcon icon={Delete02Icon} />,
-                                  danger: true,
-                                  onSelect: () => {
-                                    askDelete(item)
-                                  },
-                                }
-                              : null,
-                          ] satisfies Array<RowActionItem | null>
-                        ).filter((item) => item !== null)}
-                      />
+                              canEdit
+                                ? {
+                                    key: 'edit',
+                                    label: 'Edit',
+                                    icon: <ActionIcon icon={PencilEdit02Icon} />,
+                                    onSelect: () => openItem(item, 'edit'),
+                                  }
+                                : null,
+                              canDelete && item.usageCount === 0 && !item.isSystem
+                                ? {
+                                    key: 'delete',
+                                    label: 'Delete',
+                                    icon: <ActionIcon icon={Delete02Icon} />,
+                                    danger: true,
+                                    onSelect: () => {
+                                      askDelete(item)
+                                    },
+                                  }
+                                : null,
+                            ] satisfies Array<RowActionItem | null>
+                          ).filter((item) => item !== null)}
+                        />
+                      )}
                     </td>
                   </tr>
                 ))
@@ -1065,6 +1240,21 @@ export default function MasterDataItemsPage() {
             </tbody>
           </table>
         </Spin>
+        {items.length > 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
+            <span className="text-[0.82rem] text-text-muted">
+              Showing {(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, items.length)} of{' '}
+              {items.length}
+            </span>
+            <Pagination
+              current={safePage}
+              pageSize={PAGE_SIZE}
+              total={items.length}
+              showSizeChanger={false}
+              onChange={(next) => setPage(next)}
+            />
+          </div>
+        ) : null}
       </section>
 
       {formOpen
@@ -1080,7 +1270,13 @@ export default function MasterDataItemsPage() {
               >
                 <div className={`${modalHeader}`}>
                   <h3 id="md-modal-title">
-                    {formMode === 'create' ? `Add ${category?.name || ''}` : `Edit ${category?.name || ''}`}
+                    {category?.extraFields === 'conversationChannel'
+                      ? formMode === 'create'
+                        ? 'Add Note Channel'
+                        : 'Edit Note Channel'
+                      : formMode === 'create'
+                        ? `Add ${category?.name || ''}`
+                        : `Edit ${category?.name || ''}`}
                   </h3>
                   <PrimaryButton
                     type="button"
@@ -1091,6 +1287,94 @@ export default function MasterDataItemsPage() {
                 </div>
                 <form className={`${adminForm}`} onSubmit={(event) => void saveItem(event)}>
                   <fieldset className={`${adminFormFields}`} disabled={formSaving}>
+                    {category?.extraFields === 'conversationChannel' ? (
+                      <>
+                        <label>
+                          <FieldLabel required>Channel Name</FieldLabel>
+                          <FormInput
+                            value={form.name}
+                            onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+                            required
+                          />
+                        </label>
+                        <label>
+                          Sort Order (SL)
+                          <FormInputNumber
+                            min={0}
+                            className="w-full"
+                            value={form.sortOrder}
+                            onChange={(value) =>
+                              setForm((current) => ({
+                                ...current,
+                                sortOrder: typeof value === 'number' ? value : 0,
+                              }))
+                            }
+                          />
+                        </label>
+                        <label>
+                          <span className="inline-flex items-center gap-1.5">
+                            Icon class
+                            <Tooltip title="Font Awesome class, e.g. fa-solid fa-phone or fa-brands fa-whatsapp">
+                              <span className="inline-flex text-[#8b97a8]">
+                                <HugeiconsIcon icon={InformationCircleIcon} size={14} color="currentColor" strokeWidth={1.8} />
+                              </span>
+                            </Tooltip>
+                          </span>
+                          <span className="mt-1.5 flex items-center gap-2">
+                            <FaIconPreview iconClass={form.icon} />
+                            <FormInput
+                              className="flex-1"
+                              value={form.icon}
+                              placeholder="fa-solid fa-phone"
+                              onChange={(event) =>
+                                setForm((current) => ({ ...current, icon: event.target.value }))
+                              }
+                            />
+                          </span>
+                        </label>
+                        <label className={`${adminFormSpan}`}>
+                          <span className="inline-flex items-center gap-1.5">
+                            Description
+                            <Tooltip title="Short helper text shown with this channel">
+                              <span className="inline-flex text-[#8b97a8]">
+                                <HugeiconsIcon icon={InformationCircleIcon} size={14} color="currentColor" strokeWidth={1.8} />
+                              </span>
+                            </Tooltip>
+                          </span>
+                          <FormTextArea
+                            rows={4}
+                            value={form.description}
+                            maxLength={NOTE_CHANNEL_DESCRIPTION_MAX}
+                            showCount
+                            placeholder="e.g. Quick updates and follow-ups on WhatsApp"
+                            onChange={(event) =>
+                              setForm((current) => ({
+                                ...current,
+                                description: event.target.value.slice(0, NOTE_CHANNEL_DESCRIPTION_MAX),
+                              }))
+                            }
+                          />
+                        </label>
+                        <label>
+                          <FieldLabel required>Status</FieldLabel>
+                          <div className="mt-1.5">
+                            <FormSwitch
+                              checked={form.status === 'ACTIVE'}
+                              checkedChildren="Active"
+                              unCheckedChildren="Inactive"
+                              disabled={Boolean(selected?.isSystem)}
+                              onChange={(checked) =>
+                                setForm((current) => ({
+                                  ...current,
+                                  status: checked ? 'ACTIVE' : 'INACTIVE',
+                                }))
+                              }
+                            />
+                          </div>
+                        </label>
+                      </>
+                    ) : (
+                      <>
                     <label>
                       <FieldLabel required>Name</FieldLabel>
                       <FormInput
@@ -1232,6 +1516,8 @@ export default function MasterDataItemsPage() {
                         }
                       />
                     </label>
+                      </>
+                    )}
                   </fieldset>
                   {selected && formMode !== 'create' ? (
                     <p className={`${muted}`}>
@@ -1243,7 +1529,17 @@ export default function MasterDataItemsPage() {
                   <div className={`${formActions}`}>
                     <PrimaryButton type="button" variant="outline" onClick={() => setFormOpen(false)} disabled={formSaving} label="Cancel" />
                     {(selected ? canEdit : canCreate) ? (
-                      <PrimaryButton type="submit" loading={formSaving} label="Save" />
+                      <PrimaryButton
+                        type="submit"
+                        loading={formSaving}
+                        label={
+                          category?.extraFields === 'conversationChannel'
+                            ? formMode === 'create'
+                              ? 'Create'
+                              : 'Update'
+                            : 'Save'
+                        }
+                      />
                     ) : null}
                   </div>
                 </form>
@@ -1282,36 +1578,60 @@ export default function MasterDataItemsPage() {
                 ) : history.length === 0 ? (
                   <p className={`${muted} m-0 flex min-h-60 items-center justify-center`}>No history yet.</p>
                 ) : (
-                  <div className="grid min-h-0 flex-1 grid-cols-1 min-[721px]:grid-cols-[250px_minmax(0,1fr)]">
-                    <aside className="overflow-auto border-r border-border px-3 py-4 pl-4 [&_h4]:mb-3 [&_h4]:mt-0 [&_h4]:text-[0.72rem] [&_h4]:font-bold [&_h4]:tracking-[0.04em] [&_h4]:text-[#8b97a8] [&_h4]:uppercase [&_ol]:m-0 [&_ol]:list-none [&_ol]:p-0 [&_li]:relative [&_li]:pb-2 [&_li:not(:last-child)]:before:absolute [&_li:not(:last-child)]:before:top-[38px] [&_li:not(:last-child)]:before:bottom-0 [&_li:not(:last-child)]:before:left-[19px] [&_li:not(:last-child)]:before:w-px [&_li:not(:last-child)]:before:bg-border-subtle [&_li:not(:last-child)]:before:content-['']" aria-label="Timeline">
-                      <h4>Timeline</h4>
-                      <ol>
-                        {history.map((entry) => {
+                  <div className="grid min-h-0 flex-1 grid-cols-1 min-[721px]:grid-cols-[280px_minmax(0,1fr)]">
+                    <aside
+                      className="overflow-auto border-r border-border bg-[color-mix(in_srgb,#f8fafc_85%,var(--color-surface))] px-3 py-4 dark:bg-[color-mix(in_srgb,var(--color-text)_3%,var(--color-surface))]"
+                      aria-label="Timeline"
+                    >
+                      <h4 className="mb-3 mt-0 px-1 text-[0.72rem] font-bold tracking-[0.06em] text-[#8b97a8] uppercase">
+                        Timeline
+                      </h4>
+                      <ol className="relative m-0 list-none p-0">
+                        {history.map((entry, index) => {
                           const parsed = parseHistoryMetadata(entry.metadata)
                           const kind = historyKind(entry.action, parsed.changes)
                           const active = entry.id === historyEntryId
+                          const isLast = index === history.length - 1
                           return (
-                            <li key={entry.id}>
-                              <PrimaryButton
+                            <li key={entry.id} className="relative">
+                              {!isLast ? (
+                                <span
+                                  className="absolute top-8 bottom-0 left-[15px] w-px bg-border"
+                                  aria-hidden
+                                />
+                              ) : null}
+                              <button
                                 type="button"
                                 className={`${mdHistoryEvent} ${active ? mdHistoryEventActive : ''}`}
-                                onClick={() => setHistoryEntryId(entry.id)} label={<><span
-                                  className={`mt-1 inline-flex size-2.5 shrink-0 items-center justify-center rounded-full ${historyKindTone[kind] || 'bg-[#94a3b8]'}`}
+                                onClick={() => setHistoryEntryId(entry.id)}
+                              >
+                                <span
+                                  className={`relative z-[1] mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-full ${historyKindTone[kind] || 'bg-[#94a3b8] text-white'}`}
                                   aria-hidden
                                 >
-                                  <HugeiconsIcon icon={historyKindIcon(kind)} size={12} color="currentColor" strokeWidth={2} />
+                                  <HugeiconsIcon icon={historyKindIcon(kind)} size={14} color="currentColor" strokeWidth={2} />
                                 </span>
-                                <span className="min-w-0 flex-1 [&_strong]:block [&_strong]:text-[0.88rem] [&_time]:text-[0.72rem] [&_time]:text-text-muted">
-                                  <strong>{historyTitle(kind)}</strong>
-                                  <time dateTime={new Date(entry.createdAt).toISOString()}>
+                                <span className="min-w-0 flex-1 pt-0.5">
+                                  <strong className={`block text-[0.88rem] leading-tight ${active ? 'text-text' : 'text-text-strong'}`}>
+                                    {historyTitle(kind)}
+                                  </strong>
+                                  <time
+                                    className="mt-0.5 block text-[0.72rem] leading-snug text-text-muted"
+                                    dateTime={new Date(entry.createdAt).toISOString()}
+                                  >
                                     {formatHistoryDate(entry.createdAt)}
                                   </time>
-                                  <span className="mt-1 flex items-center gap-1.5 text-[0.75rem] text-text-muted [&_em]:rounded-full [&_em]:bg-[color-mix(in_srgb,#2f6fed_12%,var(--color-surface))] [&_em]:px-1.5 [&_em]:py-0.5 [&_em]:text-[0.7rem] [&_em]:not-italic dark:[&_em]:bg-[color-mix(in_srgb,#2f6fed_18%,var(--color-surface))]">
+                                  <span className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[0.74rem] text-text-muted">
                                     <HugeiconsIcon icon={UserIcon} size={12} color="currentColor" strokeWidth={1.8} />
-                                    {entry.user?.fullName || 'System'}
-                                    <em>{entry.user?.role || (entry.user ? 'User' : 'System')}</em>
+                                    <span className="truncate font-medium text-text-strong/80">
+                                      {entry.user?.fullName || 'System'}
+                                    </span>
+                                    <em className={mdHistoryRole}>
+                                      {entry.user?.role || (entry.user ? 'User' : 'System')}
+                                    </em>
                                   </span>
-                                </span></>} />
+                                </span>
+                              </button>
                             </li>
                           )
                         })}
@@ -1325,40 +1645,60 @@ export default function MasterDataItemsPage() {
                       const isLatest = active.id === history[0]?.id
                       const roleLabel = active.user?.role || (active.user ? 'User' : 'System')
                       return (
-                        <div className="flex min-h-0 flex-col overflow-auto p-4">
-                          <div className="mb-4 flex items-start justify-between gap-3">
-                            <div className="flex min-w-0 items-start gap-3 [&_strong]:block [&_strong]:text-[0.95rem] [&_p]:mt-1 [&_p]:mb-0 [&_p]:text-[0.8rem] [&_p]:text-text-muted [&_p_span]:text-text-faint">
-                              <span className={`${mdHistoryDetailIcon} ${historyKindTone[kind] || ''}`} aria-hidden>
-                                <HugeiconsIcon icon={historyKindIcon(kind)} size={16} color="currentColor" strokeWidth={1.8} />
+                        <div className="flex min-h-0 flex-col gap-5 overflow-auto p-5">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-start gap-3.5">
+                              <span
+                                className={`${mdHistoryDetailIcon} ${historyKindToneSoft[kind] || ''}`}
+                                aria-hidden
+                              >
+                                <HugeiconsIcon icon={historyKindIcon(kind)} size={18} color="currentColor" strokeWidth={1.8} />
                               </span>
-                              <div>
-                                <strong>{historyTitle(kind)}</strong>
-                                <p>
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <strong className="text-[1.05rem] leading-tight tracking-[-0.01em] text-text">
+                                    {historyTitle(kind)}
+                                  </strong>
+                                  {isLatest ? (
+                                    <span className="rounded-md bg-[color-mix(in_srgb,var(--color-primary)_12%,var(--color-surface))] px-1.5 py-0.5 text-[0.68rem] font-bold tracking-[0.02em] text-primary uppercase">
+                                      Latest
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <p className="mt-1.5 mb-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.8rem] text-text-muted">
                                   <time dateTime={new Date(active.createdAt).toISOString()}>
                                     {formatHistoryDate(active.createdAt)}
                                   </time>
-                                  <span>
+                                  <span className="text-border" aria-hidden>
+                                    ·
+                                  </span>
+                                  <span className="inline-flex items-center gap-1.5">
                                     <HugeiconsIcon icon={UserIcon} size={13} color="currentColor" strokeWidth={1.8} />
-                                    {active.user?.fullName || 'System'}
-                                    <em className={mdHistoryRole}>
-                                      {roleLabel}
-                                    </em>
+                                    <span className="font-medium text-text-strong/85">
+                                      {active.user?.fullName || 'System'}
+                                    </span>
+                                    <em className={mdHistoryRole}>{roleLabel}</em>
                                   </span>
                                 </p>
                               </div>
                             </div>
-                            {isLatest ? <span className="rounded-full bg-[color-mix(in_srgb,var(--color-primary)_12%,var(--color-surface))] px-2 py-0.5 text-[0.72rem] font-semibold text-primary">Latest</span> : null}
                           </div>
-                          <HistoryFieldList title="Changes Made" rows={rows} valueKey="to" />
-                          {kind === 'created' ? null : (
-                            <HistoryFieldList title="Previous Value" rows={rows} valueKey="from" />
-                          )}
-                          <section className="rounded-2xl border border-border bg-surface p-4 shadow-soft [&_h4]:mb-3 [&_h4]:mt-0 [&_h4]:text-[0.72rem] [&_h4]:font-bold [&_h4]:tracking-[0.04em] [&_h4]:text-[#8b97a8] [&_h4]:uppercase [&_h4]:mb-2 [&_h4]:mt-0 [&_h4]:text-[0.72rem] [&_h4]:font-bold [&_h4]:tracking-[0.04em] [&_h4]:text-[#8b97a8] [&_h4]:uppercase [&_p]:m-0 [&_p]:text-[0.88rem] [&_p]:text-text">
-                            <h4>
-                              <HugeiconsIcon icon={Note01Icon} size={16} color="currentColor" strokeWidth={1.6} />
+
+                          <div className="grid gap-4">
+                            <HistoryFieldList title="Changes Made" rows={rows} valueKey="to" />
+                            {kind === 'created' ? null : (
+                              <HistoryFieldList title="Previous Value" rows={rows} valueKey="from" />
+                            )}
+                          </div>
+
+                          <section className="rounded-2xl border border-dashed border-border bg-[color-mix(in_srgb,var(--color-text)_2%,var(--color-surface))] px-4 py-3.5">
+                            <h4 className="m-0 mb-1.5 inline-flex items-center gap-1.5 text-[0.72rem] font-bold tracking-[0.06em] text-[#8b97a8] uppercase">
+                              <HugeiconsIcon icon={Note01Icon} size={14} color="currentColor" strokeWidth={1.6} />
                               Additional Information
                             </h4>
-                            <p>{parsed.notes || 'No additional notes for this change.'}</p>
+                            <p className={`m-0 text-[0.88rem] leading-relaxed ${parsed.notes ? 'text-text' : 'text-text-muted'}`}>
+                              {parsed.notes || 'No additional notes for this change.'}
+                            </p>
                           </section>
                         </div>
                       )
@@ -1374,45 +1714,14 @@ export default function MasterDataItemsPage() {
           )
         : null}
 
-      {deleteTarget
-        ? createPortal(
-            <div
-              className={`${modalBackdrop}`}
-              onClick={() => {
-                if (!deleteSaving) {
-                  setDeleteTarget(null)
-                }
-              }}
-            >
-              <div
-                className={`${modalPanel} ${statusConfirmPanel}`}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="md-delete-title"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className={`${modalHeader}`}>
-                  <h3 id="md-delete-title">Delete {entityName}?</h3>
-                  <PrimaryButton
-                    type="button"
-                    className={`${modalClose}`}
-                    aria-label="Close"
-                    disabled={deleteSaving}
-                    onClick={() => setDeleteTarget(null)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
-                </div>
-                <p className={`${statusConfirmCopy}`}>
-                  Are you sure you want to delete <strong>{deleteTarget.name}</strong>? This action cannot be
-                  undone.
-                </p>
-                <div className={`${formActions}`}>
-                  <PrimaryButton loading={deleteSaving} className="ui-btn-danger" onClick={() => void confirmDelete()} label="Delete" />
-                  <PrimaryButton type="button" variant="outline" disabled={deleteSaving} onClick={() => setDeleteTarget(null)} label="Cancel" />
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      <DeleteModal
+        open={Boolean(deleteTarget)}
+        loading={deleteSaving}
+        title={`Delete ${entityName}?`}
+        itemName={deleteTarget?.name || `this ${entityName.toLowerCase()}`}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => void confirmDelete()}
+      />
 
       {importOpen && importResult
         ? createPortal(

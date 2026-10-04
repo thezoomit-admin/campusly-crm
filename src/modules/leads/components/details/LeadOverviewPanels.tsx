@@ -4,7 +4,6 @@ import {
   Calendar03Icon,
   Call02Icon,
   CheckmarkCircle02Icon,
-  Clock01Icon,
   Flag01Icon,
   Globe02Icon,
   Location01Icon,
@@ -17,7 +16,6 @@ import {
 import type { MasterOption } from '../../hooks/useLeadMasterOptions'
 import type { LeadRecord } from '../../types'
 import {
-  formatDisplayDateTime,
   formatDob,
   optionLabel,
   stageBadgeClass,
@@ -52,23 +50,18 @@ export default function LeadOverviewPanels({
 
   return (
     <div className="grid gap-4">
-      <LeadSectionCard title="Lead Information">
+      <LeadSectionCard title="Personal Information">
         <div className={GRID}>
           <LeadInfoField icon={UserIcon} label="Full Name" value={lead.name} />
+          <LeadInfoField icon={Mail01Icon} label="Email" value={lead.email} />
           <LeadInfoField icon={Call02Icon} label="Phone Number" value={lead.phone} />
           <LeadInfoField
             icon={WhatsappIcon}
             label="WhatsApp Number"
             value={lead.whatsappSameAsPhone ? 'Same as phone' : lead.whatsapp}
           />
-          <LeadInfoField icon={Mail01Icon} label="Email" value={lead.email} />
           <LeadInfoField icon={Calendar03Icon} label="Date of Birth" value={formatDob(lead.dateOfBirth)} />
           <LeadInfoField icon={Location01Icon} label="Current Location" value={lead.currentLocation} />
-          <LeadInfoField icon={Globe02Icon} label="Lead Source" value={lead.source || optionLabel(options.source, lead.sourceCode)} />
-          <LeadInfoField icon={Flag01Icon} label="Campaign" value={lead.campaign} />
-          <LeadInfoField icon={Globe02Icon} label="Landing Page" value={lead.landingPageUrl} />
-          <LeadInfoField icon={Clock01Icon} label="Last Enquiry" value={formatDisplayDateTime(lead.lastEnquiryAt)} />
-          <LeadInfoField icon={Clock01Icon} label="Created On" value={formatDisplayDateTime(lead.createdAt)} />
           <LeadInfoField icon={UserIcon} label="Assigned Counsellor" value={lead.owner?.name} empty="Unassigned" />
           <LeadInfoField
             icon={CheckmarkCircle02Icon}
@@ -108,15 +101,15 @@ export default function LeadOverviewPanels({
         </div>
       </LeadSectionCard>
 
-      <LeadSectionCard title="Notes">
+      <div className="grid gap-4 content-start">
+        <LeadMarketingPanel lead={lead} canChangeSource={canChangeSource} canChangeCampaign={canChangeCampaign} />
         {notes ? (
-          <p className="m-0 whitespace-pre-wrap text-[0.92rem] text-[#17324f] dark:text-text-strong">{notes}</p>
-        ) : (
-          <p className="m-0 text-[0.88rem] text-[#9aa6b2] dark:text-text-faint">No notes yet.</p>
-        )}
-      </LeadSectionCard>
-      <LeadMarketingPanel lead={lead} canChangeSource={canChangeSource} canChangeCampaign={canChangeCampaign} />
-      <LeadMetaCampaignHistory leadId={lead.id} />
+          <LeadSectionCard title="Notes">
+            <p className="m-0 whitespace-pre-wrap text-[0.92rem] text-[#17324f] dark:text-text-strong">{notes}</p>
+          </LeadSectionCard>
+        ) : null}
+        <LeadMetaCampaignHistory leadId={lead.id} />
+      </div>
     </div>
   )
 }

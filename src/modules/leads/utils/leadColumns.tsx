@@ -1,7 +1,7 @@
 import type { ColumnsType } from 'antd/es/table'
 import type { LeadRow } from '../types'
 import LeadTableActions from '../components/LeadTableActions'
-import { leadInitials, priorityBadgeClass, stageBadgeClass } from './leadDetails'
+import { leadInitials, stageBadgeClass } from './leadDetails'
 import { countryFlag, emptyLeadValue, formatLeadCreatedOn, leadAvatarTone, leadDisplaySubtitle } from './leadList'
 
 type LeadColumnOptions = {
@@ -9,6 +9,19 @@ type LeadColumnOptions = {
   showStatus?: boolean
   onView: (row: LeadRow) => void
   onEdit: (row: LeadRow) => void
+}
+
+function followUpClass(value?: string | null) {
+  if (!value) return 'text-text-faint'
+  const due = new Date(value)
+  if (Number.isNaN(due.getTime())) return 'text-text-faint'
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const dueDay = new Date(due)
+  dueDay.setHours(0, 0, 0, 0)
+  if (dueDay.getTime() < today.getTime()) return 'text-[#e11d48]'
+  if (dueDay.getTime() === today.getTime()) return 'text-[#d97706]'
+  return 'text-text'
 }
 
 export function getLeadColumns({ canEdit, showStatus = true, onView, onEdit }: LeadColumnOptions): ColumnsType<LeadRow> {
@@ -90,15 +103,19 @@ export function getLeadColumns({ canEdit, showStatus = true, onView, onEdit }: L
 
   columns.push(
     {
-      title: 'Priority',
-      dataIndex: 'priority',
-      key: 'priority',
-      width: 100,
-      render: (value: string) => (
-        <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${priorityBadgeClass(value)}`}>
-          {emptyLeadValue(value)}
-        </span>
-      ),
+      title: 'Follow-up',
+      dataIndex: 'nextFollowUpAt',
+      key: 'nextFollowUpAt',
+      width: 140,
+      render: (value: string | null) => {
+        const next = formatLeadCreatedOn(value)
+        return (
+          <div className={`leading-tight ${followUpClass(value)}`}>
+            <p className="m-0 text-[13px]">{next.date}</p>
+            {next.time ? <p className="m-0 text-[11px] opacity-80">{next.time}</p> : null}
+          </div>
+        )
+      },
     },
     {
       title: 'Assigned To',

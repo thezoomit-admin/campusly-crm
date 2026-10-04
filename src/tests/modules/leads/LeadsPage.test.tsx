@@ -17,7 +17,7 @@ vi.mock('@/redux/features/masterData/masterDataApi', () => ({
 vi.mock('@/modules/leads/api/leadsApi', () => ({
   useListLeadsQuery: () => ({
     data: {
-      items: [{ id: '1', code: 'L-1001', name: 'Aisha Rahman', phone: '01711', email: 'aisha@example.com', subtitle: 'IELTS 6.5 | BSc Computer Science', country: 'UK', source: 'Web', owner: 'Sarah', status: 'New', priority: 'High', updated: '1h ago', createdAt: '2026-04-28T10:24:00.000Z' }],
+      items: [{ id: '1', code: 'L-1001', name: 'Aisha Rahman', phone: '01711', email: 'aisha@example.com', subtitle: 'IELTS 6.5 | BSc Computer Science', country: 'UK', source: 'Web', owner: 'Sarah', status: 'New', priority: 'High', nextFollowUpAt: '2026-04-30T10:00:00.000Z', updated: '1h ago', createdAt: '2026-04-28T10:24:00.000Z' }],
       total: 1,
       summary: {
         total: 1,

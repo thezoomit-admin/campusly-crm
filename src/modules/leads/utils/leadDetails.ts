@@ -1,34 +1,86 @@
 import type { LeadRecord } from '../types'
 import type { MasterOption } from '../hooks/useLeadMasterOptions'
 
-export type LeadTabKey =
+export type LeadPrimaryTabKey =
   | 'overview'
   | 'academic'
-  | 'study'
   | 'documents'
+  | 'counselling'
+  | 'services'
+  | 'payments'
+  | 'more'
+
+export type LeadMoreTabKey =
+  | 'activities'
+  | 'notes'
+  | 'history'
   | 'communications'
   | 'whatsapp'
   | 'email'
-  | 'activities'
   | 'followups'
-  | 'notes'
-  | 'services'
-  | 'payments'
 
-export const LEAD_TABS: Array<{ key: LeadTabKey; label: string }> = [
+/** @deprecated Prefer LeadPrimaryTabKey / LeadMoreTabKey — kept for gradual migration */
+export type LeadTabKey = LeadPrimaryTabKey | LeadMoreTabKey | 'study'
+
+export const LEAD_PRIMARY_TABS: Array<{ key: LeadPrimaryTabKey; label: string }> = [
   { key: 'overview', label: 'Overview' },
   { key: 'academic', label: 'Academic' },
-  { key: 'study', label: 'Study & Visa' },
   { key: 'documents', label: 'Documents' },
+  { key: 'counselling', label: 'Counselling' },
+  { key: 'services', label: 'Service & Package' },
+  { key: 'payments', label: 'Payments' },
+  { key: 'more', label: 'More' },
+]
+
+export const LEAD_MORE_TABS: Array<{ key: LeadMoreTabKey; label: string }> = [
+  { key: 'activities', label: 'Activities' },
+  { key: 'notes', label: 'Notes' },
+  { key: 'history', label: 'History' },
   { key: 'communications', label: 'Communication' },
   { key: 'whatsapp', label: 'WhatsApp' },
   { key: 'email', label: 'Email' },
-  { key: 'activities', label: 'Activities' },
   { key: 'followups', label: 'Follow-ups' },
-  { key: 'notes', label: 'Notes' },
-  { key: 'services', label: 'Service & Charges' },
-  { key: 'payments', label: 'Payment History' },
 ]
+
+/** @deprecated Use LEAD_PRIMARY_TABS + LEAD_MORE_TABS */
+export const LEAD_TABS = [
+  ...LEAD_PRIMARY_TABS.filter((t) => t.key !== 'more'),
+  ...LEAD_MORE_TABS,
+] as Array<{ key: LeadTabKey; label: string }>
+
+export const LEAD_JOURNEY_STAGES = [
+  { code: 'NEW', label: 'New' },
+  { code: 'CONTACTED', label: 'Contacted' },
+  { code: 'QUALIFIED', label: 'Qualified' },
+  { code: 'COUNSELLING', label: 'Counselling' },
+  { code: 'OFFERED', label: 'Offered' },
+  { code: 'CONVERTED', label: 'Converted' },
+  { code: 'FILE_OPENING_PENDING', label: 'File Opening Pending' },
+  { code: 'FILE_OPENED', label: 'File Opened' },
+] as const
+
+export function journeyStageIndex(statusCode?: string | null, statusName?: string | null) {
+  const code = (statusCode || '').toUpperCase()
+  const byCode = LEAD_JOURNEY_STAGES.findIndex((stage) => stage.code === code)
+  if (byCode >= 0) return byCode
+  const name = (statusName || '').trim().toLowerCase()
+  const byName = LEAD_JOURNEY_STAGES.findIndex((stage) => stage.label.toLowerCase() === name)
+  return byName >= 0 ? byName : -1
+}
+
+export function followUpCountdownParts(dueAt?: string | null) {
+  if (!dueAt) return null
+  const due = new Date(dueAt).getTime()
+  if (Number.isNaN(due)) return null
+  const overdue = due < Date.now()
+  const diff = Math.max(0, due - Date.now())
+  const totalSecs = Math.floor(diff / 1000)
+  const days = Math.floor(totalSecs / (60 * 60 * 24))
+  const hours = Math.floor((totalSecs % (60 * 60 * 24)) / (60 * 60))
+  const mins = Math.floor((totalSecs % (60 * 60)) / 60)
+  const secs = totalSecs % 60
+  return { days, hours, mins, secs, overdue }
+}
 
 export function leadInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean)

@@ -49,7 +49,7 @@ import { Spin } from 'antd'
 import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import { PrimaryButton } from '@/components/ui'
-import { FormDatePicker, FormInput, FormSelect, FormSwitch } from '@/components/common/Forms'
+import { FormDatePicker, FormInput, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
@@ -148,6 +148,9 @@ function crmAccessLabel(access: EmployeeCrmAccess) {
   if (access === 'ENABLED') {
     return 'Enabled'
   }
+  if (access === 'INVITED') {
+    return 'Invited'
+  }
   if (access === 'DISABLED') {
     return 'Disabled'
   }
@@ -192,7 +195,7 @@ export default function EmployeesPage() {
   const location = useLocation()
   const canCreate = hasPermission(auth, 'employee:create')
   const canEdit = hasPermission(auth, 'employee:edit')
-  const canDocuments = hasPermission(auth, 'document:view')
+  const canManageEmployeeDocs = hasPermission(auth, 'employee_document:manage')
 
   const [employees, setEmployees] = useState<EmployeeRecord[]>([])
   const [options, setOptions] = useState<EmployeeOptions>(EMPTY_OPTIONS)
@@ -202,7 +205,16 @@ export default function EmployeesPage() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [statusPrompt, setStatusPrompt] = useState<{ employee: EmployeeRecord; nextStatusId: string } | null>(null)
+  type StatusPrompt = {
+    employee: EmployeeRecord
+    nextStatusId: string
+    resignationDate: string
+    terminationDate: string
+    terminationReason: string
+    terminationRemarks: string
+    rejoiningDate: string
+  }
+  const [statusPrompt, setStatusPrompt] = useState<StatusPrompt | null>(null)
   const [statusSaving, setStatusSaving] = useState(false)
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
   const [statusFlashId, setStatusFlashId] = useState<string | null>(null)
@@ -335,8 +347,30 @@ export default function EmployeesPage() {
     setFilters(EMPTY_FILTERS)
   }
 
+  function openStatusPrompt(employee: EmployeeRecord, nextStatusId?: string) {
+    setStatusPrompt({
+      employee,
+      nextStatusId:
+        nextStatusId ||
+        options.employmentStatuses.find((item) => item.id !== employee.employmentStatus?.id)?.id ||
+        employee.employmentStatus?.id ||
+        '',
+      resignationDate: employee.resignationDate || dayjs().format('YYYY-MM-DD'),
+      terminationDate: employee.terminationDate || dayjs().format('YYYY-MM-DD'),
+      terminationReason: employee.terminationReason || '',
+      terminationRemarks: employee.terminationRemarks || '',
+      rejoiningDate: employee.rejoiningDate || dayjs().format('YYYY-MM-DD'),
+    })
+  }
+
   async function toggleEmploymentStatus(employee: EmployeeRecord, next: 'ACTIVE' | 'INACTIVE') {
     if (statusUpdatingId || statusSaving) {
+      return
+    }
+    const previousCode = employee.employmentStatus?.code || ''
+    if (next === 'ACTIVE' && ['RESIGNED', 'TERMINATED', 'INACTIVE'].includes(previousCode)) {
+      const activeId = options.employmentStatuses.find((item) => item.code === 'ACTIVE')?.id
+      openStatusPrompt(employee, activeId)
       return
     }
     setStatusUpdatingId(employee.id)
@@ -360,7 +394,14 @@ export default function EmployeesPage() {
     try {
       const data = await updateEmployeeStatus({
         id: statusPrompt.employee.id,
-        body: { employmentStatusId: statusPrompt.nextStatusId },
+        body: {
+          employmentStatusId: statusPrompt.nextStatusId,
+          resignationDate: statusPrompt.resignationDate || undefined,
+          terminationDate: statusPrompt.terminationDate || undefined,
+          terminationReason: statusPrompt.terminationReason || undefined,
+          terminationRemarks: statusPrompt.terminationRemarks || undefined,
+          rejoiningDate: statusPrompt.rejoiningDate || undefined,
+        },
       }).unwrap()
       const nextName = data.employee.employmentStatus?.name || 'updated'
       showToast(`${statusPrompt.employee.fullName} is now ${nextName}.`)
@@ -376,6 +417,11 @@ export default function EmployeesPage() {
   const promptStatus = statusPrompt
     ? options.employmentStatuses.find((item) => item.id === statusPrompt.nextStatusId)
     : null
+  const promptPreviousCode = statusPrompt?.employee.employmentStatus?.code || ''
+  const promptIsRejoining =
+    Boolean(promptStatus) &&
+    ['RESIGNED', 'TERMINATED', 'INACTIVE'].includes(promptPreviousCode) &&
+    ['ACTIVE', 'PROBATION'].includes(promptStatus?.code || '')
 
   return (
     <div className={`${adminPage}`}>
@@ -604,24 +650,16 @@ export default function EmployeesPage() {
                                   key: 'status',
                                   label: 'Change Status',
                                   icon: <ActionIcon icon={UserCheck01Icon} />,
-                                  onSelect: () => {
-                                    setStatusPrompt({
-                                      employee,
-                                      nextStatusId:
-                                        options.employmentStatuses.find((item) => item.id !== employee.employmentStatus?.id)?.id ||
-                                        employee.employmentStatus?.id ||
-                                        '',
-                                    })
-                                  },
+                                  onSelect: () => openStatusPrompt(employee),
                                 }
                               : null,
-                            canDocuments
+                            canManageEmployeeDocs
                               ? {
                                   key: 'documents',
                                   label: 'Manage Documents',
                                   icon: <ActionIcon icon={File01Icon} />,
                                   onSelect: () => {
-                                    navigate(`/documents?employeeId=${employee.id}`)
+                                    navigate(`/employees/${employee.id}/edit`)
                                   },
                                 }
                               : null,
@@ -678,6 +716,70 @@ export default function EmployeesPage() {
                     }
                   />
                 </label>
+                {promptStatus?.code === 'RESIGNED' ? (
+                  <label className={`${adminForm}`}>
+                    <FieldLabel required>Resignation date</FieldLabel>
+                    <FormDatePicker
+                      value={toDayjs(statusPrompt.resignationDate)}
+                      onChange={(value) =>
+                        setStatusPrompt((current) =>
+                          current ? { ...current, resignationDate: toDateString(value) } : current,
+                        )
+                      }
+                    />
+                  </label>
+                ) : null}
+                {promptStatus?.code === 'TERMINATED' ? (
+                  <>
+                    <label className={`${adminForm}`}>
+                      <FieldLabel required>Termination date</FieldLabel>
+                      <FormDatePicker
+                        value={toDayjs(statusPrompt.terminationDate)}
+                        onChange={(value) =>
+                          setStatusPrompt((current) =>
+                            current ? { ...current, terminationDate: toDateString(value) } : current,
+                          )
+                        }
+                      />
+                    </label>
+                    <label className={`${adminForm}`}>
+                      <FieldLabel required>Termination reason</FieldLabel>
+                      <FormInput
+                        value={statusPrompt.terminationReason}
+                        onChange={(event) =>
+                          setStatusPrompt((current) =>
+                            current ? { ...current, terminationReason: event.target.value } : current,
+                          )
+                        }
+                      />
+                    </label>
+                    <label className={`${adminForm}`}>
+                      <FieldLabel>Remarks</FieldLabel>
+                      <FormTextArea
+                        rows={3}
+                        value={statusPrompt.terminationRemarks}
+                        onChange={(event) =>
+                          setStatusPrompt((current) =>
+                            current ? { ...current, terminationRemarks: event.target.value } : current,
+                          )
+                        }
+                      />
+                    </label>
+                  </>
+                ) : null}
+                {promptIsRejoining ? (
+                  <label className={`${adminForm}`}>
+                    <FieldLabel required>Rejoining date</FieldLabel>
+                    <FormDatePicker
+                      value={toDayjs(statusPrompt.rejoiningDate)}
+                      onChange={(value) =>
+                        setStatusPrompt((current) =>
+                          current ? { ...current, rejoiningDate: toDateString(value) } : current,
+                        )
+                      }
+                    />
+                  </label>
+                ) : null}
                 <p className={`${statusConfirmMeta}`}>
                   Current status: <strong>{statusPrompt.employee.employmentStatus?.name || '—'}</strong>
                   {promptStatus ? (
@@ -686,6 +788,10 @@ export default function EmployeesPage() {
                       New status: <strong>{promptStatus.name}</strong>
                     </>
                   ) : null}
+                  {['INACTIVE', 'RESIGNED', 'TERMINATED'].includes(promptStatus?.code || '')
+                    ? ' · Linked CRM login will be disabled.'
+                    : null}
+                  {promptIsRejoining ? ' · Employee ID stays the same. CRM login may be restored.' : null}
                 </p>
                 <div className={`${formActions}`}>
                   <PrimaryButton loading={statusSaving} disabled={!statusPrompt.nextStatusId} onClick={() => void changeStatus()} label="Change Status" />

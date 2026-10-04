@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom'
 import { Breadcrumb, Skeleton } from 'antd'
+import dayjs from 'dayjs'
 import { toast } from 'react-toastify'
 import { PrimaryButton } from '@/components/ui'
+import { DeleteModal } from '@/components/common/Modals'
 import { PageMeta } from '@/components/common/Meta'
 import { getApiError, getApiErrorFields } from '@/lib/api'
 import { hasPermission } from '../../../lib/access'
@@ -10,15 +12,19 @@ import type { AuthSession } from '../../../types'
 import { useLeadMasterOptions } from '../hooks/useLeadMasterOptions'
 import {
   useAssignLeadMutation,
+  useDeleteLeadDocumentMutation,
   useHandoverLeadMutation,
   useCloseLeadMutation,
   useGetLeadQuery,
+  useLazyFetchLeadDocumentBlobQuery,
   useListLeadAssignmentsQuery,
+  useListLeadDocumentsQuery,
   useListLeadStatusHistoryQuery,
   useReopenLeadMutation,
   useUpdateLeadMutation,
   useUpdateLeadQualificationMutation,
   useUpdateLeadStatusMutation,
+  useUploadLeadDocumentMutation,
 } from '../api/leadsApi'
 import { useCreateActivityMutation, useListActivityFeedQuery } from '@/redux/features/activities/activitiesApi'
 import { useListLeadCommunicationsQuery } from '@/modules/communications/api/communicationsApi'
@@ -44,20 +50,44 @@ import type {
   FollowUpRecord,
   RescheduleFollowUpValues,
 } from '@/modules/follow-ups/types'
-import { LEAD_TABS, type LeadTabKey } from '../utils/leadDetails'
+import type { LeadDocumentItem } from '../types'
+import { LEAD_PRIMARY_TABS, type LeadMoreTabKey, type LeadPrimaryTabKey } from '../utils/leadDetails'
 import LeadWorkspaceHeader from '../components/details/LeadWorkspaceHeader'
+import LeadJourneyBar from '../components/details/LeadJourneyBar'
 import LeadDetailsSidebar from '../components/details/LeadDetailsSidebar'
 import LeadOverviewPanels, { LeadAcademicPanel, LeadStudyVisaPanel } from '../components/details/LeadOverviewPanels'
-import { LeadActivitiesPanel, LeadCommunicationsPanel, LeadDocumentsPanel, LeadNotesPanel, LeadPaymentsPanel, LeadServicesPanel } from '../components/details/LeadTabPanels'
+import {
+  LeadActivitiesPanel,
+  LeadCommunicationsPanel,
+  LeadDocumentsPanel,
+  LeadHistoryPanel,
+  LeadMoreTabShell,
+  LeadNotesPanel,
+  LeadPaymentsPanel,
+  LeadServicesPanel,
+} from '../components/details/LeadTabPanels'
 import {
   AddActivityModal,
+  AddLeadDocumentModal,
   ChangeOwnerModal,
   HandoverLeadModal,
   ChangeStatusModal,
   CloseLeadModal,
   QualifyLeadModal,
   ReopenLeadModal,
+  ViewLeadDocumentModal,
 } from '../components/details/LeadDetailsModals'
+import type {
+  ChangeStatusEmailPayload,
+  ChangeStatusSubmitPayload,
+} from '../components/details/ChangeStatusModal'
+import {
+  useSendEmailMessageMutation,
+  useStartLeadEmailMutation,
+} from '@/modules/email/api/emailApi'
+import LogConversationWizard, {
+  type LogConversationSubmitPayload,
+} from '../components/details/LogConversationWizard'
 import { adminPage } from '../../../styles/admin'
 
 export default function LeadDetailsPage() {
@@ -66,7 +96,7 @@ export default function LeadDetailsPage() {
   const auth = useOutletContext<AuthSession>()
   const navigate = useNavigate()
   const options = useLeadMasterOptions()
-  const { data, isFetching, isError, error } = useGetLeadQuery(id, { skip: !id })
+  const { data, isFetching, isError, error, refetch: refetchLead } = useGetLeadQuery(id, { skip: !id })
   const [updateLead] = useUpdateLeadMutation()
   const [updateQualification, { isLoading: qualifying }] = useUpdateLeadQualificationMutation()
   const [updateStatus, { isLoading: statusSaving }] = useUpdateLeadStatusMutation()
@@ -79,6 +109,13 @@ export default function LeadDetailsPage() {
   const [completeFollowUp, { isLoading: completing }] = useCompleteFollowUpMutation()
   const [rescheduleFollowUp, { isLoading: rescheduling }] = useRescheduleFollowUpMutation()
   const [cancelFollowUp, { isLoading: cancelling }] = useCancelFollowUpMutation()
+  const [startLeadEmail] = useStartLeadEmailMutation()
+  const [sendEmailMessage, { isLoading: emailSending }] = useSendEmailMessageMutation()
+
+  async function refreshLeadWorkspace() {
+    if (!id) return
+    await refetchLead()
+  }
 
   const lead = data?.lead
   const canEdit = hasPermission(auth, 'lead:edit')
@@ -104,6 +141,9 @@ export default function LeadDetailsPage() {
   const canViewServices = hasPermission(auth, 'service:view')
   const canOffer = hasPermission(auth, 'service:offer')
   const canViewPayments = hasPermission(auth, 'payment:view')
+  const canUploadDocument = hasPermission(auth, 'document:upload')
+  const canDeleteDocument =
+    hasPermission(auth, 'document:delete') || hasPermission(auth, 'document:upload')
   const qualified =
     (lead?.statusCode || '').toUpperCase() === 'QUALIFIED' || (lead?.status || '').trim().toLowerCase() === 'qualified'
   const canHandover = Boolean(hasPermission(auth, 'lead:handover') && qualified && !lead?.statusChange?.locked)
@@ -120,17 +160,37 @@ export default function LeadDetailsPage() {
   const { data: followUpData, isFetching: followUpsLoading } = useListLeadFollowUpsQuery(id, {
     skip: !id || !canViewFollowUp,
   })
-  const activities = activityData?.items || []
-  const communications = communicationsData?.items || []
-  const statusHistory = historyData?.items || []
-  const assignmentHistory = assignmentData?.items || []
-  const followUps = followUpData?.items || []
+  const [uploadLeadDocument, { isLoading: documentUploading }] = useUploadLeadDocumentMutation()
+  const [deleteLeadDocument, { isLoading: documentDeleting }] = useDeleteLeadDocumentMutation()
+  const [fetchLeadDocumentBlob] = useLazyFetchLeadDocumentBlobQuery()
+  const previewUrlRef = useRef('')
 
-  const [tab, setTab] = useState<LeadTabKey>('overview')
+  const [tab, setTab] = useState<LeadPrimaryTabKey>('overview')
+  const [moreTab, setMoreTab] = useState<LeadMoreTabKey>('activities')
   const [notesDraft, setNotesDraft] = useState('')
   const [notesSaving, setNotesSaving] = useState(false)
   const [followUpOpen, setFollowUpOpen] = useState(searchParams.get('followUp') === '1')
   const [activityOpen, setActivityOpen] = useState(false)
+  const [logConversationOpen, setLogConversationOpen] = useState(false)
+  const [logConversationSaving, setLogConversationSaving] = useState(false)
+  const [documentOpen, setDocumentOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<LeadDocumentItem | null>(null)
+  const [preview, setPreview] = useState<{
+    fileName: string
+    mimeType: string
+    url: string
+    loading: boolean
+  } | null>(null)
+
+  const { data: documentsData, isFetching: documentsLoading } = useListLeadDocumentsQuery(id, {
+    skip: !id || tab !== 'documents',
+  })
+  const activities = activityData?.items || []
+  const communications = communicationsData?.items || []
+  const statusHistory = historyData?.items || []
+  const assignmentHistory = assignmentData?.items || []
+  const documents = documentsData?.items || []
+  const followUps = followUpData?.items || []
   const [qualifyOpen, setQualifyOpen] = useState(false)
   const [statusOpen, setStatusOpen] = useState(false)
   const [statusErrors, setStatusErrors] = useState<Record<string, string>>({})
@@ -178,7 +238,28 @@ export default function LeadDetailsPage() {
     if (searchParams.get('followUp') === '1') setFollowUpOpen(true)
   }, [searchParams])
 
+  useEffect(() => {
+    return () => {
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current)
+        previewUrlRef.current = ''
+      }
+    }
+  }, [])
+
   const pageTitle = useMemo(() => (lead ? `${lead.code} — ${lead.name}` : 'Lead Details'), [lead])
+
+  function releasePreviewUrl() {
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current)
+      previewUrlRef.current = ''
+    }
+  }
+
+  function closeDocumentPreview() {
+    releasePreviewUrl()
+    setPreview(null)
+  }
 
   async function saveNotes() {
     if (!canEdit || !id) return
@@ -190,6 +271,53 @@ export default function LeadDetailsPage() {
       toast.error(getApiError(error, 'Unable to save notes.'))
     } finally {
       setNotesSaving(false)
+    }
+  }
+
+  async function handleUploadDocument(body: { fileName: string; file: File }) {
+    if (!canUploadDocument || !id) return
+    try {
+      await uploadLeadDocument({ id, fileName: body.fileName, file: body.file }).unwrap()
+      toast.success('Document uploaded.')
+      setDocumentOpen(false)
+    } catch (error) {
+      toast.error(getApiError(error, 'Unable to upload document.'))
+    }
+  }
+
+  async function openDocumentPreview(document: LeadDocumentItem) {
+    if (!id) return
+    releasePreviewUrl()
+    setPreview({
+      fileName: document.fileName,
+      mimeType: document.mimeType,
+      url: '',
+      loading: true,
+    })
+    try {
+      const data = await fetchLeadDocumentBlob({ id, documentId: document.id }).unwrap()
+      const url = URL.createObjectURL(data.blob)
+      previewUrlRef.current = url
+      setPreview({
+        fileName: document.fileName,
+        mimeType: data.mimeType || document.mimeType,
+        url,
+        loading: false,
+      })
+    } catch (error) {
+      setPreview(null)
+      toast.error(getApiError(error, 'Unable to load the document.'))
+    }
+  }
+
+  async function confirmDeleteDocument() {
+    if (!canDeleteDocument || !id || !deleteTarget) return
+    try {
+      await deleteLeadDocument({ id, documentId: deleteTarget.id }).unwrap()
+      toast.success('Document deleted.')
+      setDeleteTarget(null)
+    } catch (error) {
+      toast.error(getApiError(error, 'Unable to delete document.'))
     }
   }
 
@@ -212,23 +340,163 @@ export default function LeadDetailsPage() {
     }
   }
 
-  async function onUpdateStatus(body: {
-    statusCode: string
-    remarks: string
-    lostReasonCode: string
-    override: boolean
-    overrideReason: string
-  }) {
-    if (!canUpdateStatus || !id) return
+  async function onUpdateStatus(body: ChangeStatusSubmitPayload) {
+    if (!canUpdateStatus || !id || !lead) return
     setStatusErrors({})
     try {
-      await updateStatus({ id, body }).unwrap()
+      const channelNote = body.channels.length > 0 ? `Channel: ${body.channels.join(', ')}` : ''
+      const remarks = [body.remarks.trim(), channelNote].filter(Boolean).join('\n')
+
+      await updateStatus({
+        id,
+        body: {
+          statusCode: body.statusCode,
+          remarks,
+          lostReasonCode: body.lostReasonCode,
+          override: body.override,
+          overrideReason: body.overrideReason,
+        },
+      }).unwrap()
+
+      if (body.nextFollowUpAt) {
+        const followUpType = body.channels.includes('CALL')
+          ? 'Call'
+          : body.channels.includes('WHATSAPP')
+            ? 'WhatsApp'
+            : body.channels.includes('EMAIL')
+              ? 'Email'
+              : body.channels.includes('SMS')
+                ? 'SMS'
+                : 'Call'
+        const reason = body.remarks.trim() || 'Next follow-up updated with status change'
+        // Preserve time-of-day from the current next follow-up (date picker is date-only).
+        const previousDue = lead.nextFollowUp?.dueAt ? dayjs(lead.nextFollowUp.dueAt) : null
+        const nextDueAt = previousDue?.isValid()
+          ? dayjs(body.nextFollowUpAt)
+              .hour(previousDue.hour())
+              .minute(previousDue.minute())
+              .second(0)
+              .millisecond(0)
+              .toISOString()
+          : dayjs(body.nextFollowUpAt).hour(10).minute(0).second(0).millisecond(0).toISOString()
+
+        if (lead.nextFollowUp && canEditFollowUp) {
+          // Reschedule so the old open follow-up is closed; otherwise getLead still
+          // returns the earliest open dueAt and the countdown/UI never updates.
+          const currentNextId = lead.nextFollowUp.id
+          await rescheduleFollowUp({
+            id: currentNextId,
+            body: { dueAt: nextDueAt, reason },
+          }).unwrap()
+
+          const otherOpen = followUps.filter(
+            (item) =>
+              item.id !== currentNextId &&
+              ['Pending', 'Due Soon', 'Overdue'].includes(item.status),
+          )
+          for (const item of otherOpen) {
+            await cancelFollowUp({
+              id: item.id,
+              body: { reason: 'Superseded by status change follow-up' },
+            }).unwrap()
+          }
+        } else if (canFollowUp) {
+          await createFollowUp({
+            leadId: id,
+            type: followUpType,
+            dueAt: nextDueAt,
+            priority: 'Medium',
+            purpose: 'Other',
+            purposeOther: 'Status change follow-up',
+            notes: body.remarks,
+            nextAction: body.remarks.slice(0, 200) || 'Follow up after status change',
+            reminder: 'No Reminder',
+          }).unwrap()
+        }
+      }
+
+      if (body.scheduleMeeting && body.meeting) {
+        const meeting = body.meeting
+        const startIso =
+          meeting.date && meeting.startTime
+            ? dayjs(`${meeting.date}T${meeting.startTime}:00`).toISOString()
+            : meeting.date
+              ? dayjs(`${meeting.date}T09:00:00`).toISOString()
+              : body.nextFollowUpAt
+        const meetingNotes = [
+          meeting.title,
+          `Type: ${meeting.type}`,
+          `Mode: ${meeting.mode}`,
+          meeting.location ? `Location: ${meeting.location}` : '',
+          meeting.endTime ? `End: ${meeting.endTime}` : '',
+          meeting.agenda ? `Agenda: ${meeting.agenda}` : '',
+        ]
+          .filter(Boolean)
+          .join('\n')
+
+        if (canAddActivity) {
+          await createActivity({
+            type: 'MEETING',
+            notes: meetingNotes,
+            outcome: 'Scheduled',
+            nextAction: meeting.agenda || meeting.title || 'Scheduled meeting',
+            relatedType: 'lead',
+            relatedId: id,
+            relatedName: lead.name,
+          }).unwrap()
+        }
+
+        if (canFollowUp && startIso) {
+          await createFollowUp({
+            leadId: id,
+            type: 'Meeting',
+            dueAt: startIso,
+            priority: 'Medium',
+            purpose: 'Other',
+            purposeOther: meeting.type || 'Scheduled meeting',
+            notes: meetingNotes,
+            nextAction: meeting.agenda || meeting.title || 'Scheduled meeting',
+            reminder: 'No Reminder',
+          }).unwrap()
+        }
+      }
+
+      if (canUploadDocument && body.attachment) {
+        await uploadLeadDocument({
+          id,
+          fileName: body.attachment.name.replace(/\.[^.]+$/, '') || body.attachment.name,
+          file: body.attachment,
+        }).unwrap()
+      }
+
+      await refreshLeadWorkspace()
       toast.success('Lead status updated.')
       setStatusOpen(false)
     } catch (error) {
       const fields = getApiErrorFields(error)
       if (Object.keys(fields).length > 0) setStatusErrors(fields)
       toast.error(getApiError(error, 'Unable to update the lead status. Please try again.'))
+    }
+  }
+
+  async function onSendStatusEmail(body: ChangeStatusEmailPayload) {
+    if (!id || !lead?.email) {
+      toast.error('This lead has no email address.')
+      return
+    }
+    try {
+      const started = await startLeadEmail(id).unwrap()
+      await sendEmailMessage({
+        id: started.thread.id,
+        to: lead.email,
+        subject: body.subject,
+        text: body.body,
+      }).unwrap()
+      toast.success('Email sent.')
+      setStatusOpen(false)
+      if (canViewEmail) openMoreTab('email')
+    } catch (error) {
+      toast.error(getApiError(error, 'Unable to send email. Please try again.'))
     }
   }
 
@@ -263,6 +531,7 @@ export default function LeadDetailsPage() {
   async function onFollowUp(values: FollowUpFormValues) {
     try {
       await createFollowUp({ ...values, leadId: id }).unwrap()
+      await refreshLeadWorkspace()
       toast.success('Follow-up scheduled.')
       setFollowUpOpen(false)
       if (searchParams.get('followUp') === '1') {
@@ -279,6 +548,7 @@ export default function LeadDetailsPage() {
     if (!selectedFollowUp) return
     try {
       await completeFollowUp({ id: selectedFollowUp.id, body: values }).unwrap()
+      await refreshLeadWorkspace()
       toast.success(values.createNextFollowUp ? 'Follow-up completed and next scheduled.' : 'Follow-up completed.')
       setCompleteOpen(false)
       setSelectedFollowUp(null)
@@ -291,6 +561,7 @@ export default function LeadDetailsPage() {
     if (!selectedFollowUp) return
     try {
       await rescheduleFollowUp({ id: selectedFollowUp.id, body: values }).unwrap()
+      await refreshLeadWorkspace()
       toast.success('Follow-up rescheduled.')
       setRescheduleOpen(false)
       setSelectedFollowUp(null)
@@ -303,6 +574,7 @@ export default function LeadDetailsPage() {
     if (!selectedFollowUp) return
     try {
       await cancelFollowUp({ id: selectedFollowUp.id, body: { reason } }).unwrap()
+      await refreshLeadWorkspace()
       toast.success('Follow-up cancelled.')
       setCancelOpen(false)
       setSelectedFollowUp(null)
@@ -356,6 +628,9 @@ export default function LeadDetailsPage() {
         relatedId: id,
         relatedName: lead?.name,
       }).unwrap()
+      if (result.nextFollowUp) {
+        await refreshLeadWorkspace()
+      }
       toast.success(
         result.nextFollowUp ? 'Activity saved and next follow-up scheduled.' : 'Activity added.',
       )
@@ -399,17 +674,75 @@ export default function LeadDetailsPage() {
     }
   }
 
-  function openNotes() {
-    setTab('notes')
+  function openMoreTab(key: LeadMoreTabKey) {
+    setTab('more')
+    setMoreTab(key)
   }
 
-  function sendEmail() {
-    if (!lead?.email) {
-      toast.error('This lead has no email address.')
+  function openNotes() {
+    if (!canAddActivity) {
+      openMoreTab('notes')
       return
     }
-    window.location.href = `mailto:${lead.email}`
+    setLogConversationOpen(true)
   }
+
+  async function onLogConversation(payload: LogConversationSubmitPayload) {
+    if (!id || !lead) return
+    setLogConversationSaving(true)
+    try {
+      const createNext = payload.addon === 'meeting' || payload.addon === 'followup'
+      if (payload.followUpId && canEditFollowUp) {
+        await completeFollowUp({
+          id: payload.followUpId,
+          body: {
+            outcome: payload.followUpOutcome,
+            notes: payload.notes,
+            nextAction: createNext
+              ? payload.nextAction || 'Follow up'
+              : payload.nextAction || payload.notes.slice(0, 200) || 'Logged conversation',
+            createNextFollowUp: createNext,
+            nextDueAt: createNext ? payload.nextDueAt : undefined,
+            nextType: createNext ? payload.nextFollowUpType : undefined,
+            nextPriority: 'Medium',
+          },
+        }).unwrap()
+      }
+
+      await createActivity({
+        type: payload.activityType,
+        notes: payload.notes,
+        outcome: payload.outcome,
+        nextAction: createNext && !(payload.followUpId && canEditFollowUp) ? payload.nextAction : undefined,
+        nextDate: createNext && !(payload.followUpId && canEditFollowUp) ? payload.nextDueAt || null : null,
+        createNextFollowUp: createNext && !(payload.followUpId && canEditFollowUp),
+        nextFollowUpType: createNext && !(payload.followUpId && canEditFollowUp) ? payload.nextFollowUpType : undefined,
+        nextFollowUpPriority: createNext && !(payload.followUpId && canEditFollowUp) ? 'Medium' : undefined,
+        relatedType: 'lead',
+        relatedId: id,
+        relatedName: lead.name,
+      }).unwrap()
+
+      await refreshLeadWorkspace()
+      toast.success(
+        createNext ? 'Conversation saved and next item scheduled.' : 'Conversation saved.',
+      )
+      setLogConversationOpen(false)
+    } catch (error) {
+      toast.error(getApiError(error, 'Unable to save conversation.'))
+    } finally {
+      setLogConversationSaving(false)
+    }
+  }
+
+  const moreVisibleKeys = useMemo(() => {
+    const keys: LeadMoreTabKey[] = ['activities', 'notes', 'history']
+    if (canViewCommunications) keys.push('communications')
+    if (canViewWhatsApp) keys.push('whatsapp')
+    if (canViewEmail) keys.push('email')
+    if (canViewFollowUp) keys.push('followups')
+    return keys
+  }, [canViewCommunications, canViewWhatsApp, canViewEmail, canViewFollowUp])
 
   if (isError) {
     return (
@@ -450,15 +783,15 @@ export default function LeadDetailsPage() {
         <>
           <LeadWorkspaceHeader
             lead={lead}
+            degreeOptions={options.degree}
+            countryOptions={options.country}
             canEdit={canEdit}
-            canAddActivity={canAddActivity}
             canChangeStatus={canChangeStatus}
             canClose={canClose}
             canReopen={canReopen}
             canHandover={canHandover}
             onHandover={() => setHandoverOpen(true)}
             onEdit={() => navigate(`/leads/${id}/edit`)}
-            onAddActivity={() => setActivityOpen(true)}
             onChangeStatus={() => {
               setStatusErrors({})
               setStatusOpen(true)
@@ -473,12 +806,11 @@ export default function LeadDetailsPage() {
             }}
           />
 
+          <LeadJourneyBar lead={lead} />
+
           <div className="flex gap-1.5 overflow-x-auto">
-            {LEAD_TABS.filter(
+            {LEAD_PRIMARY_TABS.filter(
               (item) =>
-                (item.key !== 'followups' || canViewFollowUp) &&
-                (item.key !== 'whatsapp' || canViewWhatsApp) &&
-                (item.key !== 'email' || canViewEmail) &&
                 (item.key !== 'services' || canViewServices) &&
                 (item.key !== 'payments' || canViewPayments),
             ).map((item) => {
@@ -521,96 +853,88 @@ export default function LeadDetailsPage() {
                 />
               ) : null}
               {tab === 'academic' ? <LeadAcademicPanel lead={lead} options={options} /> : null}
-              {tab === 'study' ? <LeadStudyVisaPanel lead={lead} options={options} /> : null}
-              {tab === 'documents' ? <LeadDocumentsPanel /> : null}
-              {tab === 'communications' && canViewCommunications ? (
-                <LeadCommunicationsPanel items={communications} loading={communicationsLoading} />
-              ) : null}
-              {tab === 'whatsapp' && canViewWhatsApp ? (
-                <LeadWhatsAppPanel leadId={lead.id} hasWhatsAppNumber={Boolean(lead.whatsapp || lead.phone)} />
-              ) : null}
-              {tab === 'email' && canViewEmail ? (
-                <LeadEmailPanel leadId={lead.id} hasEmail={Boolean(lead.email)} />
-              ) : null}
-              {tab === 'activities' ? (
-                <LeadActivitiesPanel activities={activities} canAdd={canAddActivity} onAdd={() => setActivityOpen(true)} />
-              ) : null}
-              {tab === 'followups' && canViewFollowUp ? (
-                <LeadFollowUpHistoryPanel
-                  items={followUps}
-                  loading={followUpsLoading}
-                  canCreate={canFollowUp}
-                  canEdit={canEditFollowUp}
-                  onCreate={() => setFollowUpOpen(true)}
-                  onComplete={(item) => openFollowUpActions(item, 'complete')}
-                  onReschedule={(item) => openFollowUpActions(item, 'reschedule')}
-                  onCancel={(item) => openFollowUpActions(item, 'cancel')}
+              {tab === 'documents' ? (
+                <LeadDocumentsPanel
+                  documents={documents}
+                  loading={documentsLoading}
+                  canUpload={canUploadDocument}
+                  canDelete={canDeleteDocument}
+                  onAdd={() => setDocumentOpen(true)}
+                  onView={(document) => {
+                    void openDocumentPreview(document)
+                  }}
+                  onDelete={(document) => setDeleteTarget(document)}
                 />
               ) : null}
-              {tab === 'notes' ? (
-                <LeadNotesPanel
-                  value={notesDraft}
-                  canEdit={canEdit}
-                  saving={notesSaving}
-                  onChange={setNotesDraft}
-                  onSave={() => void saveNotes()}
-                />
-              ) : null}
+              {tab === 'counselling' ? <LeadStudyVisaPanel lead={lead} options={options} /> : null}
               {tab === 'services' && canViewServices ? (
                 <LeadServicesPanel leadId={lead.id} canOffer={canOffer} />
               ) : null}
               {tab === 'payments' && canViewPayments ? <LeadPaymentsPanel /> : null}
+              {tab === 'more' ? (
+                <LeadMoreTabShell
+                  active={moreTab}
+                  onChange={setMoreTab}
+                  visibleKeys={moreVisibleKeys}
+                >
+                  {moreTab === 'activities' ? (
+                    <LeadActivitiesPanel
+                      activities={activities}
+                      canAdd={canAddActivity}
+                      onAdd={() => setActivityOpen(true)}
+                    />
+                  ) : null}
+                  {moreTab === 'notes' ? (
+                    <LeadNotesPanel
+                      value={notesDraft}
+                      canEdit={canEdit}
+                      saving={notesSaving}
+                      onChange={setNotesDraft}
+                      onSave={() => void saveNotes()}
+                    />
+                  ) : null}
+                  {moreTab === 'history' ? (
+                    <LeadHistoryPanel
+                      statusHistory={statusHistory}
+                      assignmentHistory={assignmentHistory}
+                    />
+                  ) : null}
+                  {moreTab === 'communications' && canViewCommunications ? (
+                    <LeadCommunicationsPanel items={communications} loading={communicationsLoading} />
+                  ) : null}
+                  {moreTab === 'whatsapp' && canViewWhatsApp ? (
+                    <LeadWhatsAppPanel
+                      leadId={lead.id}
+                      hasWhatsAppNumber={Boolean(lead.whatsapp || lead.phone)}
+                    />
+                  ) : null}
+                  {moreTab === 'email' && canViewEmail ? (
+                    <LeadEmailPanel leadId={lead.id} hasEmail={Boolean(lead.email)} />
+                  ) : null}
+                  {moreTab === 'followups' && canViewFollowUp ? (
+                    <LeadFollowUpHistoryPanel
+                      items={followUps}
+                      loading={followUpsLoading}
+                      canCreate={canFollowUp}
+                      canEdit={canEditFollowUp}
+                      onCreate={() => setFollowUpOpen(true)}
+                      onComplete={(item) => openFollowUpActions(item, 'complete')}
+                      onReschedule={(item) => openFollowUpActions(item, 'reschedule')}
+                      onCancel={(item) => openFollowUpActions(item, 'cancel')}
+                    />
+                  ) : null}
+                </LeadMoreTabShell>
+              ) : null}
             </div>
 
             <LeadDetailsSidebar
-              lead={lead}
               activities={activities}
-              statusHistory={statusHistory}
-              assignmentHistory={assignmentHistory}
-              canFollowUp={canFollowUp}
-              canEditFollowUp={canEditFollowUp}
               canChangeStatus={canChangeStatus}
-              canClose={canClose}
-              canReopen={canReopen}
-              canChangeOwner={canChangeOwner}
-              onViewCompletion={() => setTab('overview')}
-              onViewActivities={() => setTab('activities')}
-              onSetReminder={() => setFollowUpOpen(true)}
+              onViewActivities={() => openMoreTab('activities')}
               onAddNote={openNotes}
-              onScheduleFollowUp={() => setFollowUpOpen(true)}
-              onSendEmail={sendEmail}
-              onChangeOwner={() => setOwnerOpen(true)}
               onChangeStatus={() => {
                 setStatusErrors({})
                 setStatusOpen(true)
-              }}
-              onCloseLead={() => {
-                setCloseErrors({})
-                setCloseOpen(true)
-              }}
-              onReopenLead={() => {
-                setReopenErrors({})
-                setReopenOpen(true)
-              }}
-              onCompleteNextFollowUp={() => {
-                const next =
-                  followUps.find((item) => ['Pending', 'Due Soon', 'Overdue'].includes(item.status)) ||
-                  (lead.nextFollowUp
-                    ? ({
-                        id: lead.nextFollowUp.id,
-                        contact: lead.name,
-                        contactName: lead.name,
-                        type: lead.nextFollowUp.type,
-                        due: lead.nextFollowUp.dueAt || '',
-                        dueAt: lead.nextFollowUp.dueAt,
-                        status: lead.nextFollowUp.status,
-                        priority: lead.nextFollowUp.priority || 'Medium',
-                        nextAction: lead.nextFollowUp.nextAction || null,
-                        reminder: lead.nextFollowUp.reminder || 'No Reminder',
-                      } as FollowUpRecord)
-                    : null)
-                if (next) openFollowUpActions(next, 'complete')
-                else toast.info('No open follow-up to complete.')
               }}
             />
           </div>
@@ -661,6 +985,42 @@ export default function LeadDetailsPage() {
         onClose={() => setActivityOpen(false)}
         onSubmit={onAddActivity}
       />
+      <LogConversationWizard
+        open={logConversationOpen && canAddActivity}
+        saving={logConversationSaving}
+        lead={lead || null}
+        onClose={() => setLogConversationOpen(false)}
+        onSubmit={onLogConversation}
+      />
+      <AddLeadDocumentModal
+        open={documentOpen && canUploadDocument}
+        saving={documentUploading}
+        onClose={() => setDocumentOpen(false)}
+        onSubmit={handleUploadDocument}
+      />
+      <ViewLeadDocumentModal
+        open={Boolean(preview)}
+        fileName={preview?.fileName || ''}
+        mimeType={preview?.mimeType || ''}
+        url={preview?.url || ''}
+        loading={preview?.loading}
+        onClose={closeDocumentPreview}
+      />
+      <DeleteModal
+        open={Boolean(deleteTarget)}
+        loading={documentDeleting}
+        title="Delete document?"
+        itemName={deleteTarget?.fileName || 'this document'}
+        message={
+          deleteTarget ? (
+            <>
+              Are you sure you want to delete <strong>{deleteTarget.fileName}</strong>? This action cannot be undone.
+            </>
+          ) : undefined
+        }
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => void confirmDeleteDocument()}
+      />
       <QualifyLeadModal
         open={qualifyOpen && canQualify}
         saving={qualifying}
@@ -672,13 +1032,23 @@ export default function LeadDetailsPage() {
       />
       <ChangeStatusModal
         open={statusOpen && canChangeStatus}
-        saving={statusSaving}
-        currentStatus={lead?.status || ''}
+        saving={
+          statusSaving || followUpSaving || rescheduling || cancelling || activitySaving || documentUploading
+        }
+        emailSending={emailSending}
+        leadName={lead?.name || 'Lead'}
+        leadEmail={lead?.email}
+        activities={activities}
         options={lead?.statusChange?.options || []}
         lostReasons={options.lostReason}
         errors={statusErrors}
         onClose={() => setStatusOpen(false)}
         onSubmit={onUpdateStatus}
+        onSendEmail={onSendStatusEmail}
+        onViewHistory={() => {
+          setStatusOpen(false)
+          openMoreTab('activities')
+        }}
       />
       <CloseLeadModal
         open={closeOpen && canClose}

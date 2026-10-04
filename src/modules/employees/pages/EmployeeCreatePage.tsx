@@ -28,8 +28,6 @@ import {
   photoPreviewInvalid,
   photoUpload,
   photoUploadSpin,
-  statusConfirmCopy,
-  statusConfirmPanel,
 } from '../../../styles/admin'
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
@@ -65,6 +63,7 @@ import {
 import { getApiError, getApiErrorFields } from '@/lib/api'
 import { PrimaryButton } from '@/components/ui'
 import { FormDatePicker, FormInput, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
+import { DeleteModal } from '@/components/common/Modals'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { hasPermission } from '../../../lib/access'
@@ -447,6 +446,12 @@ export default function EmployeeCreatePage() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const previewUrl = useRef('')
   const hasExistingCrmAccount = Boolean(employee?.user)
+  const officialEmailLocked = isEdit && Boolean(employee?.user) && employee?.user?.status !== 'INVITED'
+  const officialEmailHint = officialEmailLocked
+    ? 'Official email cannot be changed after the CRM account is enabled.'
+    : isEdit && employee?.user?.status === 'INVITED'
+      ? 'While invited, changing this email sends a new setup invite to the new address.'
+      : undefined
   const [listEmployeeOptions] = useLazyListEmployeeOptionsQuery()
   const [getEmployee] = useLazyGetEmployeeQuery()
   const [createEmployee] = useCreateEmployeeMutation()
@@ -788,14 +793,20 @@ export default function EmployeeCreatePage() {
           ? await updateEmployee({ id, body }).unwrap()
           : await createEmployee(body).unwrap()
       const saved = data.employee
-      const extra = data.reset?.devResetPath ? ` Reset link: ${data.reset.devResetPath}` : ''
-      showToast(`${saved.fullName} (${saved.employeeCode}) was ${isEdit ? 'updated' : 'created'}.${extra}`)
+      const inviteEmail = typeof data.reset?.email === 'string' ? data.reset.email : form.officialEmail
+      const inviteNote =
+        data.reset?.inviteSent && inviteEmail
+          ? ` Setup invite sent to ${inviteEmail}.`
+          : data.reset?.devResetPath
+            ? ` Setup link: ${data.reset.devResetPath}`
+            : ''
+      showToast(`${saved.fullName} (${saved.employeeCode}) was ${isEdit ? 'updated' : 'created'}.${inviteNote}`)
       navigate('/employees', {
         replace: true,
         state: {
           toast: isEdit
-            ? `Employee ${saved.employeeCode} updated successfully.`
-            : `Employee ${saved.employeeCode} created successfully.`,
+            ? `Employee ${saved.employeeCode} updated successfully.${inviteNote}`
+            : `Employee ${saved.employeeCode} created successfully.${inviteNote}`,
         },
       })
     } catch (err) {
@@ -1008,12 +1019,23 @@ export default function EmployeeCreatePage() {
               onBlur={() => validateField('personalEmail')}
             />
           </Field>
-          <Field id="officialEmail" label="Official email" required error={errors.officialEmail}>
+          <Field
+            id="officialEmail"
+            label="Official email"
+            required
+            error={errors.officialEmail}
+            hint={officialEmailHint}
+          >
             <FormInput
               {...fieldProps('officialEmail')}
               type="email"
               value={form.officialEmail}
+              disabled={officialEmailLocked}
+              readOnly={officialEmailLocked}
               onChange={(event) => {
+                if (officialEmailLocked) {
+                  return
+                }
                 const value = event.target.value
                 setForm((current) => ({
                   ...current,
@@ -1149,7 +1171,7 @@ export default function EmployeeCreatePage() {
           description={
             hasExistingCrmAccount
               ? 'This employee already has a CRM login. Role permissions stay with the selected role.'
-              : 'Optional login for this employee. Role permissions stay with the selected role.'
+              : 'Optional login for this employee. A secure setup link is emailed to the official address — no password is set here.'
           }
           errors={sectionErrors('crm', errors)}
         >
@@ -1159,7 +1181,10 @@ export default function EmployeeCreatePage() {
                 <span id="createCrmAccountLabel" className={`${fieldLabel}`}>
                   Create CRM account
                 </span>
-                <p>Creates a user login using the official email, department, and team above.</p>
+                <p>
+                  Creates an invited CRM login from the official email, department, and team above. The employee sets
+                  their own password from the email link.
+                </p>
               </div>
               <FormSwitch
                 checked={form.createCrmAccount}
@@ -1196,18 +1221,28 @@ export default function EmployeeCreatePage() {
                   onChange={(value) => update('roleId', asSelectString(value))}
                 />
               </Field>
-              <Field id="userStatus" label={hasExistingCrmAccount ? 'Account status' : 'Initial account status'} required error={errors.userStatus}>
-                <FormSelect
-                  id="userStatus"
-                  value={form.userStatus}
-                  options={[
-                    { value: 'ACTIVE', label: 'Active' },
-                    { value: 'INACTIVE', label: 'Inactive' },
-                    { value: 'SUSPENDED', label: 'Suspended' },
-                  ]}
-                  onChange={(value) => update('userStatus', (asSelectString(value) || 'ACTIVE') as UserStatus)}
-                />
-              </Field>
+              {hasExistingCrmAccount ? (
+                <Field id="userStatus" label="Account status" required error={errors.userStatus}>
+                  <FormSelect
+                    id="userStatus"
+                    value={form.userStatus}
+                    options={[
+                      { value: 'ACTIVE', label: 'Active' },
+                      { value: 'INACTIVE', label: 'Inactive' },
+                      { value: 'SUSPENDED', label: 'Suspended' },
+                      { value: 'INVITED', label: 'Invited (pending setup)' },
+                    ]}
+                    onChange={(value) => update('userStatus', (asSelectString(value) || 'ACTIVE') as UserStatus)}
+                  />
+                </Field>
+              ) : (
+                <div className={`${adminFormSpan}`}>
+                  <p className={`${muted} m-0`}>
+                    Account starts as <strong>Invited</strong>. After the employee sets a password from the email link,
+                    status becomes <strong>Active</strong> automatically.
+                  </p>
+                </div>
+              )}
               <Field id="crmDepartment" label="Department" hint="Taken from Organization Structure.">
                 <FormInput id="crmDepartment" value={departmentName} disabled readOnly />
               </Field>
@@ -1370,7 +1405,17 @@ export default function EmployeeCreatePage() {
               <dt>CRM access</dt>
               <dd>
                 {showCrmFields
-                  ? `${hasExistingCrmAccount ? 'CRM login' : 'Create login'} · ${roleName} · ${form.userStatus === 'ACTIVE' ? 'Active' : form.userStatus === 'INACTIVE' ? 'Inactive' : 'Suspended'}`
+                  ? `${hasExistingCrmAccount ? 'CRM login' : 'Invite login'} · ${roleName} · ${
+                      hasExistingCrmAccount
+                        ? form.userStatus === 'ACTIVE'
+                          ? 'Active'
+                          : form.userStatus === 'INACTIVE'
+                            ? 'Inactive'
+                            : form.userStatus === 'INVITED'
+                              ? 'Invited'
+                              : 'Suspended'
+                        : 'Invited (email setup)'
+                    }`
                   : 'No CRM account'}
               </dd>
             </div>
@@ -1422,45 +1467,22 @@ export default function EmployeeCreatePage() {
           )
         : null}
 
-      {deleteTarget
-        ? createPortal(
-            <div
-              className={`${modalBackdrop}`}
-              onClick={() => {
-                if (!deletingDocument) {
-                  setDeleteTarget(null)
-                }
-              }}
-            >
-              <div
-                className={`${modalPanel} ${statusConfirmPanel}`}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="document-delete-title"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className={`${modalHeader}`}>
-                  <h3 id="document-delete-title">Delete document?</h3>
-                  <PrimaryButton
-                    type="button"
-                    className={`${modalClose}`}
-                    aria-label="Close"
-                    disabled={deletingDocument}
-                    onClick={() => setDeleteTarget(null)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
-                </div>
-                <p className={`${statusConfirmCopy}`}>
-                  Are you sure you want to delete <strong>{deleteTarget.fileName}</strong> from {deleteTarget.label}? This
-                  action cannot be undone.
-                </p>
-                <div className={`${formActions}`}>
-                  <PrimaryButton loading={deletingDocument} className="ui-btn-danger" onClick={() => void confirmDeleteDocument()} label="Delete" />
-                  <PrimaryButton type="button" variant="outline" disabled={deletingDocument} onClick={() => setDeleteTarget(null)} label="Cancel" />
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      <DeleteModal
+        open={Boolean(deleteTarget)}
+        loading={deletingDocument}
+        title="Delete document?"
+        itemName={deleteTarget?.fileName || 'this document'}
+        message={
+          deleteTarget ? (
+            <>
+              Are you sure you want to delete <strong>{deleteTarget.fileName}</strong> from {deleteTarget.label}? This
+              action cannot be undone.
+            </>
+          ) : undefined
+        }
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => void confirmDeleteDocument()}
+      />
 
       {toast
         ? createPortal(

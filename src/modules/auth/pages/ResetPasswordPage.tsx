@@ -7,6 +7,7 @@ import { useResetPasswordMutation } from '../../../redux/features/auth/authApi'
 
 type ResetValues = {
   password: string
+  confirmPassword: string
 }
 
 const cardClass =
@@ -18,6 +19,7 @@ const formClass =
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') || ''
+  const isInvite = searchParams.get('invite') === '1'
   const [resetPassword, { isLoading }] = useResetPasswordMutation()
   const [form] = Form.useForm<ResetValues>()
   const [message, setMessage] = useState('')
@@ -25,11 +27,19 @@ export default function ResetPasswordPage() {
 
   async function onFinish(values: ResetValues) {
     setMessage('')
+    if (values.password !== values.confirmPassword) {
+      setSuccess(false)
+      setMessage('Passwords do not match')
+      return
+    }
 
     try {
       const data = await resetPassword({ token, password: values.password }).unwrap()
       setSuccess(true)
-      setMessage(data?.message || 'Password has been reset. Please sign in.')
+      setMessage(
+        data?.message ||
+          (isInvite ? 'Password set successfully. You can sign in now.' : 'Password has been reset. Please sign in.'),
+      )
     } catch (error) {
       const err = error as { data?: { error?: string }; status?: string | number }
       setSuccess(false)
@@ -37,7 +47,9 @@ export default function ResetPasswordPage() {
         err?.data?.error ||
           (err?.status === 'FETCH_ERROR'
             ? 'Server is not reachable. Start campusly-crm-api.'
-            : 'Could not reset password.'),
+            : isInvite
+              ? 'Could not set password.'
+              : 'Could not reset password.'),
       )
     }
   }
@@ -45,29 +57,43 @@ export default function ResetPasswordPage() {
   return (
     <>
       <PageMeta
-        title="Reset Password"
-        description="Choose a new secure password to regain access to your EduConsult CRM account."
+        title={isInvite ? 'Set Password' : 'Reset Password'}
+        description={
+          isInvite
+            ? 'Choose a secure password to activate your EduConsult CRM account.'
+            : 'Choose a new secure password to regain access to your EduConsult CRM account.'
+        }
       />
       <div className={cardClass}>
         <Form form={form} layout="vertical" requiredMark={false} onFinish={onFinish} className={formClass}>
           <div className="mb-6 text-center">
             <h1 className="m-0 mb-1.5 text-[1.55rem] leading-tight font-bold tracking-tight text-text-strong">
-              Reset password
+              {isInvite ? 'Set your password' : 'Reset password'}
             </h1>
             <p className="m-0 text-[0.92rem] text-text-muted">
-              Choose a new password of at least 8 characters.
+              {isInvite
+                ? 'Choose a password of at least 8 characters to activate your CRM login.'
+                : 'Choose a new password of at least 8 characters.'}
             </p>
           </div>
 
           <FormInput.Password
             name="password"
-            label="New password"
+            label={isInvite ? 'Password' : 'New password'}
             rules={[
-              { required: true, message: 'Enter a new password' },
+              { required: true, message: isInvite ? 'Enter a password' : 'Enter a new password' },
               { min: 8, message: 'Password must be at least 8 characters' },
             ]}
             autoComplete="new-password"
-            placeholder="Enter a new password"
+            placeholder={isInvite ? 'Create a password' : 'Enter a new password'}
+          />
+
+          <FormInput.Password
+            name="confirmPassword"
+            label="Confirm password"
+            rules={[{ required: true, message: 'Confirm your password' }]}
+            autoComplete="new-password"
+            placeholder="Re-enter password"
           />
 
           {message ? (
@@ -81,9 +107,9 @@ export default function ResetPasswordPage() {
               block
               size="large"
               loading={isLoading}
-              disabled={!token}
+              disabled={!token || success}
             >
-              Reset password
+              {isInvite ? 'Activate account' : 'Reset password'}
             </Button>
           </Form.Item>
 
@@ -92,7 +118,7 @@ export default function ResetPasswordPage() {
               to="/login"
               className="text-[0.85rem] font-semibold text-primary! no-underline hover:text-primary-hover! hover:underline"
             >
-              Back to sign in
+              {success ? 'Continue to sign in' : 'Back to sign in'}
             </Link>
           </p>
         </Form>
