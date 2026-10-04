@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
-import { Modal } from 'antd'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { Modal, Spin } from 'antd'
 import dayjs from 'dayjs'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { CloudUploadIcon } from '@hugeicons/core-free-icons'
 import { PrimaryButton } from '@/components/ui'
 import { FormDatePicker, FormInput, FormSelect, FormSwitch, FormTextArea, InputError } from '@/components/common/Forms'
 import { AntModal } from '@/components/common/Modals'
@@ -13,8 +15,172 @@ import {
   outcomesForActivityType,
 } from '@/modules/activities/activityConstants'
 
+const LEAD_DOCUMENT_ACCEPT = '.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx'
+const LEAD_DOCUMENT_MAX_BYTES = 5 * 1024 * 1024
+
 function asSelectString(value: unknown) {
   return typeof value === 'string' ? value : ''
+}
+
+function isImageMime(mimeType: string) {
+  return mimeType.startsWith('image/')
+}
+
+function isPdfMime(mimeType: string, fileName = '') {
+  return mimeType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf')
+}
+
+export function ViewLeadDocumentModal({
+  open,
+  fileName,
+  mimeType,
+  url,
+  loading,
+  onClose,
+}: {
+  open: boolean
+  fileName: string
+  mimeType: string
+  url: string
+  loading?: boolean
+  onClose: () => void
+}) {
+  return (
+    <AntModal open={open} onClose={onClose} title={fileName || 'Document preview'} width={860}>
+      <div className="overflow-hidden rounded-xl border border-border bg-[color-mix(in_srgb,var(--color-page-bg)_70%,var(--color-surface))] [&_img]:mx-auto [&_img]:max-h-[65vh] [&_img]:max-w-full [&_img]:object-contain [&_iframe]:h-[65vh] [&_iframe]:w-full [&_iframe]:border-0">
+        {loading || !url ? (
+          <div className="grid min-h-[240px] place-items-center p-8">
+            <Spin />
+          </div>
+        ) : isImageMime(mimeType) ? (
+          <img src={url} alt={fileName} />
+        ) : isPdfMime(mimeType, fileName) ? (
+          <iframe title={fileName} src={url} />
+        ) : (
+          <div className="grid min-h-[240px] place-items-center gap-3 p-8 text-center">
+            <p className="m-0 text-[0.9rem] text-text-muted">Preview is not available for this file type.</p>
+            <a
+              href={url}
+              download={fileName}
+              className="text-[0.9rem] font-medium text-primary no-underline hover:underline"
+            >
+              Download {fileName}
+            </a>
+          </div>
+        )}
+      </div>
+    </AntModal>
+  )
+}
+
+export function AddLeadDocumentModal({
+  open,
+  saving,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean
+  saving: boolean
+  onClose: () => void
+  onSubmit: (body: { fileName: string; file: File }) => Promise<void>
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [fileName, setFileName] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!open) {
+      setFileName('')
+      setFile(null)
+      setError('')
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }, [open])
+
+  function onFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const selected = event.target.files?.[0] || null
+    setError('')
+    if (!selected) {
+      setFile(null)
+      return
+    }
+    if (selected.size > LEAD_DOCUMENT_MAX_BYTES) {
+      setFile(null)
+      setError('Document must be 5 MB or smaller.')
+      event.target.value = ''
+      return
+    }
+    setFile(selected)
+    setFileName((current) => current.trim() || selected.name.replace(/\.[^.]+$/, '') || selected.name)
+  }
+
+  async function handleSubmit() {
+    const trimmed = fileName.trim()
+    if (!trimmed) {
+      setError('File name is required.')
+      return
+    }
+    if (!file) {
+      setError('Please select a file to upload.')
+      return
+    }
+    setError('')
+    await onSubmit({ fileName: trimmed, file })
+  }
+
+  return (
+    <AntModal open={open} onClose={onClose} title="Add document" width={480}>
+      <div className="grid gap-3">
+        <label className="grid gap-1.5 text-sm">
+          <span>File name</span>
+          <FormInput
+            value={fileName}
+            placeholder="e.g. Passport, Academic certificate"
+            onChange={(event) => {
+              setFileName(event.target.value)
+              if (error) setError('')
+            }}
+          />
+        </label>
+
+        <div className="grid gap-1.5 text-sm">
+          <span>Upload file</span>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={LEAD_DOCUMENT_ACCEPT}
+            className="sr-only"
+            onChange={onFileChange}
+          />
+          <button
+            type="button"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#d0dae6] bg-[#f8fafc] px-4 py-3.5 text-left transition-colors hover:border-primary hover:bg-[color-mix(in_srgb,var(--color-primary)_6%,var(--color-surface))] dark:border-border dark:bg-transparent"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--color-primary)_12%,var(--color-surface))] text-primary">
+              <HugeiconsIcon icon={CloudUploadIcon} size={20} color="currentColor" strokeWidth={1.8} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <strong className="block text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
+                {file ? file.name : 'Choose a file'}
+              </strong>
+              <span className="mt-0.5 block text-[0.78rem] text-[#8b97a8]">
+                {file ? `${(file.size / 1024).toFixed(1)} KB · PDF, Word, or image` : 'PDF, Word, or image up to 5 MB'}
+              </span>
+            </span>
+          </button>
+        </div>
+
+        {error ? <InputError>{error}</InputError> : null}
+
+        <div className="mt-2 flex justify-end gap-2">
+          <PrimaryButton type="button" variant="outline" onClick={onClose} disabled={saving} label="Cancel" />
+          <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()} label="Upload" />
+        </div>
+      </div>
+    </AntModal>
+  )
 }
 
 export function FollowUpModal({
@@ -591,155 +757,12 @@ export function ChangeOwnerModal({
   )
 }
 
-export function ChangeStatusModal({
-  open,
-  saving,
-  currentStatus,
-  options,
-  lostReasons,
-  errors,
-  onClose,
-  onSubmit,
-}: {
-  open: boolean
-  saving: boolean
-  currentStatus: string
-  options: LeadStatusOption[]
-  lostReasons: MasterOption[]
-  errors: Record<string, string>
-  onClose: () => void
-  onSubmit: (body: {
-    statusCode: string
-    remarks: string
-    lostReasonCode: string
-    override: boolean
-    overrideReason: string
-  }) => Promise<void>
-}) {
-  const [statusCode, setStatusCode] = useState('')
-  const [remarks, setRemarks] = useState('')
-  const [lostReasonCode, setLostReasonCode] = useState('')
-  const [overrideReason, setOverrideReason] = useState('')
-  const [confirming, setConfirming] = useState(false)
-
-  const selected = options.find((item) => item.code === statusCode)
-  const lostReasonRequired = Boolean(selected?.lostReasonRequired)
-  const needsOverride = Boolean(selected?.requiresOverride)
-  const dirty = Boolean(statusCode || remarks || lostReasonCode || overrideReason)
-
-  useEffect(() => {
-    if (!open) {
-      setStatusCode('')
-      setRemarks('')
-      setLostReasonCode('')
-      setOverrideReason('')
-      setConfirming(false)
-    }
-  }, [open])
-
-  function requestClose() {
-    if (!dirty) {
-      onClose()
-      return
-    }
-    setConfirming(true)
-    Modal.confirm({
-      title: 'Discard unsaved changes?',
-      content: 'You have unsaved status changes. Close without updating?',
-      okText: 'Discard',
-      cancelText: 'Keep editing',
-      onOk: onClose,
-      afterClose: () => setConfirming(false),
-    })
-  }
-
-  return (
-    <AntModal open={open} onClose={requestClose} title="Change Lead Status" width={520} mask={{ closable: !confirming }}>
-      <div className="grid gap-3">
-        <label className="grid gap-1.5 text-sm">
-          <span>Current Status</span>
-          <input
-            readOnly
-            value={currentStatus}
-            className="h-10 rounded-lg border border-[#dbe4ee] bg-[#f7fafc] px-3 text-sm text-[#17324f] dark:border-border dark:bg-hover-bg dark:text-text"
-          />
-        </label>
-        <label className="grid gap-1.5 text-sm">
-          <span>Select New Status</span>
-          <FormSelect
-            showSearch
-            optionFilterProp="label"
-            placeholder="Select a status"
-            value={statusCode || undefined}
-            options={options.map((item) => ({ value: item.code, label: item.name }))}
-            onChange={(value) => {
-              const next = asSelectString(value)
-              setStatusCode(next)
-              const option = options.find((item) => item.code === next)
-              if (!option?.lostReasonRequired) setLostReasonCode('')
-              if (!option?.requiresOverride) setOverrideReason('')
-            }}
-          />
-          {errors.statusCode ? <InputError>{errors.statusCode}</InputError> : null}
-        </label>
-        {lostReasonRequired ? (
-          <label className="grid gap-1.5 text-sm">
-            <span>Lost Reason</span>
-            <FormSelect
-              showSearch
-              optionFilterProp="label"
-              placeholder="Select a lost reason"
-              value={lostReasonCode || undefined}
-              options={lostReasons}
-              onChange={(value) => setLostReasonCode(asSelectString(value))}
-            />
-            {errors.lostReasonCode ? <InputError>{errors.lostReasonCode}</InputError> : null}
-          </label>
-        ) : null}
-        <label className="grid gap-1.5 text-sm">
-          <span>Reason / Remarks</span>
-          <FormTextArea
-            autoSize={{ minRows: 3, maxRows: 8 }}
-            maxLength={1000}
-            showCount
-            value={remarks}
-            placeholder="Optional remarks"
-            onChange={(event) => setRemarks(event.target.value)}
-          />
-          {errors.remarks ? <InputError>{errors.remarks}</InputError> : null}
-        </label>
-        {needsOverride ? (
-          <label className="grid gap-1.5 text-sm">
-            <span>Override Reason *</span>
-            <FormTextArea
-              autoSize={{ minRows: 2, maxRows: 6 }}
-              maxLength={1000}
-              value={overrideReason}
-              placeholder="This jump skips required stages. Record why."
-              onChange={(event) => setOverrideReason(event.target.value)}
-            />
-            {errors.overrideReason ? <InputError>{errors.overrideReason}</InputError> : null}
-          </label>
-        ) : null}
-        <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={requestClose} label="Cancel" />
-          <PrimaryButton
-            type="button"
-            loading={saving}
-            onClick={() =>
-              void onSubmit({
-                statusCode,
-                remarks,
-                lostReasonCode,
-                override: needsOverride,
-                overrideReason,
-              })
-            } label="Update Status" />
-        </div>
-      </div>
-    </AntModal>
-  )
-}
+export { default as ChangeStatusModal } from './ChangeStatusModal'
+export type {
+  ChangeStatusSubmitPayload,
+  ChangeStatusMeetingPayload,
+  ChangeStatusEmailPayload,
+} from './ChangeStatusModal'
 
 export function CloseLeadModal({
   open,

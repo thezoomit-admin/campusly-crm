@@ -28,20 +28,13 @@ export default function NotificationBell({ auth }: { auth: AuthSession | null | 
   const [open, setOpen] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  const { data, refetch } = useListNotificationsQuery(
-    { limit: 15 },
-    { skip: !canView, pollingInterval: open ? 15000 : 60000 },
-  )
+  // Initial load + Socket.IO cache updates — no refetch on open/click.
+  const { data } = useListNotificationsQuery({ limit: 15 }, { skip: !canView })
   const [markRead] = useMarkNotificationReadMutation()
   const [markAllRead] = useMarkAllNotificationsReadMutation()
 
   const items = data?.items || []
   const unreadCount = data?.unreadCount || 0
-
-  useEffect(() => {
-    if (!open) return
-    void refetch()
-  }, [open, refetch])
 
   useEffect(() => {
     function onDocClick(event: MouseEvent) {

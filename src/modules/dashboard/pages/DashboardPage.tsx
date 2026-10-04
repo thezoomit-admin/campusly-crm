@@ -6,7 +6,14 @@ import { Spinner } from '@/components/common/Loading'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import type { AuthSession } from '../../../types'
-import type { DashIconName } from '../types'
+import type { DashIconName, DashboardQuickAction } from '../types'
+
+const QUICK_ACTIONS: DashboardQuickAction[] = [
+  { label: 'Add New Lead', hint: 'Create a student enquiry', tone: 'blue', icon: 'plus', to: '/leads/new' },
+  { label: 'Follow-ups', hint: 'See overdue & due today', tone: 'rose', icon: 'phone', to: '/follow-ups' },
+  { label: 'Applications', hint: 'Track university apps', tone: 'green', icon: 'file', to: '/applications' },
+  { label: 'Payments', hint: 'View fee collections', tone: 'orange', icon: 'card', to: '/payments' },
+]
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
@@ -427,6 +434,89 @@ function CalendarCard({
   )
 }
 
+function MonthSnapshotCard({
+  events,
+  onNavigate,
+}: {
+  events: Record<string, string[]>
+  onNavigate: (path: string) => void
+}) {
+  const counts = useMemo(() => {
+    const next = { followup: 0, meeting: 0, application: 0, payment: 0 }
+    for (const marks of Object.values(events)) {
+      for (const mark of marks) {
+        if (mark in next) {
+          next[mark as keyof typeof next] += 1
+        }
+      }
+    }
+    return next
+  }, [events])
+
+  const rows = [
+    { key: 'followup', label: 'Follow-ups', value: counts.followup, path: '/follow-ups', tone: 'rose' },
+    { key: 'meeting', label: 'Meetings', value: counts.meeting, path: '/activity-history', tone: 'orange' },
+    { key: 'application', label: 'Applications', value: counts.application, path: '/applications', tone: 'green' },
+    { key: 'payment', label: 'Payments', value: counts.payment, path: '/payments', tone: 'blue' },
+  ] as const
+
+  return (
+    <article className={cx(dashCard, 'flex h-full min-h-0 min-w-0 flex-col')}>
+      <div className={cardHead}>
+        <h3 className="m-0 text-base">This Month</h3>
+        <span className={chip}>Calendar summary</span>
+      </div>
+      <ul className="m-0 grid min-h-0 flex-1 list-none content-start gap-2.5 p-0">
+        {rows.map((row) => (
+          <li key={row.key}>
+            <button
+              type="button"
+              className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-[14px] border-0 bg-[#f8fafc] px-3 py-3 text-left dark:bg-hover-bg"
+              onClick={() => onNavigate(row.path)}
+            >
+              <span className="flex min-w-0 items-center gap-2.5">
+                <i className={cx('inline-block size-2 shrink-0 rounded-full', dotTone[row.key])} />
+                <span className="truncate text-[0.86rem] font-medium text-text">{row.label}</span>
+              </span>
+              <strong className="text-[1.05rem] text-text">{row.value}</strong>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </article>
+  )
+}
+
+function QuickActionsCard({ onNavigate }: { onNavigate: (path: string) => void }) {
+  return (
+    <article className={cx(dashCard, 'min-w-0')}>
+      <div className={cardHead}>
+        <h3 className="m-0 text-base">Quick Actions</h3>
+        <span className={chip}>Shortcuts</span>
+      </div>
+      <ul className="m-0 grid list-none grid-cols-1 gap-2.5 p-0 sm:grid-cols-2 lg:grid-cols-4">
+        {QUICK_ACTIONS.map((action) => (
+          <li key={action.to} className="min-w-0">
+            <button
+              type="button"
+              className="flex h-full w-full cursor-pointer items-center gap-3 rounded-[14px] border-0 bg-[#f8fafc] px-3 py-3 text-left dark:bg-hover-bg"
+              onClick={() => onNavigate(action.to)}
+            >
+              <span className={cx('grid size-[34px] shrink-0 place-items-center rounded-[10px]', toneIcon[action.tone])}>
+                <Icon name={action.icon} />
+              </span>
+              <span className="min-w-0">
+                <strong className="block truncate text-[0.86rem] text-text">{action.label}</strong>
+                <small className="mt-0.5 block truncate text-[0.75rem] text-text-muted">{action.hint}</small>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </article>
+  )
+}
+
 export default function DashboardPage() {
   const auth = useOutletContext<AuthSession>()
   const navigate = useNavigate()
@@ -438,8 +528,8 @@ export default function DashboardPage() {
   const stats = data?.stats || []
   const leadSources = data?.leadSources || []
   const leadTrend = data?.leadTrend || []
-  const recentLeads = data?.recentLeads || []
-  const upcomingFollowUps = data?.upcomingFollowUps || []
+  const recentLeads = (data?.recentLeads || []).slice(0, 5)
+  const upcomingFollowUps = (data?.upcomingFollowUps || []).slice(0, 2)
   const calendarEvents = data?.calendarEvents || {}
   const followUpMetrics = data?.followUpMetrics || {
     overdue: 0,
@@ -528,6 +618,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      <QuickActionsCard onNavigate={navigate} />
+
       <div className="grid min-w-0 grid-cols-1 gap-3 *:min-w-0 lg:grid-cols-2">
         <article className={cx(dashCard, 'min-w-0')}>
           <div className={cardHead}>
@@ -568,7 +660,7 @@ export default function DashboardPage() {
         </article>
       </div>
 
-      <div className="grid min-w-0 grid-cols-1 items-stretch gap-3 *:min-w-0 md:grid-cols-2 lg:h-[28rem] lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,0.85fr)] lg:grid-rows-1">
+      <div className="grid min-w-0 grid-cols-1 items-stretch gap-3 *:min-w-0 md:grid-cols-2 lg:h-[28rem] lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:grid-rows-1">
         <article className={cx(dashCard, 'flex h-full min-h-0 min-w-0 flex-col overflow-hidden')}>
           <div className={cx(cardHead, 'shrink-0')}>
             <h3 className="m-0 text-base">Recent Leads</h3>
@@ -724,8 +816,11 @@ export default function DashboardPage() {
             ))}
           </ul>
         </article>
+      </div>
 
+      <div className="grid min-w-0 grid-cols-1 items-stretch gap-3 *:min-w-0 lg:grid-cols-2">
         <CalendarCard year={now.getFullYear()} month={now.getMonth()} events={calendarEvents} />
+        <MonthSnapshotCard events={calendarEvents} onNavigate={navigate} />
       </div>
 
       <footer className="flex justify-between gap-3 text-text-faint text-[0.78rem] max-sm:grid max-sm:grid-cols-1">

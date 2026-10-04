@@ -78,6 +78,7 @@ import {
   File01Icon,
   InformationCircleIcon,
   LicenseIcon,
+  Mail01Icon,
   PauseIcon,
   PencilEdit02Icon,
   Shield01Icon,
@@ -291,6 +292,9 @@ function statusLabel(status: UserStatus) {
   }
   if (status === 'SUSPENDED') {
     return 'Suspended'
+  }
+  if (status === 'INVITED') {
+    return 'Invited'
   }
   return 'Active'
 }
@@ -738,7 +742,12 @@ function UserViewLayout({
                     ))}
                     <div className={`${formActions}`}>
                       <PrimaryButton size="sm" variant="outline" onClick={() => void onForceLogout()} label="Force Logout" />
-                      <PrimaryButton size="sm" variant="outline" onClick={() => void onPasswordReset()} label="Send password reset" />
+                      <PrimaryButton
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void onPasswordReset()}
+                        label={selected?.status === 'INVITED' ? 'Resend invite' : 'Send password reset'}
+                      />
                     </div>
                   </article>
                 ) : null}
@@ -1068,8 +1077,16 @@ export default function UsersPage() {
         ? await updateUser({ id: editingId, body }).unwrap()
         : await createUser({ body }).unwrap()
 
-      if (!editingId && data.reset?.devResetPath) {
-        toast.success(`User created. Dev reset link: ${data.reset.devResetPath}`)
+      if (data.reset?.inviteSent) {
+        const email = data.reset.email || form.email
+        const extra = data.reset.devResetPath ? ` Dev setup link: ${data.reset.devResetPath}` : ''
+        toast.success(
+          editingId
+            ? `User updated. Setup invite sent to ${email}.${extra}`
+            : `User created. Setup invite sent to ${email}.${extra}`,
+        )
+      } else if (!editingId && data.reset?.devResetPath) {
+        toast.success(`User created. Dev setup link: ${data.reset.devResetPath}`)
       } else {
         toast.success(editingId ? 'User updated.' : 'User created.')
       }
@@ -1211,6 +1228,7 @@ export default function UsersPage() {
           value={filters.status || undefined}
           options={[
             { value: 'ACTIVE', label: 'Active' },
+            { value: 'INVITED', label: 'Invited' },
             { value: 'INACTIVE', label: 'Inactive' },
             { value: 'SUSPENDED', label: 'Suspended' },
           ]}
@@ -1258,16 +1276,20 @@ export default function UsersPage() {
                     <td>{user.department?.name || '—'}</td>
                     <td>{user.team?.name || '—'}</td>
                     <td onClick={(event) => event.stopPropagation()}>
-                      <FormSwitch
-                        checked={user.status === 'ACTIVE'}
-                        checkedChildren="Active"
-                        unCheckedChildren={user.status === 'SUSPENDED' ? 'Suspended' : 'Inactive'}
-                        disabled={!canEdit}
-                        loading={statusUpdatingId === user.id}
-                        onChange={(checked) => {
-                          void changeStatus(user, checked ? 'ACTIVE' : 'INACTIVE')
-                        }}
-                      />
+                      {user.status === 'INVITED' ? (
+                        <span className={userStatusPillClass(user.status)}>{statusLabel(user.status)}</span>
+                      ) : (
+                        <FormSwitch
+                          checked={user.status === 'ACTIVE'}
+                          checkedChildren="Active"
+                          unCheckedChildren={user.status === 'SUSPENDED' ? 'Suspended' : 'Inactive'}
+                          disabled={!canEdit}
+                          loading={statusUpdatingId === user.id}
+                          onChange={(checked) => {
+                            void changeStatus(user, checked ? 'ACTIVE' : 'INACTIVE')
+                          }}
+                        />
+                      )}
                     </td>
                     <td className={`${rowActions}`} onClick={(event) => event.stopPropagation()}>
                       <RowActionMenu
@@ -1291,7 +1313,28 @@ export default function UsersPage() {
                                   },
                                 }
                               : null,
-                            canEdit && user.status !== 'ACTIVE'
+                            canEdit && user.status === 'INVITED'
+                              ? {
+                                  key: 'resend-invite',
+                                  label: 'Resend invite',
+                                  icon: <ActionIcon icon={Mail01Icon} />,
+                                  onSelect: () => {
+                                    void (async () => {
+                                      try {
+                                        const data = await adminPasswordReset(user.id).unwrap()
+                                        toast.success(
+                                          data.devResetPath
+                                            ? `Invite resent. Dev link: ${data.devResetPath}`
+                                            : data.message || 'Invite email resent.',
+                                        )
+                                      } catch (err) {
+                                        showApiError(err, 'Unable to resend invite.')
+                                      }
+                                    })()
+                                  },
+                                }
+                              : null,
+                            canEdit && user.status !== 'ACTIVE' && user.status !== 'INVITED'
                               ? {
                                   key: 'activate',
                                   label: 'Activate User',
@@ -1389,13 +1432,20 @@ export default function UsersPage() {
                       }
                       try {
                         const data = await adminPasswordReset(selected.id).unwrap()
+                        const isInvite = selected.status === 'INVITED' || data.inviteSent
                         toast.success(
                           data.devResetPath
-                            ? `Reset created. Dev link: ${data.devResetPath}`
-                            : data.message || 'Password reset started.',
+                            ? `${isInvite ? 'Invite resent' : 'Reset created'}. Dev link: ${data.devResetPath}`
+                            : data.message ||
+                                (isInvite ? 'Invite email resent.' : 'Password reset email sent.'),
                         )
                       } catch (err) {
-                        showApiError(err, 'Unable to start password reset.')
+                        showApiError(
+                          err,
+                          selected.status === 'INVITED'
+                            ? 'Unable to resend invite.'
+                            : 'Unable to start password reset.',
+                        )
                       }
                     }}
                     onScopeChange={(resource, value) =>
@@ -1465,9 +1515,24 @@ export default function UsersPage() {
                   type="email"
                   value={form.email}
                   autoComplete="off"
-                  onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                  disabled={Boolean(editingId) && form.status !== 'INVITED'}
+                  readOnly={Boolean(editingId) && form.status !== 'INVITED'}
+                  onChange={(event) => {
+                    if (editingId && form.status !== 'INVITED') {
+                      return
+                    }
+                    setForm((current) => ({ ...current, email: event.target.value }))
+                  }}
                   required
                 />
+                {editingId && form.status === 'INVITED' ? (
+                  <p className={`${fieldHint}`}>
+                    While invited, changing email sends a new setup invite to the new address.
+                  </p>
+                ) : null}
+                {editingId && form.status !== 'INVITED' ? (
+                  <p className={`${fieldHint}`}>Email cannot be changed after the account is enabled.</p>
+                ) : null}
               </label>
               <label>
                 <FieldLabel required>Mobile</FieldLabel>
@@ -1493,7 +1558,7 @@ export default function UsersPage() {
               </label>
               {editingId ? null : (
                 <label>
-                  <FieldLabel>Temporary password</FieldLabel>
+                  <FieldLabel>Password (optional)</FieldLabel>
                   <FormInput.Password
                     value={form.password}
                     autoComplete="new-password"
@@ -1502,8 +1567,11 @@ export default function UsersPage() {
                       event.currentTarget.readOnly = false
                     }}
                     onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-                    placeholder="Leave blank to send a reset link"
+                    placeholder="Leave blank to email a secure setup invite"
                   />
+                  <p className={`${fieldHint}`}>
+                    Leave blank for the industrial invite flow. The user starts as Invited and sets their own password.
+                  </p>
                 </label>
               )}
               <label>

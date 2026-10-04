@@ -30,6 +30,9 @@ export type MasterDataItemPayload = {
   behaviorKey?: string | null
   startDate?: string
   endDate?: string
+  fileOpeningCharge?: number | null
+  icon?: string
+  activityType?: string
 }
 
 const masterDataApi = baseApi.injectEndpoints({
@@ -43,7 +46,19 @@ const masterDataApi = baseApi.injectEndpoints({
       providesTags: (_r, _e, params) => [{ type: 'MasterDataItems', id: params.category }],
     }),
     listMasterDataOptions: builder.query<
-      { items: Array<{ id: string; name: string; code: string | null; status: string; parentId?: string | null }> },
+      {
+        items: Array<{
+          id: string
+          name: string
+          code: string | null
+          description?: string | null
+          status: string
+          sortOrder?: number
+          parentId?: string | null
+          behaviorKey?: string | null
+          extras?: Record<string, unknown> | null
+        }>
+      },
       { category: string; parentId?: string }
     >({
       query: ({ category, parentId }) =>

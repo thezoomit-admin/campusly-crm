@@ -1,4 +1,3 @@
-import { Button } from 'antd'
 import { useMemo, useState } from 'react'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
@@ -6,7 +5,6 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { useListDocumentsQuery } from '../api/documentsApi'
 import { adminCard, adminPage } from '../../../styles/admin'
 import DocumentFilters from '../components/DocumentFilters'
-import DocumentFormModal from '../components/DocumentFormModal'
 import DocumentsTable from '../components/DocumentsTable'
 import type { DocumentRow } from '../types'
 
@@ -14,7 +12,6 @@ export default function DocumentsPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
-  const [formOpen, setFormOpen] = useState(false)
   const debouncedSearch = useDebounce(search, 300)
 
   const { data, isFetching, isError } = useListDocumentsQuery({
@@ -33,11 +30,6 @@ export default function DocumentsPage() {
         title="Documents"
         subtitle="Upload, review, and organize student and staff documents for admissions workflows."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Documents' }]}
-        extra={
-          <Button type="primary" onClick={() => setFormOpen(true)}>
-            Add document
-          </Button>
-        }
       />
 
       <div className={`${adminCard} grid gap-3`}>
@@ -63,8 +55,6 @@ export default function DocumentsPage() {
           onLimitChange={setLimit}
         />
       </div>
-
-      <DocumentFormModal open={formOpen} onClose={() => setFormOpen(false)} />
     </div>
   )
 }

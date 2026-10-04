@@ -42,14 +42,17 @@ const authApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Auth'],
     }),
-    forgotPassword: builder.mutation<{ message?: string; devResetPath?: string }, ForgotPasswordBody>({
+    forgotPassword: builder.mutation<
+      { message?: string; devResetPath?: string; setupPath?: string; inviteSent?: boolean },
+      ForgotPasswordBody
+    >({
       query: (body) => ({
         url: '/auth/forgot-password',
         method: 'POST',
         body,
       }),
     }),
-    resetPassword: builder.mutation<{ message?: string }, ResetPasswordBody>({
+    resetPassword: builder.mutation<{ message?: string; activated?: boolean }, ResetPasswordBody>({
       query: (body) => ({
         url: '/auth/reset-password',
         method: 'POST',

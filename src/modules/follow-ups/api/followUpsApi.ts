@@ -39,36 +39,79 @@ const followUpsApi = baseApi.injectEndpoints({
     }),
     createFollowUp: builder.mutation<{ followUp: FollowUpRecord }, FollowUpFormValues>({
       query: (body) => ({ url: '/follow-ups', method: 'POST', body }),
-      invalidatesTags: (_r, _e, body) => [
-        { type: 'FollowUps', id: 'LIST' },
-        ...(body.leadId
-          ? [
-              { type: 'FollowUps' as const, id: body.leadId },
-              { type: 'Leads' as const, id: body.leadId },
-            ]
-          : []),
-        { type: 'Leads', id: 'MINE' },
-        'Activities',
-        'Dashboard',
-      ],
+      invalidatesTags: (result, _e, body) => {
+        const leadId = body.leadId || result?.followUp?.leadId || result?.followUp?.lead?.id || undefined
+        return [
+          { type: 'FollowUps', id: 'LIST' },
+          ...(leadId
+            ? [
+                { type: 'FollowUps' as const, id: leadId },
+                { type: 'Leads' as const, id: leadId },
+              ]
+            : [{ type: 'Leads' as const }]),
+          { type: 'Leads', id: 'LIST' },
+          { type: 'Leads', id: 'MINE' },
+          'Activities',
+          'Dashboard',
+        ]
+      },
     }),
     completeFollowUp: builder.mutation<
       { followUp: FollowUpRecord; nextFollowUp: FollowUpRecord | null },
       { id: string; body: CompleteFollowUpValues }
     >({
       query: ({ id, body }) => ({ url: `/follow-ups/${id}/complete`, method: 'POST', body }),
-      invalidatesTags: [{ type: 'FollowUps', id: 'LIST' }, 'Activities', 'Dashboard', 'Leads'],
+      invalidatesTags: (result) => {
+        const leadId = result?.followUp?.leadId || result?.followUp?.lead?.id || undefined
+        return [
+          { type: 'FollowUps', id: 'LIST' },
+          ...(leadId
+            ? [
+                { type: 'FollowUps' as const, id: leadId },
+                { type: 'Leads' as const, id: leadId },
+              ]
+            : [{ type: 'Leads' as const }]),
+          'Activities',
+          'Dashboard',
+        ]
+      },
     }),
     rescheduleFollowUp: builder.mutation<
       { followUp: FollowUpRecord; nextFollowUp: FollowUpRecord },
       { id: string; body: RescheduleFollowUpValues }
     >({
       query: ({ id, body }) => ({ url: `/follow-ups/${id}/reschedule`, method: 'POST', body }),
-      invalidatesTags: [{ type: 'FollowUps', id: 'LIST' }, 'Activities', 'Dashboard', 'Leads'],
+      invalidatesTags: (result) => {
+        const leadId = result?.followUp?.leadId || result?.followUp?.lead?.id || undefined
+        return [
+          { type: 'FollowUps', id: 'LIST' },
+          ...(leadId
+            ? [
+                { type: 'FollowUps' as const, id: leadId },
+                { type: 'Leads' as const, id: leadId },
+              ]
+            : [{ type: 'Leads' as const }]),
+          'Activities',
+          'Dashboard',
+        ]
+      },
     }),
     cancelFollowUp: builder.mutation<{ followUp: FollowUpRecord }, { id: string; body: CancelFollowUpValues }>({
       query: ({ id, body }) => ({ url: `/follow-ups/${id}/cancel`, method: 'POST', body }),
-      invalidatesTags: [{ type: 'FollowUps', id: 'LIST' }, 'Activities', 'Dashboard', 'Leads'],
+      invalidatesTags: (result) => {
+        const leadId = result?.followUp?.leadId || result?.followUp?.lead?.id || undefined
+        return [
+          { type: 'FollowUps', id: 'LIST' },
+          ...(leadId
+            ? [
+                { type: 'FollowUps' as const, id: leadId },
+                { type: 'Leads' as const, id: leadId },
+              ]
+            : [{ type: 'Leads' as const }]),
+          'Activities',
+          'Dashboard',
+        ]
+      },
     }),
   }),
 })

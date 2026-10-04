@@ -1,6 +1,6 @@
 import { baseApi } from '../../api/baseApi'
 import { toQuery } from '@/lib/api'
-import type { EmployeeOptions, EmployeeRecord } from '@/types'
+import type { EmployeeAuditLog, EmployeeOptions, EmployeePerformanceSummary, EmployeeRecord } from '@/types'
 
 export type EmployeeListParams = {
   search?: string
@@ -50,7 +50,10 @@ const employeesApi = baseApi.injectEndpoints({
       providesTags: (_r, _e, id) => [{ type: 'Employee', id }],
     }),
     createEmployee: builder.mutation<
-      { employee: EmployeeRecord; reset?: { message?: string; devResetPath?: string } },
+      {
+        employee: EmployeeRecord
+        reset?: { message?: string; devResetPath?: string; setupPath?: string; inviteSent?: boolean; email?: string }
+      },
       FormData
     >({
       query: (body) => ({
@@ -64,7 +67,10 @@ const employeesApi = baseApi.injectEndpoints({
       ],
     }),
     updateEmployee: builder.mutation<
-      { employee: EmployeeRecord; reset?: { message?: string; devResetPath?: string } },
+      {
+        employee: EmployeeRecord
+        reset?: { message?: string; devResetPath?: string; setupPath?: string; inviteSent?: boolean; email?: string }
+      },
       { id: string; body: EmployeePayload | FormData }
     >({
       query: ({ id, body }) => ({
@@ -116,7 +122,19 @@ const employeesApi = baseApi.injectEndpoints({
     }),
     updateEmployeeStatus: builder.mutation<
       { employee: EmployeeRecord },
-      { id: string; body: { employmentStatusId: string } | { status: 'ACTIVE' | 'INACTIVE' } }
+      {
+        id: string
+        body:
+          | { status: 'ACTIVE' | 'INACTIVE' }
+          | {
+              employmentStatusId: string
+              resignationDate?: string
+              terminationDate?: string
+              terminationReason?: string
+              terminationRemarks?: string
+              rejoiningDate?: string
+            }
+      }
     >({
       query: ({ id, body }) => ({
         url: `/employees/${id}/status`,
@@ -127,6 +145,14 @@ const employeesApi = baseApi.injectEndpoints({
         { type: 'Employee', id },
         { type: 'Employees', id: 'LIST' },
       ],
+    }),
+    listEmployeeAuditLogs: builder.query<{ logs: EmployeeAuditLog[] }, string>({
+      query: (id) => `/employees/${id}/audit-logs`,
+      providesTags: (_r, _e, id) => [{ type: 'Employee', id }],
+    }),
+    getEmployeePerformance: builder.query<{ performance: EmployeePerformanceSummary }, string>({
+      query: (id) => `/employees/${id}/performance`,
+      providesTags: (_r, _e, id) => [{ type: 'Employee', id }],
     }),
     fetchEmployeeDocumentBlob: builder.query<
       { blob: Blob; mimeType: string },
@@ -159,5 +185,9 @@ export const {
   useUploadEmployeeDocumentMutation,
   useDeleteEmployeeDocumentMutation,
   useUpdateEmployeeStatusMutation,
+  useListEmployeeAuditLogsQuery,
+  useLazyListEmployeeAuditLogsQuery,
+  useGetEmployeePerformanceQuery,
+  useLazyGetEmployeePerformanceQuery,
   useLazyFetchEmployeeDocumentBlobQuery,
 } = employeesApi
