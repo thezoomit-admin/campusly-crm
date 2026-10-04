@@ -177,7 +177,7 @@ export type MasterDataCategory = {
   name: string
   recordCount: number
   parentCategoryKey?: string
-  extraFields?: 'none' | 'intake' | 'leadStatus'
+  extraFields?: 'none' | 'intake' | 'leadStatus' | 'country'
   codePolicy?: 'optional' | 'recommended' | 'required'
 }
 

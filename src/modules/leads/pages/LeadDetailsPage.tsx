@@ -102,6 +102,7 @@ export default function LeadDetailsPage() {
   const canReassign = hasPermission(auth, 'lead:reassign')
   const canChangeOwner = Boolean(lead?.owner?.id ? canReassign : canAssign)
   const canViewServices = hasPermission(auth, 'service:view')
+  const canOffer = hasPermission(auth, 'service:offer')
   const canViewPayments = hasPermission(auth, 'payment:view')
   const qualified =
     (lead?.statusCode || '').toUpperCase() === 'QUALIFIED' || (lead?.status || '').trim().toLowerCase() === 'qualified'
@@ -555,7 +556,9 @@ export default function LeadDetailsPage() {
                   onSave={() => void saveNotes()}
                 />
               ) : null}
-              {tab === 'services' && canViewServices ? <LeadServicesPanel /> : null}
+              {tab === 'services' && canViewServices ? (
+                <LeadServicesPanel leadId={lead.id} canOffer={canOffer} />
+              ) : null}
               {tab === 'payments' && canViewPayments ? <LeadPaymentsPanel /> : null}
             </div>
 

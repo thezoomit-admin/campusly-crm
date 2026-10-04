@@ -7,6 +7,7 @@ import type { ActivityFeedItem } from '@/types'
 import type { CommunicationEvent } from '@/modules/communications/types'
 import { CHANNEL_LABELS, STATUS_LABELS } from '@/modules/communications/types'
 import { activityTitle, formatDisplayDateTime } from '../../utils/leadDetails'
+import LeadPackageOfferPanel from '@/modules/packages/components/LeadPackageOfferPanel'
 import LeadSectionCard from './LeadSectionCard'
 
 export function LeadDocumentsPanel() {
@@ -175,14 +176,8 @@ function EmptyWorkspacePanel({ title, heading, body }: { title: string; heading:
   )
 }
 
-export function LeadServicesPanel() {
-  return (
-    <EmptyWorkspacePanel
-      title="Service & Charges"
-      heading="No service offer yet"
-      body="Service items, charges, discounts, and the fee offer for this lead will appear here once counselling moves into an offer."
-    />
-  )
+export function LeadServicesPanel({ leadId, canOffer }: { leadId: string; canOffer: boolean }) {
+  return <LeadPackageOfferPanel leadId={leadId} canOffer={canOffer} />
 }
 
 export function LeadPaymentsPanel() {

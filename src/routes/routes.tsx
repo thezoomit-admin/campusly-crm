@@ -22,7 +22,7 @@ import { ProfilePage } from '../modules/profile'
 import { ReportsPage } from '../modules/reports'
 import { RolesPage } from '../modules/roles/index'
 import { SettingsPage } from '../modules/settings'
-import { ServiceItemsPage } from '../modules/service-items'
+import { ServiceCatalogPage } from '../modules/service-items'
 import { StudentsPage } from '../modules/students'
 import { UsersPage } from '../modules/users/index'
 import PermissionRoute from './PermissionRoute'
@@ -88,11 +88,11 @@ const routes = [
             element: (
               <PermissionRoute
                 permission="service:view"
-                deniedTitle="Service Items"
-                deniedMessage="You do not have permission to view service items."
+                deniedTitle="Service & Package Management"
+                deniedMessage="You do not have permission to view services and packages."
               />
             ),
-            children: [{ path: '/service-items', element: <ServiceItemsPage /> }],
+            children: [{ path: '/service-items', element: <ServiceCatalogPage /> }],
           },
           {
             element: <PermissionRoute permission="follow_up:view" />,
