@@ -154,11 +154,13 @@ function ActivityHistorySidebar({
                   <span className="absolute top-6 bottom-[-2px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
                 ) : null}
                 <div className="min-w-0 flex-1">
-                  <p className="m-0 text-[0.86rem] font-semibold text-[#17324f] dark:text-text-strong">
-                    {activityTitle(item.action, item.details)}
+                  <p className="m-0 break-words text-[0.86rem] font-semibold text-[#17324f] [overflow-wrap:anywhere] dark:text-text-strong">
+                    {activityTitle(item.action, item.details, item.outcome)}
                   </p>
                   {item.details ? (
-                    <p className="mt-0.5 mb-0 line-clamp-2 text-[0.78rem] text-[#5b6b7c]">{item.details}</p>
+                    <p className="mt-0.5 mb-0 line-clamp-2 break-words text-[0.78rem] text-[#5b6b7c] [overflow-wrap:anywhere]">
+                      {item.details}
+                    </p>
                   ) : null}
                   <p className="mt-0.5 mb-0 text-[0.72rem] text-[#8b97a8]">
                     {formatDisplayDateTime(item.occurredAt)}

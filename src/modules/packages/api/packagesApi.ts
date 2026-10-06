@@ -7,6 +7,7 @@ import type {
   PackageRecord,
   ServiceOfferContext,
   ServiceOfferRecord,
+  ServiceOfferStatus,
   ServiceOfferWriteBody,
 } from "../types";
 
@@ -34,6 +35,40 @@ export type PackageServiceInput = {
 export type PackageWriteBody = Omit<PackageFormValues, "countryId"> & {
   countryId?: string | null;
   services: PackageServiceInput[];
+};
+
+export type LeadPaymentItem = {
+  id: string;
+  offerId: string;
+  offerVersion: number;
+  packageName: string | null;
+  offerStatus: ServiceOfferStatus;
+  sequence: number;
+  purpose: string;
+  amount: string;
+  dueDate: string | null;
+  status: "PAID" | "PENDING";
+  paidAt: string | null;
+  paidBy: { id: string; fullName: string } | null;
+  canRecord: boolean;
+};
+
+export type LeadPaymentsResponse = {
+  summary: {
+    finalPayable: string;
+    paidAmount: string;
+    dueAmount: string;
+    currency: "BDT";
+    activeOffer: {
+      id: string;
+      offerVersion: number;
+      status: ServiceOfferStatus;
+      packageName: string | null;
+    } | null;
+  };
+  permissions: { canRecordPayment: boolean };
+  leadStatusChanged?: boolean;
+  items: LeadPaymentItem[];
 };
 
 const packagesApi = baseApi.injectEndpoints({
@@ -110,6 +145,10 @@ const packagesApi = baseApi.injectEndpoints({
     listLeadServiceOffers: builder.query<{ offers: ServiceOfferRecord[] }, string>({
       query: (leadId) => `/leads/${leadId}/service-offers`,
       providesTags: (_result, _error, leadId) => [{ type: "ServiceOffers", id: leadId }],
+    }),
+    listLeadPayments: builder.query<LeadPaymentsResponse, string>({
+      query: (leadId) => `/leads/${leadId}/service-offers/payments`,
+      providesTags: (_result, _error, leadId) => [{ type: "LeadPayments", id: leadId }],
     }),
     getServiceOfferContext: builder.query<ServiceOfferContext, string>({
       query: (leadId) => `/leads/${leadId}/service-offers/context`,
@@ -203,7 +242,13 @@ const packagesApi = baseApi.injectEndpoints({
 export type OfferStatusAction = "send" | "accept" | "reject" | "cancel";
 
 function offerChangeTags(_result: unknown, _error: unknown, { leadId }: { leadId: string }) {
-  return [{ type: "ServiceOffers" as const, id: leadId }, "Activities" as const];
+  return [
+    { type: "ServiceOffers" as const, id: leadId },
+    { type: "LeadPayments" as const, id: leadId },
+    { type: "Leads" as const, id: leadId },
+    { type: "Payments" as const, id: "LIST" },
+    "Activities" as const,
+  ];
 }
 
 export const {
@@ -215,6 +260,7 @@ export const {
   useUpdatePackageMutation,
   useUpdatePackageStatusMutation,
   useListLeadServiceOffersQuery,
+  useListLeadPaymentsQuery,
   useGetServiceOfferContextQuery,
   useCreateLeadServiceOfferMutation,
   useUpdateLeadServiceOfferMutation,

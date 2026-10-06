@@ -60,8 +60,7 @@ describe('LeadPoolPage', () => {
 
     expect(screen.getAllByText('Lead Pool').length).toBeGreaterThan(0)
     expect(screen.getByPlaceholderText(/lead id, student name, or phone/i)).toBeTruthy()
-    expect(screen.getByRole('button', { name: /^search$/i })).toBeTruthy()
-    expect(screen.getByRole('button', { name: /^reset$/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /^refresh$/i })).toBeTruthy()
     expect(screen.getByText('Aisha Rahman')).toBeTruthy()
     expect(screen.getByRole('button', { name: /assign lead/i })).toBeTruthy()
   })

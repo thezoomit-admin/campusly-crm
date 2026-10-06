@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
 
 export default function LeadInfoField({
   icon,
+  avatarUrl,
   label,
   value,
   empty = 'Not specified',
@@ -13,6 +14,7 @@ export default function LeadInfoField({
   children,
 }: {
   icon: IconSvgElement
+  avatarUrl?: string | null
   label: string
   value?: string | number | null
   empty?: string
@@ -23,11 +25,23 @@ export default function LeadInfoField({
 }) {
   const text = value == null ? '' : String(value).trim()
   const filled = text.length > 0
+  const [avatarFailed, setAvatarFailed] = useState(false)
+  const showAvatar = Boolean(avatarUrl) && !avatarFailed
 
   return (
     <div className="flex min-w-0 items-start gap-3">
-      <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-[10px] bg-[#f3f7fb] text-[#8b97a8] dark:bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] dark:text-icon">
-        <HugeiconsIcon icon={icon} size={16} color="currentColor" strokeWidth={1.7} />
+      <span className="mt-0.5 grid size-9 shrink-0 place-items-center overflow-hidden rounded-[10px] bg-[#f3f7fb] text-[#8b97a8] dark:bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] dark:text-icon">
+        {showAvatar ? (
+          <img
+            key={avatarUrl || ''}
+            src={avatarUrl || ''}
+            alt=""
+            className="size-full object-cover"
+            onError={() => setAvatarFailed(true)}
+          />
+        ) : (
+          <HugeiconsIcon icon={icon} size={16} color="currentColor" strokeWidth={1.7} />
+        )}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">

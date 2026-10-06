@@ -27,7 +27,7 @@ export default function LeadSectionCard({
   children: ReactNode
 }) {
   return (
-    <section className="rounded-2xl border border-[#e7eef5] bg-surface p-5 shadow-[0_10px_28px_rgba(22,50,79,0.035)] dark:border-border">
+    <section className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-[#e7eef5] bg-surface p-5 shadow-[0_10px_28px_rgba(22,50,79,0.035)] dark:border-border">
       <header className="mb-5 flex items-center justify-between gap-3">
         <h3 className="m-0 flex items-center gap-2.5 text-[0.98rem] font-semibold text-[#1b3a57] dark:text-text-strong">
           <span className="h-4 w-[3px] rounded-full bg-primary" />

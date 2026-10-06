@@ -16,6 +16,20 @@ export function formatBubbleTime(iso: string) {
   return dayjs(iso).format('h:mm A')
 }
 
+/** Normalize stored template bodies for display (legacy "Template: name" or bare name). */
+export function formatTemplateLabel(body: string | null | undefined) {
+  if (!body?.trim()) return 'Template message'
+  const match = /^Template:\s*(.+)$/i.exec(body.trim())
+  return (match?.[1] || body).trim()
+}
+
+export function formatReplyWindowExpiry(iso: string | null | undefined) {
+  if (!iso) return null
+  const expires = dayjs(iso)
+  if (!expires.isValid() || expires.isBefore(dayjs())) return null
+  return expires.format('h:mm A')
+}
+
 export function formatDayDivider(iso: string) {
   const value = dayjs(iso)
   const now = dayjs()

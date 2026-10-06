@@ -18,7 +18,7 @@ import { hasPermission } from "@/lib/access";
 import { useDebounce } from "@/hooks/useDebounce";
 import { statusClass } from "@/lib/statusClass";
 import type { AuthSession } from "@/types";
-import { adminCard, adminPage } from "@/styles/admin";
+import { adminCard, adminFilters, adminFiltersCompact, adminPage } from "@/styles/admin";
 import {
   useCreateCampaignMutation,
   useListCampaignsQuery,
@@ -192,7 +192,7 @@ export default function CampaignsPage() {
       />
 
       <div className={`${adminCard} grid gap-3`}>
-        <div className="flex flex-wrap gap-2">
+        <div className={`${adminFilters} ${adminFiltersCompact}`}>
           <FormInput.Search
             allowClear
             placeholder="Search campaigns…"
@@ -201,12 +201,10 @@ export default function CampaignsPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="min-w-[220px] max-w-sm flex-1"
           />
           <FormSelect
             allowClear
             placeholder="Status"
-            className="min-w-[140px]"
             value={status}
             onChange={(value) => {
               setStatus(value || undefined);

@@ -42,6 +42,8 @@ export type CommunicationEvent = {
   processedAt: string | null
   createdAt: string
   updatedAt: string
+  /** Present for CRM email thread items merged into lead communications. */
+  threadId?: string | null
   lead: {
     id: string
     code: string

@@ -1,3 +1,4 @@
+import dayjs from 'dayjs'
 import { useListMasterDataOptionsQuery } from '@/redux/features/masterData/masterDataApi'
 
 const INTEGRATION_SOURCES = new Set(['WEBSITE', 'META', 'WHATSAPP', 'EMAIL', 'FACEBOOK_LEAD_ADS', 'INSTAGRAM_LEAD_ADS'])
@@ -31,16 +32,26 @@ const CATEGORIES = [
 
 export type MasterOption = { value: string; label: string }
 
-function useCategory(category: string) {
+function isFutureIntake(extras?: Record<string, unknown> | null) {
+  const start = extras?.startDate
+  if (typeof start !== 'string' || !start.trim()) return true
+  return !dayjs(start).isBefore(dayjs(), 'day')
+}
+
+function useCategory(category: string, options?: { futureIntakeOnly?: boolean }) {
   const { data, isFetching } = useListMasterDataOptionsQuery({ category })
   const items = data?.items || []
-  const options: MasterOption[] = items
+  const filtered =
+    category === 'INTAKE' && options?.futureIntakeOnly
+      ? items.filter((item) => isFutureIntake(item.extras))
+      : items
+  const mapped: MasterOption[] = filtered
     .filter((item) => item.code)
     .map((item) => ({ value: item.code as string, label: item.name }))
   if (category === 'COUNTRY') {
-    options.sort((a, b) => a.label.localeCompare(b.label))
+    mapped.sort((a, b) => a.label.localeCompare(b.label))
   }
-  return { options, items, isFetching }
+  return { options: mapped, items, isFetching }
 }
 
 export { INTEGRATION_SOURCES }
@@ -48,7 +59,7 @@ export { INTEGRATION_SOURCES }
 export function useLeadMasterOptions() {
   const country = useCategory('COUNTRY')
   const degree = useCategory('STUDY_LEVEL')
-  const intake = useCategory('INTAKE')
+  const intake = useCategory('INTAKE', { futureIntakeOnly: true })
   const purpose = useCategory('STUDY_PURPOSE')
   const education = useCategory('EDUCATION_LEVEL')
   const englishTest = useCategory('ENGLISH_TEST_TYPE')
@@ -75,6 +86,7 @@ export function useLeadMasterOptions() {
     country: country.options,
     degree: degree.options,
     intake: intake.options,
+    intakeItems: intake.items,
     purpose: purpose.options,
     education: education.options,
     englishTest: englishTest.options,

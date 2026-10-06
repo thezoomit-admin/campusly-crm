@@ -107,6 +107,23 @@ function formFromRole(role: RoleRecord): RoleForm {
   };
 }
 
+function formatCreatedAt(value?: string | Date | null) {
+  if (!value) {
+    return "—";
+  }
+  const date = new Date(value);
+  const day = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const time = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${day} • ${time}`;
+}
+
 function asSelectString(value: unknown) {
   return typeof value === "string" ? value : "";
 }
@@ -379,14 +396,15 @@ export default function RolesPage() {
               <tr>
                 <th>Role</th>
                 <th>Status</th>
-                <th>Users</th>
+                <th>Total users</th>
+                <th>Created at</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {!loading && roles.length === 0 ? (
                 <tr>
-                  <td colSpan={4}>No roles found.</td>
+                  <td colSpan={5}>No roles found.</td>
                 </tr>
               ) : (
                 roles.map((role) => (
@@ -411,6 +429,7 @@ export default function RolesPage() {
                       />
                     </td>
                     <td>{role.assignedUserCount}</td>
+                    <td>{formatCreatedAt(role.createdAt)}</td>
                     <td className={`${rowActions}`}>
                       <RowActionMenu
                         items={(

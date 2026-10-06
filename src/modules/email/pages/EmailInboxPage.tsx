@@ -31,15 +31,12 @@ export default function EmailInboxPage() {
   const debouncedSearch = useDebounce(search, 300)
 
   const { data: settings } = useGetEmailSettingsQuery()
-  const { data, isFetching, isError } = useListEmailThreadsQuery(
-    {
-      search: debouncedSearch || undefined,
-      status,
-      assigned: assigned === 'all' ? undefined : assigned,
-      limit: 50,
-    },
-    { pollingInterval: 10000 },
-  )
+  const { data, isFetching, isError } = useListEmailThreadsQuery({
+    search: debouncedSearch || undefined,
+    status,
+    assigned: assigned === 'all' ? undefined : assigned,
+    limit: 50,
+  })
   const [simulate, { isLoading: simulating }] = useSimulateInboundEmailMutation()
 
   const items = useMemo(() => data?.items || [], [data?.items])
@@ -95,7 +92,14 @@ export default function EmailInboxPage() {
         <p className={adminBanner}>
           Company mailbox is not configured. Running in test mode: outgoing mail is saved in the CRM and is not
           delivered. Set SMTP_HOST and EMAIL_FROM_ADDRESS on the API server to send live mail. Inbound mail can arrive
-          at POST /api/webhooks/email.
+          via IMAP sync or POST /api/webhooks/email.
+        </p>
+      ) : null}
+
+      {settings && !settings.mockMode && settings.inbound && !settings.inbound.imap ? (
+        <p className={adminBanner}>
+          Outbound SMTP is live for {settings.fromAddress}, but inbound sync is off. Enable IMAP
+          (EMAIL_IMAP_ENABLED) or wire POST /api/webhooks/email so student replies appear here.
         </p>
       ) : null}
 
@@ -112,22 +116,24 @@ export default function EmailInboxPage() {
         ))}
       </div>
 
-      <div className={`${adminCard} grid overflow-hidden p-0 lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]`}>
+      <div
+        className={`${adminCard} grid min-w-0 max-w-full overflow-hidden p-0 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]`}
+      >
         <aside
-          className={`flex min-h-0 flex-col border-border-subtle lg:h-[calc(100vh-290px)] lg:min-h-[520px] lg:border-r ${
+          className={`flex min-h-0 min-w-0 max-w-full flex-col overflow-hidden border-border-subtle lg:h-[calc(100vh-290px)] lg:min-h-[520px] lg:border-r ${
             selectedId ? 'hidden lg:flex' : 'flex'
           }`}
         >
-          <div className="grid gap-2 border-b border-border-subtle p-3">
+          <div className="grid min-w-0 gap-2 border-b border-border-subtle p-3 [&_.ant-input-search]:w-full [&_.ant-input-search]:min-w-0 [&_.ant-select]:w-full [&_.ant-select]:min-w-0">
             <Input.Search
               allowClear
               placeholder="Search name, email, subject, lead"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
-            <Select value={assigned} onChange={setAssigned} options={ASSIGNED_OPTIONS} />
+            <Select value={assigned} onChange={setAssigned} options={ASSIGNED_OPTIONS} className="w-full" />
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
             {isError ? (
               <p className="m-0 p-4 text-danger">Could not load emails. Check API connection.</p>
             ) : (
@@ -136,7 +142,9 @@ export default function EmailInboxPage() {
           </div>
         </aside>
 
-        <section className={`min-h-0 ${selectedId ? 'flex' : 'hidden lg:flex'} flex-col`}>
+        <section
+          className={`min-h-0 min-w-0 max-w-full overflow-hidden ${selectedId ? 'flex' : 'hidden lg:flex'} flex-col`}
+        >
           {selectedId ? (
             <>
               <button
@@ -150,7 +158,7 @@ export default function EmailInboxPage() {
                 key={selectedId}
                 threadId={selectedId}
                 settings={settings}
-                className="h-[calc(100vh-240px)] min-h-[520px] lg:h-[calc(100vh-290px)]"
+                className="h-[calc(100vh-240px)] min-h-[520px] min-w-0 lg:h-[calc(100vh-290px)]"
               />
             </>
           ) : (
@@ -186,12 +194,12 @@ function StatusChip({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.8rem] ${
+      className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-3 py-1.5 text-[0.8rem] ${
         active ? 'border-primary bg-primary text-on-primary' : 'border-border bg-surface text-text hover:bg-hover-bg'
       }`}
     >
       {label}
-      <span className={`rounded-full px-1.5 text-[0.72rem] font-semibold ${active ? 'bg-white/25' : 'bg-hover-bg'}`}>
+      <span className={`rounded px-1.5 text-[0.72rem] font-semibold ${active ? 'bg-white/25' : 'bg-hover-bg'}`}>
         {count}
       </span>
     </button>

@@ -35,13 +35,39 @@ vi.mock('@/modules/leads/api/leadsApi', () => ({
     isFetching: false,
     isError: false,
   }),
+  useGetLeadQuery: () => ({ data: undefined, isFetching: false, isError: false }),
+  useUpdateLeadStatusMutation: () => [vi.fn(), { isLoading: false }],
+  useUploadLeadDocumentMutation: () => [vi.fn(), { isLoading: false }],
+}))
+
+vi.mock('@/redux/features/activities/activitiesApi', () => ({
+  useListActivityFeedQuery: () => ({ data: { items: [] } }),
+  useCreateActivityMutation: () => [vi.fn(), { isLoading: false }],
+}))
+
+vi.mock('@/modules/follow-ups/api/followUpsApi', () => ({
+  useListLeadFollowUpsQuery: () => ({ data: { items: [] } }),
+  useCreateFollowUpMutation: () => [vi.fn(), { isLoading: false }],
+  useRescheduleFollowUpMutation: () => [vi.fn(), { isLoading: false }],
+  useCancelFollowUpMutation: () => [vi.fn(), { isLoading: false }],
+}))
+
+vi.mock('@/modules/email/api/emailApi', () => ({
+  useStartLeadEmailMutation: () => [vi.fn()],
+  useSendEmailMessageMutation: () => [vi.fn(), { isLoading: false }],
+}))
+
+vi.mock('@/modules/leads/hooks/useLeadMasterOptions', () => ({
+  useLeadMasterOptions: () => ({ lostReason: [] }),
 }))
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom')
   return {
     ...actual,
-    useOutletContext: () => ({ permissions: ['lead:view', 'lead:create', 'lead:edit'] }),
+    useOutletContext: () => ({
+      permissions: ['lead:view', 'lead:create', 'lead:edit', 'lead:update_status'],
+    }),
   }
 })
 

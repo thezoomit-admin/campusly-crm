@@ -18,6 +18,7 @@ export const LEAD_PIPELINE_TABS = [
   { key: 'Counselling', label: 'Counselling' },
   { key: 'Offered', label: 'Offered' },
   { key: 'Converted', label: 'Converted' },
+  { key: 'closed', label: 'Closed' },
 ] as const
 
 export type LeadPipelineTab = (typeof LEAD_PIPELINE_TABS)[number]['key']
@@ -114,6 +115,9 @@ export function formatLeadCreatedOn(value?: string | null) {
 export function tabCount(summary: LeadListSummary | undefined, tab: LeadPipelineTab) {
   if (!summary) return 0
   if (tab === 'all') return summary.total
+  if (tab === 'closed') {
+    return summary.statuses.find((item) => item.key === 'closed' || item.label === 'Closed')?.count || 0
+  }
   return summary.statuses.find((item) => item.label === tab)?.count || 0
 }
 

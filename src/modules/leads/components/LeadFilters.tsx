@@ -1,7 +1,8 @@
-import { Search01Icon } from '@hugeicons/core-free-icons'
+import { Search01Icon, UserMultiple02Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { AdminFilterDrawer, countActiveFilters } from '@/components/common/Filters'
 import { FormInput } from '@/components/common/Forms'
+import { PrimaryButton } from '@/components/ui'
 import { useListMasterDataOptionsQuery } from '@/redux/features/masterData/masterDataApi'
 
 export type LeadFilterValues = {
@@ -21,6 +22,8 @@ type LeadFiltersProps = {
   onSearchChange: (value: string) => void
   filters: LeadFilterValues
   onFiltersChange: (value: LeadFilterValues) => void
+  duplicatesOnly?: boolean
+  onDuplicatesOnlyChange?: (value: boolean) => void
 }
 
 function useNamedOptions(category: string) {
@@ -35,6 +38,8 @@ export default function LeadFilters({
   onSearchChange,
   filters,
   onFiltersChange,
+  duplicatesOnly = false,
+  onDuplicatesOnlyChange,
 }: LeadFiltersProps) {
   const sourceOptions = useNamedOptions('LEAD_SOURCE')
   const countryOptions = useNamedOptions('COUNTRY')
@@ -92,6 +97,16 @@ export default function LeadFilters({
           },
         ]}
       />
+      {onDuplicatesOnlyChange ? (
+        <PrimaryButton
+          variant={duplicatesOnly ? 'primary' : 'outline'}
+          className="leads-filter-btn shrink-0"
+          icon={<HugeiconsIcon icon={UserMultiple02Icon} size={16} color="currentColor" strokeWidth={1.7} />}
+          label="Duplicate"
+          aria-pressed={duplicatesOnly}
+          onClick={() => onDuplicatesOnlyChange(!duplicatesOnly)}
+        />
+      ) : null}
     </div>
   )
 }

@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 export function userPhotoSrc(photoUrl?: string | null) {
   if (!photoUrl) {
     return ''
@@ -29,9 +31,15 @@ export default function UserAvatar({
   className?: string
 }) {
   const src = userPhotoSrc(photoUrl)
+  const [failed, setFailed] = useState(false)
+
   return (
     <span className={className}>
-      {src ? <img key={src} src={src} alt="" /> : userInitials(name)}
+      {src && !failed ? (
+        <img key={src} src={src} alt="" onError={() => setFailed(true)} />
+      ) : (
+        userInitials(name)
+      )}
     </span>
   )
 }
