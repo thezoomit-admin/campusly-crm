@@ -35,7 +35,7 @@ import {
   useLazyListEmployeesQuery,
   useUpdateEmployeeStatusMutation,
 } from '@/redux/features/employees/employeesApi'
-import { getApiError } from '@/lib/api'
+import { getApiError, toQuery } from '@/lib/api'
 import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
 import {
@@ -51,6 +51,7 @@ import dayjs from 'dayjs'
 import { PrimaryButton } from '@/components/ui'
 import { FormDatePicker, FormInput, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
+import ExportActions from '@/components/common/Export/ExportActions'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
 import { hasPermission } from '../../../lib/access'
@@ -198,6 +199,7 @@ export default function EmployeesPage() {
   const canManageEmployeeDocs = hasPermission(auth, 'employee_document:manage')
 
   const [employees, setEmployees] = useState<EmployeeRecord[]>([])
+  const [loadedFilters, setLoadedFilters] = useState<Filters>(EMPTY_FILTERS)
   const [options, setOptions] = useState<EmployeeOptions>(EMPTY_OPTIONS)
   const [filters, setFilters] = useState<Filters>({
     ...EMPTY_FILTERS,
@@ -280,23 +282,36 @@ export default function EmployeesPage() {
   }
 
   async function loadList(opts?: { silent?: boolean; search?: string }) {
+    const query: Filters = {
+      search: (opts?.search ?? filters.search).trim(),
+      departmentId: filters.departmentId,
+      teamId: filters.teamId,
+      designationId: filters.designationId,
+      roleId: filters.roleId,
+      employmentTypeId: filters.employmentTypeId,
+      employmentStatusId: filters.employmentStatusId,
+      reportingManagerId: filters.reportingManagerId,
+      joiningFrom: filters.joiningFrom,
+      joiningTo: filters.joiningTo,
+    }
     if (!opts?.silent) {
       setLoading(true)
     }
     try {
       const data = await listEmployees({
-        search: (opts?.search ?? filters.search).trim() || undefined,
-        departmentId: filters.departmentId || undefined,
-        teamId: filters.teamId || undefined,
-        designationId: filters.designationId || undefined,
-        roleId: filters.roleId || undefined,
-        employmentTypeId: filters.employmentTypeId || undefined,
-        employmentStatusId: filters.employmentStatusId || undefined,
-        reportingManagerId: filters.reportingManagerId || undefined,
-        joiningFrom: filters.joiningFrom || undefined,
-        joiningTo: filters.joiningTo || undefined,
+        search: query.search || undefined,
+        departmentId: query.departmentId || undefined,
+        teamId: query.teamId || undefined,
+        designationId: query.designationId || undefined,
+        roleId: query.roleId || undefined,
+        employmentTypeId: query.employmentTypeId || undefined,
+        employmentStatusId: query.employmentStatusId || undefined,
+        reportingManagerId: query.reportingManagerId || undefined,
+        joiningFrom: query.joiningFrom || undefined,
+        joiningTo: query.joiningTo || undefined,
       }).unwrap()
       setEmployees(data.employees)
+      setLoadedFilters(query)
       setError('')
     } catch (err) {
       setError(getApiError(err, 'Unable to load employees.'))
@@ -433,7 +448,26 @@ export default function EmployeesPage() {
         title="Employees"
         subtitle="Manage employee records, assignments, and employment status."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Employees' }]}
-        extra={canCreate ? <PrimaryButton onClick={openCreate} label="Create Employee" /> : undefined}
+        extra={
+          <div className="flex flex-wrap items-center gap-2">
+            <ExportActions
+              title="Employees"
+              path={`/employees/export${toQuery({
+                search: loadedFilters.search.trim() || undefined,
+                departmentId: loadedFilters.departmentId || undefined,
+                teamId: loadedFilters.teamId || undefined,
+                designationId: loadedFilters.designationId || undefined,
+                roleId: loadedFilters.roleId || undefined,
+                employmentTypeId: loadedFilters.employmentTypeId || undefined,
+                employmentStatusId: loadedFilters.employmentStatusId || undefined,
+                reportingManagerId: loadedFilters.reportingManagerId || undefined,
+                joiningFrom: loadedFilters.joiningFrom || undefined,
+                joiningTo: loadedFilters.joiningTo || undefined,
+              })}`}
+            />
+            {canCreate ? <PrimaryButton onClick={openCreate} label="Create Employee" /> : null}
+          </div>
+        }
       />
 
       <section className={`${adminFilters} ${adminFiltersEmployees}`}>
@@ -591,7 +625,7 @@ export default function EmployeesPage() {
                     <td>
                       {employee.reportingManager ? (
                         <Link
-                          className="font-[650] text-inherit no-underline hover:text-primary hover:underline"
+                          className="!text-primary font-[650] no-underline hover:!text-primary-hover hover:underline"
                           to={`/employees/${employee.reportingManager.id}`}
                           onClick={(event) => event.stopPropagation()}
                         >

@@ -11,14 +11,36 @@ function text(value: string | number | null | undefined) {
   return String(value)
 }
 
+/** Split a stored phone into dial code + national digits for the flag input. */
+function splitStoredPhone(phone: string | null | undefined, countryCode?: string | null) {
+  const digits = (phone || '').replace(/\D/g, '')
+  const dial = (countryCode || '').replace(/\D/g, '')
+  if (dial && digits.startsWith(dial) && digits.length > dial.length) {
+    return { countryCode: dial, national: digits.slice(dial.length) }
+  }
+  if (digits.startsWith('880') && digits.length > 3) {
+    return { countryCode: '880', national: digits.slice(3) }
+  }
+  return { countryCode: dial || '880', national: digits }
+}
+
 export function recordToForm(lead: LeadRecord): LeadFormState {
+  const phoneCountryCode = lead.phoneCountryCode || '880'
+  const phoneParts = splitStoredPhone(lead.phone, phoneCountryCode)
+  const whatsappSameAsPhone = Boolean(lead.whatsappSameAsPhone)
+  const whatsappCountryCode = lead.whatsappCountryCode || phoneCountryCode || '880'
+  const whatsappParts = splitStoredPhone(lead.whatsapp, whatsappCountryCode)
+
   return {
     ...EMPTY_LEAD_FORM,
     name: lead.name || '',
-    phone: lead.phone || '',
-    phoneCountryCode: lead.phoneCountryCode || '880',
-    whatsapp: lead.whatsapp || '',
-    whatsappSameAsPhone: Boolean(lead.whatsappSameAsPhone),
+    phone: phoneParts.national || lead.phone || '',
+    phoneCountryCode: phoneParts.countryCode || phoneCountryCode,
+    whatsapp: whatsappSameAsPhone ? phoneParts.national || lead.phone || '' : whatsappParts.national,
+    whatsappCountryCode: whatsappSameAsPhone
+      ? phoneParts.countryCode || phoneCountryCode
+      : whatsappParts.countryCode || whatsappCountryCode,
+    whatsappSameAsPhone,
     email: lead.email || '',
     dateOfBirth: lead.dateOfBirth || '',
     currentLocation: lead.currentLocation || '',
@@ -37,6 +59,10 @@ export function recordToForm(lead: LeadRecord): LeadFormState {
     testStatusCode: lead.testStatusCode || '',
     overallScore: text(lead.overallScore),
     testDate: lead.testDate || '',
+    listening: text(lead.listening),
+    reading: text(lead.reading),
+    writing: text(lead.writing),
+    speaking: text(lead.speaking),
     estimatedBudgetCode: lead.estimatedBudgetCode || '',
     fundingSourceCode: lead.fundingSourceCode || '',
     financialReadinessCode: lead.financialReadinessCode || '',
@@ -87,6 +113,9 @@ export function formToPayload(form: LeadFormState, extra?: Record<string, unknow
     phone: form.phone.trim(),
     phoneCountryCode: emptyToNull(form.phoneCountryCode),
     whatsapp: form.whatsappSameAsPhone ? form.phone.trim() : emptyToNull(form.whatsapp),
+    whatsappCountryCode: form.whatsappSameAsPhone
+      ? emptyToNull(form.phoneCountryCode)
+      : emptyToNull(form.whatsappCountryCode),
     whatsappSameAsPhone: form.whatsappSameAsPhone,
     email: emptyToNull(form.email.toLowerCase()),
     dateOfBirth: emptyToNull(form.dateOfBirth),
@@ -106,6 +135,10 @@ export function formToPayload(form: LeadFormState, extra?: Record<string, unknow
     testStatusCode: emptyToNull(form.testStatusCode),
     overallScore: emptyToNull(form.overallScore),
     testDate: emptyToNull(form.testDate),
+    listening: emptyToNull(form.listening),
+    reading: emptyToNull(form.reading),
+    writing: emptyToNull(form.writing),
+    speaking: emptyToNull(form.speaking),
     estimatedBudgetCode: emptyToNull(form.estimatedBudgetCode),
     fundingSourceCode: emptyToNull(form.fundingSourceCode),
     financialReadinessCode: emptyToNull(form.financialReadinessCode),

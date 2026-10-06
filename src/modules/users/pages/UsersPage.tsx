@@ -59,7 +59,7 @@ import {
 } from '@/redux/features/users/usersApi'
 import { useLazyListRoleOptionsQuery } from '@/redux/features/roles/rolesApi'
 import { useLazyListDepartmentsQuery } from '@/redux/features/masterData/masterDataApi'
-import { getApiError, isGloballyToastedApiError } from '@/lib/api'
+import { getApiError, isGloballyToastedApiError, toQuery } from '@/lib/api'
 import { patchCurrentAuthUser } from '@/lib/auth'
 import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
@@ -89,10 +89,11 @@ import {
   UserIcon,
   ViewIcon,
 } from '@hugeicons/core-free-icons'
-import { Skeleton, Spin } from 'antd'
+import { Skeleton, Spin, Tooltip } from 'antd'
 import { PrimaryButton } from '@/components/ui'
 import { FormInput, FormSelect, FormSwitch } from '@/components/common/Forms'
 import { PageHeader } from '@/components/common/Navigation'
+import ExportActions from '@/components/common/Export/ExportActions'
 import { PageMeta } from '@/components/common/Meta'
 import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
 import { hasPermission } from '../../../lib/access'
@@ -214,9 +215,15 @@ function UserAvatar({
   className: string
 }) {
   const src = userPhotoSrc(photoUrl)
+  const [failed, setFailed] = useState(false)
+
   return (
     <div className={className}>
-      {src ? <img src={src} alt="" /> : userInitials(name)}
+      {src && !failed ? (
+        <img key={src} src={src} alt="" onError={() => setFailed(true)} />
+      ) : (
+        userInitials(name)
+      )}
     </div>
   )
 }
@@ -837,6 +844,13 @@ export default function UsersPage() {
   const canOverride = hasPermission(auth, 'permission:configure')
 
   const [users, setUsers] = useState<AdminUser[]>([])
+  const [loadedFilters, setLoadedFilters] = useState({
+    search: '',
+    roleId: '',
+    departmentId: '',
+    teamId: '',
+    status: '',
+  })
   const [roles, setRoles] = useState<RoleOption[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [filters, setFilters] = useState({
@@ -933,9 +947,23 @@ export default function UsersPage() {
     if (options?.fromSearch) {
       setSearching(true)
     }
+    const query = {
+      search: (options?.search ?? filters.search).trim(),
+      roleId: filters.roleId,
+      departmentId: filters.departmentId,
+      teamId: filters.teamId,
+      status: filters.status,
+    }
     try {
-      const data = await listUsers({ ...filters, search: options?.search ?? filters.search }).unwrap()
+      const data = await listUsers({
+        search: query.search || undefined,
+        roleId: query.roleId || undefined,
+        departmentId: query.departmentId || undefined,
+        teamId: query.teamId || undefined,
+        status: query.status || undefined,
+      }).unwrap()
       setUsers(data.users)
+      setLoadedFilters(query)
     } catch (err) {
       showApiError(err, 'Unable to load users.')
     } finally {
@@ -1181,7 +1209,21 @@ export default function UsersPage() {
         title="Users"
         subtitle="Create users, assign roles, and control login access."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Users' }]}
-        extra={canCreate ? <PrimaryButton onClick={() => void openCreate()} label="Create User" /> : undefined}
+        extra={
+          <div className="flex flex-wrap items-center gap-2">
+            <ExportActions
+              title="Users"
+              path={`/users/export${toQuery({
+                search: loadedFilters.search.trim() || undefined,
+                roleId: loadedFilters.roleId || undefined,
+                departmentId: loadedFilters.departmentId || undefined,
+                teamId: loadedFilters.teamId || undefined,
+                status: loadedFilters.status || undefined,
+              })}`}
+            />
+            {canCreate ? <PrimaryButton onClick={() => void openCreate()} label="Create User" /> : null}
+          </div>
+        }
       />
 
       <section className={`${adminFilters}`}>
@@ -1246,13 +1288,14 @@ export default function UsersPage() {
                 <th>Department</th>
                 <th>Team</th>
                 <th>Status</th>
+                <th>Created at</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {!loading && users.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>No users found.</td>
+                  <td colSpan={7}>No users found.</td>
                 </tr>
               ) : (
                 users.map((user) => (
@@ -1291,6 +1334,7 @@ export default function UsersPage() {
                         />
                       )}
                     </td>
+                    <td>{formatPrettyDate(user.createdAt)}</td>
                     <td className={`${rowActions}`} onClick={(event) => event.stopPropagation()}>
                       <RowActionMenu
                         items={(
@@ -1510,7 +1554,24 @@ export default function UsersPage() {
                 />
               </label>
               <label>
-                <FieldLabel required>Email</FieldLabel>
+                <span className="inline-flex items-center gap-1.5">
+                  <FieldLabel required>Email</FieldLabel>
+                  {editingId && form.status !== 'INVITED' ? (
+                    <Tooltip title="Email cannot be changed after the account is enabled.">
+                      <span
+                        className="inline-flex text-[#8b97a8]"
+                        onClick={(event) => event.preventDefault()}
+                      >
+                        <HugeiconsIcon
+                          icon={InformationCircleIcon}
+                          size={14}
+                          color="currentColor"
+                          strokeWidth={1.8}
+                        />
+                      </span>
+                    </Tooltip>
+                  ) : null}
+                </span>
                 <FormInput
                   type="email"
                   value={form.email}
@@ -1529,9 +1590,6 @@ export default function UsersPage() {
                   <p className={`${fieldHint}`}>
                     While invited, changing email sends a new setup invite to the new address.
                   </p>
-                ) : null}
-                {editingId && form.status !== 'INVITED' ? (
-                  <p className={`${fieldHint}`}>Email cannot be changed after the account is enabled.</p>
                 ) : null}
               </label>
               <label>

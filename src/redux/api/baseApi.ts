@@ -4,115 +4,137 @@ import {
   type FetchArgs,
   fetchBaseQuery,
   type FetchBaseQueryError,
-} from '@reduxjs/toolkit/query/react'
-import { toast } from 'react-toastify'
-import { config } from '@/config'
-import { clearAuthPersistStorage } from '@/lib/auth'
-import { clearSession } from '../features/auth/authSlice'
+} from "@reduxjs/toolkit/query/react";
+import { toast } from "react-toastify";
+import { config } from "@/config";
+import { clearAuthPersistStorage } from "@/lib/auth";
+import { clearSession } from "../features/auth/authSlice";
 
 function getToastMessage(data: unknown, fallback: string): string {
-  if (!data || typeof data !== 'object') return fallback
-  const body = data as Record<string, unknown>
-  if (typeof body.error === 'string' && body.error.trim()) return body.error
-  if (typeof body.message === 'string' && body.message.trim()) return body.message
-  return fallback
+  if (!data || typeof data !== "object") return fallback;
+  const body = data as Record<string, unknown>;
+  if (typeof body.error === "string" && body.error.trim()) return body.error;
+  if (typeof body.message === "string" && body.message.trim())
+    return body.message;
+  return fallback;
 }
 
 function getRequestUrl(args: string | FetchArgs): string {
-  return typeof args === 'string' ? args : args.url
+  return typeof args === "string" ? args : args.url;
 }
 
 const isGuestAuthEndpoint = (url: string) =>
-  /\/auth\/(login|forgot-password|reset-password)(\?|\/|$)/i.test(url) || url === '/me'
+  /\/auth\/(login|forgot-password|reset-password)(\?|\/|$)/i.test(url) ||
+  url === "/me";
 
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: config.api,
-  credentials: 'include',
+  credentials: "include",
   prepareHeaders: (headers) => {
-    headers.set('Accept', 'application/json')
-    return headers
+    headers.set("Accept", "application/json");
+    return headers;
   },
-})
+});
 
-const baseQueryWithAuth: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
-  args,
-  api,
-  extraOptions,
-) => {
-  const result = await rawBaseQuery(args, api, extraOptions)
-  const requestUrl = getRequestUrl(args)
-  const status = result.error?.status
+const baseQueryWithAuth: BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+  const result = await rawBaseQuery(args, api, extraOptions);
+  const requestUrl = getRequestUrl(args);
+  const status = result.error?.status;
 
   if (status === 401 && !isGuestAuthEndpoint(requestUrl)) {
-    toast.error(getToastMessage(result.error?.data, 'Session expired. Please sign in again.'))
-    api.dispatch(clearSession())
-    api.dispatch(baseApi.util.resetApiState())
-    clearAuthPersistStorage()
+    toast.error(
+      getToastMessage(
+        result.error?.data,
+        "Session expired. Please sign in again.",
+      ),
+    );
+    api.dispatch(clearSession());
+    api.dispatch(baseApi.util.resetApiState());
+    clearAuthPersistStorage();
     try {
-      const path = window.location.pathname
-      if (!path.includes('/login') && !path.includes('/forgot-password') && !path.includes('/reset-password')) {
-        window.location.assign('/login')
+      const path = window.location.pathname;
+      if (
+        !path.includes("/login") &&
+        !path.includes("/forgot-password") &&
+        !path.includes("/reset-password")
+      ) {
+        window.location.assign("/login");
       }
     } catch {
-      window.location.assign('/login')
+      window.location.assign("/login");
     }
   }
 
   if (status === 403) {
-    toast.error(getToastMessage(result.error?.data, 'You do not have permission for this action.'))
+    toast.error(
+      getToastMessage(
+        result.error?.data,
+        "You do not have permission for this action.",
+      ),
+    );
   }
 
   if (status === 404 && !isGuestAuthEndpoint(requestUrl)) {
-    toast.error(getToastMessage(result.error?.data, 'Not found.'))
+    toast.error(getToastMessage(result.error?.data, "Not found."));
   }
 
   if (status === 409) {
-    toast.error(getToastMessage(result.error?.data, 'Conflict with an existing resource.'))
+    toast.error(
+      getToastMessage(
+        result.error?.data,
+        "Conflict with an existing resource.",
+      ),
+    );
   }
 
-  return result
-}
+  return result;
+};
 
 export const baseApi = createApi({
-  reducerPath: 'baseApi',
+  reducerPath: "baseApi",
   baseQuery: baseQueryWithAuth,
   tagTypes: [
-    'Auth',
-    'Users',
-    'User',
-    'Roles',
-    'Role',
-    'Permissions',
-    'Employees',
-    'Employee',
-    'EmployeeOptions',
-    'MasterDataCategories',
-    'MasterDataItems',
-    'MasterDataHistory',
-    'ServiceItems',
-    'ServiceItem',
-    'Packages',
-    'Package',
-    'ServiceOffers',
-    'Departments',
-    'Activities',
-    'AuditLogs',
-    'Search',
-    'Pipeline',
-    'Leads',
-    'Applications',
-    'Students',
-    'Documents',
-    'Payments',
-    'FollowUps',
-    'Reports',
-    'Dashboard',
-    'Notifications',
-    'Communications',
-    'Campaigns',
-    'MetaLeads',
-    'WhatsApp',
-    'Email',
+    "Auth",
+    "Users",
+    "User",
+    "Roles",
+    "Role",
+    "Permissions",
+    "Employees",
+    "Employee",
+    "EmployeeOptions",
+    "MasterDataCategories",
+    "MasterDataItems",
+    "MasterDataHistory",
+    "ServiceItems",
+    "ServiceItem",
+    "Packages",
+    "Package",
+    "ServiceOffers",
+    "LeadPayments",
+    "Departments",
+    "Activities",
+    "AuditLogs",
+    "Search",
+    "Pipeline",
+    "Leads",
+    "Applications",
+    "Students",
+    "Documents",
+    "Payments",
+    "FollowUps",
+    "Reports",
+    "Dashboard",
+    "Notifications",
+    "Communications",
+    "Campaigns",
+    "MetaLeads",
+    "WhatsApp",
+    "Email",
   ],
   endpoints: () => ({}),
-})
+});

@@ -1,4 +1,4 @@
-import { Search01Icon } from '@hugeicons/core-free-icons'
+import { RefreshIcon, Search01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { PrimaryButton } from '@/components/ui'
 import { FormInput, FormSelect } from '@/components/common/Forms'
@@ -31,8 +31,8 @@ type MyLeadsFiltersProps = {
   filters: MyLeadFilterValues
   onSearchChange: (value: string) => void
   onFiltersChange: (value: MyLeadFilterValues) => void
-  onSearch: () => void
-  onReset: () => void
+  onRefresh: () => void
+  refreshing?: boolean
 }
 
 function useNamedOptions(category: string) {
@@ -47,78 +47,81 @@ export default function MyLeadsFilters({
   filters,
   onSearchChange,
   onFiltersChange,
-  onSearch,
-  onReset,
+  onRefresh,
+  refreshing = false,
 }: MyLeadsFiltersProps) {
   const statusOptions = useNamedOptions('LEAD_STATUS')
   const countryOptions = useNamedOptions('COUNTRY')
   const sourceOptions = useNamedOptions('LEAD_SOURCE')
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-4">
+    <div className="flex flex-wrap items-center gap-2 px-4 py-4">
       <FormInput
         allowClear
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
-        onPressEnter={onSearch}
         placeholder="Search by Lead ID, student name, or phone number"
         prefix={<HugeiconsIcon icon={Search01Icon} size={16} color="currentColor" strokeWidth={1.7} />}
-        className="leads-list-search w-full max-w-xl"
+        className="leads-list-search min-w-[220px] flex-1"
       />
-      <div className="flex flex-wrap items-center gap-2">
-        <FormSelect
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          placeholder="Current Status"
-          className="min-w-[160px] flex-1"
-          value={filters.status || undefined}
-          options={statusOptions}
-          onChange={(value) => onFiltersChange({ ...filters, status: value || '' })}
-        />
-        <FormSelect
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          placeholder="Preferred Country"
-          className="min-w-[160px] flex-1"
-          value={filters.country || undefined}
-          options={countryOptions}
-          onChange={(value) => onFiltersChange({ ...filters, country: value || '' })}
-        />
-        <FormSelect
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          placeholder="Lead Source"
-          className="min-w-[160px] flex-1"
-          value={filters.source || undefined}
-          options={sourceOptions}
-          onChange={(value) => onFiltersChange({ ...filters, source: value || '' })}
-        />
-        <FormSelect
-          allowClear
-          placeholder="Priority"
-          className="min-w-[140px] flex-1"
-          value={filters.priority || undefined}
-          options={[
-            { label: 'High', value: 'High' },
-            { label: 'Medium', value: 'Medium' },
-            { label: 'Low', value: 'Low' },
-          ]}
-          onChange={(value) => onFiltersChange({ ...filters, priority: value || '' })}
-        />
-        <FormSelect
-          allowClear
-          placeholder="Follow-up Status"
-          className="min-w-[180px] flex-1"
-          value={filters.followUpStatus || undefined}
-          options={FOLLOW_UP_STATUS_OPTIONS}
-          onChange={(value) => onFiltersChange({ ...filters, followUpStatus: value || '' })}
-        />
-        <PrimaryButton type="button" onClick={onSearch} label="Search" />
-        <PrimaryButton type="button" variant="outline" onClick={onReset} label="Reset" />
-      </div>
+      <FormSelect
+        allowClear
+        showSearch
+        optionFilterProp="label"
+        placeholder="Current Status"
+        className="min-w-[140px] flex-1"
+        value={filters.status || undefined}
+        options={statusOptions}
+        onChange={(value) => onFiltersChange({ ...filters, status: value || '' })}
+      />
+      <FormSelect
+        allowClear
+        showSearch
+        optionFilterProp="label"
+        placeholder="Preferred Country"
+        className="min-w-[140px] flex-1"
+        value={filters.country || undefined}
+        options={countryOptions}
+        onChange={(value) => onFiltersChange({ ...filters, country: value || '' })}
+      />
+      <FormSelect
+        allowClear
+        showSearch
+        optionFilterProp="label"
+        placeholder="Lead Source"
+        className="min-w-[140px] flex-1"
+        value={filters.source || undefined}
+        options={sourceOptions}
+        onChange={(value) => onFiltersChange({ ...filters, source: value || '' })}
+      />
+      <FormSelect
+        allowClear
+        placeholder="Priority"
+        className="min-w-[120px] flex-1"
+        value={filters.priority || undefined}
+        options={[
+          { label: 'High', value: 'High' },
+          { label: 'Medium', value: 'Medium' },
+          { label: 'Low', value: 'Low' },
+        ]}
+        onChange={(value) => onFiltersChange({ ...filters, priority: value || '' })}
+      />
+      <FormSelect
+        allowClear
+        placeholder="Follow-up Status"
+        className="min-w-[150px] flex-1"
+        value={filters.followUpStatus || undefined}
+        options={FOLLOW_UP_STATUS_OPTIONS}
+        onChange={(value) => onFiltersChange({ ...filters, followUpStatus: value || '' })}
+      />
+      <PrimaryButton
+        type="button"
+        variant="outline"
+        onClick={onRefresh}
+        loading={refreshing}
+        icon={<HugeiconsIcon icon={RefreshIcon} size={15} />}
+        label="Refresh"
+      />
     </div>
   )
 }

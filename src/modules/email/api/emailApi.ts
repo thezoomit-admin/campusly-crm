@@ -28,7 +28,7 @@ const threadTags = (id: string) => [
   { type: 'Email' as const, id: `MSG-${id}` },
 ]
 
-const emailApi = baseApi.injectEndpoints({
+export const emailApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getEmailSettings: builder.query<EmailSettings, void>({
       query: () => '/email/settings',

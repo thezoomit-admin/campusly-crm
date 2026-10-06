@@ -50,7 +50,7 @@ export type EmailMessage = {
   fromEmail: string
   fromName: string | null
   toEmail: string
-  deliveryStatus: string
+  deliveryStatus: 'sent' | 'failed' | 'received' | 'bounced' | string
   errorMessage: string | null
   templateCode: string | null
   sentAt: string
@@ -72,6 +72,12 @@ export type EmailSettings = {
   autoCreateLead: boolean
   fromAddress: string
   canManage: boolean
+  inbound?: {
+    imap: boolean
+    imapHost: string | null
+    pollSeconds: number
+    webhook: boolean
+  }
 }
 
 export const EMAIL_STATUS_LABELS: Record<EmailThreadStatus, string> = {
@@ -104,6 +110,7 @@ export const EMAIL_DOC_CATEGORIES = [
 
 export const EMAIL_ERRORS = {
   sendFailed: 'Unable to send email. Please try again.',
+  bounced: 'This email bounced. The student address may be invalid.',
   attachmentFailed: 'Unable to upload attachment.',
   unavailable: 'Email conversation not found.',
   denied: 'You do not have permission to access this email.',

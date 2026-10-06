@@ -6,6 +6,7 @@ import type {
   LeadAssignmentHistoryItem,
   LeadDocumentItem,
   LeadListSummary,
+  LeadNoteItem,
   LeadPoolRow,
   LeadRecord,
   LeadRow,
@@ -22,6 +23,7 @@ export type LeadListParams = {
   source?: string
   priority?: string
   country?: string
+  duplicatesOnly?: boolean
 }
 
 export type LeadListResponse = {
@@ -88,6 +90,7 @@ const leadsApi = baseApi.injectEndpoints({
           source: params?.source,
           priority: params?.priority,
           country: params?.country,
+          duplicatesOnly: params?.duplicatesOnly ? 'true' : undefined,
         })}`,
       providesTags: [{ type: 'Leads', id: 'LIST' }],
     }),
@@ -101,6 +104,19 @@ const leadsApi = baseApi.injectEndpoints({
     >({
       query: (body) => ({ url: '/leads/duplicate-check', method: 'POST', body }),
     }),
+    previewLeadAssignment: builder.query<
+      {
+        assignment: {
+          ownerId: string | null
+          ownerName: string | null
+          teamId: string | null
+          teamName: string | null
+        }
+      },
+      string
+    >({
+      query: (countryCode) => `/leads/assignment-preview${toQuery({ countryCode })}`,
+    }),
     createLead: builder.mutation<{ lead: LeadRecord; message: string }, Record<string, unknown>>({
       query: (body) => ({ url: '/leads', method: 'POST', body }),
       invalidatesTags: [...LEAD_COLLECTION_TAGS, 'Dashboard', 'Pipeline', { type: 'Campaigns', id: 'PERFORMANCE' }],
@@ -111,7 +127,7 @@ const leadsApi = baseApi.injectEndpoints({
     }),
     updateLeadQualification: builder.mutation<{ lead: LeadRecord }, { id: string; body: Record<string, unknown> }>({
       query: ({ id, body }) => ({ url: `/leads/${id}/qualification`, method: 'PATCH', body }),
-      invalidatesTags: (_r, _e, { id }) => [{ type: 'Leads', id }, ...LEAD_COLLECTION_TAGS],
+      invalidatesTags: (_r, _e, { id }) => [{ type: 'Leads', id }, ...LEAD_COLLECTION_TAGS, 'Activities'],
     }),
     updateLeadPriority: builder.mutation<{ lead: LeadRecord }, { id: string; body: Record<string, unknown> }>({
       query: ({ id, body }) => ({ url: `/leads/${id}/priority`, method: 'PATCH', body }),
@@ -202,6 +218,25 @@ const leadsApi = baseApi.injectEndpoints({
     listLeadAssignments: builder.query<{ items: LeadAssignmentHistoryItem[] }, string>({
       query: (id) => `/leads/${id}/assignments`,
       providesTags: (_r, _e, id) => [{ type: 'Leads', id }],
+    }),
+    listLeadNotes: builder.query<{ items: LeadNoteItem[] }, string>({
+      query: (id) => `/leads/${id}/notes`,
+      providesTags: (_r, _e, id) => [{ type: 'Leads', id: `${id}-notes` }],
+    }),
+    createLeadNote: builder.mutation<
+      { note: LeadNoteItem },
+      { id: string; body: string; skipActivity?: boolean }
+    >({
+      query: ({ id, body, skipActivity }) => ({
+        url: `/leads/${id}/notes`,
+        method: 'POST',
+        body: { body, skipActivity: Boolean(skipActivity) },
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Leads', id: `${id}-notes` },
+        { type: 'Leads', id },
+        'Activities',
+      ],
     }),
     listLeadDocuments: builder.query<{ items: LeadDocumentItem[] }, string>({
       query: (id) => `/leads/${id}/documents`,
@@ -324,6 +359,24 @@ const leadsApi = baseApi.injectEndpoints({
         'Pipeline',
       ],
     }),
+    reviewDuplicateLead: builder.mutation<
+      { lead?: LeadRecord; message: string },
+      { id: string; action: 'keep' | 'cancel_duplicate' | 'archive' | 'delete' }
+    >({
+      query: ({ id, action }) => ({
+        url: `/leads/${id}/duplicate-review`,
+        method: 'POST',
+        body: { action },
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Leads', id },
+        ...LEAD_COLLECTION_TAGS,
+        'Activities',
+        'Dashboard',
+        'Pipeline',
+        'FollowUps',
+      ],
+    }),
   }),
 })
 
@@ -332,6 +385,7 @@ export const {
   useGetLeadQuery,
   useLazyGetLeadQuery,
   useCheckLeadDuplicateMutation,
+  usePreviewLeadAssignmentQuery,
   useCreateLeadMutation,
   useUpdateLeadMutation,
   useUpdateLeadQualificationMutation,
@@ -345,12 +399,15 @@ export const {
   useListMyLeadsQuery,
   useListLeadAssigneesQuery,
   useListLeadAssignmentsQuery,
+  useListLeadNotesQuery,
+  useCreateLeadNoteMutation,
   useListLeadDocumentsQuery,
   useUploadLeadDocumentMutation,
   useDeleteLeadDocumentMutation,
   useLazyFetchLeadDocumentBlobQuery,
   useHandoverLeadMutation,
   useAssignLeadMutation,
+  useReviewDuplicateLeadMutation,
   useCorrectLeadSourceMutation,
   useCorrectLeadCampaignMutation,
   useListAttributionChangesQuery,

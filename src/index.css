@@ -3,7 +3,7 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 @theme {
-  --font-sans: Inter, "Segoe UI", system-ui, sans-serif;
+  --font-sans: "Outfit", sans-serif;
 
   --color-page-bg: #fafafa;
   --color-sidebar-bg: #ffffff;
@@ -371,6 +371,18 @@ table tbody td:last-child :is(button, .ant-btn, a):not(:disabled):not(.ant-btn-d
   }
 }
 
+@keyframes journey-current-pulse {
+  0%,
+  100% {
+    transform: scale(1.05);
+    opacity: 0.22;
+  }
+  50% {
+    transform: scale(1.45);
+    opacity: 0.65;
+  }
+}
+
 /* Keep Font Awesome glyph fonts intact under Tailwind base font rules. */
 .fa,
 .fas,
@@ -410,4 +422,16 @@ table tbody td:last-child :is(button, .ant-btn, a):not(:disabled):not(.ant-btn-d
 .fab {
   font-family: "Font Awesome 6 Brands" !important;
   font-weight: 400 !important;
+}
+
+/* Pagination active state — theme primary everywhere (table + standalone) */
+.ant-pagination .ant-pagination-item-active {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.ant-pagination .ant-pagination-item-active a,
+.ant-pagination .ant-pagination-item-active .ant-pagination-item-link,
+.ant-pagination .ant-pagination-item-active a.ant-pagination-item-link {
+  color: var(--color-on-primary) !important;
 }

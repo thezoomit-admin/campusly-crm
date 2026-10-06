@@ -28,16 +28,16 @@ export default function ThreadList({ items, selectedId, loading, onSelect }: Pro
   }
 
   return (
-    <ul className="m-0 grid list-none gap-0 p-0">
+    <ul className="m-0 grid min-w-0 list-none gap-0 p-0">
       {items.map((item) => {
         const active = item.id === selectedId
         const unread = item.unreadCount > 0
         return (
-          <li key={item.id}>
+          <li key={item.id} className="min-w-0">
             <button
               type="button"
               onClick={() => onSelect(item.id)}
-              className={`flex w-full cursor-pointer items-start gap-3 border-0 border-b border-border-subtle bg-transparent px-3 py-3 text-left transition-colors ${
+              className={`flex w-full min-w-0 max-w-full cursor-pointer items-start gap-3 overflow-hidden border-0 border-b border-border-subtle bg-transparent px-3 py-3 text-left transition-colors ${
                 active
                   ? 'bg-[color-mix(in_srgb,var(--color-primary)_9%,var(--color-surface))]'
                   : 'hover:bg-hover-bg'
@@ -50,24 +50,24 @@ export default function ThreadList({ items, selectedId, loading, onSelect }: Pro
               >
                 {initials(item.displayName)}
               </span>
-              <span className="grid min-w-0 flex-1 gap-0.5">
-                <span className="flex items-center justify-between gap-2">
-                  <span className={`truncate text-[0.9rem] text-text-strong ${unread ? 'font-bold' : 'font-semibold'}`}>
+              <span className="grid min-w-0 flex-1 gap-0.5 overflow-hidden">
+                <span className="flex min-w-0 items-center justify-between gap-2">
+                  <span className={`min-w-0 truncate text-[0.9rem] text-text-strong ${unread ? 'font-bold' : 'font-semibold'}`}>
                     {item.displayName}
                   </span>
                   <time className={`shrink-0 text-[0.72rem] ${unread ? 'font-semibold text-primary' : 'text-text-muted'}`}>
                     {formatListTime(item.lastMessageAt)}
                   </time>
                 </span>
-                <span className="truncate text-[0.75rem] text-text-muted">
+                <span className="min-w-0 truncate text-[0.75rem] text-text-muted">
                   {item.participantEmail}
                   {item.lead ? ` · ${item.lead.code}` : ' · Unidentified'}
                 </span>
-                <span className="truncate text-[0.78rem] font-medium text-text-strong">
+                <span className="min-w-0 truncate text-[0.78rem] font-medium text-text-strong">
                   {item.subject || 'No subject'}
                 </span>
-                <span className="flex items-center justify-between gap-2">
-                  <span className={`truncate text-[0.8rem] ${unread ? 'text-text-strong' : 'text-text-muted'}`}>
+                <span className="flex min-w-0 items-center justify-between gap-2">
+                  <span className={`min-w-0 truncate text-[0.8rem] ${unread ? 'text-text-strong' : 'text-text-muted'}`}>
                     {item.lastDirection === 'outgoing' ? 'You: ' : ''}
                     {item.lastMessagePreview || 'No messages yet'}
                   </span>

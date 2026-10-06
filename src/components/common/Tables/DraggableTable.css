@@ -20,7 +20,7 @@
   background-color: #fff;
   color: #374151;
   border-bottom: 1px solid #f3f4f6;
-  font-family: Inter;
+  font-family: "Outfit", sans-serif;
   font-weight: 400;
   font-size: 13px;
   line-height: 20px;
@@ -197,14 +197,14 @@
   font-weight: 600;
 }
 
-/* Active page — solid brand green, white label */
+/* Active page — theme primary */
 .ant-table-wrapper .ant-pagination .ant-pagination-item-active {
-  background: #237d3b !important;
-  border-color: #237d3b !important;
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
 }
 
 .ant-table-wrapper .ant-pagination .ant-pagination-item-active a {
-  color: #ffffff;
+  color: var(--color-on-primary) !important;
 }
 
 .ant-table-wrapper
@@ -215,7 +215,7 @@
   .ant-pagination
   .ant-pagination-item-active
   a.ant-pagination-item-link {
-  color: #fff !important;
+  color: var(--color-on-primary) !important;
   background: transparent !important;
 }
 

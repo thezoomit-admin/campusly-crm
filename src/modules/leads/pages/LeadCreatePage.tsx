@@ -15,6 +15,7 @@ import {
   useCheckLeadDuplicateMutation,
   useCreateLeadMutation,
   useGetLeadQuery,
+  usePreviewLeadAssignmentQuery,
   useUpdateLeadMutation,
 } from '../api/leadsApi'
 import { EMPTY_LEAD_FORM, type DuplicateLead, type LeadFormState } from '../types'
@@ -49,6 +50,16 @@ export default function LeadCreatePage() {
   const canCreateAnyway = hasPermission(auth, 'lead:create_duplicate')
   const { data, isFetching, isError } = useGetLeadQuery(id as string, { skip: !isEdit })
   const lead = data?.lead
+  const { data: assignmentPreview } = usePreviewLeadAssignmentQuery(form.preferredCountryCode, {
+    skip: !form.preferredCountryCode,
+  })
+  const assignedTeamName = !form.preferredCountryCode
+    ? null
+    : assignmentPreview
+      ? assignmentPreview.assignment.teamName
+      : lead?.preferredCountryCode === form.preferredCountryCode
+        ? lead?.assignedTeam?.name || null
+        : null
 
   useEffect(() => {
     if (!isEdit || !lead) return
@@ -173,7 +184,7 @@ export default function LeadCreatePage() {
           errors={errors}
           sourceLocked={lead?.sourceLocked}
           attributionLocked={isEdit}
-          assignedTeamName={lead?.assignedTeam?.name}
+          assignedTeamName={assignedTeamName}
           onChange={update}
         />
         <div className={formActions}>

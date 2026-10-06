@@ -14,7 +14,7 @@ import { FormDatePicker, FormTextArea } from '@/components/common/Forms'
 import { AntModal } from '@/components/common/Modals'
 import { useListMasterDataOptionsQuery } from '@/redux/features/masterData/masterDataApi'
 import type { LeadRecord } from '../../types'
-import { formatDisplayDate } from '../../utils/leadDetails'
+import { formatDisplayDate, formatDisplayDateTime } from '../../utils/leadDetails'
 
 export type LogConversationOpenStatus = 'discussed' | 'no_response' | 'nothing' | null
 
@@ -124,9 +124,15 @@ function addonLabel(addon: LogConversationAddon) {
   return ''
 }
 
-function addonDetail(addon: LogConversationAddon) {
-  if (addon === 'meeting') return 'Schedule a meeting'
-  if (addon === 'followup') return 'Set a Next Follow-up'
+function addonDetail(addon: LogConversationAddon, nextDueAt?: string, nextAction?: string) {
+  if (addon === 'meeting' || addon === 'followup') {
+    const when = formatDisplayDateTime(nextDueAt)
+    const agenda = nextAction?.trim()
+    const kind = addon === 'meeting' ? 'Meeting' : 'Follow-up'
+    if (when && agenda) return `${kind} · ${when}\n${agenda}`
+    if (when) return `${kind} · ${when}`
+    return addon === 'meeting' ? 'Schedule a meeting' : 'Set a Next Follow-up'
+  }
   if (addon === 'nothing') return 'Just save the note'
   return ''
 }
@@ -309,7 +315,7 @@ export default function LogConversationWizard({
     <AntModal
       open={open}
       onClose={onClose}
-      title={`Log conversation — ${leadName}`}
+      title={`Add note — ${leadName}`}
       width={720}
       styles={{ body: { paddingTop: 12 } }}
     >
@@ -401,9 +407,9 @@ export default function LogConversationWizard({
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-[#e7eef5] bg-surface p-3.5 dark:border-border">
+              <div className="min-w-0 overflow-hidden rounded-2xl border border-[#e7eef5] bg-surface p-3.5 dark:border-border">
                 {hasOpenFollowUp && nextFollowUp ? (
-                  <div className="mb-3 border-b border-[#eef3f8] pb-3 dark:border-border-subtle">
+                  <div className="mb-3 min-w-0 border-b border-[#eef3f8] pb-3 dark:border-border-subtle">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[0.84rem] font-semibold text-primary">
                         Next Follow-up · {formatDisplayDate(nextFollowUp.dueAt) || 'No date'}
@@ -412,7 +418,7 @@ export default function LogConversationWizard({
                         {nextFollowUp.status || 'Upcoming'}
                       </span>
                     </div>
-                    <p className="mt-1.5 mb-0 text-[0.78rem] text-[#7a8796]">
+                    <p className="mt-1.5 mb-0 break-words text-[0.78rem] text-[#7a8796] [overflow-wrap:anywhere]">
                       Agenda: {nextFollowUp.nextAction || nextFollowUp.notes || 'No'} · Contact: {leadName}
                     </p>
                   </div>
@@ -627,7 +633,7 @@ export default function LogConversationWizard({
                     { title: 'OPEN WORK', detail: openStatusDetail(openStatus) },
                     { title: 'CHANNEL', detail: selectedChannel?.label || channel || '—' },
                     { title: 'NOTE', detail: note.trim() || '—' },
-                    { title: "WHAT'S NEXT", detail: addonDetail(addon) },
+                    { title: "WHAT'S NEXT", detail: addonDetail(addon, nextDueAt, nextAction) },
                   ].map((item, index) => (
                     <li
                       key={item.title}

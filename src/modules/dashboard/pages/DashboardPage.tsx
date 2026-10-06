@@ -499,7 +499,7 @@ function QuickActionsCard({ onNavigate }: { onNavigate: (path: string) => void }
           <li key={action.to} className="min-w-0">
             <button
               type="button"
-              className="flex h-full w-full cursor-pointer items-center gap-3 rounded-[14px] border-0 bg-[#f8fafc] px-3 py-3 text-left dark:bg-hover-bg"
+              className="flex h-full w-full cursor-pointer items-center gap-3 rounded-[14px] border border-border bg-[#f8fafc] px-3 py-3 text-left transition-colors hover:border-primary/40 dark:bg-hover-bg"
               onClick={() => onNavigate(action.to)}
             >
               <span className={cx('grid size-[34px] shrink-0 place-items-center rounded-[10px]', toneIcon[action.tone])}>

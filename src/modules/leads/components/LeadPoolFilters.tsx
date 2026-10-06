@@ -1,5 +1,5 @@
 import type { Dayjs } from 'dayjs'
-import { Search01Icon } from '@hugeicons/core-free-icons'
+import { RefreshIcon, Search01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { PrimaryButton } from '@/components/ui'
 import { FormDatePicker, FormInput, FormSelect } from '@/components/common/Forms'
@@ -22,8 +22,8 @@ type LeadPoolFiltersProps = {
   filters: LeadPoolFilterValues
   onSearchChange: (value: string) => void
   onFiltersChange: (value: LeadPoolFilterValues) => void
-  onSearch: () => void
-  onReset: () => void
+  onRefresh: () => void
+  refreshing?: boolean
 }
 
 function useNamedOptions(category: string) {
@@ -38,53 +38,56 @@ export default function LeadPoolFilters({
   filters,
   onSearchChange,
   onFiltersChange,
-  onSearch,
-  onReset,
+  onRefresh,
+  refreshing = false,
 }: LeadPoolFiltersProps) {
   const sourceOptions = useNamedOptions('LEAD_SOURCE')
   const countryOptions = useNamedOptions('COUNTRY')
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-4">
+    <div className="flex flex-wrap items-center gap-2 px-4 py-4">
       <FormInput
         allowClear
         value={search}
         onChange={(event) => onSearchChange(event.target.value)}
-        onPressEnter={onSearch}
         placeholder="Search by Lead ID, student name, or phone number"
         prefix={<HugeiconsIcon icon={Search01Icon} size={16} color="currentColor" strokeWidth={1.7} />}
-        className="leads-list-search w-full max-w-xl"
+        className="leads-list-search min-w-[220px] flex-1"
       />
-      <div className="flex flex-wrap items-center gap-2">
-        <FormSelect
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          placeholder="Preferred Country"
-          className="min-w-[180px] flex-1"
-          value={filters.country || undefined}
-          options={countryOptions}
-          onChange={(value) => onFiltersChange({ ...filters, country: value || '' })}
-        />
-        <FormSelect
-          allowClear
-          showSearch
-          optionFilterProp="label"
-          placeholder="Lead Source"
-          className="min-w-[180px] flex-1"
-          value={filters.source || undefined}
-          options={sourceOptions}
-          onChange={(value) => onFiltersChange({ ...filters, source: value || '' })}
-        />
-        <FormDatePicker.Range
-          allowClear
-          className="min-w-[240px] flex-1"
-          value={filters.createdRange}
-          onChange={(dates) => onFiltersChange({ ...filters, createdRange: dates })}
-        />
-        <PrimaryButton type="button" onClick={onSearch} label="Search" />
-        <PrimaryButton type="button" variant="outline" onClick={onReset} label="Reset" />
-      </div>
+      <FormSelect
+        allowClear
+        showSearch
+        optionFilterProp="label"
+        placeholder="Preferred Country"
+        className="min-w-[160px] flex-1"
+        value={filters.country || undefined}
+        options={countryOptions}
+        onChange={(value) => onFiltersChange({ ...filters, country: value || '' })}
+      />
+      <FormSelect
+        allowClear
+        showSearch
+        optionFilterProp="label"
+        placeholder="Lead Source"
+        className="min-w-[160px] flex-1"
+        value={filters.source || undefined}
+        options={sourceOptions}
+        onChange={(value) => onFiltersChange({ ...filters, source: value || '' })}
+      />
+      <FormDatePicker.Range
+        allowClear
+        className="min-w-[220px] flex-1"
+        value={filters.createdRange}
+        onChange={(dates) => onFiltersChange({ ...filters, createdRange: dates })}
+      />
+      <PrimaryButton
+        type="button"
+        variant="outline"
+        onClick={onRefresh}
+        loading={refreshing}
+        icon={<HugeiconsIcon icon={RefreshIcon} size={15} />}
+        label="Refresh"
+      />
     </div>
   )
 }

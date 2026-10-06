@@ -1,14 +1,21 @@
 import type { ColumnsType } from 'antd/es/table'
 import type { LeadRow } from '../types'
+import LeadPhoneCell from '../components/LeadPhoneCell'
 import LeadTableActions from '../components/LeadTableActions'
 import { leadInitials, stageBadgeClass } from './leadDetails'
 import { countryFlag, emptyLeadValue, formatLeadCreatedOn, leadAvatarTone, leadDisplaySubtitle } from './leadList'
 
 type LeadColumnOptions = {
   canEdit?: boolean
+  canChangeStatus?: boolean
+  canClose?: boolean
+  canReopen?: boolean
   showStatus?: boolean
   onView: (row: LeadRow) => void
   onEdit: (row: LeadRow) => void
+  onChangeStatus?: (row: LeadRow) => void
+  onCloseLead?: (row: LeadRow) => void
+  onReopen?: (row: LeadRow) => void
 }
 
 function followUpClass(value?: string | null) {
@@ -24,7 +31,18 @@ function followUpClass(value?: string | null) {
   return 'text-text'
 }
 
-export function getLeadColumns({ canEdit, showStatus = true, onView, onEdit }: LeadColumnOptions): ColumnsType<LeadRow> {
+export function getLeadColumns({
+  canEdit,
+  canChangeStatus,
+  canClose,
+  canReopen,
+  showStatus = true,
+  onView,
+  onEdit,
+  onChangeStatus,
+  onCloseLead,
+  onReopen,
+}: LeadColumnOptions): ColumnsType<LeadRow> {
   const columns: ColumnsType<LeadRow> = [
     {
       title: 'Name',
@@ -53,7 +71,9 @@ export function getLeadColumns({ canEdit, showStatus = true, onView, onEdit }: L
       dataIndex: 'phone',
       key: 'phone',
       width: 140,
-      render: (value: string) => <span className="whitespace-nowrap">{emptyLeadValue(value)}</span>,
+      render: (value: string, row) => (
+        <LeadPhoneCell phone={value} isDuplicate={row.isDuplicate} hasPhoneDuplicate={row.hasPhoneDuplicate} />
+      ),
     },
     {
       title: 'Email',
@@ -143,11 +163,22 @@ export function getLeadColumns({ canEdit, showStatus = true, onView, onEdit }: L
     {
       title: 'Actions',
       key: 'actions',
-      width: 118,
+      width: 72,
       align: 'right',
       fixed: 'right',
       render: (_value, row) => (
-        <LeadTableActions row={row} canEdit={canEdit} onView={onView} onEdit={onEdit} />
+        <LeadTableActions
+          row={row}
+          canEdit={canEdit}
+          canChangeStatus={canChangeStatus}
+          canClose={canClose}
+          canReopen={canReopen}
+          onView={onView}
+          onEdit={onEdit}
+          onChangeStatus={onChangeStatus}
+          onCloseLead={onCloseLead}
+          onReopen={onReopen}
+        />
       ),
     },
   )

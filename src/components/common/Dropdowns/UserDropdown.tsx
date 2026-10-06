@@ -31,7 +31,7 @@ const QUICK_MENUS: QuickMenuItem[] = [
   { key: 'follow-ups', label: 'Follow-ups', to: '/follow-ups', icon: 'bell', permission: 'follow_up:view' },
   { key: 'documents', label: 'Documents', to: '/documents', icon: 'folder', permission: 'document:view' },
   { key: 'payments', label: 'Payments', to: '/payments', icon: 'card', permission: 'payment:view' },
-  { key: 'reports', label: 'Reports', to: '/reports', icon: 'chart', permission: 'report:view' },
+  { key: 'reports', label: 'Reports & Analytics', to: '/reports', icon: 'chart', permission: 'report:view' },
 ]
 
 function isPathActive(pathname: string, to: string) {

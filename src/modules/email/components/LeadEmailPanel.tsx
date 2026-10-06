@@ -15,7 +15,7 @@ type Props = {
 
 export default function LeadEmailPanel({ leadId, hasEmail }: Props) {
   const { data: settings } = useGetEmailSettingsQuery()
-  const { data, isLoading, isError } = useListLeadEmailQuery(leadId, { pollingInterval: 15000 })
+  const { data, isLoading, isError } = useListLeadEmailQuery(leadId)
   const [start, { isLoading: starting }] = useStartLeadEmailMutation()
   const threads = data?.items || []
   const [picked, setPicked] = useState<string | undefined>()

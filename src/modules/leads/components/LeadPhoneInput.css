@@ -1,0 +1,26 @@
+.lead-phone-input .lead-phone-input__country.ant-select {
+  min-width: 72px;
+}
+
+.lead-phone-input .lead-phone-input__country .ant-select-selector {
+  padding-inline: 10px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+}
+
+.lead-phone-input .lead-phone-input__country .ant-select-selection-item {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding-inline-end: 4px !important;
+}
+
+.lead-phone-input .lead-phone-input__country .ant-select-arrow {
+  inset-inline-end: 8px;
+}
+
+.lead-phone-input .react-international-phone-flag-emoji {
+  display: block;
+  border-radius: 2px;
+}

@@ -9,11 +9,17 @@ type LeadsTableProps = {
   limit: number
   total: number
   canEdit?: boolean
+  canChangeStatus?: boolean
+  canClose?: boolean
+  canReopen?: boolean
   showStatus?: boolean
   onPageChange: (page: number) => void
   onLimitChange: (limit: number) => void
   onView: (row: LeadRow) => void
   onEdit: (row: LeadRow) => void
+  onChangeStatus?: (row: LeadRow) => void
+  onCloseLead?: (row: LeadRow) => void
+  onReopen?: (row: LeadRow) => void
 }
 
 export default function LeadsTable({
@@ -23,18 +29,35 @@ export default function LeadsTable({
   limit,
   total,
   canEdit,
+  canChangeStatus,
+  canClose,
+  canReopen,
   showStatus = true,
   onPageChange,
   onLimitChange,
   onView,
   onEdit,
+  onChangeStatus,
+  onCloseLead,
+  onReopen,
 }: LeadsTableProps) {
   return (
     <DataTable
       className="leads-table-shell"
       loading={loading}
       data={data}
-      columns={getLeadColumns({ canEdit, showStatus, onView, onEdit })}
+      columns={getLeadColumns({
+        canEdit,
+        canChangeStatus,
+        canClose,
+        canReopen,
+        showStatus,
+        onView,
+        onEdit,
+        onChangeStatus,
+        onCloseLead,
+        onReopen,
+      })}
       rowKey="id"
       selectRow
       isPaginate

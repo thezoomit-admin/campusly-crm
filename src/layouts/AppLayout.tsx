@@ -320,19 +320,17 @@ export default function AppLayout() {
       >
         <div
           className={[
-            "flex items-center gap-2.5 overflow-hidden border-r border-header-border bg-sidebar-bg px-4 py-2.5",
-            collapsed
-              ? "justify-center px-2 py-2.5 max-[960px]:justify-start max-[960px]:px-4"
-              : "",
-            "max-[960px]:min-w-0 max-[960px]:flex-[1_1_auto] max-[960px]:border-r-0 max-[960px]:bg-surface",
-            "max-[640px]:px-3 max-[640px]:py-2.5",
+            "flex w-full items-center justify-center overflow-hidden border-r border-header-border bg-sidebar-bg px-2 py-2.5",
+            collapsed ? "px-1 max-[960px]:justify-start max-[960px]:px-4" : "",
+            "max-[960px]:min-w-0 max-[960px]:flex-[1_1_auto] max-[960px]:justify-start max-[960px]:border-r-0 max-[960px]:bg-surface",
+            "max-[640px]:px-3 max-[640px]:py-2",
           ]
             .filter(Boolean)
             .join(" ")}
         >
           <button
             type="button"
-            className="mr-1 hidden size-9 cursor-pointer place-items-center rounded-[10px] border-0 bg-transparent text-text-strong hover:bg-hover-bg max-[960px]:grid"
+            className="mr-1 hidden size-9 shrink-0 cursor-pointer place-items-center rounded-[10px] border-0 bg-transparent text-text-strong hover:bg-hover-bg max-[960px]:grid"
             aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileNavOpen}
             onClick={() => setMobileNavOpen((open) => !open)}
@@ -344,26 +342,32 @@ export default function AppLayout() {
               strokeWidth={1.5}
             />
           </button>
-          <span className="relative grid h-10 w-full min-w-0 items-center overflow-hidden">
-            <img
-              src="/logo.jpg"
-              alt="Abroad Education Experts"
-              className={[
-                "col-start-1 row-start-1 h-10 w-auto max-w-full justify-self-start object-contain object-left",
-                "transition-opacity duration-300 ease-in-out",
-                collapsed ? "opacity-0" : "opacity-100",
-              ].join(" ")}
-            />
-            <img
-              src="/logo-icon.png"
-              alt=""
-              aria-hidden="true"
-              className={[
-                "col-start-1 row-start-1 h-10 w-auto justify-self-center object-contain",
-                "transition-opacity duration-300 ease-in-out",
-                collapsed ? "opacity-100" : "opacity-0",
-              ].join(" ")}
-            />
+          <span className="flex h-14 w-full min-w-0 items-center justify-center overflow-hidden">
+            <span className="flex max-w-full items-center justify-center">
+              <img
+                src="/campusly_logo_icon.png"
+                alt={collapsed ? "Campusly" : ""}
+                aria-hidden={collapsed ? undefined : true}
+                className="h-14 w-auto shrink-0 object-contain"
+              />
+              <span
+                className={[
+                  "grid overflow-hidden transition-[grid-template-columns,opacity] duration-200 ease-in-out",
+                  collapsed
+                    ? "grid-cols-[0fr] opacity-0"
+                    : "grid-cols-[1fr] opacity-100",
+                ].join(" ")}
+                aria-hidden={collapsed}
+              >
+                <span className="min-w-0 overflow-hidden pl-2.5">
+                  <img
+                    src="/logo_icon2.png"
+                    alt="Campusly"
+                    className="h-11 w-auto max-w-none object-contain"
+                  />
+                </span>
+              </span>
+            </span>
           </span>
         </div>
 

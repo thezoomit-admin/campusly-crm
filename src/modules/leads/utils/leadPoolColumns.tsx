@@ -2,6 +2,7 @@ import { Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { UserAdd01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
+import LeadPhoneCell from '../components/LeadPhoneCell'
 import type { LeadPoolRow } from '../types'
 import { countryFlag, emptyLeadValue, formatLeadCreatedOn, leadAvatarTone } from './leadList'
 import { leadInitials } from './leadDetails'
@@ -42,7 +43,9 @@ export function getLeadPoolColumns({ now, onAssign }: LeadPoolColumnOptions): Co
       dataIndex: 'phone',
       key: 'phone',
       width: 150,
-      render: (value: string) => <span className="whitespace-nowrap">{emptyLeadValue(value)}</span>,
+      render: (value: string, row) => (
+        <LeadPhoneCell phone={value} isDuplicate={row.isDuplicate} hasPhoneDuplicate={row.hasPhoneDuplicate} />
+      ),
     },
     {
       title: 'Preferred Country',

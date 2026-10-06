@@ -3,7 +3,16 @@ import { config } from '@/config'
 
 export const SOCKET_EVENTS = {
   notificationCreated: 'notification:created',
+  emailInbound: 'email:inbound',
 } as const
+
+export type EmailInboundEvent = {
+  threadId: string
+  messageId: string
+  leadId: string | null
+  fromEmail: string
+  preview: string
+}
 
 export type SocketNotification = {
   id: string

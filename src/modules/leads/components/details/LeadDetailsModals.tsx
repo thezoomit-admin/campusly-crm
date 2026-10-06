@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { Modal, Spin } from 'antd'
 import dayjs from 'dayjs'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -9,7 +9,15 @@ import { AntModal } from '@/components/common/Modals'
 import { useListLeadAssigneesQuery } from '../../api/leadsApi'
 import type { MasterOption } from '../../hooks/useLeadMasterOptions'
 import type { LeadRecord, LeadStatusOption } from '../../types'
-import { optionLabel } from '../../utils/leadDetails'
+import { optionLabel, priorityBadgeClass } from '../../utils/leadDetails'
+import {
+  computeLeadScorePreview,
+  QUALIFICATION_FIELD_META,
+  resultLabel,
+  suggestQualificationResult,
+  validateQualificationForm,
+  type QualificationFormValues,
+} from '../../utils/leadQualification'
 import {
   ACTIVITY_TYPE_OPTIONS,
   outcomesForActivityType,
@@ -431,18 +439,7 @@ export function QualifyLeadModal({
 }: {
   open: boolean
   saving: boolean
-  values: {
-    academicFitCode: string
-    financialReadinessCode: string
-    englishReadinessCode: string
-    countryIntakeFitCode: string
-    studyIntentQualCode: string
-    applicationReadinessCode: string
-    decisionTimelineCode: string
-    qualificationResultCode: string
-    unqualifiedReasonCode: string
-    unqualifiedRemarks: string
-  }
+  values: QualificationFormValues
   options: {
     fit: MasterOption[]
     financial: MasterOption[]
@@ -453,32 +450,333 @@ export function QualifyLeadModal({
     unqualified: MasterOption[]
   }
   onClose: () => void
-  onChange: (key: string, value: string) => void
+  onChange: (key: keyof QualificationFormValues, value: string) => void
   onSubmit: () => Promise<void>
 }) {
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [resultTouched, setResultTouched] = useState(false)
+  const [baseline, setBaseline] = useState<QualificationFormValues | null>(null)
+  const lastAutoResult = useRef('')
+
+  const optionMap = useMemo(
+    () => ({
+      fit: options.fit,
+      readiness: options.financial,
+      studyIntent: options.studyIntent,
+      appReady: options.appReady,
+      timeline: options.timeline,
+      result: options.result,
+      unqualified: options.unqualified,
+    }),
+    [options],
+  )
+
+  const preview = useMemo(() => computeLeadScorePreview(values), [values])
+  const suggested = useMemo(() => suggestQualificationResult(values, preview), [values, preview])
+  const showApplySuggestion = Boolean(suggested) && suggested !== values.qualificationResultCode
+  const isDirty = Boolean(
+    baseline &&
+      (Object.keys(values) as Array<keyof QualificationFormValues>).some(
+        (key) => (values[key] ?? '').trim() !== (baseline[key] ?? '').trim(),
+      ),
+  )
+
+  useEffect(() => {
+    if (!open) {
+      setErrors({})
+      setResultTouched(false)
+      lastAutoResult.current = ''
+      setBaseline(null)
+      return
+    }
+    setBaseline((current) => current ?? { ...values })
+  }, [open, values])
+
+  useEffect(() => {
+    if (!open || resultTouched || !suggested) return
+    const current = values.qualificationResultCode
+    const stillAuto = !current || current === lastAutoResult.current
+    if (!stillAuto || current === suggested) {
+      if (current === suggested) lastAutoResult.current = suggested
+      return
+    }
+    lastAutoResult.current = suggested
+    onChange('qualificationResultCode', suggested)
+    if (suggested !== 'UNQUALIFIED') {
+      onChange('unqualifiedReasonCode', '')
+      onChange('unqualifiedRemarks', '')
+    }
+  }, [open, resultTouched, suggested, values.qualificationResultCode, onChange])
+
+  function setField(key: keyof QualificationFormValues, value: string) {
+    setErrors((current) => {
+      if (!current[key]) return current
+      const next = { ...current }
+      delete next[key]
+      return next
+    })
+    onChange(key, value)
+  }
+
+  async function handleSubmit() {
+    const nextErrors = validateQualificationForm(values)
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0) return
+    await onSubmit()
+  }
+
   return (
-    <AntModal open={open} onClose={onClose} title="Lead Qualification" width={720}>
-      <div className="grid gap-3 min-[721px]:grid-cols-2">
-        <FormSelect placeholder="Academic Fit" value={values.academicFitCode || undefined} options={options.fit} onChange={(value) => onChange('academicFitCode', asSelectString(value))} />
-        <FormSelect placeholder="Financial Readiness" value={values.financialReadinessCode || undefined} options={options.financial} onChange={(value) => onChange('financialReadinessCode', asSelectString(value))} />
-        <FormSelect placeholder="English Readiness" value={values.englishReadinessCode || undefined} options={options.financial} onChange={(value) => onChange('englishReadinessCode', asSelectString(value))} />
-        <FormSelect placeholder="Country/Intake Fit" value={values.countryIntakeFitCode || undefined} options={options.fit} onChange={(value) => onChange('countryIntakeFitCode', asSelectString(value))} />
-        <FormSelect placeholder="Study Intent" value={values.studyIntentQualCode || undefined} options={options.studyIntent} onChange={(value) => onChange('studyIntentQualCode', asSelectString(value))} />
-        <FormSelect placeholder="Application Readiness" value={values.applicationReadinessCode || undefined} options={options.appReady} onChange={(value) => onChange('applicationReadinessCode', asSelectString(value))} />
-        <FormSelect placeholder="Decision Timeline" value={values.decisionTimelineCode || undefined} options={options.timeline} onChange={(value) => onChange('decisionTimelineCode', asSelectString(value))} />
-        <FormSelect placeholder="Qualification Result" value={values.qualificationResultCode || undefined} options={options.result} onChange={(value) => onChange('qualificationResultCode', asSelectString(value))} />
-        {values.qualificationResultCode === 'UNQUALIFIED' ? (
-          <FormSelect placeholder="Unqualified Reason" value={values.unqualifiedReasonCode || undefined} options={options.unqualified} onChange={(value) => onChange('unqualifiedReasonCode', asSelectString(value))} />
-        ) : null}
-        {values.unqualifiedReasonCode === 'OTHER' ? (
-          <div className="min-[721px]:col-span-2">
-            <FormTextArea value={values.unqualifiedRemarks} placeholder="Remarks" onChange={(event) => onChange('unqualifiedRemarks', event.target.value)} />
+    <AntModal open={open} onClose={onClose} title="Lead Qualification" width={760}>
+      <div className="grid gap-4">
+        <p className="m-0 text-sm text-text-muted">
+          Screen this lead across fit criteria, then set the final result. Score and priority update from your
+          selections so you can decide whether to pursue the student.
+        </p>
+
+        <div className="grid gap-3 rounded-xl border border-border bg-[color-mix(in_srgb,var(--color-page-bg)_65%,var(--color-surface))] px-3 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div className="grid gap-1">
+            <span className="text-xs font-medium uppercase tracking-wide text-text-muted">Live preview</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[1.35rem] font-semibold tabular-nums text-text-strong">{preview.score}</span>
+              <span className="text-sm text-text-muted">/ 100</span>
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${priorityBadgeClass(preview.priority)}`}>
+                {preview.priority} priority
+              </span>
+            </div>
+            <span className="text-xs text-text-muted">
+              Based on academic, finance, English, intent, timeline, and readiness.
+            </span>
           </div>
+          {suggested ? (
+            <div className="flex flex-col items-start gap-1.5 sm:items-end">
+              <span className="text-xs text-text-muted">Suggested result</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-primary">
+                  {resultLabel(suggested)}
+                </span>
+                {showApplySuggestion ? (
+                  <button
+                    type="button"
+                    className="cursor-pointer border-0 bg-transparent p-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                    onClick={() => {
+                      setResultTouched(false)
+                      lastAutoResult.current = suggested
+                      setField('qualificationResultCode', suggested)
+                      if (suggested !== 'UNQUALIFIED') {
+                        setField('unqualifiedReasonCode', '')
+                        setField('unqualifiedRemarks', '')
+                      }
+                    }}
+                  >
+                    Apply
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <p className="m-0 text-xs text-text-muted sm:text-right">Fill criteria to see a suggested result.</p>
+          )}
+        </div>
+
+        <div className="grid gap-3 min-[721px]:grid-cols-2">
+          {QUALIFICATION_FIELD_META.map((field) => {
+            const required = field.requiredForQualified && values.qualificationResultCode === 'QUALIFIED'
+            return (
+              <label key={field.key} className="grid gap-1 text-sm">
+                <span className="font-medium text-text-strong">
+                  {field.label}
+                  {required ? <span className="text-[#e11d48]"> *</span> : null}
+                </span>
+                <span className="text-xs text-text-muted">{field.hint}</span>
+                <FormSelect
+                  allowClear
+                  placeholder={`Select ${field.label.toLowerCase()}`}
+                  value={values[field.key] || undefined}
+                  options={optionMap[field.optionsKey]}
+                  status={errors[field.key] ? 'error' : undefined}
+                  onChange={(value) => setField(field.key, asSelectString(value))}
+                />
+                {errors[field.key] ? <InputError>{errors[field.key]}</InputError> : null}
+              </label>
+            )
+          })}
+
+          <label className="grid gap-1 text-sm">
+            <span className="font-medium text-text-strong">
+              Qualification Result <span className="text-[#e11d48]">*</span>
+            </span>
+            <span className="text-xs text-text-muted">Final verdict: pursue, nurture, or disqualify.</span>
+            <FormSelect
+              allowClear
+              placeholder="Select qualification result"
+              value={values.qualificationResultCode || undefined}
+              options={options.result}
+              status={errors.qualificationResultCode ? 'error' : undefined}
+              onChange={(value) => {
+                setResultTouched(true)
+                const next = asSelectString(value)
+                setField('qualificationResultCode', next)
+                if (next !== 'UNQUALIFIED') {
+                  setField('unqualifiedReasonCode', '')
+                  setField('unqualifiedRemarks', '')
+                }
+              }}
+            />
+            {errors.qualificationResultCode ? <InputError>{errors.qualificationResultCode}</InputError> : null}
+          </label>
+
+          {values.qualificationResultCode === 'UNQUALIFIED' ? (
+            <label className="grid gap-1 text-sm">
+              <span className="font-medium text-text-strong">
+                Unqualified Reason <span className="text-[#e11d48]">*</span>
+              </span>
+              <span className="text-xs text-text-muted">Why this lead should not be pursued now.</span>
+              <FormSelect
+                allowClear
+                placeholder="Select reason"
+                value={values.unqualifiedReasonCode || undefined}
+                options={options.unqualified}
+                status={errors.unqualifiedReasonCode ? 'error' : undefined}
+                onChange={(value) => {
+                  const next = asSelectString(value)
+                  setField('unqualifiedReasonCode', next)
+                  if (next !== 'OTHER') setField('unqualifiedRemarks', '')
+                }}
+              />
+              {errors.unqualifiedReasonCode ? <InputError>{errors.unqualifiedReasonCode}</InputError> : null}
+            </label>
+          ) : null}
+
+          {values.unqualifiedReasonCode === 'OTHER' ? (
+            <label className="grid gap-1 text-sm min-[721px]:col-span-2">
+              <span className="font-medium text-text-strong">
+                Remarks <span className="text-[#e11d48]">*</span>
+              </span>
+              <FormTextArea
+                rows={3}
+                value={values.unqualifiedRemarks}
+                placeholder="Add details for the Other reason"
+                status={errors.unqualifiedRemarks ? 'error' : undefined}
+                onChange={(event) => setField('unqualifiedRemarks', event.target.value)}
+              />
+              {errors.unqualifiedRemarks ? <InputError>{errors.unqualifiedRemarks}</InputError> : null}
+            </label>
+          ) : null}
+        </div>
+
+        {values.qualificationResultCode === 'QUALIFIED' ? (
+          <p className="m-0 rounded-lg bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)] px-3 py-2 text-xs text-text-muted">
+            Marking Qualified requires core fit fields. After saving, you can update pipeline status to Qualified
+            separately.
+          </p>
         ) : null}
+
+        <div className="flex justify-end gap-2">
+          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+          <PrimaryButton
+            type="button"
+            loading={saving}
+            disabled={!isDirty || saving}
+            onClick={() => void handleSubmit()}
+            label="Save qualification"
+          />
+        </div>
       </div>
-      <div className="mt-4 flex justify-end gap-2">
-        <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
-        <PrimaryButton type="button" loading={saving} onClick={() => void onSubmit()} label="Save qualification" />
+    </AntModal>
+  )
+}
+
+export function OverridePriorityModal({
+  open,
+  saving,
+  currentPriority,
+  currentPriorityCode,
+  priorityOptions,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean
+  saving: boolean
+  currentPriority?: string | null
+  currentPriorityCode?: string | null
+  priorityOptions: MasterOption[]
+  onClose: () => void
+  onSubmit: (priorityCode: string, reason: string) => Promise<void>
+}) {
+  const [priorityCode, setPriorityCode] = useState('')
+  const [reason, setReason] = useState('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (!open) return
+    setPriorityCode(currentPriorityCode || '')
+    setReason('')
+    setErrors({})
+  }, [open, currentPriorityCode])
+
+  async function handleSubmit() {
+    const nextErrors: Record<string, string> = {}
+    if (!priorityCode) nextErrors.priorityCode = 'Please select a valid priority.'
+    if (!reason.trim()) nextErrors.reason = 'Please provide a reason.'
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0) return
+    await onSubmit(priorityCode, reason.trim())
+  }
+
+  return (
+    <AntModal open={open} onClose={onClose} title="Override Lead Priority" width={520}>
+      <div className="grid gap-4">
+        <p className="m-0 text-sm text-text-muted">
+          System priority is based on Lead Score. A manual override requires a reason and is audited.
+        </p>
+        {currentPriority ? (
+          <p className="m-0 text-sm text-text-muted">
+            Current priority:{' '}
+            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${priorityBadgeClass(currentPriority)}`}>
+              {currentPriority}
+            </span>
+            {currentPriorityCode ? (
+              <span className="ml-1 text-xs">(system / last value)</span>
+            ) : null}
+          </p>
+        ) : null}
+        <label className="grid gap-1 text-sm">
+          <span className="font-medium text-text-strong">
+            New Priority <span className="text-[#e11d48]">*</span>
+          </span>
+          <FormSelect
+            placeholder="Select priority"
+            value={priorityCode || undefined}
+            options={priorityOptions}
+            status={errors.priorityCode ? 'error' : undefined}
+            onChange={(value) => {
+              setPriorityCode(asSelectString(value))
+              setErrors((current) => ({ ...current, priorityCode: '' }))
+            }}
+          />
+          {errors.priorityCode ? <InputError>{errors.priorityCode}</InputError> : null}
+        </label>
+        <label className="grid gap-1 text-sm">
+          <span className="font-medium text-text-strong">
+            Override Reason <span className="text-[#e11d48]">*</span>
+          </span>
+          <FormTextArea
+            rows={3}
+            maxLength={400}
+            value={reason}
+            placeholder="Why are you changing the system priority?"
+            status={errors.reason ? 'error' : undefined}
+            onChange={(event) => {
+              setReason(event.target.value)
+              setErrors((current) => ({ ...current, reason: '' }))
+            }}
+          />
+          {errors.reason ? <InputError>{errors.reason}</InputError> : null}
+        </label>
+        <div className="flex justify-end gap-2">
+          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Cancel" />
+          <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()} label="Save priority" />
+        </div>
       </div>
     </AntModal>
   )

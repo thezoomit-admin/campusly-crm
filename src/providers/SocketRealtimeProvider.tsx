@@ -5,9 +5,11 @@ import {
   connectSocket,
   disconnectSocket,
   SOCKET_EVENTS,
+  type EmailInboundEvent,
   type NotificationCreatedEvent,
 } from '@/lib/socket'
 import { useAppDispatch } from '@/redux'
+import { emailApi } from '@/modules/email/api/emailApi'
 import {
   notificationsApi,
   type AppNotification,
@@ -49,12 +51,13 @@ function upsertNotificationCache(
 
 /**
  * Keeps a cookie-authenticated Socket.IO connection while logged in.
- * Phase 1: live `notification:created` → RTK cache + toast.
+ * Live notifications + email inbound → RTK cache invalidation / toast.
  */
 export default function SocketRealtimeProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, hydrated, can } = useAuth()
   const dispatch = useAppDispatch()
   const canViewNotifications = can('notification:view')
+  const canViewEmail = can('communication:view')
 
   useEffect(() => {
     if (!hydrated) return
@@ -65,6 +68,26 @@ export default function SocketRealtimeProvider({ children }: { children: ReactNo
     }
 
     const socket = connectSocket()
+
+    const refreshEmailThread = (threadId: string, leadId?: string | null) => {
+      if (!canViewEmail || !threadId) return
+      dispatch(
+        emailApi.util.invalidateTags([
+          { type: 'Email', id: 'LIST' },
+          { type: 'Email', id: threadId },
+          { type: 'Email', id: `MSG-${threadId}` },
+          ...(leadId ? [{ type: 'Email' as const, id: `LEAD-${leadId}` }] : []),
+          'Activities',
+          'Communications',
+          ...(leadId
+            ? [
+                { type: 'Leads' as const, id: leadId },
+                { type: 'Leads' as const, id: `${leadId}-documents` },
+              ]
+            : []),
+        ]),
+      )
+    }
 
     const onNotificationCreated = (event: NotificationCreatedEvent) => {
       if (!event?.notification?.id || !canViewNotifications) return
@@ -81,21 +104,51 @@ export default function SocketRealtimeProvider({ children }: { children: ReactNo
         toastId: `notification:${event.notification.id}`,
         autoClose: 4000,
       })
+
+      // Email notifications → refetch thread/list/messages once (no polling).
+      const type = event.notification.type || ''
+      const isEmailNotif = type.includes('email')
+      if (canViewEmail && isEmailNotif) {
+        const link = event.notification.link || ''
+        const match = link.match(/[?&]c=([0-9a-f-]{36})/i)
+        if (match?.[1]) {
+          refreshEmailThread(match[1], event.notification.leadId)
+        } else {
+          dispatch(
+            emailApi.util.invalidateTags([
+              { type: 'Email', id: 'LIST' },
+              ...(event.notification.leadId
+                ? [{ type: 'Email' as const, id: `LEAD-${event.notification.leadId}` }]
+                : []),
+            ]),
+          )
+        }
+      }
+    }
+
+    const onEmailInbound = (event: EmailInboundEvent) => {
+      refreshEmailThread(event?.threadId, event?.leadId)
     }
 
     const onReconnect = () => {
-      if (!canViewNotifications) return
-      dispatch(notificationsApi.util.invalidateTags([{ type: 'Notifications', id: 'LIST' }]))
+      if (canViewNotifications) {
+        dispatch(notificationsApi.util.invalidateTags([{ type: 'Notifications', id: 'LIST' }]))
+      }
+      if (canViewEmail) {
+        dispatch(emailApi.util.invalidateTags([{ type: 'Email', id: 'LIST' }]))
+      }
     }
 
     socket.on(SOCKET_EVENTS.notificationCreated, onNotificationCreated)
+    socket.on(SOCKET_EVENTS.emailInbound, onEmailInbound)
     socket.on('reconnect', onReconnect)
 
     return () => {
       socket.off(SOCKET_EVENTS.notificationCreated, onNotificationCreated)
+      socket.off(SOCKET_EVENTS.emailInbound, onEmailInbound)
       socket.off('reconnect', onReconnect)
     }
-  }, [canViewNotifications, dispatch, hydrated, isAuthenticated])
+  }, [canViewEmail, canViewNotifications, dispatch, hydrated, isAuthenticated])
 
   return <>{children}</>
 }

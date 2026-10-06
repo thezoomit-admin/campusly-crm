@@ -35,7 +35,7 @@ function ThemedApp() {
           zIndexPopupBase: 2000,
           colorPrimary: '#35AD0B',
           borderRadius: 10,
-          fontFamily: 'Inter, Segoe UI, system-ui, sans-serif',
+          fontFamily: '"Outfit", sans-serif',
           controlHeight: 42,
           controlHeightLG: 42,
           controlHeightSM: 34,

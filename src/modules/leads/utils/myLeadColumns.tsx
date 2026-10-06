@@ -1,5 +1,8 @@
+import { Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
-import { PrimaryButton } from '@/components/ui'
+import { ViewIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
+import LeadPhoneCell from '../components/LeadPhoneCell'
 import type { MyLeadRow } from '../types'
 import { countryFlag, emptyLeadValue, formatLeadCreatedOn, leadAvatarTone } from './leadList'
 import { leadInitials, priorityBadgeClass, stageBadgeClass } from './leadDetails'
@@ -31,13 +34,16 @@ export function getMyLeadColumns({ sort, order, onView }: MyLeadColumnOptions): 
       key: 'code',
       width: 120,
       render: (value: string, row) => (
-        <PrimaryButton
+        <button
           type="button"
-          className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold text-[#0f9d8e] hover:underline"
+          className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold text-[#0f9d8e] no-underline hover:no-underline"
           onClick={(event) => {
             event.stopPropagation()
             onView(row)
-          }} label={emptyLeadValue(value)} />
+          }}
+        >
+          {emptyLeadValue(value)}
+        </button>
       ),
     },
     {
@@ -59,7 +65,9 @@ export function getMyLeadColumns({ sort, order, onView }: MyLeadColumnOptions): 
       dataIndex: 'phone',
       key: 'phone',
       width: 150,
-      render: (value: string) => <span className="whitespace-nowrap">{emptyLeadValue(value)}</span>,
+      render: (value: string, row) => (
+        <LeadPhoneCell phone={value} isDuplicate={row.isDuplicate} hasPhoneDuplicate={row.hasPhoneDuplicate} />
+      ),
     },
     {
       title: 'Preferred Country',
@@ -141,16 +149,25 @@ export function getMyLeadColumns({ sort, order, onView }: MyLeadColumnOptions): 
     {
       title: 'Actions',
       key: 'actions',
-      width: 140,
-      align: 'right',
+      width: 88,
+      align: 'center',
       fixed: 'right',
       render: (_value, row) => (
         <div
-          className="flex justify-end"
+          className="flex justify-center"
           onClick={(event) => event.stopPropagation()}
           onMouseDown={(event) => event.stopPropagation()}
         >
-          <PrimaryButton type="button" size="sm" className="!cursor-pointer" onClick={() => onView(row)} label="Open Lead Details" />
+          <Tooltip title="Open Lead Details">
+            <button
+              type="button"
+              aria-label="Open Lead Details"
+              onClick={() => onView(row)}
+              className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-[#6b7280] transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
+            >
+              <HugeiconsIcon icon={ViewIcon} size={16} color="currentColor" strokeWidth={1.7} />
+            </button>
+          </Tooltip>
         </div>
       ),
     },

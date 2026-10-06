@@ -7,12 +7,13 @@ import {
   formField,
   formFieldInvalid,
 } from '../../../styles/admin'
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import { FormDatePicker, FormInput, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
 import type { LeadFormState } from '../types'
 import { useListCampaignOptionsQuery } from '@/modules/campaigns/api/campaignsApi'
 import { INTEGRATION_SOURCES, useLeadMasterOptions } from '../hooks/useLeadMasterOptions'
+import LeadPhoneInput from './LeadPhoneInput'
 
 type FieldErrors = Record<string, string>
 
@@ -65,14 +66,18 @@ export function FormSection({
   children: ReactNode
 }) {
   return (
-    <section id={id} className="rounded-2xl border border-border bg-surface p-4" aria-labelledby={`${id}-title`}>
-      <header className="border-b border-[color-mix(in_srgb,var(--color-text-muted)_22%,transparent)] pb-3">
-        <h3 id={`${id}-title`} className="m-0 text-[1.05rem]">
+    <section
+      id={id}
+      className="overflow-hidden rounded-2xl border border-border bg-surface"
+      aria-labelledby={`${id}-title`}
+    >
+      <header className="border-b border-[color-mix(in_srgb,var(--color-primary)_18%,transparent)] bg-[color-mix(in_srgb,var(--color-primary)_8%,var(--color-surface))] px-4 py-3">
+        <h3 id={`${id}-title`} className="m-0 text-[1.05rem] text-primary">
           {title}
         </h3>
         {description ? <p className="mt-1.5 mb-0 text-text-muted">{description}</p> : null}
       </header>
-      <div className={`mt-4 ${createFormFields}`}>{children}</div>
+      <div className={`p-4 ${createFormFields}`}>{children}</div>
     </section>
   )
 }
@@ -137,6 +142,19 @@ export default function LeadFormFields({
   const showVisaApp = form.previousVisaApplication === 'true'
   const showRefusal = form.previousVisaRefusal === 'true'
   const showSpecificTime = form.preferredContactTimeCode === 'SPECIFIC'
+  const intakeOptions = useMemo(() => {
+    const base = [...options.intake]
+    if (
+      form.preferredIntakeCode &&
+      !base.some((item) => item.value === form.preferredIntakeCode)
+    ) {
+      const item = options.intakeItems.find((row) => row.code === form.preferredIntakeCode)
+      if (item?.code) {
+        base.unshift({ value: item.code, label: item.name })
+      }
+    }
+    return base
+  }, [options.intake, options.intakeItems, form.preferredIntakeCode])
 
   return (
     <div className="grid gap-4">
@@ -149,31 +167,63 @@ export default function LeadFormFields({
             autoComplete="name"
             placeholder="Student full name"
             onChange={(event) => onChange('name', event.target.value)}
+            onBlur={(event) => {
+              const next = event.target.value
+                .trim()
+                .replace(/\s+/g, ' ')
+                .replace(/\b\w/g, (char) => char.toUpperCase())
+              if (next && next !== form.name) onChange('name', next)
+            }}
           />
         </Field>
         <Field id="phone" label="Phone Number" required error={errors.phone}>
-          <FormInput
+          <LeadPhoneInput
             id="phone"
-            value={form.phone}
-            placeholder="017XXXXXXXX"
-            onChange={(event) => onChange('phone', event.target.value)}
+            countryCode={form.phoneCountryCode || '880'}
+            phone={form.phone}
+            status={errors.phone ? 'error' : undefined}
+            onCountryCodeChange={(value) => {
+              onChange('phoneCountryCode', value)
+              if (form.whatsappSameAsPhone) onChange('whatsappCountryCode', value)
+            }}
+            onPhoneChange={(value) => {
+              onChange('phone', value)
+              if (form.whatsappSameAsPhone) onChange('whatsapp', value)
+            }}
           />
         </Field>
         <Field id="whatsappSameAsPhone" label="WhatsApp same as phone">
           <div className="flex h-10 items-center">
             <FormSwitch
               checked={form.whatsappSameAsPhone}
-              onChange={(checked) => onChange('whatsappSameAsPhone', checked)}
+              onChange={(checked) => {
+                onChange('whatsappSameAsPhone', checked)
+                if (checked) {
+                  onChange('whatsapp', form.phone)
+                  onChange('whatsappCountryCode', form.phoneCountryCode || '880')
+                }
+              }}
             />
           </div>
         </Field>
         <Field id="whatsapp" label="WhatsApp Number" error={errors.whatsapp}>
-          <FormInput
+          <LeadPhoneInput
             id="whatsapp"
-            value={form.whatsappSameAsPhone ? form.phone : form.whatsapp}
+            countryCode={
+              form.whatsappSameAsPhone
+                ? form.phoneCountryCode || '880'
+                : form.whatsappCountryCode || '880'
+            }
+            phone={form.whatsappSameAsPhone ? form.phone : form.whatsapp}
             disabled={form.whatsappSameAsPhone}
             placeholder="WhatsApp number"
-            onChange={(event) => onChange('whatsapp', event.target.value)}
+            status={errors.whatsapp ? 'error' : undefined}
+            onCountryCodeChange={(value) => {
+              if (!form.whatsappSameAsPhone) onChange('whatsappCountryCode', value)
+            }}
+            onPhoneChange={(value) => {
+              if (!form.whatsappSameAsPhone) onChange('whatsapp', value)
+            }}
           />
         </Field>
         <Field id="email" label="Email" error={errors.email}>
@@ -241,7 +291,7 @@ export default function LeadFormFields({
             optionFilterProp="label"
             placeholder="Select intake"
             value={form.preferredIntakeCode || undefined}
-            options={options.intake}
+            options={intakeOptions}
             onChange={(value) => onChange('preferredIntakeCode', asSelectString(value))}
           />
         </Field>
@@ -265,11 +315,25 @@ export default function LeadFormFields({
             />
           </Field>
         ) : null}
-        {assignedTeamName ? (
-          <Field id="assignedTeam" label="Assigned Country Team">
-            <FormInput id="assignedTeam" value={assignedTeamName} disabled readOnly />
-          </Field>
-        ) : null}
+        <Field
+          id="assignedTeam"
+          label="Assigned Country Team"
+          hint={
+            assignedTeamName
+              ? 'Auto-selected from the Preferred Country assignment rule.'
+              : form.preferredCountryCode
+                ? 'No active country team rule for this country — lead may enter the pool.'
+                : 'Select a Preferred Country to preview the assigned team.'
+          }
+        >
+          <FormInput
+            id="assignedTeam"
+            value={assignedTeamName || (form.preferredCountryCode ? 'Unassigned / Lead Pool' : '')}
+            placeholder="Select preferred country first"
+            disabled
+            readOnly
+          />
+        </Field>
       </FormSection>
 
       <FormSection id="academic" title="Academic Information">
@@ -299,7 +363,14 @@ export default function LeadFormFields({
             placeholder="Select year"
             value={form.passingYear || undefined}
             options={YEARS}
-            onChange={(value) => onChange('passingYear', asSelectString(value))}
+            onChange={(value) => {
+              const year = asSelectString(value)
+              onChange('passingYear', year)
+              if (year && !form.studyGapYears.trim()) {
+                const gap = Math.max(0, currentYear - Number(year) - 1)
+                if (Number.isFinite(gap)) onChange('studyGapYears', String(gap))
+              }
+            }}
           />
         </Field>
         <Field id="resultCgpa" label="Result / CGPA">
@@ -310,7 +381,12 @@ export default function LeadFormFields({
             onChange={(event) => onChange('resultCgpa', event.target.value)}
           />
         </Field>
-        <Field id="studyGapYears" label="Study Gap (years)" error={errors.studyGapYears}>
+        <Field
+          id="studyGapYears"
+          label="Study Gap (years)"
+          error={errors.studyGapYears}
+          hint="Auto-suggested from passing year when empty; you can override."
+        >
           <FormInput
             id="studyGapYears"
             value={form.studyGapYears}
@@ -357,6 +433,38 @@ export default function LeadFormFields({
                 allowClear
                 value={toDayjs(form.testDate)}
                 onChange={(value) => onChange('testDate', toDateString(value))}
+              />
+            </Field>
+            <Field id="listening" label="Listening" error={errors.listening}>
+              <FormInput
+                id="listening"
+                value={form.listening}
+                placeholder="Band / score"
+                onChange={(event) => onChange('listening', event.target.value)}
+              />
+            </Field>
+            <Field id="reading" label="Reading" error={errors.reading}>
+              <FormInput
+                id="reading"
+                value={form.reading}
+                placeholder="Band / score"
+                onChange={(event) => onChange('reading', event.target.value)}
+              />
+            </Field>
+            <Field id="writing" label="Writing" error={errors.writing}>
+              <FormInput
+                id="writing"
+                value={form.writing}
+                placeholder="Band / score"
+                onChange={(event) => onChange('writing', event.target.value)}
+              />
+            </Field>
+            <Field id="speaking" label="Speaking" error={errors.speaking}>
+              <FormInput
+                id="speaking"
+                value={form.speaking}
+                placeholder="Band / score"
+                onChange={(event) => onChange('speaking', event.target.value)}
               />
             </Field>
           </>

@@ -90,7 +90,7 @@ export const APP_NAV_GROUPS: NavGroup[] = [
       { to: '/documents', label: 'Documents', icon: 'folder', permission: 'document:view' },
       { to: '/payments', label: 'Payments', icon: 'card', permission: 'payment:view' },
       { to: '/activity-history', label: 'Activity History', icon: 'activity', permission: 'activity:view' },
-      { to: '/reports', label: 'Reports', icon: 'chart', permission: 'report:view' },
+      { to: '/reports', label: 'Reports & Analytics', icon: 'chart', permission: 'report:view' },
     ],
   },
   {
