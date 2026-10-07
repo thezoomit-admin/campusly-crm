@@ -3,21 +3,20 @@ import type { MasterOption } from "../hooks/useLeadMasterOptions";
 
 export type LeadPrimaryTabKey =
   | "overview"
-  | "academic"
-  | "documents"
-  | "counselling"
-  | "services"
-  | "payments"
+  | "timeline"
+  | "notes"
+  | "attachments"
+  | "activities"
+  | "assignments"
+  | "followups"
   | "more";
 
 export type LeadMoreTabKey =
-  | "activities"
-  | "notes"
-  | "history"
   | "communications"
   | "whatsapp"
   | "email"
-  | "followups";
+  | "services"
+  | "payments";
 
 /** @deprecated Prefer LeadPrimaryTabKey / LeadMoreTabKey — kept for gradual migration */
 export type LeadTabKey = LeadPrimaryTabKey | LeadMoreTabKey | "study";
@@ -27,22 +26,21 @@ export const LEAD_PRIMARY_TABS: Array<{
   label: string;
 }> = [
   { key: "overview", label: "Overview" },
-  { key: "academic", label: "Academic" },
-  { key: "documents", label: "Documents" },
-  { key: "counselling", label: "Counselling" },
-  { key: "services", label: "Service & Package" },
-  { key: "payments", label: "Payments" },
+  { key: "timeline", label: "Timeline" },
+  { key: "notes", label: "Notes" },
+  { key: "attachments", label: "Attachments" },
+  { key: "activities", label: "Activities" },
+  { key: "assignments", label: "Assignment History" },
+  { key: "followups", label: "Follow-up History" },
   { key: "more", label: "More" },
 ];
 
 export const LEAD_MORE_TABS: Array<{ key: LeadMoreTabKey; label: string }> = [
-  { key: "activities", label: "Activities" },
-  { key: "notes", label: "Notes" },
-  { key: "history", label: "History" },
   { key: "communications", label: "Communication" },
   { key: "whatsapp", label: "WhatsApp" },
   { key: "email", label: "Email" },
-  { key: "followups", label: "Follow-ups" },
+  { key: "services", label: "Service & Package" },
+  { key: "payments", label: "Payments" },
 ];
 
 const LEAD_PRIMARY_TAB_KEYS = new Set<string>(
@@ -52,19 +50,34 @@ const LEAD_MORE_TAB_KEYS = new Set<string>(
   LEAD_MORE_TABS.map((item) => item.key),
 );
 
+const LEGACY_PRIMARY_TAB_MAP: Record<string, LeadPrimaryTabKey> = {
+  academic: "overview",
+  counselling: "overview",
+  study: "overview",
+  documents: "attachments",
+  history: "assignments",
+  "follow-ups": "followups",
+  services: "more",
+  payments: "more",
+};
+
 export function parseLeadPrimaryTab(
   value: string | null | undefined,
 ): LeadPrimaryTabKey {
-  if (value && LEAD_PRIMARY_TAB_KEYS.has(value))
-    return value as LeadPrimaryTabKey;
+  if (!value) return "overview";
+  if (LEAD_PRIMARY_TAB_KEYS.has(value)) return value as LeadPrimaryTabKey;
+  if (value in LEGACY_PRIMARY_TAB_MAP) return LEGACY_PRIMARY_TAB_MAP[value];
   return "overview";
 }
 
 export function parseLeadMoreTab(
   value: string | null | undefined,
+  rawPrimaryTab?: string | null,
 ): LeadMoreTabKey {
+  if (rawPrimaryTab === "services" || value === "services") return "services";
+  if (rawPrimaryTab === "payments" || value === "payments") return "payments";
   if (value && LEAD_MORE_TAB_KEYS.has(value)) return value as LeadMoreTabKey;
-  return "activities";
+  return "communications";
 }
 
 /** @deprecated Use LEAD_PRIMARY_TABS + LEAD_MORE_TABS */

@@ -68,6 +68,7 @@ export default function LeadQualificationSummaryCard({
             type="button"
             size="sm"
             variant="outline"
+            className="!border-primary !text-primary hover:!border-primary-hover hover:!text-primary-hover hover:!bg-[color-mix(in_srgb,var(--color-primary)_8%,var(--color-surface))]"
             onClick={onUpdateQualification}
             label="Update"
           />

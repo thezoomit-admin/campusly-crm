@@ -24,7 +24,7 @@ import { RolesPage } from '../modules/roles/index'
 import { SettingsPage } from '../modules/settings'
 import { ServiceCatalogPage } from '../modules/service-items'
 import { StudentsPage } from '../modules/students'
-import { UsersPage } from '../modules/users/index'
+import { UsersPage, UserDetailsPage } from '../modules/users/index'
 import PermissionRoute from './PermissionRoute'
 import ProtectedRoute from './ProtectedRoute'
 
@@ -167,7 +167,10 @@ const routes = [
           },
           {
             element: <PermissionRoute permission="user:view" />,
-            children: [{ path: '/users', element: <UsersPage /> }],
+            children: [
+              { path: '/users', element: <UsersPage /> },
+              { path: '/users/:id', element: <UserDetailsPage /> },
+            ],
           },
           {
             element: <PermissionRoute permission="role:view" />,

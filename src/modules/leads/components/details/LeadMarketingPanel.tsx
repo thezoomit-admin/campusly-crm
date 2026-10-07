@@ -3,6 +3,7 @@ import { toast } from 'react-toastify'
 import { Globe02Icon } from '@hugeicons/core-free-icons'
 import { getApiError } from '@/lib/api'
 import { FormInput, FormSelect, FormTextArea } from '@/components/common/Forms'
+import { AntModal } from '@/components/common/Modals'
 import { PrimaryButton } from '@/components/ui'
 import { useListCampaignOptionsQuery } from '@/modules/campaigns/api/campaignsApi'
 import {
@@ -54,6 +55,20 @@ export default function LeadMarketingPanel({
   )
 
   const utm = [lead.utmSource, lead.utmMedium, lead.utmCampaign, lead.utmContent, lead.utmTerm].filter(Boolean)
+
+  function openSourceModal() {
+    setSourceCode(lead.sourceCode || '')
+    setChannelCode(lead.channelCode || '')
+    setReferralBy(lead.referralBy || '')
+    setReason('')
+    setSourceOpen(true)
+  }
+
+  function openCampaignModal() {
+    setCampaignId(lead.campaignId || '')
+    setCampaignReason('')
+    setCampaignOpen(true)
+  }
 
   async function saveSource() {
     try {
@@ -111,18 +126,19 @@ export default function LeadMarketingPanel({
       )}
       <div className="mt-4 flex flex-wrap gap-2">
         {canChangeSource ? (
-          <PrimaryButton type="button" variant="outline" onClick={() => setSourceOpen((open) => !open)}>
+          <PrimaryButton type="button" variant="outline" onClick={openSourceModal}>
             Correct source
           </PrimaryButton>
         ) : null}
         {canChangeCampaign ? (
-          <PrimaryButton type="button" variant="outline" onClick={() => setCampaignOpen((open) => !open)}>
+          <PrimaryButton type="button" variant="outline" onClick={openCampaignModal}>
             Correct campaign
           </PrimaryButton>
         ) : null}
       </div>
-      {sourceOpen ? (
-        <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
+
+      <AntModal open={sourceOpen} onClose={() => setSourceOpen(false)} title="Correct source" width={440}>
+        <div className="grid gap-3">
           <FormSelect
             showSearch
             optionFilterProp="label"
@@ -146,13 +162,21 @@ export default function LeadMarketingPanel({
             <FormInput value={referralBy} placeholder="Referral by" onChange={(event) => setReferralBy(event.target.value)} />
           ) : null}
           <FormTextArea value={reason} rows={2} placeholder="Reason for the correction" onChange={(event) => setReason(event.target.value)} />
-          <PrimaryButton type="button" disabled={savingSource || !reason.trim() || !sourceCode} onClick={saveSource}>
-            Save source correction
-          </PrimaryButton>
+          <div className="mt-1 flex justify-end gap-2">
+            <PrimaryButton type="button" variant="outline" onClick={() => setSourceOpen(false)} label="Cancel" />
+            <PrimaryButton
+              type="button"
+              loading={savingSource}
+              disabled={!reason.trim() || !sourceCode}
+              onClick={() => void saveSource()}
+              label="Save source correction"
+            />
+          </div>
         </div>
-      ) : null}
-      {campaignOpen ? (
-        <div className="mt-4 grid gap-3 rounded-xl border border-border p-3">
+      </AntModal>
+
+      <AntModal open={campaignOpen} onClose={() => setCampaignOpen(false)} title="Correct campaign" width={440}>
+        <div className="grid gap-3">
           <FormSelect
             showSearch
             optionFilterProp="label"
@@ -167,11 +191,19 @@ export default function LeadMarketingPanel({
             placeholder="Reason for the correction"
             onChange={(event) => setCampaignReason(event.target.value)}
           />
-          <PrimaryButton type="button" disabled={savingCampaign || !campaignReason.trim() || !campaignId} onClick={saveCampaign}>
-            Save campaign correction
-          </PrimaryButton>
+          <div className="mt-1 flex justify-end gap-2">
+            <PrimaryButton type="button" variant="outline" onClick={() => setCampaignOpen(false)} label="Cancel" />
+            <PrimaryButton
+              type="button"
+              loading={savingCampaign}
+              disabled={!campaignReason.trim() || !campaignId}
+              onClick={() => void saveCampaign()}
+              label="Save campaign correction"
+            />
+          </div>
         </div>
-      ) : null}
+      </AntModal>
+
       {history?.items.length ? (
         <div className="mt-4 grid gap-2">
           <p className="m-0 text-[0.82rem] font-semibold text-text-strong">Correction history</p>

@@ -38,6 +38,10 @@ import {
 } from "../../utils/leadDetails";
 import LeadPackageOfferPanel from "@/modules/packages/components/LeadPackageOfferPanel";
 import LeadSectionCard from "./LeadSectionCard";
+import {
+  LeadListPagination,
+  useLeadListPagination,
+} from "./LeadListPagination";
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -62,15 +66,18 @@ export function LeadDocumentsPanel({
   onView: (document: LeadDocumentItem) => void;
   onDelete: (document: LeadDocumentItem) => void;
 }) {
+  const { page, pageSize, setPage, setPageSize, pageItems, total } =
+    useLeadListPagination(documents);
+
   return (
     <LeadSectionCard
-      title="Documents"
+      title="Attachments"
       extra={
         canUpload ? (
           <PrimaryButton
             type="button"
             size="sm"
-            label="Add document"
+            label="Upload file"
             icon={
               <HugeiconsIcon
                 icon={Add01Icon}
@@ -97,77 +104,89 @@ export function LeadDocumentsPanel({
             />
           </span>
           <p className="m-0 text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
-            No documents uploaded
+            No attachments uploaded
           </p>
           <p className="m-0 max-w-md text-[0.84rem] text-[#8b97a8]">
-            Passport, academic certificates, and language test reports will
-            appear here once they are attached to this lead.
+            Passport, academic certificates, transcripts, IELTS results, and
+            other supporting documents will appear here once uploaded.
           </p>
         </div>
       ) : (
-        <ul className="m-0 grid list-none gap-2 p-0">
-          {documents.map((doc) => (
-            <li
-              key={doc.id}
-              className="flex items-center gap-3 rounded-xl border border-[#e7eef5] bg-[#f8fafc] px-3.5 py-3 dark:border-border dark:bg-transparent"
-            >
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--color-primary)_10%,var(--color-surface))] text-primary">
-                <HugeiconsIcon
-                  icon={File01Icon}
-                  size={18}
-                  color="currentColor"
-                  strokeWidth={1.7}
-                />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="m-0 truncate text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
-                  {doc.fileName}
-                </p>
-                <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
-                  {formatFileSize(doc.fileSize)}
-                  {doc.uploadedBy?.name ? ` · ${doc.uploadedBy.name}` : ""}
-                  {` · ${formatDisplayDateTime(doc.createdAt)}`}
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <PrimaryButton
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="!inline-flex !h-8 !w-8 !min-w-8 !items-center !justify-center !rounded-lg !border-border !bg-surface !p-0 !text-primary hover:!border-primary hover:!text-primary"
-                  aria-label={`View ${doc.fileName}`}
-                  onClick={() => onView(doc)}
-                  icon={
-                    <HugeiconsIcon
-                      icon={ViewIcon}
-                      size={15}
-                      color="currentColor"
-                      strokeWidth={1.8}
-                    />
-                  }
-                />
-                {canDelete ? (
+        <>
+          <ul className="m-0 grid list-none gap-2 p-0">
+            {pageItems.map((doc) => (
+              <li
+                key={doc.id}
+                className="flex items-center gap-3 rounded-xl border border-[#e7eef5] bg-[#f8fafc] px-3.5 py-3 dark:border-border dark:bg-transparent"
+              >
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--color-primary)_10%,var(--color-surface))] text-primary">
+                  <HugeiconsIcon
+                    icon={File01Icon}
+                    size={18}
+                    color="currentColor"
+                    strokeWidth={1.7}
+                  />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="m-0 truncate text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
+                    {doc.fileName}
+                  </p>
+                  <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
+                    {doc.mimeType || "File"}
+                    {` · ${formatFileSize(doc.fileSize)}`}
+                    {doc.uploadedBy?.name
+                      ? ` · Uploaded by ${doc.uploadedBy.name}`
+                      : ""}
+                    {` · ${formatDisplayDateTime(doc.createdAt)}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5">
                   <PrimaryButton
                     type="button"
-                    variant="danger"
+                    variant="outline"
                     size="sm"
-                    className="!inline-flex !h-8 !w-8 !min-w-8 !items-center !justify-center !rounded-lg !p-0"
-                    aria-label={`Delete ${doc.fileName}`}
-                    onClick={() => onDelete(doc)}
+                    className="!inline-flex !h-8 !w-8 !min-w-8 !items-center !justify-center !rounded-lg !border-border !bg-surface !p-0 !text-primary hover:!border-primary hover:!text-primary"
+                    aria-label={`View ${doc.fileName}`}
+                    onClick={() => onView(doc)}
                     icon={
                       <HugeiconsIcon
-                        icon={Delete02Icon}
+                        icon={ViewIcon}
                         size={15}
                         color="currentColor"
                         strokeWidth={1.8}
                       />
                     }
                   />
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
+                  {canDelete ? (
+                    <PrimaryButton
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      className="!inline-flex !h-8 !w-8 !min-w-8 !items-center !justify-center !rounded-lg !p-0"
+                      aria-label={`Delete ${doc.fileName}`}
+                      onClick={() => onDelete(doc)}
+                      icon={
+                        <HugeiconsIcon
+                          icon={Delete02Icon}
+                          size={15}
+                          color="currentColor"
+                          strokeWidth={1.8}
+                        />
+                      }
+                    />
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <LeadListPagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </>
       )}
     </LeadSectionCard>
   );
@@ -180,6 +199,9 @@ export function LeadCommunicationsPanel({
   items: CommunicationEvent[];
   loading?: boolean;
 }) {
+  const { page, pageSize, setPage, setPageSize, pageItems, total } =
+    useLeadListPagination(items);
+
   return (
     <LeadSectionCard title="Communication History">
       {loading ? (
@@ -192,8 +214,9 @@ export function LeadCommunicationsPanel({
           enquiries for this lead will appear here.
         </p>
       ) : (
-        <ol className="m-0 grid min-w-0 list-none gap-0 p-0">
-          {items.map((item, index) => {
+        <>
+          <ol className="m-0 grid min-w-0 list-none gap-0 p-0">
+            {pageItems.map((item, index) => {
             const isEmail = item.channel === "EMAIL";
             const outgoing = item.direction === "outgoing";
             const emailLabel = isEmail
@@ -215,7 +238,7 @@ export function LeadCommunicationsPanel({
                       : "border-[#e7f8ef] bg-primary"
                   }`}
                 />
-                {index < items.length - 1 ? (
+                {index < pageItems.length - 1 ? (
                   <span className="absolute top-7 bottom-[-6px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
                 ) : null}
                 <div className="min-w-0 flex-1 overflow-hidden">
@@ -269,7 +292,84 @@ export function LeadCommunicationsPanel({
               </li>
             );
           })}
-        </ol>
+          </ol>
+          <LeadListPagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </>
+      )}
+    </LeadSectionCard>
+  );
+}
+
+export function LeadTimelinePanel({
+  items,
+  loading,
+}: {
+  items: ActivityFeedItem[];
+  loading?: boolean;
+}) {
+  const { page, pageSize, setPage, setPageSize, pageItems, total } =
+    useLeadListPagination(items);
+
+  return (
+    <LeadSectionCard title="Timeline">
+      {loading ? (
+        <p className="m-0 text-[0.88rem] text-[#8b97a8]">Loading timeline…</p>
+      ) : items.length === 0 ? (
+        <p className="m-0 text-[0.88rem] text-[#8b97a8]">
+          No timeline events recorded for this lead yet.
+        </p>
+      ) : (
+        <>
+          <ol className="m-0 grid min-w-0 list-none gap-0 p-0">
+            {pageItems.map((item, index) => (
+              <li
+                key={item.id}
+                className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
+              >
+                <span
+                  className="mt-1 size-3.5 shrink-0 rounded-full border-[3px] border-[#e7f8ef] bg-primary"
+                  aria-hidden
+                />
+                {index < pageItems.length - 1 ? (
+                  <span className="absolute top-7 bottom-[-6px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
+                ) : null}
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                    <p className="m-0 min-w-0 break-all text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
+                      {activityTitle(item.action, item.details, item.outcome)}
+                    </p>
+                    <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
+                      {formatDisplayDateTime(item.occurredAt)}
+                    </time>
+                  </div>
+                  {item.details ? (
+                    <p className="mt-1 mb-0 max-w-full whitespace-pre-wrap break-all text-[0.82rem] text-[#5b6b7c]">
+                      {item.details}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
+                    {item.user?.fullName
+                      ? `Performed by ${item.user.fullName}`
+                      : "Performed by System"}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <LeadListPagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </>
       )}
     </LeadSectionCard>
   );
@@ -284,6 +384,10 @@ export function LeadActivitiesPanel({
   onAdd: () => void;
   canAdd: boolean;
 }) {
+  const items = activities.filter((item) => item.source === "activity");
+  const { page, pageSize, setPage, setPageSize, pageItems, total } =
+    useLeadListPagination(items);
+
   return (
     <LeadSectionCard
       title="Activities"
@@ -293,47 +397,68 @@ export function LeadActivitiesPanel({
             type="button"
             className="inline-flex cursor-pointer items-center gap-1 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[0.82rem] font-medium text-primary hover:bg-hover-bg"
             onClick={onAdd}
-            label="Add"
+            label="Add activity"
           />
         ) : null
       }
     >
-      {activities.length === 0 ? (
+      {items.length === 0 ? (
         <p className="m-0 text-[0.88rem] text-[#8b97a8]">
           No activities recorded for this lead yet.
         </p>
       ) : (
-        <ol className="m-0 grid min-w-0 list-none gap-0 p-0">
-          {activities.map((item, index) => (
-            <li
-              key={item.id}
-              className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
-            >
-              <span className="mt-1 size-3.5 shrink-0 rounded-full border-[3px] border-[#e7f8ef] bg-primary" />
-              {index < activities.length - 1 ? (
-                <span className="absolute top-7 bottom-[-6px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
-              ) : null}
-              <div className="min-w-0 flex-1 overflow-hidden">
-                <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-                  <p className="m-0 min-w-0 break-all text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
-                    {activityTitle(item.action, item.details, item.outcome)}
-                  </p>
-                  <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
-                    {formatDisplayDateTime(item.occurredAt)}
-                  </time>
-                </div>
-                {item.details ? (
-                  <p className="mt-1 mb-0 max-w-full whitespace-pre-wrap break-all text-[0.82rem] text-[#5b6b7c]">
-                    {item.details}
-                  </p>
+        <>
+          <ol className="m-0 grid min-w-0 list-none gap-0 p-0">
+            {pageItems.map((item, index) => (
+              <li
+                key={item.id}
+                className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
+              >
+                <span className="mt-1 size-3.5 shrink-0 rounded-full border-[3px] border-[#e7f8ef] bg-primary" />
+                {index < pageItems.length - 1 ? (
+                  <span className="absolute top-7 bottom-[-6px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
                 ) : null}
-                <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
-                  {item.user?.fullName ? `by ${item.user.fullName}` : "System"}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="m-0 text-[0.72rem] font-medium uppercase tracking-wide text-[#8b97a8]">
+                        {item.action || item.category}
+                      </p>
+                      <p className="m-0 min-w-0 break-all text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
+                        {activityTitle(item.action, item.details, item.outcome)}
+                      </p>
+                    </div>
+                    <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
+                      {formatDisplayDateTime(item.occurredAt)}
+                    </time>
+                  </div>
+                  {item.outcome ? (
+                    <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
+                      Outcome: {item.outcome}
+                    </p>
+                  ) : null}
+                  {item.details ? (
+                    <p className="mt-1 mb-0 max-w-full whitespace-pre-wrap break-all text-[0.82rem] text-[#5b6b7c]">
+                      {item.details}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
+                    {item.user?.fullName
+                      ? `Performed by ${item.user.fullName}`
+                      : "Performed by System"}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+          <LeadListPagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </>
       )}
     </LeadSectionCard>
   );
@@ -350,6 +475,9 @@ export function LeadNotesPanel({
   canAdd: boolean;
   onAdd: () => void;
 }) {
+  const { page, pageSize, setPage, setPageSize, pageItems, total } =
+    useLeadListPagination(notes);
+
   return (
     <LeadSectionCard
       title="Note history"
@@ -371,34 +499,43 @@ export function LeadNotesPanel({
           No notes recorded for this lead yet.
         </p>
       ) : (
-        <ol className="m-0 grid list-none gap-0 p-0">
-          {notes.map((item, index) => (
-            <li
-              key={item.id}
-              className="relative flex gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
-            >
-              <span className="mt-1 size-3.5 shrink-0 rounded-full border-[3px] border-[#e7f8ef] bg-primary" />
-              {index < notes.length - 1 ? (
-                <span className="absolute top-7 bottom-[-6px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
-              ) : null}
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <p className="m-0 min-w-0 whitespace-pre-wrap break-words text-[0.88rem] text-[#17324f] [overflow-wrap:anywhere] dark:text-text-strong">
-                    {item.body}
+        <>
+          <ol className="m-0 grid list-none gap-0 p-0">
+            {pageItems.map((item, index) => (
+              <li
+                key={item.id}
+                className="relative flex gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
+              >
+                <span className="mt-1 size-3.5 shrink-0 rounded-full border-[3px] border-[#e7f8ef] bg-primary" />
+                {index < pageItems.length - 1 ? (
+                  <span className="absolute top-7 bottom-[-6px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
+                ) : null}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className="m-0 min-w-0 whitespace-pre-wrap break-words text-[0.88rem] text-[#17324f] [overflow-wrap:anywhere] dark:text-text-strong">
+                      {item.body}
+                    </p>
+                    <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
+                      {formatDisplayDateTime(item.createdAt)}
+                    </time>
+                  </div>
+                  <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
+                    {item.createdBy?.name
+                      ? `by ${item.createdBy.name}`
+                      : "System"}
                   </p>
-                  <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
-                    {formatDisplayDateTime(item.createdAt)}
-                  </time>
                 </div>
-                <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
-                  {item.createdBy?.name
-                    ? `by ${item.createdBy.name}`
-                    : "System"}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
+              </li>
+            ))}
+          </ol>
+          <LeadListPagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </>
       )}
     </LeadSectionCard>
   );
@@ -430,6 +567,8 @@ export function LeadPaymentsPanel({ leadId }: { leadId: string }) {
   const items = data?.items || [];
   const summary = data?.summary;
   const paidCount = items.filter((item) => item.status === "PAID").length;
+  const { page, pageSize, setPage, setPageSize, pageItems, total } =
+    useLeadListPagination(items);
 
   useEffect(() => {
     if (!data?.leadStatusChanged) return;
@@ -518,55 +657,64 @@ export function LeadPaymentsPanel({ leadId }: { leadId: string }) {
       ) : null}
 
       {items.length > 0 ? (
-        <ul className="m-0 grid list-none gap-2 p-0">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e7eef5] bg-[#f8fafc] px-3.5 py-3 dark:border-border dark:bg-transparent"
-            >
-              <div className="min-w-0">
-                <p className="m-0 text-[0.9rem] font-medium text-[#17324f] dark:text-text-strong">
-                  {item.purpose}
-                  <span className="font-normal text-text-muted">
-                    {" "}
-                    · Offer V{item.offerVersion}
-                    {item.packageName ? ` · ${item.packageName}` : ""}
+        <>
+          <ul className="m-0 grid list-none gap-2 p-0">
+            {pageItems.map((item) => (
+              <li
+                key={item.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e7eef5] bg-[#f8fafc] px-3.5 py-3 dark:border-border dark:bg-transparent"
+              >
+                <div className="min-w-0">
+                  <p className="m-0 text-[0.9rem] font-medium text-[#17324f] dark:text-text-strong">
+                    {item.purpose}
+                    <span className="font-normal text-text-muted">
+                      {" "}
+                      · Offer V{item.offerVersion}
+                      {item.packageName ? ` · ${item.packageName}` : ""}
+                    </span>
+                  </p>
+                  <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
+                    {item.status === "PAID"
+                      ? `Received ${paymentDateTime(item.paidAt)}${item.paidBy ? ` by ${item.paidBy.fullName}` : ""}`
+                      : item.dueDate
+                        ? `Due ${item.dueDate}`
+                        : "Awaiting payment"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-semibold text-[#17324f] dark:text-text-strong">
+                    {formatMoney(item.amount)}
                   </span>
-                </p>
-                <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
-                  {item.status === "PAID"
-                    ? `Received ${paymentDateTime(item.paidAt)}${item.paidBy ? ` by ${item.paidBy.fullName}` : ""}`
-                    : item.dueDate
-                      ? `Due ${item.dueDate}`
-                      : "Awaiting payment"}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-[#17324f] dark:text-text-strong">
-                  {formatMoney(item.amount)}
-                </span>
-                <Tag color={item.status === "PAID" ? "success" : "gold"}>
-                  {item.status === "PAID" ? "Paid" : "Pending"}
-                </Tag>
-                {item.canRecord ? (
-                  <Popconfirm
-                    title="Record this payment as received?"
-                    okText="Record Payment"
-                    onConfirm={() => void pay(item)}
-                  >
-                    <PrimaryButton
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      label="Record Payment"
-                      loading={paying && recordingId === item.id}
-                    />
-                  </Popconfirm>
-                ) : null}
-              </div>
-            </li>
-          ))}
-        </ul>
+                  <Tag color={item.status === "PAID" ? "success" : "gold"}>
+                    {item.status === "PAID" ? "Paid" : "Pending"}
+                  </Tag>
+                  {item.canRecord ? (
+                    <Popconfirm
+                      title="Record this payment as received?"
+                      okText="Record Payment"
+                      onConfirm={() => void pay(item)}
+                    >
+                      <PrimaryButton
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        label="Record Payment"
+                        loading={paying && recordingId === item.id}
+                      />
+                    </Popconfirm>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <LeadListPagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </>
       ) : null}
 
       {paidCount > 0 && items.some((item) => item.status === "PENDING") ? (
@@ -579,6 +727,73 @@ export function LeadPaymentsPanel({ leadId }: { leadId: string }) {
   );
 }
 
+export function LeadAssignmentHistoryPanel({
+  assignmentHistory,
+  loading,
+}: {
+  assignmentHistory: LeadAssignmentHistoryItem[];
+  loading?: boolean;
+}) {
+  const { page, pageSize, setPage, setPageSize, pageItems, total } =
+    useLeadListPagination(assignmentHistory);
+
+  return (
+    <LeadSectionCard title="Assignment History">
+      {loading ? (
+        <p className="m-0 text-[0.84rem] text-[#8b97a8]">
+          Loading assignment history…
+        </p>
+      ) : assignmentHistory.length === 0 ? (
+        <p className="m-0 text-[0.84rem] text-[#8b97a8]">
+          No assignment records yet.
+        </p>
+      ) : (
+        <>
+          <ol className="m-0 grid list-none gap-3 p-0">
+            {pageItems.map((item) => (
+              <li
+                key={item.id}
+                className="border-b border-[#eef3f8] pb-3 last:border-0 last:pb-0 dark:border-border-subtle"
+              >
+                <p className="m-0 text-[0.86rem] font-medium text-[#17324f] dark:text-text-strong">
+                  {item.fromOwner?.name || "Unassigned"} →{" "}
+                  {item.toOwner?.name || "Lead Pool"}
+                </p>
+                <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
+                  {formatDisplayDateTime(item.createdAt)}
+                  {item.assignedBy?.name
+                    ? ` · Assigned by ${item.assignedBy.name}`
+                    : ""}
+                </p>
+                {item.kind === "HANDOVER" ? (
+                  <p className="m-0 mt-0.5 text-[0.72rem] font-medium text-primary">
+                    Handover
+                  </p>
+                ) : null}
+                {item.kind === "HANDOVER" && item.handoverNote ? (
+                  <HandoverNoteLines note={item.handoverNote} />
+                ) : item.reason ? (
+                  <p className="m-0 mt-0.5 text-[0.78rem] text-[#5b6b7c]">
+                    Remarks: {item.reason}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+          <LeadListPagination
+            page={page}
+            pageSize={pageSize}
+            total={total}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+          />
+        </>
+      )}
+    </LeadSectionCard>
+  );
+}
+
+/** @deprecated Status history now surfaces via Timeline; kept for compatibility */
 export function LeadHistoryPanel({
   statusHistory,
   assignmentHistory,
@@ -628,43 +843,7 @@ export function LeadHistoryPanel({
         )}
       </LeadSectionCard>
 
-      <LeadSectionCard title="Assignment History">
-        {assignmentHistory.length === 0 ? (
-          <p className="m-0 text-[0.84rem] text-[#8b97a8]">
-            No assignment records yet.
-          </p>
-        ) : (
-          <ol className="m-0 grid list-none gap-3 p-0">
-            {assignmentHistory.map((item) => (
-              <li
-                key={item.id}
-                className="border-b border-[#eef3f8] pb-3 last:border-0 last:pb-0 dark:border-border-subtle"
-              >
-                <p className="m-0 text-[0.86rem] font-medium text-[#17324f] dark:text-text-strong">
-                  {item.fromOwner?.name || "Unassigned"} →{" "}
-                  {item.toOwner?.name || "Lead Pool"}
-                </p>
-                <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
-                  {formatDisplayDateTime(item.createdAt)}
-                  {item.assignedBy?.name ? ` · ${item.assignedBy.name}` : ""}
-                </p>
-                {item.kind === "HANDOVER" ? (
-                  <p className="m-0 mt-0.5 text-[0.72rem] font-medium text-primary">
-                    Handover
-                  </p>
-                ) : null}
-                {item.kind === "HANDOVER" && item.handoverNote ? (
-                  <HandoverNoteLines note={item.handoverNote} />
-                ) : item.reason ? (
-                  <p className="m-0 mt-0.5 text-[0.78rem] text-[#5b6b7c]">
-                    {item.reason}
-                  </p>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-        )}
-      </LeadSectionCard>
+      <LeadAssignmentHistoryPanel assignmentHistory={assignmentHistory} />
     </div>
   );
 }
