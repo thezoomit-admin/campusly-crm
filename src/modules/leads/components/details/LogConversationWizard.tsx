@@ -411,10 +411,10 @@ export default function LogConversationWizard({
                 {hasOpenFollowUp && nextFollowUp ? (
                   <div className="mb-3 min-w-0 border-b border-[#eef3f8] pb-3 dark:border-border-subtle">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-[0.84rem] font-semibold text-primary">
+                      <span className="text-[0.92rem] font-bold text-[#c2410c] dark:text-[#fb923c]">
                         Next Follow-up · {formatDisplayDate(nextFollowUp.dueAt) || 'No date'}
                       </span>
-                      <span className="rounded-full bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] px-2 py-0.5 text-[0.68rem] font-semibold text-primary">
+                      <span className="rounded-full bg-[#fff7ed] px-2 py-0.5 text-[0.68rem] font-bold text-[#c2410c] dark:bg-[color-mix(in_srgb,#fb923c_18%,transparent)] dark:text-[#fb923c]">
                         {nextFollowUp.status || 'Upcoming'}
                       </span>
                     </div>

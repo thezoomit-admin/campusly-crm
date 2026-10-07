@@ -52,14 +52,14 @@ export function getLeadColumns({
       render: (_value, row) => {
         const subtitle = leadDisplaySubtitle(row)
         return (
-          <div className="group flex min-w-0 items-center gap-2.5">
+          <div className="flex min-w-0 items-center gap-2.5">
             <span
               className={`grid size-9 shrink-0 place-items-center rounded-full text-[11px] font-bold ${leadAvatarTone(row.name)}`}
             >
               {leadInitials(row.name)}
             </span>
             <div className="min-w-0">
-              <p className="m-0 truncate text-[13px] font-semibold text-[#0f9d8e] group-hover:underline">{row.name || '—'}</p>
+              <p className="m-0 truncate text-[13px] font-semibold text-[#0f9d8e]">{row.name || '—'}</p>
               {subtitle ? <p className="m-0 truncate text-[11px] text-text-faint">{subtitle}</p> : null}
             </div>
           </div>
@@ -114,7 +114,7 @@ export function getLeadColumns({
       key: 'status',
       width: 120,
       render: (value: string) => (
-        <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${stageBadgeClass(value || '')}`}>
+        <span className={`inline-flex rounded-md border border-current/40 px-2.5 py-1 text-[11px] font-semibold ${stageBadgeClass(value || '')}`}>
           {emptyLeadValue(value)}
         </span>
       ),

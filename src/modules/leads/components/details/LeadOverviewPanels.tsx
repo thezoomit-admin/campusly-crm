@@ -23,7 +23,6 @@ import {
 } from "../../utils/leadDetails";
 import LeadInfoField from "./LeadInfoField";
 import LeadSectionCard from "./LeadSectionCard";
-import LeadMetaCampaignHistory from "@/modules/meta-leads/components/LeadMetaCampaignHistory";
 import LeadMarketingPanel from "./LeadMarketingPanel";
 
 const GRID = "grid gap-x-6 gap-y-5 sm:grid-cols-2 xl:grid-cols-3";
@@ -51,8 +50,6 @@ export default function LeadOverviewPanels({
   ]
     .filter(Boolean)
     .join(" · ");
-  const notes = (lead.notes || lead.remarks || "").trim();
-
   return (
     <div className="grid gap-4">
       <LeadSectionCard title="Personal Information">
@@ -174,21 +171,11 @@ export default function LeadOverviewPanels({
         </div>
       </LeadSectionCard>
 
-      <div className="grid gap-4 content-start">
-        <LeadMarketingPanel
-          lead={lead}
-          canChangeSource={canChangeSource}
-          canChangeCampaign={canChangeCampaign}
-        />
-        {notes ? (
-          <LeadSectionCard title="Notes">
-            <p className="m-0 whitespace-pre-wrap break-words text-[0.92rem] text-[#17324f] [overflow-wrap:anywhere] dark:text-text-strong">
-              {notes}
-            </p>
-          </LeadSectionCard>
-        ) : null}
-        <LeadMetaCampaignHistory leadId={lead.id} />
-      </div>
+      <LeadMarketingPanel
+        lead={lead}
+        canChangeSource={canChangeSource}
+        canChangeCampaign={canChangeCampaign}
+      />
     </div>
   );
 }

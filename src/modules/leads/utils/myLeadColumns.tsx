@@ -90,7 +90,7 @@ export function getMyLeadColumns({ sort, order, onView }: MyLeadColumnOptions): 
       key: 'status',
       width: 140,
       render: (value: string) => (
-        <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${stageBadgeClass(value || '')}`}>
+        <span className={`inline-flex rounded-md border border-current/40 px-2.5 py-1 text-[11px] font-semibold ${stageBadgeClass(value || '')}`}>
           {emptyLeadValue(value)}
         </span>
       ),

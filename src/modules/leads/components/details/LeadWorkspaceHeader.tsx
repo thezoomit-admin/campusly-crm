@@ -1,7 +1,8 @@
+import { Link } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Call02Icon,
-  CheckmarkCircle02Icon,
+  FileUploadIcon,
   Flag01Icon,
   Globe02Icon,
   Location01Icon,
@@ -9,7 +10,7 @@ import {
   Mortarboard01Icon,
   Note01Icon,
   PencilEdit02Icon,
-  RefreshIcon,
+  TaskDaily01Icon,
   UserIcon,
 } from "@hugeicons/core-free-icons";
 import { PrimaryButton } from "@/components/ui";
@@ -27,47 +28,39 @@ export default function LeadWorkspaceHeader({
   degreeOptions = [],
   countryOptions = [],
   canEdit,
-  canClose,
   canReopen,
   canHandover,
   canManageDuplicate,
   canOverridePriority,
-  canChangeStatus,
   canAssign,
   onEdit,
-  onCloseLead,
   onReopenLead,
   onHandover,
   onReviewDuplicate,
   onOverridePriority,
   onAddNote,
-  onChangeStatus,
+  onAddActivity,
+  onUploadFile,
   onAssign,
-  onRefresh,
-  refreshing = false,
 }: {
   lead: LeadRecord;
   degreeOptions?: MasterOption[];
   countryOptions?: MasterOption[];
   canEdit: boolean;
-  canClose?: boolean;
   canReopen?: boolean;
   canHandover?: boolean;
   canManageDuplicate?: boolean;
   canOverridePriority?: boolean;
-  canChangeStatus?: boolean;
   canAssign?: boolean;
   onEdit: () => void;
-  onCloseLead?: () => void;
   onReopenLead?: () => void;
   onHandover?: () => void;
   onReviewDuplicate?: () => void;
   onOverridePriority?: () => void;
   onAddNote?: () => void;
-  onChangeStatus?: () => void;
+  onAddActivity?: () => void;
+  onUploadFile?: () => void;
   onAssign?: () => void;
-  onRefresh?: () => void;
-  refreshing?: boolean;
 }) {
   const studyLevel =
     optionLabel(degreeOptions, lead.preferredDegreeCode) ||
@@ -82,10 +75,10 @@ export default function LeadWorkspaceHeader({
     canManageDuplicate && lead.isDuplicate && onReviewDuplicate,
   );
   const showAddNote = Boolean(onAddNote);
-  const showChangeStatus = Boolean(canChangeStatus && onChangeStatus);
+  const showAddActivity = Boolean(onAddActivity);
+  const showUploadFile = Boolean(onUploadFile);
   const showAssign = Boolean(canAssign && onAssign);
   const assignLabel = lead.owner?.id ? "Reassign" : "Assign";
-  const showRefresh = Boolean(onRefresh);
 
   return (
     <section className="rounded-2xl border border-[#e7eef5] bg-surface px-4 py-4 shadow-[0_10px_28px_rgba(22,50,79,0.035)] md:px-5 dark:border-border">
@@ -99,16 +92,6 @@ export default function LeadWorkspaceHeader({
             label="Review Duplicate"
           />
         ) : null}
-        {showChangeStatus ? (
-          <PrimaryButton
-            type="button"
-            size="sm"
-            variant="primary"
-            icon={<HugeiconsIcon icon={CheckmarkCircle02Icon} size={15} />}
-            onClick={onChangeStatus}
-            label="Change Status"
-          />
-        ) : null}
         {showAssign ? (
           <PrimaryButton
             type="button"
@@ -117,6 +100,26 @@ export default function LeadWorkspaceHeader({
             icon={<HugeiconsIcon icon={UserIcon} size={15} />}
             onClick={onAssign}
             label={assignLabel}
+          />
+        ) : null}
+        {showAddActivity ? (
+          <PrimaryButton
+            type="button"
+            size="sm"
+            variant="outline"
+            icon={<HugeiconsIcon icon={TaskDaily01Icon} size={15} />}
+            onClick={onAddActivity}
+            label="Add Activity"
+          />
+        ) : null}
+        {showUploadFile ? (
+          <PrimaryButton
+            type="button"
+            size="sm"
+            variant="outline"
+            icon={<HugeiconsIcon icon={FileUploadIcon} size={15} />}
+            onClick={onUploadFile}
+            label="Upload File"
           />
         ) : null}
         {showAddNote ? (
@@ -155,27 +158,6 @@ export default function LeadWorkspaceHeader({
             variant="outline"
             onClick={onReopenLead}
             label="Reopen Lead"
-          />
-        ) : null}
-        {canClose ? (
-          <PrimaryButton
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={onCloseLead}
-            label="Close Lead"
-          />
-        ) : null}
-        {showRefresh ? (
-          <PrimaryButton
-            type="button"
-            size="sm"
-            variant="outline"
-            loading={refreshing}
-            disabled={refreshing}
-            icon={<HugeiconsIcon icon={RefreshIcon} size={15} />}
-            onClick={onRefresh}
-            label="Refresh"
           />
         ) : null}
       </div>
@@ -259,6 +241,7 @@ export default function LeadWorkspaceHeader({
             icon={UserIcon}
             label="Assigned To"
             value={lead.owner?.name || "Unassigned"}
+            href={lead.owner?.id ? `/users/${lead.owner.id}` : undefined}
             hint={lead.owner?.name ? "Counsellor" : undefined}
           />
         </div>
@@ -299,11 +282,13 @@ function HeaderMeta({
   icon,
   label,
   value,
+  href,
   hint,
 }: {
   icon: typeof Globe02Icon;
   label: string;
   value: string;
+  href?: string;
   hint?: string;
 }) {
   return (
@@ -317,9 +302,18 @@ function HeaderMeta({
         />
         {label}
       </p>
-      <p className="m-0 truncate text-[0.88rem] font-semibold text-[#17324f] dark:text-text-strong">
-        {value}
-      </p>
+      {href ? (
+        <Link
+          to={href}
+          className="m-0 block truncate text-[0.88rem] font-semibold text-primary hover:underline"
+        >
+          {value}
+        </Link>
+      ) : (
+        <p className="m-0 truncate text-[0.88rem] font-semibold text-[#17324f] dark:text-text-strong">
+          {value}
+        </p>
+      )}
       {hint ? <p className="m-0 text-[0.7rem] text-[#8b97a8]">{hint}</p> : null}
     </div>
   );
