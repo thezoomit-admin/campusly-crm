@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Popconfirm, Tag } from "antd";
+import { Input, Modal, Tag } from "antd";
 import { toast } from "react-toastify";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -18,13 +18,18 @@ import type { ActivityFeedItem } from "@/types";
 import type { CommunicationEvent } from "@/modules/communications/types";
 import { CHANNEL_LABELS, STATUS_LABELS } from "@/modules/communications/types";
 import {
-  useListLeadPaymentsQuery,
-  useRecordOfferInstallmentPaymentMutation,
-  type LeadPaymentItem,
-} from "@/modules/packages/api/packagesApi";
+  useCancelPaymentMutation,
+  useGeneratePaymentReceiptMutation,
+  useListLeadPaymentHistoryQuery,
+  useReversePaymentMutation,
+} from "@/modules/payments/api/paymentsApi";
+import AddPaymentModal from "@/modules/payments/components/AddPaymentModal";
+import ReceiptViewModal from "@/modules/payments/components/ReceiptViewModal";
+import type { PaymentRecord } from "@/modules/payments/types";
 import { formatMoney } from "@/modules/packages/utils/offerCalculator";
 import type {
   LeadAssignmentHistoryItem,
+  LeadDocumentChecklist,
   LeadDocumentItem,
   LeadHandoverNote,
   LeadNoteItem,
@@ -51,144 +56,255 @@ function formatFileSize(bytes: number) {
 
 export function LeadDocumentsPanel({
   documents,
+  checklist,
   loading,
   canUpload,
   canDelete,
+  canVerify,
+  showArchived,
+  onToggleArchived,
   onAdd,
+  onUploadMissing,
   onView,
+  onVerify,
   onDelete,
+  onCreateFollowUp,
 }: {
   documents: LeadDocumentItem[];
+  checklist?: LeadDocumentChecklist | null;
   loading?: boolean;
   canUpload: boolean;
   canDelete: boolean;
+  canVerify: boolean;
+  showArchived?: boolean;
+  onToggleArchived?: () => void;
   onAdd: () => void;
+  onUploadMissing?: (typeCode: string) => void;
   onView: (document: LeadDocumentItem) => void;
+  onVerify: (document: LeadDocumentItem) => void;
   onDelete: (document: LeadDocumentItem) => void;
+  onCreateFollowUp?: (typeCode: string, name: string) => void;
 }) {
   const { page, pageSize, setPage, setPageSize, pageItems, total } =
     useLeadListPagination(documents);
 
   return (
-    <LeadSectionCard
-      title="Attachments"
-      extra={
-        canUpload ? (
-          <PrimaryButton
-            type="button"
-            size="sm"
-            label="Upload file"
-            icon={
-              <HugeiconsIcon
-                icon={Add01Icon}
-                size={14}
-                color="currentColor"
-                strokeWidth={1.8}
+    <div className="grid gap-4">
+      {checklist ? (
+        <LeadSectionCard title="Document Checklist">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="m-0 text-[0.84rem] text-[#8b97a8]">
+              Completion: {checklist.completionPercent}% ({checklist.completedRequired}/
+              {checklist.totalRequired})
+            </p>
+            <div className="h-2 w-40 overflow-hidden rounded-full bg-[#e8eef5]">
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${checklist.completionPercent}%` }}
               />
-            }
-            onClick={onAdd}
-          />
-        ) : null
-      }
-    >
-      {loading ? (
-        <p className="m-0 text-[0.88rem] text-[#8b97a8]">Loading documents…</p>
-      ) : documents.length === 0 ? (
-        <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-[#dbe4ee] bg-[#f8fafc] px-4 py-10 text-center dark:border-border dark:bg-transparent">
-          <span className="grid size-12 place-items-center rounded-full bg-[#eef3f8] text-[#8b97a8]">
-            <HugeiconsIcon
-              icon={File01Icon}
-              size={22}
-              color="currentColor"
-              strokeWidth={1.6}
-            />
-          </span>
-          <p className="m-0 text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
-            No attachments uploaded
-          </p>
-          <p className="m-0 max-w-md text-[0.84rem] text-[#8b97a8]">
-            Passport, academic certificates, transcripts, IELTS results, and
-            other supporting documents will appear here once uploaded.
-          </p>
-        </div>
-      ) : (
-        <>
+            </div>
+          </div>
           <ul className="m-0 grid list-none gap-2 p-0">
-            {pageItems.map((doc) => (
+            {checklist.items.map((item) => (
               <li
-                key={doc.id}
-                className="flex items-center gap-3 rounded-xl border border-[#e7eef5] bg-[#f8fafc] px-3.5 py-3 dark:border-border dark:bg-transparent"
+                key={item.typeCode}
+                className="flex flex-wrap items-center gap-2 rounded-xl border border-[#e7eef5] px-3 py-2.5 dark:border-border"
               >
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--color-primary)_10%,var(--color-surface))] text-primary">
-                  <HugeiconsIcon
-                    icon={File01Icon}
-                    size={18}
-                    color="currentColor"
-                    strokeWidth={1.7}
-                  />
+                <span className="text-[0.95rem]">{item.completed ? "☑" : "☐"}</span>
+                <span className="min-w-0 flex-1 text-[0.9rem] font-medium text-[#17324f] dark:text-text-strong">
+                  {item.name}
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="m-0 truncate text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
-                    {doc.fileName}
-                  </p>
-                  <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
-                    {doc.mimeType || "File"}
-                    {` · ${formatFileSize(doc.fileSize)}`}
-                    {doc.uploadedBy?.name
-                      ? ` · Uploaded by ${doc.uploadedBy.name}`
-                      : ""}
-                    {` · ${formatDisplayDateTime(doc.createdAt)}`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-1.5">
+                <Tag className="m-0">{item.checklistStatus}</Tag>
+                {item.checklistStatus === "Missing" && canUpload ? (
                   <PrimaryButton
                     type="button"
-                    variant="outline"
                     size="sm"
-                    className="!inline-flex !h-8 !w-8 !min-w-8 !items-center !justify-center !rounded-lg !border-border !bg-surface !p-0 !text-primary hover:!border-primary hover:!text-primary"
-                    aria-label={`View ${doc.fileName}`}
-                    onClick={() => onView(doc)}
-                    icon={
-                      <HugeiconsIcon
-                        icon={ViewIcon}
-                        size={15}
-                        color="currentColor"
-                        strokeWidth={1.8}
-                      />
-                    }
+                    variant="outline"
+                    label="Upload"
+                    onClick={() => onUploadMissing?.(item.typeCode)}
                   />
-                  {canDelete ? (
-                    <PrimaryButton
-                      type="button"
-                      variant="danger"
-                      size="sm"
-                      className="!inline-flex !h-8 !w-8 !min-w-8 !items-center !justify-center !rounded-lg !p-0"
-                      aria-label={`Delete ${doc.fileName}`}
-                      onClick={() => onDelete(doc)}
-                      icon={
-                        <HugeiconsIcon
-                          icon={Delete02Icon}
-                          size={15}
-                          color="currentColor"
-                          strokeWidth={1.8}
-                        />
-                      }
-                    />
-                  ) : null}
-                </div>
+                ) : null}
+                {item.checklistStatus === "Missing" && onCreateFollowUp ? (
+                  <PrimaryButton
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    label="Create Follow-up"
+                    onClick={() => onCreateFollowUp(item.typeCode, item.name)}
+                  />
+                ) : null}
               </li>
             ))}
           </ul>
-          <LeadListPagination
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-          />
-        </>
-      )}
-    </LeadSectionCard>
+        </LeadSectionCard>
+      ) : null}
+
+      <LeadSectionCard
+        title="Documents"
+        extra={
+          <div className="flex flex-wrap items-center gap-2">
+            {onToggleArchived ? (
+              <PrimaryButton
+                type="button"
+                size="sm"
+                variant="outline"
+                label={showArchived ? "Hide Archived" : "View Archived Documents"}
+                onClick={onToggleArchived}
+              />
+            ) : null}
+            {canUpload ? (
+              <PrimaryButton
+                type="button"
+                size="sm"
+                label="Upload Document"
+                icon={
+                  <HugeiconsIcon
+                    icon={Add01Icon}
+                    size={14}
+                    color="currentColor"
+                    strokeWidth={1.8}
+                  />
+                }
+                onClick={onAdd}
+              />
+            ) : null}
+          </div>
+        }
+      >
+        {loading ? (
+          <p className="m-0 text-[0.88rem] text-[#8b97a8]">Loading documents…</p>
+        ) : documents.length === 0 ? (
+          <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-[#dbe4ee] bg-[#f8fafc] px-4 py-10 text-center dark:border-border dark:bg-transparent">
+            <span className="grid size-12 place-items-center rounded-full bg-[#eef3f8] text-[#8b97a8]">
+              <HugeiconsIcon
+                icon={File01Icon}
+                size={22}
+                color="currentColor"
+                strokeWidth={1.6}
+              />
+            </span>
+            <p className="m-0 text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
+              {showArchived ? "No archived documents" : "No documents uploaded"}
+            </p>
+            <p className="m-0 max-w-md text-[0.84rem] text-[#8b97a8]">
+              Passport, academic certificates, transcripts, IELTS results, and
+              other supporting documents will appear here once uploaded.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="mb-2 hidden grid-cols-[1.1fr_1.4fr_0.8fr_auto] gap-3 px-1 text-[0.75rem] font-semibold uppercase tracking-wide text-[#8b97a8] md:grid">
+              <span>Category</span>
+              <span>Document</span>
+              <span>Status</span>
+              <span />
+            </div>
+            <ul className="m-0 grid list-none gap-2 p-0">
+              {pageItems.map((doc) => (
+                <li
+                  key={doc.id}
+                  className="grid items-center gap-3 rounded-xl border border-[#e7eef5] bg-[#f8fafc] px-3.5 py-3 dark:border-border dark:bg-transparent md:grid-cols-[1.1fr_1.4fr_0.8fr_auto]"
+                >
+                  <div className="min-w-0">
+                    <p className="m-0 truncate text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
+                      {doc.typeCode || doc.categoryCode || "Document"}
+                    </p>
+                    <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
+                      {doc.categoryCode}
+                      {doc.versionNumber ? ` · v${doc.versionNumber}` : ""}
+                      {doc.isSensitive ? " · Sensitive" : ""}
+                    </p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="m-0 truncate text-[0.9rem] font-medium text-[#17324f] dark:text-text-strong">
+                      {doc.name || doc.fileName}
+                    </p>
+                    <p className="m-0 mt-0.5 truncate text-[0.75rem] text-[#8b97a8]">
+                      {doc.fileName}
+                      {` · ${formatFileSize(doc.fileSize)}`}
+                      {doc.uploadedBy?.name
+                        ? ` · ${doc.uploadedBy.name}`
+                        : ""}
+                      {` · ${formatDisplayDateTime(doc.createdAt)}`}
+                    </p>
+                  </div>
+                  <div>
+                    <Tag className={`m-0 ${statusClass(doc.statusLabel || doc.status || "Pending")}`}>
+                      {doc.statusLabel || doc.status || "Pending"}
+                    </Tag>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5 justify-self-end">
+                    {doc.canPreview !== false ? (
+                      <PrimaryButton
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="!inline-flex !h-8 !w-8 !min-w-8 !items-center !justify-center !rounded-lg !border-border !bg-surface !p-0 !text-primary hover:!border-primary hover:!text-primary"
+                        aria-label={`View ${doc.fileName}`}
+                        onClick={() => onView(doc)}
+                        icon={
+                          <HugeiconsIcon
+                            icon={ViewIcon}
+                            size={15}
+                            color="currentColor"
+                            strokeWidth={1.8}
+                          />
+                        }
+                      />
+                    ) : null}
+                    {canVerify && doc.status === "PENDING" && !showArchived ? (
+                      <PrimaryButton
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        label="Review"
+                        onClick={() => onVerify(doc)}
+                      />
+                    ) : null}
+                    {canUpload &&
+                    (doc.status === "REJECTED" || doc.status === "EXPIRED") &&
+                    !showArchived ? (
+                      <PrimaryButton
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        label="Upload New Version"
+                        onClick={() => onUploadMissing?.(doc.typeCode)}
+                      />
+                    ) : null}
+                    {canDelete && !showArchived ? (
+                      <PrimaryButton
+                        type="button"
+                        variant="danger"
+                        size="sm"
+                        className="!inline-flex !h-8 !w-8 !min-w-8 !items-center !justify-center !rounded-lg !p-0"
+                        aria-label={`Archive ${doc.fileName}`}
+                        onClick={() => onDelete(doc)}
+                        icon={
+                          <HugeiconsIcon
+                            icon={Delete02Icon}
+                            size={15}
+                            color="currentColor"
+                            strokeWidth={1.8}
+                          />
+                        }
+                      />
+                    ) : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <LeadListPagination
+              page={page}
+              pageSize={pageSize}
+              total={total}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+            />
+          </>
+        )}
+      </LeadSectionCard>
+    </div>
   );
 }
 
@@ -543,32 +659,63 @@ export function LeadNotesPanel({
 
 export function LeadServicesPanel({
   leadId,
+  leadName,
+  leadCode,
   canOffer,
 }: {
   leadId: string;
+  leadName: string;
+  leadCode: string;
   canOffer: boolean;
 }) {
-  return <LeadPackageOfferPanel leadId={leadId} canOffer={canOffer} />;
+  return (
+    <LeadPackageOfferPanel
+      leadId={leadId}
+      leadName={leadName}
+      leadCode={leadCode}
+      canOffer={canOffer}
+    />
+  );
 }
 
-function paymentDateTime(value: string | null) {
-  if (!value) return "—";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+function paymentStatusColor(status: string) {
+  if (status === "COMPLETED") return "success";
+  if (status === "PENDING") return "gold";
+  if (status === "FAILED") return "error";
+  if (status === "CANCELLED" || status === "REVERSED") return "default";
+  return "processing";
 }
 
-export function LeadPaymentsPanel({ leadId }: { leadId: string }) {
+export function LeadPaymentsPanel({
+  leadId,
+  leadName,
+  leadCode,
+}: {
+  leadId: string;
+  leadName: string;
+  leadCode: string;
+}) {
   const dispatch = useAppDispatch();
-  const { data, isFetching, isError } = useListLeadPaymentsQuery(leadId);
-  const [recordPayment, { isLoading: paying }] =
-    useRecordOfferInstallmentPaymentMutation();
-  const [recordingId, setRecordingId] = useState<string | null>(null);
+  const { data, isFetching, isError } = useListLeadPaymentHistoryQuery(leadId);
+  const [cancelPayment, { isLoading: cancelling }] = useCancelPaymentMutation();
+  const [reversePayment, { isLoading: reversing }] = useReversePaymentMutation();
+  const [generateReceipt, { isLoading: generating }] =
+    useGeneratePaymentReceiptMutation();
 
-  const items = data?.items || [];
+  const [addOpen, setAddOpen] = useState(false);
+  const [receiptId, setReceiptId] = useState<string | null>(null);
+  const [reasonPrompt, setReasonPrompt] = useState<{
+    payment: PaymentRecord;
+    action: "cancel" | "reverse";
+  } | null>(null);
+  const [reason, setReason] = useState("");
+  const [followUpHint, setFollowUpHint] = useState(false);
+
+  const payments = data?.payments || [];
   const summary = data?.summary;
-  const paidCount = items.filter((item) => item.status === "PAID").length;
+  const permissions = data?.permissions;
   const { page, pageSize, setPage, setPageSize, pageItems, total } =
-    useLeadListPagination(items);
+    useLeadListPagination(payments);
 
   useEffect(() => {
     if (!data?.leadStatusChanged) return;
@@ -580,27 +727,67 @@ export function LeadPaymentsPanel({ leadId }: { leadId: string }) {
     );
   }, [data?.leadStatusChanged, dispatch, leadId]);
 
-  async function pay(item: LeadPaymentItem) {
-    if (paying) return;
-    setRecordingId(item.id);
+  async function confirmReason() {
+    if (!reasonPrompt || !reason.trim()) {
+      toast.error("Please provide a reason.");
+      return;
+    }
     try {
-      const result = await recordPayment({
-        leadId,
-        offerId: item.offerId,
-        installmentId: item.id,
-      }).unwrap();
+      const result =
+        reasonPrompt.action === "cancel"
+          ? await cancelPayment({
+              paymentId: reasonPrompt.payment.id,
+              reason: reason.trim(),
+              leadId,
+            }).unwrap()
+          : await reversePayment({
+              paymentId: reasonPrompt.payment.id,
+              reason: reason.trim(),
+              leadId,
+            }).unwrap();
       toast.success(result.message);
+      setReasonPrompt(null);
+      setReason("");
     } catch (error) {
       toast.error(
-        getApiError(error, "Unable to record this payment. Please try again."),
+        getApiError(
+          error,
+          reasonPrompt.action === "cancel"
+            ? "Unable to cancel this payment."
+            : "Unable to reverse this payment.",
+        ),
       );
-    } finally {
-      setRecordingId(null);
+    }
+  }
+
+  async function onGenerateReceipt(payment: PaymentRecord) {
+    try {
+      const result = await generateReceipt({
+        paymentId: payment.id,
+        leadId,
+      }).unwrap();
+      toast.success(result.message);
+      setReceiptId(result.receipt.id);
+    } catch (error) {
+      toast.error(getApiError(error, "Unable to generate receipt."));
     }
   }
 
   return (
-    <LeadSectionCard title="Payment History">
+    <LeadSectionCard
+      title="Payment & Receipt"
+      extra={
+        permissions?.canRecordPayment && summary?.activeOffer ? (
+          <PrimaryButton
+            type="button"
+            size="sm"
+            label="Add Payment"
+            icon={<HugeiconsIcon icon={Add01Icon} size={14} />}
+            onClick={() => setAddOpen(true)}
+          />
+        ) : null
+      }
+    >
       {isFetching && !data ? (
         <p className="m-0 text-[0.88rem] text-[#8b97a8]">Loading payments…</p>
       ) : null}
@@ -610,24 +797,30 @@ export function LeadPaymentsPanel({ leadId }: { leadId: string }) {
         </p>
       ) : null}
 
-      {summary && (items.length > 0 || summary.activeOffer) ? (
-        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+      {summary && (payments.length > 0 || summary.activeOffer) ? (
+        <div className="mb-4 grid gap-3 sm:grid-cols-4">
           <div className="rounded-xl bg-[#f8fafc] px-4 py-3 dark:bg-transparent">
-            <p className="m-0 text-xs text-text-muted">Offer total</p>
+            <p className="m-0 text-xs text-text-muted">Total Payable</p>
             <p className="m-0 mt-1 text-base font-semibold text-[#17324f] dark:text-text-strong">
               {formatMoney(summary.finalPayable)}
             </p>
           </div>
           <div className="rounded-xl bg-[#f8fafc] px-4 py-3 dark:bg-transparent">
-            <p className="m-0 text-xs text-text-muted">Received</p>
+            <p className="m-0 text-xs text-text-muted">Paid</p>
             <p className="m-0 mt-1 text-base font-semibold text-[#17324f] dark:text-text-strong">
               {formatMoney(summary.paidAmount)}
             </p>
           </div>
           <div className="rounded-xl bg-[#f8fafc] px-4 py-3 dark:bg-transparent">
-            <p className="m-0 text-xs text-text-muted">Outstanding</p>
+            <p className="m-0 text-xs text-text-muted">Due</p>
             <p className="m-0 mt-1 text-base font-semibold text-[#17324f] dark:text-text-strong">
               {formatMoney(summary.dueAmount)}
+            </p>
+          </div>
+          <div className="rounded-xl bg-[#f8fafc] px-4 py-3 dark:bg-transparent">
+            <p className="m-0 text-xs text-text-muted">Status</p>
+            <p className="m-0 mt-1 text-base font-semibold text-[#17324f] dark:text-text-strong">
+              {summary.paymentStatus || "—"}
             </p>
           </div>
         </div>
@@ -644,64 +837,105 @@ export function LeadPaymentsPanel({ leadId }: { leadId: string }) {
         </p>
       ) : null}
 
-      {!isFetching && !isError && items.length === 0 ? (
+      {followUpHint ? (
+        <p className="mb-3 mt-0 rounded-lg bg-[#fff7e6] px-3 py-2 text-sm text-[#8a6116]">
+          Payment is still due. Create a Payment Follow-up from the Follow-ups
+          tab to chase the remaining balance.
+        </p>
+      ) : null}
+
+      {!isFetching && !isError && payments.length === 0 ? (
         <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-[#dbe4ee] bg-[#f8fafc] px-4 py-10 text-center dark:border-border dark:bg-transparent">
           <p className="m-0 text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
             No payments recorded
           </p>
           <p className="m-0 max-w-md text-[0.84rem] text-[#8b97a8]">
-            Accept a service offer first. Payment installments then appear here
-            so you can record collections.
+            Accept a service offer first, then use Add Payment to record partial
+            or full collections and generate receipts.
           </p>
         </div>
       ) : null}
 
-      {items.length > 0 ? (
+      {payments.length > 0 ? (
         <>
           <ul className="m-0 grid list-none gap-2 p-0">
-            {pageItems.map((item) => (
+            {pageItems.map((payment) => (
               <li
-                key={item.id}
+                key={payment.id}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e7eef5] bg-[#f8fafc] px-3.5 py-3 dark:border-border dark:bg-transparent"
               >
                 <div className="min-w-0">
                   <p className="m-0 text-[0.9rem] font-medium text-[#17324f] dark:text-text-strong">
-                    {item.purpose}
+                    {payment.paymentNumber}
                     <span className="font-normal text-text-muted">
                       {" "}
-                      · Offer V{item.offerVersion}
-                      {item.packageName ? ` · ${item.packageName}` : ""}
+                      · {payment.methodName}
+                      {payment.receipt
+                        ? ` · ${payment.receipt.receiptNumber}`
+                        : ""}
                     </span>
                   </p>
                   <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
-                    {item.status === "PAID"
-                      ? `Received ${paymentDateTime(item.paidAt)}${item.paidBy ? ` by ${item.paidBy.fullName}` : ""}`
-                      : item.dueDate
-                        ? `Due ${item.dueDate}`
-                        : "Awaiting payment"}
+                    {payment.paymentDate}
+                    {payment.transactionRef
+                      ? ` · Ref ${payment.transactionRef}`
+                      : ""}
+                    {` · Received by ${payment.receivedBy.fullName}`}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-semibold text-[#17324f] dark:text-text-strong">
-                    {formatMoney(item.amount)}
+                    {formatMoney(payment.amount)}
                   </span>
-                  <Tag color={item.status === "PAID" ? "success" : "gold"}>
-                    {item.status === "PAID" ? "Paid" : "Pending"}
+                  <Tag color={paymentStatusColor(payment.status)}>
+                    {payment.status}
                   </Tag>
-                  {item.canRecord ? (
-                    <Popconfirm
-                      title="Record this payment as received?"
-                      okText="Record Payment"
-                      onConfirm={() => void pay(item)}
-                    >
-                      <PrimaryButton
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        label="Record Payment"
-                        loading={paying && recordingId === item.id}
-                      />
-                    </Popconfirm>
+                  {payment.receipt && permissions?.canViewReceipt ? (
+                    <PrimaryButton
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      label="View Receipt"
+                      onClick={() => setReceiptId(payment.receipt!.id)}
+                    />
+                  ) : null}
+                  {!payment.receipt &&
+                  permissions?.canGenerateReceipt &&
+                  (payment.status === "COMPLETED" ||
+                    payment.status === "PENDING") ? (
+                    <PrimaryButton
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      label="Generate Receipt"
+                      loading={generating}
+                      onClick={() => void onGenerateReceipt(payment)}
+                    />
+                  ) : null}
+                  {permissions?.canCancelPayment &&
+                  (payment.status === "COMPLETED" ||
+                    payment.status === "PENDING") ? (
+                    <PrimaryButton
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      label="Cancel"
+                      onClick={() =>
+                        setReasonPrompt({ payment, action: "cancel" })
+                      }
+                    />
+                  ) : null}
+                  {permissions?.canCancelPayment &&
+                  payment.status === "COMPLETED" ? (
+                    <PrimaryButton
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      label="Reverse"
+                      onClick={() =>
+                        setReasonPrompt({ payment, action: "reverse" })
+                      }
+                    />
                   ) : null}
                 </div>
               </li>
@@ -717,12 +951,59 @@ export function LeadPaymentsPanel({ leadId }: { leadId: string }) {
         </>
       ) : null}
 
-      {paidCount > 0 && items.some((item) => item.status === "PENDING") ? (
-        <p className="mb-0 mt-3 text-xs text-text-muted">
-          Partial collections stay listed until every installment is marked
-          paid. Lead status moves to Converted after the first payment.
-        </p>
+      {summary?.activeOffer ? (
+        <AddPaymentModal
+          open={addOpen}
+          onClose={() => setAddOpen(false)}
+          leadId={leadId}
+          leadName={leadName}
+          leadCode={leadCode}
+          offerId={summary.activeOffer.id}
+          offerLabel={`Offer V${summary.activeOffer.offerVersion}${summary.activeOffer.packageName ? ` · ${summary.activeOffer.packageName}` : ""}`}
+          finalPayable={summary.finalPayable}
+          previouslyPaid={summary.paidAmount}
+          currentDue={summary.dueAmount}
+          onSuccess={({ followUpOffered, receiptId: nextReceipt }) => {
+            if (followUpOffered) setFollowUpHint(true);
+            if (nextReceipt) setReceiptId(nextReceipt);
+          }}
+        />
       ) : null}
+
+      <ReceiptViewModal
+        open={Boolean(receiptId)}
+        receiptId={receiptId}
+        onClose={() => setReceiptId(null)}
+      />
+
+      <Modal
+        open={Boolean(reasonPrompt)}
+        title={
+          reasonPrompt?.action === "cancel"
+            ? "Cancel payment"
+            : "Reverse payment"
+        }
+        onCancel={() => {
+          setReasonPrompt(null);
+          setReason("");
+        }}
+        onOk={() => void confirmReason()}
+        okText={reasonPrompt?.action === "cancel" ? "Cancel payment" : "Reverse"}
+        confirmLoading={cancelling || reversing}
+        destroyOnHidden
+      >
+        <p className="mt-0 text-sm text-text-muted">
+          {reasonPrompt?.payment.paymentNumber} ·{" "}
+          {formatMoney(reasonPrompt?.payment.amount || 0)}
+        </p>
+        <Input.TextArea
+          rows={3}
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          placeholder="Reason (required)"
+          maxLength={500}
+        />
+      </Modal>
     </LeadSectionCard>
   );
 }

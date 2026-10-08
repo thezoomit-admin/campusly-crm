@@ -675,7 +675,7 @@ export default function EmployeeProfilePage() {
             </section>
 
             <div className="grid grid-cols-1 items-start gap-x-8 gap-y-5 min-[1101px]:grid-cols-[220px_minmax(0,1fr)]">
-              <aside className="sticky top-4 z-6 grid items-start gap-4 self-start max-[1100px]:top-3 max-[1100px]:bg-page-bg max-[1100px]:pb-1 max-[960px]:top-[72px]">
+              <aside className="sticky top-4 z-6 grid items-start gap-4 self-start max-[1100px]:top-3 max-[1100px]:bg-page-bg max-[1100px]:pb-1 max-[960px]:top-[7.75rem]">
                 <nav className="grid gap-1.5 rounded-2xl border border-border bg-surface p-2.5 shadow-soft max-[1100px]:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]" aria-label="Profile sections">
                   {visibleSections.map((section) => {
                     const active = activeSection === section.id
@@ -929,8 +929,8 @@ export default function EmployeeProfilePage() {
                             onClick={() =>
                               navigate(
                                 employee.user?.id
-                                  ? `/reports?employeeId=${employee.id}&ownerId=${employee.user.id}`
-                                  : '/reports',
+                                  ? `/reports?tab=employee-performance&detail=${employee.user.id}`
+                                  : '/reports?tab=employee-performance',
                               )
                             }
                           />

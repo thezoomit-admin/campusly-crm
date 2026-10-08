@@ -112,6 +112,25 @@ const usersApi = baseApi.injectEndpoints({
         method: 'POST',
       }),
     }),
+    adminChangePassword: builder.mutation<
+      { message?: string; activated?: boolean },
+      {
+        id: string
+        currentPassword: string
+        newPassword: string
+        confirmPassword: string
+      }
+    >({
+      query: ({ id, ...body }) => ({
+        url: `/users/${id}/change-password`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'User', id },
+        { type: 'Users', id: 'LIST' },
+      ],
+    }),
     resendUserInvite: builder.mutation<
       { message?: string; devResetPath?: string; setupPath?: string; inviteSent?: boolean; email?: string },
       string
@@ -156,6 +175,7 @@ export const {
   useRevokeUserSessionMutation,
   useForceLogoutUserMutation,
   useAdminPasswordResetMutation,
+  useAdminChangePasswordMutation,
   useResendUserInviteMutation,
   useSetUserOverridesMutation,
   useSetUserScopesMutation,

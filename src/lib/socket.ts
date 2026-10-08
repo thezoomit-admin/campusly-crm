@@ -20,11 +20,18 @@ export type SocketNotification = {
   body: string | null
   link: string | null
   type: string | null
+  eventType?: string | null
+  kind?: string
+  priority?: string
   status: string
   leadId: string | null
   followUpId: string | null
   createdAt: string
   readAt: string | null
+  browser?: boolean
+  payload?: Record<string, unknown> | null
+  actions?: Array<{ key: string; label: string; href?: string }>
+  deliveryStatus?: string
 }
 
 export type NotificationCreatedEvent = {

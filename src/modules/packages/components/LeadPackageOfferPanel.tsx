@@ -5,6 +5,8 @@ import { PrimaryButton } from "@/components/ui";
 import { DeleteModal } from "@/components/common/Modals";
 import { getApiError } from "@/lib/api";
 import LeadSectionCard from "@/modules/leads/components/details/LeadSectionCard";
+import AddPaymentModal from "@/modules/payments/components/AddPaymentModal";
+import ReceiptViewModal from "@/modules/payments/components/ReceiptViewModal";
 import {
   useChangeLeadServiceOfferStatusMutation,
   useDeleteLeadServiceOfferMutation,
@@ -190,7 +192,9 @@ function OfferDetails({
               </span>
               <span className="flex items-center gap-2">
                 {formatMoney(item.amount)}
-                <Tag color={item.status === "PAID" ? "success" : "default"}>{item.status === "PAID" ? "Paid" : "Pending"}</Tag>
+                <Tag color={item.status === "PAID" ? "success" : item.status === "PARTIAL" ? "orange" : "default"}>
+                  {item.status === "PAID" ? "Paid" : item.status === "PARTIAL" ? "Partial" : "Pending"}
+                </Tag>
                 {canRecordPayment && payable && item.status !== "PAID" ? (
                   <Popconfirm
                     title="Record this payment as received?"
@@ -229,7 +233,17 @@ function OfferDetails({
 
 type ReasonPrompt = { offer: ServiceOfferRecord; action: "reject" | "cancel" };
 
-export default function LeadPackageOfferPanel({ leadId, canOffer }: { leadId: string; canOffer: boolean }) {
+export default function LeadPackageOfferPanel({
+  leadId,
+  leadName,
+  leadCode,
+  canOffer,
+}: {
+  leadId: string;
+  leadName: string;
+  leadCode: string;
+  canOffer: boolean;
+}) {
   const { data, isFetching, isError } = useListLeadServiceOffersQuery(leadId);
   const { data: context, isFetching: contextLoading } = useGetServiceOfferContextQuery(leadId, { skip: !canOffer });
   const [generateOffer, { isLoading: generating }] = useGenerateLeadServiceOfferMutation();
@@ -241,6 +255,8 @@ export default function LeadPackageOfferPanel({ leadId, canOffer }: { leadId: st
   const [prompt, setPrompt] = useState<ReasonPrompt | null>(null);
   const [reason, setReason] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<ServiceOfferRecord | null>(null);
+  const [payOffer, setPayOffer] = useState<ServiceOfferRecord | null>(null);
+  const [receiptId, setReceiptId] = useState<string | null>(null);
 
   const offers = data?.offers || [];
   const canRecordPayment = Boolean(context?.permissions.canRecordPayment);
@@ -481,6 +497,18 @@ export default function LeadPackageOfferPanel({ leadId, canOffer }: { leadId: st
                   label={open ? "Hide details" : "View details"}
                   onClick={() => setExpanded(open ? null : offer.id)}
                 />
+                {canRecordPayment &&
+                (offer.status === "PAYMENT_PENDING" ||
+                  offer.status === "PARTIALLY_PAID" ||
+                  offer.status === "ACCEPTED") &&
+                Number(offer.dueAmount) > 0 ? (
+                  <PrimaryButton
+                    type="button"
+                    size="sm"
+                    label="Add Payment"
+                    onClick={() => setPayOffer(offer)}
+                  />
+                ) : null}
                 {actions(offer)}
               </div>
               {open ? (
@@ -529,6 +557,30 @@ export default function LeadPackageOfferPanel({ leadId, canOffer }: { leadId: st
         itemName={deleteTarget ? `Offer V${deleteTarget.offerVersion}` : "this draft offer"}
         onCancel={() => setDeleteTarget(null)}
         onConfirm={() => void confirmDelete()}
+      />
+
+      {payOffer ? (
+        <AddPaymentModal
+          open={Boolean(payOffer)}
+          onClose={() => setPayOffer(null)}
+          leadId={leadId}
+          leadName={leadName}
+          leadCode={leadCode}
+          offerId={payOffer.id}
+          offerLabel={`Offer V${payOffer.offerVersion}${payOffer.packageName ? ` · ${payOffer.packageName}` : ""}`}
+          finalPayable={payOffer.finalPayable}
+          previouslyPaid={payOffer.paidAmount}
+          currentDue={payOffer.dueAmount}
+          onSuccess={({ receiptId: nextReceipt }) => {
+            if (nextReceipt) setReceiptId(nextReceipt);
+          }}
+        />
+      ) : null}
+
+      <ReceiptViewModal
+        open={Boolean(receiptId)}
+        receiptId={receiptId}
+        onClose={() => setReceiptId(null)}
       />
     </LeadSectionCard>
   );

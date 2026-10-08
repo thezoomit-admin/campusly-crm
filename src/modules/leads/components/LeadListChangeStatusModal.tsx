@@ -217,10 +217,15 @@ export default function LeadListChangeStatusModal({
       }
 
       if (canUploadDocument && body.attachment) {
+        const attachmentName =
+          body.attachment.name.replace(/\.[^.]+$/, '') || body.attachment.name
         await uploadLeadDocument({
           id: leadId,
-          fileName: body.attachment.name.replace(/\.[^.]+$/, '') || body.attachment.name,
           file: body.attachment,
+          categoryCode: 'OTHER',
+          typeCode: 'OTHER',
+          name: attachmentName.slice(0, 150),
+          fileName: body.attachment.name,
         }).unwrap()
       }
 

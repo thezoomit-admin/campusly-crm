@@ -52,12 +52,16 @@ function countActiveReportFilters(filters: ReportFiltersState) {
 export default function ReportsPage() {
   const auth = useOutletContext<AuthSession>();
   const canExport = hasPermission(auth, "report:export");
+  const canViewReports = hasPermission(auth, "report:view");
   const [searchParams, setSearchParams] = useSearchParams();
 
   const tabParam = searchParams.get("tab");
-  const initialTab: ReportTabId = isReportTabId(tabParam)
-    ? tabParam
-    : "overview";
+  const initialTab: ReportTabId =
+    !canViewReports
+      ? "employee-performance"
+      : isReportTabId(tabParam)
+        ? tabParam
+        : "overview";
   const [activeTab, setActiveTab] = useState<ReportTabId>(initialTab);
   const [filters, setFilters] = useState<ReportFiltersState>(() => ({
     ...DEFAULT_FILTERS,
@@ -80,8 +84,13 @@ export default function ReportsPage() {
     setActiveTab(tabId);
     const next = new URLSearchParams(searchParams);
     next.set("tab", tabId);
+    if (tabId !== "employee-performance") next.delete("detail");
     setSearchParams(next, { replace: true });
   };
+
+  const visibleTabs = canViewReports
+    ? REPORT_TABS
+    : REPORT_TABS.filter((tab) => tab.id === "employee-performance");
 
   const patchFilters = (patch: Partial<ReportFiltersState>) => {
     setFilters((current) => ({ ...current, ...patch }));
@@ -162,6 +171,7 @@ export default function ReportsPage() {
         ]}
         showDivider={false}
         extra={
+          activeTab === "employee-performance" ? null : (
           <div className="flex flex-wrap items-center gap-2">
             {canExport ? (
               <Dropdown menu={{ items: exportMenu }} trigger={["click"]}>
@@ -183,12 +193,13 @@ export default function ReportsPage() {
               onSchedule={() => setScheduleOpen(true)}
             />
           </div>
+          )
         }
       />
 
       <div className="mb-1 overflow-x-auto border-b border-border-subtle">
         <div className="flex min-w-max items-center gap-1">
-          {REPORT_TABS.map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab.id}
               type="button"

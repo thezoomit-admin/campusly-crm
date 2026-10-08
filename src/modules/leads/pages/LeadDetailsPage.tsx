@@ -25,6 +25,7 @@ import { useLeadMasterOptions } from "../hooks/useLeadMasterOptions";
 import {
   useAssignLeadMutation,
   useDeleteLeadDocumentMutation,
+  useGetLeadDocumentChecklistQuery,
   useHandoverLeadMutation,
   useCloseLeadMutation,
   useGetLeadQuery,
@@ -33,13 +34,16 @@ import {
   useListLeadAssignmentsQuery,
   useListLeadDocumentsQuery,
   useListLeadNotesQuery,
+  useRejectLeadDocumentMutation,
   useReopenLeadMutation,
   useReviewDuplicateLeadMutation,
   useUpdateLeadPriorityMutation,
   useUpdateLeadQualificationMutation,
   useUpdateLeadStatusMutation,
   useUploadLeadDocumentMutation,
+  useVerifyLeadDocumentMutation,
 } from "../api/leadsApi";
+import { useListMasterDataOptionsQuery } from "@/redux/features/masterData/masterDataApi";
 import DuplicateReviewModal, {
   type DuplicateReviewAction,
 } from "../components/DuplicateReviewModal";
@@ -96,17 +100,21 @@ import {
   LeadServicesPanel,
   LeadTimelinePanel,
 } from "../components/details/LeadTabPanels";
+import FileDocumentsPanel from "../components/details/FileDocumentsPanel";
 import {
   AddActivityModal,
   AddLeadDocumentModal,
   ChangeOwnerModal,
+  DuplicateDocumentModal,
   HandoverLeadModal,
   ChangeStatusModal,
   CloseLeadModal,
   OverridePriorityModal,
   QualifyLeadModal,
   ReopenLeadModal,
+  VerifyLeadDocumentModal,
   ViewLeadDocumentModal,
+  type UploadLeadDocumentForm,
 } from "../components/details/LeadDetailsModals";
 import type {
   ChangeStatusEmailPayload,
@@ -236,9 +244,9 @@ export default function LeadDetailsPage() {
   const canOffer = hasPermission(auth, "service:offer");
   const canViewPayments = hasPermission(auth, "payment:view");
   const canUploadDocument = hasPermission(auth, "document:upload");
-  const canDeleteDocument =
-    hasPermission(auth, "document:delete") ||
-    hasPermission(auth, "document:upload");
+  const canDeleteDocument = hasPermission(auth, "document:delete");
+  const canVerifyDocument = hasPermission(auth, "document:verify");
+  const canDownloadDocument = hasPermission(auth, "document:download");
   const qualified =
     (lead?.statusCode || "").toUpperCase() === "QUALIFIED" ||
     (lead?.status || "").trim().toLowerCase() === "qualified";
@@ -274,10 +282,15 @@ export default function LeadDetailsPage() {
     });
   const [uploadLeadDocument, { isLoading: documentUploading }] =
     useUploadLeadDocumentMutation();
+  const [verifyLeadDocument, { isLoading: documentVerifying }] =
+    useVerifyLeadDocumentMutation();
+  const [rejectLeadDocument, { isLoading: documentRejecting }] =
+    useRejectLeadDocumentMutation();
   const [deleteLeadDocument, { isLoading: documentDeleting }] =
     useDeleteLeadDocumentMutation();
   const [fetchLeadDocumentBlob] = useLazyFetchLeadDocumentBlobQuery();
   const previewUrlRef = useRef("");
+  const pendingUploadRef = useRef<UploadLeadDocumentForm | null>(null);
 
   const [createLeadNote] = useCreateLeadNoteMutation();
   const { data: notesData, isFetching: notesLoading } = useListLeadNotesQuery(
@@ -293,6 +306,15 @@ export default function LeadDetailsPage() {
   const [logConversationOpen, setLogConversationOpen] = useState(false);
   const [logConversationSaving, setLogConversationSaving] = useState(false);
   const [documentOpen, setDocumentOpen] = useState(false);
+  const [defaultDocTypeCode, setDefaultDocTypeCode] = useState<
+    string | undefined
+  >();
+  const [showArchivedDocs, setShowArchivedDocs] = useState(false);
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
+  const [duplicateName, setDuplicateName] = useState("");
+  const [verifyTarget, setVerifyTarget] = useState<LeadDocumentItem | null>(
+    null,
+  );
   const [deleteTarget, setDeleteTarget] = useState<LeadDocumentItem | null>(
     null,
   );
@@ -304,9 +326,70 @@ export default function LeadDetailsPage() {
   } | null>(null);
 
   const { data: documentsData, isFetching: documentsLoading } =
-    useListLeadDocumentsQuery(id, {
-      skip: !id || tab !== "attachments",
-    });
+    useListLeadDocumentsQuery(
+      { id: id || "", archived: showArchivedDocs },
+      { skip: !id || tab !== "attachments" },
+    );
+  const { data: checklistData } = useGetLeadDocumentChecklistQuery(id || "", {
+    skip: !id || tab !== "attachments" || showArchivedDocs,
+  });
+  const { data: documentCategoryData } = useListMasterDataOptionsQuery(
+    { category: "DOCUMENT_CATEGORY" },
+    { skip: tab !== "attachments" },
+  );
+  const { data: documentTypeData } = useListMasterDataOptionsQuery(
+    { category: "DOCUMENT_TYPE" },
+    { skip: tab !== "attachments" },
+  );
+  const documentCategories = useMemo(() => {
+    const items = documentCategoryData?.items || [];
+    if (items.length) {
+      return items
+        .filter((item) => item.code)
+        .map((item) => ({
+          value: item.code as string,
+          label: item.name,
+          id: item.id,
+        }));
+    }
+    return [
+      { value: "PERSONAL", label: "Personal Documents" },
+      { value: "ACADEMIC", label: "Academic Documents" },
+      { value: "LANGUAGE", label: "Language Documents" },
+      { value: "FINANCIAL", label: "Financial Documents" },
+      { value: "APPLICATION", label: "Application Documents" },
+      { value: "OTHER", label: "Other" },
+    ];
+  }, [documentCategoryData]);
+  const documentTypes = useMemo(() => {
+    const items = documentTypeData?.items || [];
+    if (items.length) {
+      return items
+        .filter((item) => item.code)
+        .map((item) => ({
+          value: item.code as string,
+          label: item.name,
+          parentId: item.parentId,
+          parentCode: null as string | null,
+        }));
+    }
+    return [
+      { value: "PASSPORT", label: "Passport", parentCode: "PERSONAL" },
+      { value: "NID", label: "NID", parentCode: "PERSONAL" },
+      { value: "IELTS", label: "IELTS", parentCode: "LANGUAGE" },
+      {
+        value: "TRANSCRIPT",
+        label: "Academic Transcript",
+        parentCode: "ACADEMIC",
+      },
+      {
+        value: "BANK_STATEMENT",
+        label: "Bank Statement",
+        parentCode: "FINANCIAL",
+      },
+      { value: "OTHER", label: "Other Document", parentCode: "OTHER" },
+    ];
+  }, [documentTypeData]);
   const activities = activityData?.items || [];
   const communications = communicationsData?.items || [];
   const assignmentHistory = assignmentData?.items || [];
@@ -389,23 +472,56 @@ export default function LeadDetailsPage() {
     setPreview(null);
   }
 
-  async function handleUploadDocument(body: { fileName: string; file: File }) {
+  async function submitDocumentUpload(body: UploadLeadDocumentForm) {
     if (!canUploadDocument || !id) return;
     try {
       await uploadLeadDocument({
         id,
-        fileName: body.fileName,
         file: body.file,
+        categoryCode: body.categoryCode,
+        typeCode: body.typeCode,
+        name: body.name,
+        fileName: body.file.name,
+        documentDate: body.documentDate,
+        expiryDate: body.expiryDate,
+        remarks: body.remarks,
+        duplicateAction: body.duplicateAction,
       }).unwrap();
       toast.success("Document uploaded.");
       setDocumentOpen(false);
+      setDefaultDocTypeCode(undefined);
+      setDuplicateOpen(false);
+      pendingUploadRef.current = null;
     } catch (error) {
-      toast.error(getApiError(error, "Unable to upload document."));
+      const apiError = error as {
+        status?: number;
+        data?: { code?: string; message?: string; actions?: string[] };
+      };
+      if (
+        apiError?.status === 409 ||
+        apiError?.data?.code === "DUPLICATE_DOCUMENT"
+      ) {
+        pendingUploadRef.current = body;
+        setDuplicateName(body.name || "This");
+        setDuplicateOpen(true);
+        return;
+      }
+      toast.error(
+        getApiError(error, "Unable to upload the document. Please try again."),
+      );
     }
+  }
+
+  async function handleUploadDocument(body: UploadLeadDocumentForm) {
+    await submitDocumentUpload(body);
   }
 
   async function openDocumentPreview(document: LeadDocumentItem) {
     if (!id) return;
+    if (document.canPreview === false) {
+      toast.error("You are not authorized to access this document.");
+      return;
+    }
     releasePreviewUrl();
     setPreview({
       fileName: document.fileName,
@@ -436,10 +552,10 @@ export default function LeadDetailsPage() {
     if (!canDeleteDocument || !id || !deleteTarget) return;
     try {
       await deleteLeadDocument({ id, documentId: deleteTarget.id }).unwrap();
-      toast.success("Document deleted.");
+      toast.success("Document archived.");
       setDeleteTarget(null);
     } catch (error) {
-      toast.error(getApiError(error, "Unable to delete document."));
+      toast.error(getApiError(error, "Unable to archive document."));
     }
   }
 
@@ -631,12 +747,15 @@ export default function LeadDetailsPage() {
       }
 
       if (canUploadDocument && body.attachment) {
+        const attachmentName =
+          body.attachment.name.replace(/\.[^.]+$/, "") || body.attachment.name;
         await uploadLeadDocument({
           id,
-          fileName:
-            body.attachment.name.replace(/\.[^.]+$/, "") ||
-            body.attachment.name,
           file: body.attachment,
+          categoryCode: "OTHER",
+          typeCode: "OTHER",
+          name: attachmentName.slice(0, 150),
+          fileName: body.attachment.name,
         }).unwrap();
       }
 
@@ -1051,13 +1170,7 @@ export default function LeadDetailsPage() {
     if (tab === "more" && !moreVisibleKeys.includes(moreTab)) {
       syncWorkspaceTabs("more", moreVisibleKeys[0] || "communications");
     }
-  }, [
-    tab,
-    moreTab,
-    canViewFollowUp,
-    moreVisibleKeys,
-    syncWorkspaceTabs,
-  ]);
+  }, [tab, moreTab, canViewFollowUp, moreVisibleKeys, syncWorkspaceTabs]);
 
   if (isError) {
     return (
@@ -1155,7 +1268,11 @@ export default function LeadDetailsPage() {
               {LEAD_PRIMARY_TABS.filter(
                 (item) =>
                   (item.key !== "followups" || canViewFollowUp) &&
-                  (item.key !== "more" || moreVisibleKeys.length > 0),
+                  (item.key !== "more" || moreVisibleKeys.length > 0) &&
+                  (item.key !== "file-documents" ||
+                    lead.statusCode === "FILE_OPENED" ||
+                    lead.statusChange?.current?.behaviorKey === "file_opened" ||
+                    lead.status.trim().toLowerCase() === "file opened"),
               ).map((item) => {
                 const active = tab === item.key;
                 return (
@@ -1246,14 +1363,45 @@ export default function LeadDetailsPage() {
               {tab === "attachments" ? (
                 <LeadDocumentsPanel
                   documents={documents}
+                  checklist={showArchivedDocs ? null : checklistData}
                   loading={documentsLoading}
                   canUpload={canUploadDocument}
                   canDelete={canDeleteDocument}
-                  onAdd={() => setDocumentOpen(true)}
+                  canVerify={canVerifyDocument}
+                  showArchived={showArchivedDocs}
+                  onToggleArchived={() =>
+                    setShowArchivedDocs((value) => !value)
+                  }
+                  onAdd={() => {
+                    setDefaultDocTypeCode(undefined);
+                    setDocumentOpen(true);
+                  }}
+                  onUploadMissing={(typeCode) => {
+                    setDefaultDocTypeCode(typeCode);
+                    setDocumentOpen(true);
+                  }}
                   onView={(document) => {
                     void openDocumentPreview(document);
                   }}
+                  onVerify={(document) => setVerifyTarget(document)}
                   onDelete={(document) => setDeleteTarget(document)}
+                  onCreateFollowUp={
+                    canFollowUp
+                      ? (_typeCode, name) => {
+                          setFollowUpOpen(true);
+                          toast.info(`Create a follow-up for missing: ${name}`);
+                        }
+                      : undefined
+                  }
+                />
+              ) : null}
+              {tab === "file-documents" ? (
+                <FileDocumentsPanel
+                  leadId={lead.id}
+                  canUpload={canUploadDocument}
+                  canVerify={canVerifyDocument}
+                  canManage={canDeleteDocument}
+                  canDownload={canDownloadDocument}
                 />
               ) : null}
               {tab === "activities" ? (
@@ -1308,10 +1456,19 @@ export default function LeadDetailsPage() {
                     />
                   ) : null}
                   {moreTab === "services" && canViewServices ? (
-                    <LeadServicesPanel leadId={lead.id} canOffer={canOffer} />
+                    <LeadServicesPanel
+                      leadId={lead.id}
+                      leadName={lead.name}
+                      leadCode={lead.code}
+                      canOffer={canOffer}
+                    />
                   ) : null}
                   {moreTab === "payments" && canViewPayments ? (
-                    <LeadPaymentsPanel leadId={lead.id} />
+                    <LeadPaymentsPanel
+                      leadId={lead.id}
+                      leadName={lead.name}
+                      leadCode={lead.code}
+                    />
                   ) : null}
                 </LeadMoreTabShell>
               ) : null}
@@ -1383,8 +1540,70 @@ export default function LeadDetailsPage() {
       <AddLeadDocumentModal
         open={documentOpen && canUploadDocument}
         saving={documentUploading}
-        onClose={() => setDocumentOpen(false)}
+        categories={documentCategories}
+        types={documentTypes}
+        defaultTypeCode={defaultDocTypeCode}
+        onClose={() => {
+          setDocumentOpen(false);
+          setDefaultDocTypeCode(undefined);
+        }}
         onSubmit={handleUploadDocument}
+      />
+      <DuplicateDocumentModal
+        open={duplicateOpen}
+        documentName={duplicateName}
+        saving={documentUploading}
+        onClose={() => {
+          setDuplicateOpen(false);
+          pendingUploadRef.current = null;
+        }}
+        onReplace={() => {
+          const pending = pendingUploadRef.current;
+          if (!pending) return;
+          void submitDocumentUpload({ ...pending, duplicateAction: "replace" });
+        }}
+        onNewVersion={() => {
+          const pending = pendingUploadRef.current;
+          if (!pending) return;
+          void submitDocumentUpload({
+            ...pending,
+            duplicateAction: "new_version",
+          });
+        }}
+      />
+      <VerifyLeadDocumentModal
+        open={Boolean(verifyTarget) && canVerifyDocument}
+        document={verifyTarget}
+        saving={documentVerifying || documentRejecting}
+        onClose={() => setVerifyTarget(null)}
+        onVerify={async (remarks) => {
+          if (!id || !verifyTarget) return;
+          try {
+            await verifyLeadDocument({
+              id,
+              documentId: verifyTarget.id,
+              remarks,
+            }).unwrap();
+            toast.success("Document verified.");
+            setVerifyTarget(null);
+          } catch (error) {
+            toast.error(getApiError(error, "Unable to verify the document."));
+          }
+        }}
+        onReject={async (reason) => {
+          if (!id || !verifyTarget) return;
+          try {
+            await rejectLeadDocument({
+              id,
+              documentId: verifyTarget.id,
+              reason,
+            }).unwrap();
+            toast.success("Document rejected.");
+            setVerifyTarget(null);
+          } catch (error) {
+            toast.error(getApiError(error, "Unable to reject the document."));
+          }
+        }}
       />
       <ViewLeadDocumentModal
         open={Boolean(preview)}
@@ -1397,14 +1616,16 @@ export default function LeadDetailsPage() {
       <DeleteModal
         open={Boolean(deleteTarget)}
         loading={documentDeleting}
-        title="Delete document?"
-        itemName={deleteTarget?.fileName || "this document"}
+        title="Archive document?"
+        itemName={
+          deleteTarget?.name || deleteTarget?.fileName || "this document"
+        }
         message={
           deleteTarget ? (
             <>
-              Are you sure you want to delete{" "}
-              <strong>{deleteTarget.fileName}</strong>? This action cannot be
-              undone.
+              Archive{" "}
+              <strong>{deleteTarget.name || deleteTarget.fileName}</strong>? It
+              will be hidden from the active document list.
             </>
           ) : undefined
         }

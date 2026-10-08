@@ -111,13 +111,59 @@ export type LeadAssignmentHistoryItem = {
   createdAt: string;
 };
 
+export type LeadDocumentStatus =
+  | "PENDING"
+  | "VERIFIED"
+  | "REJECTED"
+  | "EXPIRED"
+  | "REPLACED";
+
 export type LeadDocumentItem = {
   id: string;
+  leadId?: string;
+  documentGroupId?: string;
+  categoryCode: string;
+  typeCode: string;
+  name: string;
   fileName: string;
   mimeType: string;
   fileSize: number;
+  versionNumber: number;
+  isLatest: boolean;
+  status: LeadDocumentStatus;
+  statusLabel: string;
+  documentDate: string | null;
+  expiryDate: string | null;
+  remarks: string | null;
+  isSensitive: boolean;
+  verificationRemarks: string | null;
+  rejectionReason: string | null;
+  verifiedAt: string | null;
+  archivedAt: string | null;
   createdAt: string;
+  updatedAt?: string;
   uploadedBy: { id: string; name: string } | null;
+  verifiedBy: { id: string; name: string } | null;
+  canPreview?: boolean;
+};
+
+export type LeadDocumentChecklistItem = {
+  typeCode: string;
+  categoryCode: string;
+  name: string;
+  isRequired: boolean;
+  isSensitive: boolean;
+  checklistStatus: "Missing" | "Pending" | "Verified" | "Rejected" | "Expired";
+  completed: boolean;
+  document: LeadDocumentItem | null;
+};
+
+export type LeadDocumentChecklist = {
+  items: LeadDocumentChecklistItem[];
+  totalRequired: number;
+  completedRequired: number;
+  completionPercent: number;
+  missingCount: number;
 };
 
 export type LeadNoteItem = {

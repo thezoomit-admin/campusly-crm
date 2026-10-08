@@ -47,7 +47,7 @@ export type LeadPaymentItem = {
   purpose: string;
   amount: string;
   dueDate: string | null;
-  status: "PAID" | "PENDING";
+  status: "PAID" | "PENDING" | "PARTIAL";
   paidAt: string | null;
   paidBy: { id: string; fullName: string } | null;
   canRecord: boolean;
@@ -59,6 +59,7 @@ export type LeadPaymentsResponse = {
     paidAmount: string;
     dueAmount: string;
     currency: "BDT";
+    paymentStatus?: string | null;
     activeOffer: {
       id: string;
       offerVersion: number;
@@ -66,7 +67,13 @@ export type LeadPaymentsResponse = {
       packageName: string | null;
     } | null;
   };
-  permissions: { canRecordPayment: boolean };
+  permissions: {
+    canRecordPayment: boolean;
+    canCancelPayment?: boolean;
+    canGenerateReceipt?: boolean;
+    canViewReceipt?: boolean;
+  };
+  payments?: unknown[];
   leadStatusChanged?: boolean;
   items: LeadPaymentItem[];
 };
