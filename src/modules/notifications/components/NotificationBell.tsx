@@ -74,7 +74,7 @@ export default function NotificationBell({ auth }: { auth: AuthSession | null | 
       </button>
 
       {open ? (
-        <div className="absolute top-[calc(100%+8px)] right-0 z-50 w-[min(360px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_40px_rgba(22,50,79,0.14)]">
+        <div className="absolute top-[calc(100%+8px)] right-0 z-70 w-[min(360px,calc(100vw-24px))] overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_16px_40px_rgba(22,50,79,0.14)]">
           <div className="flex items-center justify-between gap-2 border-b border-border px-3.5 py-2.5">
             <strong className="text-[0.92rem]">Notifications</strong>
             {unreadCount > 0 ? (

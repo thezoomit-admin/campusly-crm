@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { PreferenceHorizontalIcon, Search01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useLazyGlobalSearchQuery } from '@/redux/features/search/searchApi'
 import { APP_NAV_GROUPS, flattenSearchablePages, type NavItem } from '@/config/navigation'
 import { hasPermission } from '@/lib/access'
@@ -98,25 +100,28 @@ export default function GlobalSearch({ auth }: Props) {
 
   const pageHits = useMemo(() => {
     const needle = query.trim()
-    const matched = needle
-      ? pages.filter((page) =>
-          pageMatches(`${page.label} ${page.group} ${page.to} ${page.keywords.join(' ')}`, needle),
-        )
-      : pages.filter((page) => page.group !== 'Account').slice(0, 8)
-
-    return matched
+    if (!needle) {
+      return pages.slice(0, 6).map((page) => ({
+        id: `page:${page.to}`,
+        type: 'page' as const,
+        group: 'Pages',
+        title: page.label,
+        subtitle: page.to,
+        href: page.to,
+      }))
+    }
+    return pages
+      .filter((page) => pageMatches(`${page.label} ${page.to}`, needle))
+      .sort((a, b) => rankText(a.label, needle) - rankText(b.label, needle))
+      .slice(0, 8)
       .map((page) => ({
         id: `page:${page.to}`,
         type: 'page' as const,
-        title: page.label,
-        subtitle: page.group,
-        href: page.to,
         group: 'Pages',
-        rank: needle ? Math.min(rankText(page.label, needle), ...page.keywords.map((word) => rankText(word, needle))) : 3,
+        title: page.label,
+        subtitle: page.to,
+        href: page.to,
       }))
-      .sort((a, b) => a.rank - b.rank || a.title.localeCompare(b.title))
-      .slice(0, 8)
-      .map(({ rank: _rank, ...hit }) => hit)
   }, [pages, query])
 
   const results = useMemo(() => {
@@ -130,9 +135,10 @@ export default function GlobalSearch({ auth }: Props) {
   const grouped = useMemo(() => {
     const map = new Map<string, GlobalSearchHit[]>()
     for (const hit of results) {
-      const list = map.get(hit.group) || []
+      const group = hit.group || (hit.type === 'page' ? 'Pages' : 'Results')
+      const list = map.get(group) || []
       list.push(hit)
-      map.set(hit.group, list)
+      map.set(group, list)
     }
     return GROUP_ORDER.filter((group) => map.has(group)).map((group) => ({
       group,
@@ -255,7 +261,8 @@ export default function GlobalSearch({ auth }: Props) {
       ref={rootRef}
       className={[
         'relative flex w-full min-w-[180px] max-w-search flex-[1_1_280px] items-center gap-2.5 rounded-search border border-search-border bg-search-bg px-3 text-text-muted shadow-soft',
-        'max-[1100px]:min-w-0 max-[960px]:order-3 max-[960px]:mx-4 max-[960px]:mb-3 max-[960px]:w-auto max-[960px]:min-w-0 max-[960px]:max-w-none max-[960px]:flex-[1_1_100%] max-[640px]:mx-3 max-[640px]:mb-3',
+        'max-[1100px]:min-w-0',
+        'max-[960px]:max-w-none max-[960px]:flex-none max-[960px]:rounded-[14px] max-[960px]:px-3.5 max-[960px]:py-0.5 max-[960px]:shadow-none',
         open
           ? 'border-[color-mix(in_srgb,var(--color-primary)_45%,var(--color-search-border))] shadow-[0_10px_28px_rgb(22_50_79_/_0.08)]'
           : '',
@@ -264,13 +271,16 @@ export default function GlobalSearch({ auth }: Props) {
         .join(' ')}
     >
       <span className="sr-only">Search</span>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="11" cy="11" r="7" />
-        <path d="m20 20-3-3" />
-      </svg>
+      <HugeiconsIcon
+        icon={Search01Icon}
+        size={16}
+        color="currentColor"
+        strokeWidth={1.8}
+        className="shrink-0"
+      />
       <input
         ref={inputRef}
-        className="header-search-input m-0 w-full border-0 bg-transparent py-2.5 text-text outline-none placeholder:text-text-faint focus:outline-none"
+        className="header-search-input m-0 w-full border-0 bg-transparent py-2.5 text-text outline-none placeholder:text-text-faint focus:outline-none max-[960px]:py-2.5 max-[960px]:text-[0.92rem]"
         value={query}
         role="combobox"
         aria-expanded={showPanel}
@@ -284,11 +294,19 @@ export default function GlobalSearch({ auth }: Props) {
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
-        placeholder="Search anything..."
+        placeholder="Search leads, students, universities..."
       />
       <kbd className="rounded-[calc(var(--radius-search)-4px)] border border-header-border bg-page-bg px-2 py-0.5 text-[0.72rem] whitespace-nowrap max-[960px]:hidden">
         {isMac ? '⌘K' : 'Ctrl K'}
       </kbd>
+      <button
+        type="button"
+        className="hidden size-8 shrink-0 cursor-pointer place-items-center rounded-lg border-0 bg-transparent text-icon hover:bg-hover-bg max-[960px]:grid"
+        aria-label="Open filters"
+        onClick={() => navigate('/leads')}
+      >
+        <HugeiconsIcon icon={PreferenceHorizontalIcon} size={18} color="currentColor" strokeWidth={1.5} />
+      </button>
 
       {showPanel ? (
         <div
@@ -342,7 +360,7 @@ export default function GlobalSearch({ auth }: Props) {
               </section>
             )
           })}
-          <p className="m-0 border-t border-border-subtle px-3.5 py-2.5 text-[0.72rem] text-text-faint">
+          <p className="m-0 border-t border-border-subtle px-3.5 py-2.5 text-[0.72rem] text-text-faint max-[960px]:hidden">
             ↑↓ to move · Enter to open · Esc to close
           </p>
         </div>

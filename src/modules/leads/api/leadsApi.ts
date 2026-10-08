@@ -4,6 +4,7 @@ import type {
   DuplicateLead,
   LeadAssignee,
   LeadAssignmentHistoryItem,
+  LeadDocumentChecklist,
   LeadDocumentItem,
   LeadListSummary,
   LeadNoteItem,
@@ -14,6 +15,19 @@ import type {
   MyLeadRow,
   MyLeadsSummary,
 } from '../types'
+
+export type UploadLeadDocumentBody = {
+  id: string
+  file: File
+  categoryCode: string
+  typeCode: string
+  name: string
+  fileName?: string
+  documentDate?: string
+  expiryDate?: string
+  remarks?: string
+  duplicateAction?: 'replace' | 'new_version'
+}
 
 export type LeadListParams = {
   search?: string
@@ -238,18 +252,37 @@ const leadsApi = baseApi.injectEndpoints({
         'Activities',
       ],
     }),
-    listLeadDocuments: builder.query<{ items: LeadDocumentItem[] }, string>({
-      query: (id) => `/leads/${id}/documents`,
+    listLeadDocuments: builder.query<
+      { items: LeadDocumentItem[] },
+      string | { id: string; archived?: boolean; includeHistory?: boolean }
+    >({
+      query: (arg) => {
+        if (typeof arg === 'string') return `/leads/${arg}/documents`
+        return `/leads/${arg.id}/documents${toQuery({
+          archived: arg.archived ? '1' : undefined,
+          includeHistory: arg.includeHistory ? '1' : undefined,
+        })}`
+      },
+      providesTags: (_r, _e, arg) => [
+        { type: 'Leads', id: `${typeof arg === 'string' ? arg : arg.id}-documents` },
+      ],
+    }),
+    getLeadDocumentChecklist: builder.query<LeadDocumentChecklist, string>({
+      query: (id) => `/leads/${id}/documents/checklist`,
       providesTags: (_r, _e, id) => [{ type: 'Leads', id: `${id}-documents` }],
     }),
-    uploadLeadDocument: builder.mutation<
-      { document: LeadDocumentItem },
-      { id: string; fileName: string; file: File }
-    >({
-      query: ({ id, fileName, file }) => {
+    uploadLeadDocument: builder.mutation<{ document: LeadDocumentItem }, UploadLeadDocumentBody>({
+      query: ({ id, file, categoryCode, typeCode, name, fileName, documentDate, expiryDate, remarks, duplicateAction }) => {
         const body = new FormData()
-        body.set('fileName', fileName)
         body.set('file', file)
+        body.set('categoryCode', categoryCode)
+        body.set('typeCode', typeCode)
+        body.set('name', name)
+        body.set('fileName', fileName || file.name)
+        if (documentDate) body.set('documentDate', documentDate)
+        if (expiryDate) body.set('expiryDate', expiryDate)
+        if (remarks) body.set('remarks', remarks)
+        if (duplicateAction) body.set('duplicateAction', duplicateAction)
         return {
           url: `/leads/${id}/documents`,
           method: 'POST',
@@ -259,6 +292,36 @@ const leadsApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { id }) => [
         { type: 'Leads', id: `${id}-documents` },
         { type: 'Leads', id },
+        'Activities',
+        'Documents',
+      ],
+    }),
+    verifyLeadDocument: builder.mutation<
+      { document: LeadDocumentItem },
+      { id: string; documentId: string; remarks?: string }
+    >({
+      query: ({ id, documentId, remarks }) => ({
+        url: `/leads/${id}/documents/${documentId}/verify`,
+        method: 'POST',
+        body: { remarks },
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Leads', id: `${id}-documents` },
+        'Activities',
+        'Documents',
+      ],
+    }),
+    rejectLeadDocument: builder.mutation<
+      { document: LeadDocumentItem },
+      { id: string; documentId: string; reason: string }
+    >({
+      query: ({ id, documentId, reason }) => ({
+        url: `/leads/${id}/documents/${documentId}/reject`,
+        method: 'POST',
+        body: { reason },
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: 'Leads', id: `${id}-documents` },
         'Activities',
         'Documents',
       ],
@@ -275,12 +338,28 @@ const leadsApi = baseApi.injectEndpoints({
         'Documents',
       ],
     }),
-    fetchLeadDocumentBlob: builder.query<
-      { blob: Blob; mimeType: string },
+    getLeadDocumentHistory: builder.query<
+      {
+        document: LeadDocumentItem
+        versions: LeadDocumentItem[]
+        activities: Array<{
+          id: string
+          action: string
+          notes: string | null
+          createdAt: string
+          user: { id: string; name: string } | null
+        }>
+      },
       { id: string; documentId: string }
     >({
-      query: ({ id, documentId }) => ({
-        url: `/leads/${id}/documents/${documentId}`,
+      query: ({ id, documentId }) => `/leads/${id}/documents/${documentId}/history`,
+    }),
+    fetchLeadDocumentBlob: builder.query<
+      { blob: Blob; mimeType: string },
+      { id: string; documentId: string; download?: boolean }
+    >({
+      query: ({ id, documentId, download }) => ({
+        url: `/leads/${id}/documents/${documentId}${toQuery({ download: download ? '1' : undefined })}`,
         responseHandler: async (response) => {
           const blob = await response.blob()
           return {
@@ -402,8 +481,13 @@ export const {
   useListLeadNotesQuery,
   useCreateLeadNoteMutation,
   useListLeadDocumentsQuery,
+  useGetLeadDocumentChecklistQuery,
   useUploadLeadDocumentMutation,
+  useVerifyLeadDocumentMutation,
+  useRejectLeadDocumentMutation,
   useDeleteLeadDocumentMutation,
+  useGetLeadDocumentHistoryQuery,
+  useLazyGetLeadDocumentHistoryQuery,
   useLazyFetchLeadDocumentBlobQuery,
   useHandoverLeadMutation,
   useAssignLeadMutation,

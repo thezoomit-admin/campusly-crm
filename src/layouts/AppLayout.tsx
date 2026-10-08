@@ -23,6 +23,7 @@ import { hasPermission } from "../lib/access";
 import type { AuthSession } from "../types";
 
 import NotificationBell from "../modules/notifications/components/NotificationBell";
+import MobileBottomNav from "./MobileBottomNav";
 
 const ICON_BTN =
   "relative grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-icon hover:bg-hover-bg";
@@ -315,63 +316,70 @@ export default function AppLayout() {
         className={[
           "relative z-30 col-span-full grid min-h-16 overflow-visible border-b border-header-border bg-surface",
           shellCols,
-          "max-[960px]:sticky max-[960px]:top-0 max-[960px]:z-50 max-[960px]:flex max-[960px]:w-full max-[960px]:flex-wrap max-[960px]:items-center max-[960px]:grid-cols-none",
+          "max-[960px]:sticky max-[960px]:top-0 max-[960px]:z-50 max-[960px]:flex max-[960px]:h-auto max-[960px]:min-h-0 max-[960px]:w-full max-[960px]:flex-col max-[960px]:items-stretch max-[960px]:gap-0 max-[960px]:grid-cols-none",
         ].join(" ")}
       >
         <div
           className={[
             "flex w-full items-center justify-center overflow-hidden border-r border-header-border bg-sidebar-bg px-2 py-2.5",
-            collapsed ? "px-1 max-[960px]:justify-start max-[960px]:px-4" : "",
-            "max-[960px]:min-w-0 max-[960px]:flex-[1_1_auto] max-[960px]:justify-start max-[960px]:border-r-0 max-[960px]:bg-surface",
-            "max-[640px]:px-3 max-[640px]:py-2",
+            collapsed ? "px-1 max-[960px]:justify-start max-[960px]:px-2" : "",
+            "max-[960px]:h-14 max-[960px]:min-h-14 max-[960px]:w-full max-[960px]:justify-between max-[960px]:gap-2 max-[960px]:overflow-visible max-[960px]:border-r-0 max-[960px]:bg-surface max-[960px]:px-2 max-[960px]:py-0",
           ]
             .filter(Boolean)
             .join(" ")}
         >
-          <button
-            type="button"
-            className="mr-1 hidden size-9 shrink-0 cursor-pointer place-items-center rounded-[10px] border-0 bg-transparent text-text-strong hover:bg-hover-bg max-[960px]:grid"
-            aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
-            aria-expanded={mobileNavOpen}
-            onClick={() => setMobileNavOpen((open) => !open)}
-          >
-            <HugeiconsIcon
-              icon={mobileNavOpen ? Cancel01Icon : Menu01Icon}
-              size={20}
-              color="currentColor"
-              strokeWidth={1.5}
-            />
-          </button>
-          <span className="flex h-14 w-full min-w-0 items-center justify-center overflow-hidden">
-            <span className="flex max-w-full items-center justify-center">
-              <img
-                src="/campusly_logo_icon.png"
-                alt={collapsed ? "Campusly" : ""}
-                aria-hidden={collapsed ? undefined : true}
-                className="h-14 w-auto shrink-0 object-contain"
+          <div className="flex min-w-0 items-center overflow-hidden max-[960px]:gap-0.5">
+            <button
+              type="button"
+              className="mr-1 hidden size-9 shrink-0 cursor-pointer place-items-center rounded-[10px] border-0 bg-transparent text-text-strong hover:bg-hover-bg max-[960px]:grid"
+              aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileNavOpen}
+              onClick={() => setMobileNavOpen((open) => !open)}
+            >
+              <HugeiconsIcon
+                icon={mobileNavOpen ? Cancel01Icon : Menu01Icon}
+                size={20}
+                color="currentColor"
+                strokeWidth={1.5}
               />
-              <span
-                className={[
-                  "grid overflow-hidden transition-[grid-template-columns,opacity] duration-200 ease-in-out",
-                  collapsed
-                    ? "grid-cols-[0fr] opacity-0"
-                    : "grid-cols-[1fr] opacity-100",
-                ].join(" ")}
-                aria-hidden={collapsed}
-              >
-                <span className="min-w-0 overflow-hidden pl-2.5">
-                  <img
-                    src="/logo_icon2.png"
-                    alt="Campusly"
-                    className="h-11 w-auto max-w-none object-contain"
-                  />
+            </button>
+            <span className="flex h-14 w-full min-w-0 items-center justify-center overflow-hidden max-[960px]:h-9 max-[960px]:w-auto">
+              <span className="flex max-w-full items-center justify-center">
+                <img
+                  src="/campusly_logo_icon.png"
+                  alt={collapsed ? "Campusly" : ""}
+                  aria-hidden={collapsed ? undefined : true}
+                  className="h-14 w-auto shrink-0 object-contain max-[960px]:h-8"
+                />
+                <span
+                  className={[
+                    "grid overflow-hidden transition-[grid-template-columns,opacity] duration-200 ease-in-out",
+                    collapsed
+                      ? "grid-cols-[0fr] opacity-0"
+                      : "grid-cols-[1fr] opacity-100",
+                  ].join(" ")}
+                  aria-hidden={collapsed}
+                >
+                  <span className="min-w-0 overflow-hidden pl-2.5 max-[960px]:pl-1.5">
+                    <img
+                      src="/logo_icon2.png"
+                      alt="Campusly"
+                      className="h-11 w-auto max-w-none object-contain max-[960px]:h-7"
+                    />
+                  </span>
                 </span>
               </span>
             </span>
-          </span>
+          </div>
+
+          <div className="relative z-60 hidden shrink-0 items-center gap-0.5 overflow-visible max-[960px]:flex">
+            <ThemeToggle className={ICON_BTN} />
+            <NotificationBell auth={auth} />
+            <UserDropdown auth={auth} displayName={name} showChevron />
+          </div>
         </div>
 
-        <div className="relative flex items-center justify-between gap-4 py-2.5 pr-6 pl-7 max-[1100px]:pr-4 max-[960px]:contents">
+        <div className="relative flex items-center justify-between gap-4 py-2.5 pr-6 pl-7 max-[1100px]:pr-4 max-[960px]:w-full max-[960px]:justify-stretch max-[960px]:gap-0 max-[960px]:px-3 max-[960px]:pt-1 max-[960px]:pb-3">
           <button
             type="button"
             className="absolute top-1/2 left-0 z-[4] grid size-[26px] -translate-x-1/2 -translate-y-1/2 cursor-pointer place-items-center rounded-full border border-header-border bg-collapse-bg text-icon shadow-[0_2px_8px_rgb(47_59_70_/_0.08)] max-[960px]:hidden"
@@ -383,7 +391,7 @@ export default function AppLayout() {
 
           <GlobalSearch auth={auth} />
 
-          <div className="flex items-center gap-2.5 max-[960px]:order-2 max-[960px]:pr-3 max-[640px]:gap-1 max-[640px]:pr-2">
+          <div className="flex shrink-0 items-center gap-2.5 max-[960px]:hidden">
             <ThemeToggle className={ICON_BTN} />
             <NotificationBell auth={auth} />
             <UserDropdown auth={auth} displayName={name} />
@@ -394,7 +402,7 @@ export default function AppLayout() {
       {mobileNavOpen ? (
         <button
           type="button"
-          className="fixed inset-0 z-30 hidden cursor-pointer border-0 p-0 max-[960px]:block"
+          className="fixed top-[7.75rem] right-0 bottom-0 left-0 z-40 hidden cursor-pointer border-0 p-0 max-[960px]:block"
           style={{ background: "var(--modal-backdrop)" }}
           aria-label="Close menu"
           onClick={() => setMobileNavOpen(false)}
@@ -404,7 +412,7 @@ export default function AppLayout() {
       <aside
         className={[
           "flex min-h-0 flex-col overflow-hidden border-r border-header-border bg-sidebar-bg p-3 text-nav",
-          "max-[960px]:fixed max-[960px]:top-0 max-[960px]:bottom-0 max-[960px]:left-0 max-[960px]:z-40 max-[960px]:w-[min(280px,86vw)] max-[960px]:px-3.5 max-[960px]:pt-5 max-[960px]:pb-7 max-[960px]:shadow-[12px_0_32px_rgb(22_50_79_/_0.12)] max-[960px]:transition-transform max-[960px]:duration-[220ms] max-[960px]:ease-in-out",
+          "max-[960px]:fixed max-[960px]:top-[7.75rem] max-[960px]:bottom-0 max-[960px]:left-0 max-[960px]:z-[45] max-[960px]:w-[min(280px,86vw)] max-[960px]:px-3.5 max-[960px]:pt-4 max-[960px]:pb-7 max-[960px]:shadow-[12px_0_32px_rgb(22_50_79_/_0.12)] max-[960px]:transition-transform max-[960px]:duration-[220ms] max-[960px]:ease-in-out",
           mobileNavOpen
             ? "max-[960px]:translate-x-0"
             : "max-[960px]:-translate-x-full",
@@ -470,9 +478,11 @@ export default function AppLayout() {
         </div>
       </aside>
 
-      <main className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto p-4 max-[960px]:w-full max-[640px]:p-3">
+      <main className="min-h-0 min-w-0 overflow-x-hidden overflow-y-auto p-4 max-[960px]:w-full max-[960px]:pb-20 max-[640px]:p-3 max-[640px]:pb-20">
         <Outlet context={auth} />
       </main>
+
+      <MobileBottomNav />
     </div>
   );
 }

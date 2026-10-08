@@ -23,8 +23,8 @@ import {
   outcomesForActivityType,
 } from '@/modules/activities/activityConstants'
 
-const LEAD_DOCUMENT_ACCEPT = '.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx'
-const LEAD_DOCUMENT_MAX_BYTES = 5 * 1024 * 1024
+const LEAD_DOCUMENT_ACCEPT = '.pdf,.jpg,.jpeg,.png'
+const LEAD_DOCUMENT_MAX_BYTES = 10 * 1024 * 1024
 
 function asSelectString(value: unknown) {
   return typeof value === 'string' ? value : ''
@@ -36,6 +36,17 @@ function isImageMime(mimeType: string) {
 
 function isPdfMime(mimeType: string, fileName = '') {
   return mimeType === 'application/pdf' || fileName.toLowerCase().endsWith('.pdf')
+}
+
+export type UploadLeadDocumentForm = {
+  categoryCode: string
+  typeCode: string
+  name: string
+  file: File
+  documentDate?: string
+  expiryDate?: string
+  remarks?: string
+  duplicateAction?: 'replace' | 'new_version'
 }
 
 export function ViewLeadDocumentModal({
@@ -84,27 +95,72 @@ export function ViewLeadDocumentModal({
 export function AddLeadDocumentModal({
   open,
   saving,
+  categories,
+  types,
+  defaultTypeCode,
   onClose,
   onSubmit,
 }: {
   open: boolean
   saving: boolean
+  categories: Array<{ value: string; label: string; id?: string }>
+  types: Array<{ value: string; label: string; parentId?: string | null; parentCode?: string | null }>
+  defaultTypeCode?: string
   onClose: () => void
-  onSubmit: (body: { fileName: string; file: File }) => Promise<void>
+  onSubmit: (body: UploadLeadDocumentForm) => Promise<void>
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [fileName, setFileName] = useState('')
+  const [categoryCode, setCategoryCode] = useState('')
+  const [typeCode, setTypeCode] = useState('')
+  const [name, setName] = useState('')
+  const [documentDate, setDocumentDate] = useState<dayjs.Dayjs | null>(null)
+  const [expiryDate, setExpiryDate] = useState<dayjs.Dayjs | null>(null)
+  const [remarks, setRemarks] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  const categoryIdByCode = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const item of categories) {
+      if (item.id) map.set(item.value, item.id)
+    }
+    return map
+  }, [categories])
+
+  const filteredTypes = useMemo(() => {
+    if (!categoryCode) return types
+    const parentId = categoryIdByCode.get(categoryCode)
+    return types.filter((item) => {
+      if (item.parentCode) return item.parentCode === categoryCode
+      if (parentId && item.parentId) return item.parentId === parentId
+      return true
+    })
+  }, [types, categoryCode, categoryIdByCode])
 
   useEffect(() => {
     if (!open) {
-      setFileName('')
+      setCategoryCode('')
+      setTypeCode('')
+      setName('')
+      setDocumentDate(null)
+      setExpiryDate(null)
+      setRemarks('')
       setFile(null)
       setError('')
+      setFieldErrors({})
       if (fileInputRef.current) fileInputRef.current.value = ''
+      return
     }
-  }, [open])
+    if (defaultTypeCode) {
+      const match = types.find((item) => item.value === defaultTypeCode)
+      if (match) {
+        setTypeCode(match.value)
+        setName(match.label)
+        if (match.parentCode) setCategoryCode(match.parentCode)
+      }
+    }
+  }, [open, defaultTypeCode, types])
 
   function onFileChange(event: ChangeEvent<HTMLInputElement>) {
     const selected = event.target.files?.[0] || null
@@ -115,45 +171,96 @@ export function AddLeadDocumentModal({
     }
     if (selected.size > LEAD_DOCUMENT_MAX_BYTES) {
       setFile(null)
-      setError('Document must be 5 MB or smaller.')
+      setError('File size exceeds the allowed limit.')
       event.target.value = ''
       return
     }
     setFile(selected)
-    setFileName((current) => current.trim() || selected.name.replace(/\.[^.]+$/, '') || selected.name)
   }
 
-  async function handleSubmit() {
-    const trimmed = fileName.trim()
-    if (!trimmed) {
-      setError('File name is required.')
-      return
+  async function handleSubmit(duplicateAction?: 'replace' | 'new_version') {
+    const nextErrors: Record<string, string> = {}
+    if (!categoryCode) nextErrors.categoryCode = 'Document category is required.'
+    if (!typeCode) nextErrors.typeCode = 'Document category is required.'
+    if (!name.trim() || name.trim().length < 2) nextErrors.name = 'Document name must be 2–150 characters.'
+    if (!file) nextErrors.file = 'Please select a document to upload.'
+    if (documentDate && expiryDate && expiryDate.isBefore(documentDate, 'day')) {
+      nextErrors.expiryDate = 'Expiry date cannot be before document date.'
     }
-    if (!file) {
-      setError('Please select a file to upload.')
+    if (Object.keys(nextErrors).length) {
+      setFieldErrors(nextErrors)
+      setError(Object.values(nextErrors)[0] || '')
       return
     }
     setError('')
-    await onSubmit({ fileName: trimmed, file })
+    setFieldErrors({})
+    await onSubmit({
+      categoryCode,
+      typeCode,
+      name: name.trim(),
+      file: file!,
+      documentDate: documentDate ? documentDate.format('YYYY-MM-DD') : undefined,
+      expiryDate: expiryDate ? expiryDate.format('YYYY-MM-DD') : undefined,
+      remarks: remarks.trim() || undefined,
+      duplicateAction,
+    })
   }
 
   return (
-    <AntModal open={open} onClose={onClose} title="Add document" width={480}>
+    <AntModal open={open} onClose={onClose} title="Upload Document" width={520}>
       <div className="grid gap-3">
         <label className="grid gap-1.5 text-sm">
-          <span>File name</span>
-          <FormInput
-            value={fileName}
-            placeholder="e.g. Passport, Academic certificate"
-            onChange={(event) => {
-              setFileName(event.target.value)
+          <span>Document Category</span>
+          <FormSelect
+            showSearch
+            optionFilterProp="label"
+            value={categoryCode || undefined}
+            placeholder="Select category"
+            options={categories.map((item) => ({ value: item.value, label: item.label }))}
+            onChange={(value) => {
+              setCategoryCode(asSelectString(value))
+              setTypeCode('')
+              setName('')
               if (error) setError('')
             }}
           />
+          {fieldErrors.categoryCode ? <InputError>{fieldErrors.categoryCode}</InputError> : null}
+        </label>
+
+        <label className="grid gap-1.5 text-sm">
+          <span>Document Type</span>
+          <FormSelect
+            showSearch
+            optionFilterProp="label"
+            value={typeCode || undefined}
+            placeholder="Select document"
+            options={filteredTypes.map((item) => ({ value: item.value, label: item.label }))}
+            onChange={(value) => {
+              const code = asSelectString(value)
+              setTypeCode(code)
+              const match = filteredTypes.find((item) => item.value === code)
+              if (match) setName(match.label)
+              if (error) setError('')
+            }}
+          />
+          {fieldErrors.typeCode ? <InputError>{fieldErrors.typeCode}</InputError> : null}
+        </label>
+
+        <label className="grid gap-1.5 text-sm">
+          <span>Document Name</span>
+          <FormInput
+            value={name}
+            placeholder="e.g. Passport"
+            onChange={(event) => {
+              setName(event.target.value)
+              if (error) setError('')
+            }}
+          />
+          {fieldErrors.name ? <InputError>{fieldErrors.name}</InputError> : null}
         </label>
 
         <div className="grid gap-1.5 text-sm">
-          <span>Upload file</span>
+          <span>File</span>
           <input
             ref={fileInputRef}
             type="file"
@@ -171,20 +278,160 @@ export function AddLeadDocumentModal({
             </span>
             <span className="min-w-0 flex-1">
               <strong className="block text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
-                {file ? file.name : 'Choose a file'}
+                {file ? file.name : 'Choose File'}
               </strong>
               <span className="mt-0.5 block text-[0.78rem] text-[#8b97a8]">
-                {file ? `${(file.size / 1024).toFixed(1)} KB · PDF, Word, or image` : 'PDF, Word, or image up to 5 MB'}
+                {file ? `${(file.size / 1024).toFixed(1)} KB · PDF / JPG / PNG` : 'PDF, JPG, JPEG, PNG up to 10 MB'}
               </span>
             </span>
           </button>
+          {fieldErrors.file ? <InputError>{fieldErrors.file}</InputError> : null}
         </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="grid gap-1.5 text-sm">
+            <span>Document Date</span>
+            <FormDatePicker value={documentDate} onChange={(value) => setDocumentDate(value)} className="w-full" />
+          </label>
+          <label className="grid gap-1.5 text-sm">
+            <span>Expiry Date</span>
+            <FormDatePicker value={expiryDate} onChange={(value) => setExpiryDate(value)} className="w-full" />
+            {fieldErrors.expiryDate ? <InputError>{fieldErrors.expiryDate}</InputError> : null}
+          </label>
+        </div>
+
+        <label className="grid gap-1.5 text-sm">
+          <span>Remarks</span>
+          <FormTextArea
+            value={remarks}
+            maxLength={500}
+            rows={3}
+            placeholder="Optional notes"
+            onChange={(event) => setRemarks(event.target.value)}
+          />
+        </label>
 
         {error ? <InputError>{error}</InputError> : null}
 
         <div className="mt-2 flex justify-end gap-2">
           <PrimaryButton type="button" variant="outline" onClick={onClose} disabled={saving} label="Cancel" />
           <PrimaryButton type="button" loading={saving} onClick={() => void handleSubmit()} label="Upload" />
+        </div>
+      </div>
+    </AntModal>
+  )
+}
+
+export function DuplicateDocumentModal({
+  open,
+  documentName,
+  saving,
+  onClose,
+  onReplace,
+  onNewVersion,
+}: {
+  open: boolean
+  documentName: string
+  saving: boolean
+  onClose: () => void
+  onReplace: () => void
+  onNewVersion: () => void
+}) {
+  return (
+    <AntModal open={open} onClose={onClose} title="Document already exists" width={480}>
+      <p className="m-0 text-[0.92rem] text-text-muted">
+        {documentName || 'This'} document already exists.
+      </p>
+      <div className="mt-4 flex flex-wrap justify-end gap-2">
+        <PrimaryButton type="button" variant="outline" onClick={onClose} disabled={saving} label="Cancel" />
+        <PrimaryButton type="button" variant="outline" loading={saving} onClick={onNewVersion} label="Upload as New Version" />
+        <PrimaryButton type="button" loading={saving} onClick={onReplace} label="Replace Existing" />
+      </div>
+    </AntModal>
+  )
+}
+
+export function VerifyLeadDocumentModal({
+  open,
+  document,
+  saving,
+  onClose,
+  onVerify,
+  onReject,
+}: {
+  open: boolean
+  document: { name: string; fileName: string; uploadedBy?: { name: string } | null; createdAt?: string } | null
+  saving: boolean
+  onClose: () => void
+  onVerify: (remarks: string) => Promise<void>
+  onReject: (reason: string) => Promise<void>
+}) {
+  const [remarks, setRemarks] = useState('')
+  const [error, setError] = useState('')
+  const [mode, setMode] = useState<'idle' | 'reject'>('idle')
+
+  useEffect(() => {
+    if (!open) {
+      setRemarks('')
+      setError('')
+      setMode('idle')
+    }
+  }, [open])
+
+  return (
+    <AntModal open={open} onClose={onClose} title="Document Verification" width={520}>
+      <div className="grid gap-3 text-sm">
+        <div className="rounded-xl border border-border bg-[color-mix(in_srgb,var(--color-page-bg)_55%,var(--color-surface))] px-3.5 py-3">
+          <p className="m-0 font-semibold text-text-strong">{document?.name || document?.fileName}</p>
+          <p className="m-0 mt-1 text-[0.8rem] text-text-muted">
+            Uploaded By: {document?.uploadedBy?.name || '—'}
+            {document?.createdAt ? ` · Uploaded Date: ${dayjs(document.createdAt).format('DD MMM YYYY')}` : ''}
+          </p>
+          <p className="m-0 mt-1 text-[0.8rem] text-text-muted">Status: Pending</p>
+        </div>
+
+        <label className="grid gap-1.5">
+          <span>{mode === 'reject' ? 'Reason' : 'Remarks'}</span>
+          <FormTextArea
+            value={remarks}
+            rows={3}
+            maxLength={500}
+            placeholder={mode === 'reject' ? 'Reason for rejection' : 'Optional verification remarks'}
+            onChange={(event) => {
+              setRemarks(event.target.value)
+              if (error) setError('')
+            }}
+          />
+        </label>
+        {error ? <InputError>{error}</InputError> : null}
+
+        <div className="mt-1 flex flex-wrap justify-end gap-2">
+          <PrimaryButton type="button" variant="outline" onClick={onClose} disabled={saving} label="Cancel" />
+          {mode === 'reject' ? (
+            <PrimaryButton
+              type="button"
+              variant="danger"
+              loading={saving}
+              label="Reject Document"
+              onClick={() => {
+                if (!remarks.trim()) {
+                  setError('Please provide a reason for rejection.')
+                  return
+                }
+                void onReject(remarks.trim())
+              }}
+            />
+          ) : (
+            <>
+              <PrimaryButton type="button" variant="outline" disabled={saving} label="Reject" onClick={() => setMode('reject')} />
+              <PrimaryButton
+                type="button"
+                loading={saving}
+                label="Verify"
+                onClick={() => void onVerify(remarks.trim())}
+              />
+            </>
+          )}
         </div>
       </div>
     </AntModal>
@@ -529,22 +776,16 @@ export function QualifyLeadModal({
     <AntModal open={open} onClose={onClose} title="Lead Qualification" width={760}>
       <div className="grid gap-4">
         <p className="m-0 text-sm text-text-muted">
-          Screen this lead across fit criteria, then set the final result. Score and priority update from your
-          selections so you can decide whether to pursue the student.
+          These ratings set the qualification result. Lead Score on the header is counted from the student
+          profile: personal, study, academic, English, finance, visa, intent, contact, and source. Filling those
+          fields raises the score, including when priority was overridden by hand.
         </p>
 
         <div className="grid gap-3 rounded-xl border border-border bg-[color-mix(in_srgb,var(--color-page-bg)_65%,var(--color-surface))] px-3 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
           <div className="grid gap-1">
-            <span className="text-xs font-medium uppercase tracking-wide text-text-muted">Live preview</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[1.35rem] font-semibold tabular-nums text-text-strong">{preview.score}</span>
-              <span className="text-sm text-text-muted">/ 100</span>
-              <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${priorityBadgeClass(preview.priority)}`}>
-                {preview.priority} priority
-              </span>
-            </div>
-            <span className="text-xs text-text-muted">
-              Based on academic, finance, English, intent, timeline, and readiness.
+            <span className="text-xs font-medium uppercase tracking-wide text-text-muted">Qualification</span>
+            <span className="text-sm text-text-strong">
+              Suggested from academic fit, finance, English, country, intent, timeline, and readiness.
             </span>
           </div>
           {suggested ? (
@@ -727,7 +968,7 @@ export function OverridePriorityModal({
     <AntModal open={open} onClose={onClose} title="Override Lead Priority" width={520}>
       <div className="grid gap-4">
         <p className="m-0 text-sm text-text-muted">
-          System priority is based on Lead Score. A manual override requires a reason and is audited.
+          System priority follows Lead Score. A manual override keeps the chosen priority while the score continues to follow profile data. A reason is required and audited.
         </p>
         {currentPriority ? (
           <p className="m-0 text-sm text-text-muted">

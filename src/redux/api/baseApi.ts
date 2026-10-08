@@ -125,6 +125,7 @@ export const baseApi = createApi({
     "Applications",
     "Students",
     "Documents",
+    "FileDocuments",
     "Payments",
     "FollowUps",
     "Reports",

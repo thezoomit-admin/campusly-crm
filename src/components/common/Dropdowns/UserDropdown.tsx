@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Logout01Icon, UserCircleIcon } from '@hugeicons/core-free-icons'
+import { ArrowDown01Icon, Logout01Icon, UserCircleIcon } from '@hugeicons/core-free-icons'
 import { hasPermission } from '@/lib/access'
 import { useAuth } from '@/hooks/useAuth'
 import type { NavIconName } from '@/config/navigation'
@@ -65,9 +65,11 @@ function menuItemClass(active: boolean) {
 export default function UserDropdown({
   auth,
   displayName,
+  showChevron = false,
 }: {
   auth: AuthSession
   displayName: string
+  showChevron?: boolean
 }) {
   const navigate = useNavigate()
   const location = useLocation()
@@ -139,7 +141,9 @@ export default function UserDropdown({
       <button
         type="button"
         className={[
-          'grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 shadow-none outline-none',
+          showChevron
+            ? 'inline-flex h-9 cursor-pointer items-center gap-0.5 rounded-full border-0 bg-transparent p-0 shadow-none outline-none'
+            : 'grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 shadow-none outline-none',
           'hover:[&>span]:bg-[color-mix(in_srgb,var(--color-primary)_24%,white)] dark:hover:[&>span]:bg-[color-mix(in_srgb,var(--color-primary)_32%,transparent)]',
           isOpen
             ? '[&>span]:bg-[color-mix(in_srgb,var(--color-primary)_28%,white)] dark:[&>span]:bg-[color-mix(in_srgb,var(--color-primary)_36%,transparent)]'
@@ -155,14 +159,23 @@ export default function UserDropdown({
           key={user.photoUrl || user.id}
           name={displayName}
           photoUrl={user.photoUrl}
-          className="grid size-full place-items-center overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--color-primary)_16%,white)] text-[0.72rem] font-bold text-primary-active transition-colors duration-200 ease-in-out dark:bg-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] dark:text-nav-active [&_img]:size-full [&_img]:object-cover"
+          className="grid size-9 place-items-center overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--color-primary)_16%,white)] text-[0.72rem] font-bold text-primary-active transition-colors duration-200 ease-in-out dark:bg-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] dark:text-nav-active [&_img]:size-full [&_img]:object-cover"
         />
+        {showChevron ? (
+          <HugeiconsIcon
+            icon={ArrowDown01Icon}
+            size={14}
+            color="currentColor"
+            strokeWidth={1.8}
+            className="text-icon"
+          />
+        ) : null}
       </button>
 
       {shouldRender ? (
         <div
           className={[
-            'absolute top-[calc(100%+10px)] right-0 z-40 flex max-h-[min(70vh,480px)] w-[260px] origin-top-right flex-col overflow-hidden rounded-[10px] border border-border bg-surface p-0 shadow-card transition-[opacity,transform] ease-out',
+            'absolute top-[calc(100%+10px)] right-0 z-70 flex max-h-[min(70vh,480px)] w-[260px] origin-top-right flex-col overflow-hidden rounded-[10px] border border-border bg-surface p-0 shadow-card transition-[opacity,transform] ease-out',
             isVisible
               ? 'pointer-events-auto translate-y-0 scale-100 opacity-100'
               : 'pointer-events-none -translate-y-1.5 scale-[0.97] opacity-0',

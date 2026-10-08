@@ -6,6 +6,7 @@ export type LeadPrimaryTabKey =
   | "timeline"
   | "notes"
   | "attachments"
+  | "file-documents"
   | "activities"
   | "assignments"
   | "followups"
@@ -29,6 +30,7 @@ export const LEAD_PRIMARY_TABS: Array<{
   { key: "timeline", label: "Timeline" },
   { key: "notes", label: "Notes" },
   { key: "attachments", label: "Attachments" },
+  { key: "file-documents", label: "File Documents" },
   { key: "activities", label: "Activities" },
   { key: "assignments", label: "Assignment History" },
   { key: "followups", label: "Follow-up History" },

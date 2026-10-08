@@ -1,4 +1,7 @@
-/** Mirrors API `computeLeadScore` for live preview in the Qualify modal. */
+/**
+ * Fit signal for the Qualify modal's suggested result.
+ * Header Lead Score is separate: the API counts every filled profile field.
+ */
 
 export type QualificationFormValues = {
   academicFitCode: string
@@ -33,21 +36,24 @@ function fitPoints(code: string | null | undefined, map: Record<string, number>)
 }
 
 export function computeLeadScorePreview(values: Partial<QualificationFormValues>): LeadScorePreview {
-  const academic = fitPoints(values.academicFitCode, { STRONG: 15, GOOD: 11, AVERAGE: 7, WEAK: 3 })
+  const academic = fitPoints(values.academicFitCode, { HIGH_FIT: 15, STRONG: 15, GOOD: 11, AVERAGE: 7, WEAK: 3 })
   const financial = fitPoints(values.financialReadinessCode, {
+    FUNDS_READY: 15,
     READY: 15,
     PARTIAL: 9,
     NOT_READY: 3,
     UNKNOWN: 5,
   })
   const english = fitPoints(values.englishReadinessCode, {
+    FUNDS_READY: 15,
     READY: 15,
     PARTIAL: 9,
     NOT_READY: 3,
     UNKNOWN: 5,
   })
-  const countryFit = fitPoints(values.countryIntakeFitCode, { STRONG: 10, GOOD: 8, AVERAGE: 5, WEAK: 2 })
+  const countryFit = fitPoints(values.countryIntakeFitCode, { HIGH_FIT: 10, STRONG: 10, GOOD: 8, AVERAGE: 5, WEAK: 2 })
   const intent = fitPoints(values.studyIntentQualCode, {
+    SI_HIGH_INTENT: 15,
     HIGH: 15,
     MEDIUM: 9,
     LOW: 4,
@@ -55,6 +61,7 @@ export function computeLeadScorePreview(values: Partial<QualificationFormValues>
     GOOD: 11,
   })
   const timeline = fitPoints(values.decisionTimelineCode, {
+    DT_IMMEDIATE: 10,
     IMMEDIATE: 10,
     '1_3_MONTHS': 8,
     '3_6_MONTHS': 5,
@@ -62,6 +69,7 @@ export function computeLeadScorePreview(values: Partial<QualificationFormValues>
     EXPLORING: 2,
   })
   const readiness = fitPoints(values.applicationReadinessCode, {
+    AR_READY_TO_APPLY: 10,
     READY_NOW: 10,
     PLANNING: 6,
     EXPLORING: 3,

@@ -42,15 +42,19 @@ export default function PageHeader({
           })}
         />
       ) : null}
-      <div className="flex w-full flex-col justify-between sm:items-center md:flex-row">
-        <div>
-          <Title level={4} className="!mb-0 !text-text">
+      <div className="flex w-full flex-row items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <Title level={4} className="!mb-0 !text-text max-[960px]:!text-[1.15rem] max-[960px]:!leading-snug">
             {title}
           </Title>
-          {subtitle ? <p className="mt-1 mb-0 text-sm text-text-muted">{subtitle}</p> : null}
+          {subtitle ? (
+            <p className="mt-1 mb-0 text-sm text-text-muted max-[960px]:text-[0.78rem] max-[960px]:leading-snug">
+              {subtitle}
+            </p>
+          ) : null}
         </div>
         {extra ? (
-          <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-0">{extra}</div>
+          <div className="mt-0 flex shrink-0 flex-wrap items-start justify-end gap-2">{extra}</div>
         ) : null}
       </div>
       {showDivider ? <Divider className="my-4" /> : null}

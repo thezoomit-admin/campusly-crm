@@ -494,20 +494,20 @@ function QuickActionsCard({ onNavigate }: { onNavigate: (path: string) => void }
         <h3 className="m-0 text-base">Quick Actions</h3>
         <span className={chip}>Shortcuts</span>
       </div>
-      <ul className="m-0 grid list-none grid-cols-1 gap-2.5 p-0 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4">
         {QUICK_ACTIONS.map((action) => (
           <li key={action.to} className="min-w-0">
             <button
               type="button"
-              className="flex h-full w-full cursor-pointer items-center gap-3 rounded-[14px] border border-border bg-[#f8fafc] px-3 py-3 text-left transition-colors hover:border-primary/40 dark:bg-hover-bg"
+              className="flex h-full w-full cursor-pointer items-center gap-2.5 rounded-[14px] border border-border bg-[#f8fafc] px-2.5 py-3 text-left transition-colors hover:border-primary/40 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-2 sm:gap-3 sm:px-3 dark:bg-hover-bg"
               onClick={() => onNavigate(action.to)}
             >
               <span className={cx('grid size-[34px] shrink-0 place-items-center rounded-[10px]', toneIcon[action.tone])}>
                 <Icon name={action.icon} />
               </span>
               <span className="min-w-0">
-                <strong className="block truncate text-[0.86rem] text-text">{action.label}</strong>
-                <small className="mt-0.5 block truncate text-[0.75rem] text-text-muted">{action.hint}</small>
+                <strong className="block truncate text-[0.86rem] text-text max-[640px]:text-[0.78rem]">{action.label}</strong>
+                <small className="mt-0.5 block truncate text-[0.75rem] text-text-muted max-[640px]:text-[0.68rem]">{action.hint}</small>
               </span>
             </button>
           </li>
@@ -559,12 +559,27 @@ export default function DashboardPage() {
         breadcrumbs={[{ title: 'Dashboard' }]}
         showDivider={false}
         extra={
-          <div className="flex items-center gap-2 text-right text-text-muted">
-            <Icon name="calendar" />
-            <div className="min-w-0">
-              <strong className="block text-[0.88rem] font-semibold text-text">{dateLabel}</strong>
-              <span className="block text-[0.75rem]">Dhaka, Bangladesh</span>
-            </div>
+          <div className="grid gap-1 text-right text-text-muted max-[960px]:gap-0.5">
+            <span className="inline-flex items-center justify-end gap-1.5 text-[0.88rem] font-semibold text-text max-[960px]:text-[0.68rem]">
+              <Icon name="calendar" />
+              {dateLabel}
+            </span>
+            <span className="inline-flex items-center justify-end gap-1.5 text-[0.75rem] max-[960px]:text-[0.64rem]">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                aria-hidden="true"
+                className="max-[960px]:size-3"
+              >
+                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+              Dhaka, Bangladesh
+            </span>
           </div>
         }
       />
@@ -579,11 +594,11 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      <div className="grid min-w-0 grid-cols-1 gap-3 *:min-w-0 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid min-w-0 grid-cols-2 gap-3 *:min-w-0 lg:grid-cols-5">
         {stats.map((stat) => (
           <article
             key={stat.key}
-            className={cx(card, 'relative min-h-[118px] min-w-0 overflow-hidden px-3 py-3 xl:px-3.5 xl:py-3.5')}
+            className={cx(card, 'relative min-h-[118px] min-w-0 overflow-hidden px-3 py-3 max-[640px]:min-h-[108px] max-[640px]:px-2.5 max-[640px]:py-2.5 xl:px-3.5 xl:py-3.5')}
           >
             <div className={cx('grid size-8 place-items-center rounded-[10px] xl:size-9', toneIcon[stat.tone])}>
               <Icon name={stat.icon} />
@@ -666,18 +681,20 @@ export default function DashboardPage() {
             <h3 className="m-0 text-base">Recent Leads</h3>
             <PrimaryButton
               type="button"
-              className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
-              onClick={() => navigate('/leads')} label="View All" />
+              className="cursor-pointer border-0 bg-transparent font-semibold text-[#3b82f6]"
+              onClick={() => navigate('/leads')}
+              label="View All"
+            />
           </div>
           <div className="min-h-0 flex-1 overflow-auto">
             <table className="w-full min-w-[620px] border-collapse">
               <thead>
                 <tr>
-                  <th className="py-2 px-1.5 text-text-faint text-[0.75rem] font-semibold text-left">Name</th>
-                  <th className="py-2 px-1.5 text-text-faint text-[0.75rem] font-semibold text-left">Country</th>
-                  <th className="py-2 px-1.5 text-text-faint text-[0.75rem] font-semibold text-left">Source</th>
-                  <th className="py-2 px-1.5 text-text-faint text-[0.75rem] font-semibold text-left">Status</th>
-                  <th className="py-2 px-1.5 text-text-faint text-[0.75rem] font-semibold text-left">Created</th>
+                  <th className="px-1.5 py-2 text-left text-[0.75rem] font-semibold text-text-faint">Name</th>
+                  <th className="px-1.5 py-2 text-left text-[0.75rem] font-semibold text-text-faint">Country</th>
+                  <th className="px-1.5 py-2 text-left text-[0.75rem] font-semibold text-text-faint">Source</th>
+                  <th className="px-1.5 py-2 text-left text-[0.75rem] font-semibold text-text-faint">Status</th>
+                  <th className="px-1.5 py-2 text-left text-[0.75rem] font-semibold text-text-faint">Created</th>
                 </tr>
               </thead>
               <tbody>
@@ -690,9 +707,9 @@ export default function DashboardPage() {
                 ) : null}
                 {recentLeads.map((lead) => (
                   <tr key={lead.id}>
-                    <td className="py-2.5 px-1.5 border-t border-border-subtle text-[0.86rem]">
+                    <td className="border-t border-border-subtle px-1.5 py-2.5 text-[0.86rem]">
                       <div className="flex items-center gap-2.5">
-                        <span className="size-[34px] grid place-items-center rounded-full bg-[#e8f1ff] text-[#3b82f6] text-[0.72rem] font-bold dark:bg-blue-500/20 dark:text-[#93c5fd]">
+                        <span className="grid size-[34px] place-items-center rounded-full bg-[#e8f1ff] text-[0.72rem] font-bold text-[#3b82f6] dark:bg-blue-500/20 dark:text-[#93c5fd]">
                           {initials(lead.name)}
                         </span>
                         <span>
@@ -701,14 +718,14 @@ export default function DashboardPage() {
                         </span>
                       </div>
                     </td>
-                    <td className="py-2.5 px-1.5 border-t border-border-subtle text-[0.86rem]">
+                    <td className="border-t border-border-subtle px-1.5 py-2.5 text-[0.86rem]">
                       {lead.flag} {lead.country}
                     </td>
-                    <td className="py-2.5 px-1.5 border-t border-border-subtle text-[0.86rem]">{lead.source}</td>
-                    <td className="py-2.5 px-1.5 border-t border-border-subtle text-[0.86rem]">
+                    <td className="border-t border-border-subtle px-1.5 py-2.5 text-[0.86rem]">{lead.source}</td>
+                    <td className="border-t border-border-subtle px-1.5 py-2.5 text-[0.86rem]">
                       <span className={statusClass(lead.status)}>{lead.status}</span>
                     </td>
-                    <td className="py-2.5 px-1.5 border-t border-border-subtle text-[0.86rem] text-text-faint">
+                    <td className="border-t border-border-subtle px-1.5 py-2.5 text-[0.86rem] text-text-faint">
                       {lead.created}
                     </td>
                   </tr>
@@ -723,8 +740,10 @@ export default function DashboardPage() {
             <h3 className="m-0 text-base">Today&apos;s Follow-ups</h3>
             <PrimaryButton
               type="button"
-              className="border-0 bg-transparent text-[#3b82f6] font-semibold cursor-pointer"
-              onClick={() => navigate('/follow-ups')} label="View All" />
+              className="cursor-pointer border-0 bg-transparent font-semibold text-[#3b82f6]"
+              onClick={() => navigate('/follow-ups')}
+              label="View All"
+            />
           </div>
           <div className="mb-3 grid shrink-0 grid-cols-3 gap-2">
             <div
@@ -796,13 +815,13 @@ export default function DashboardPage() {
               <li
                 key={item.id}
                 className={cx(
-                  'flex gap-3 items-start py-2.5 px-3 rounded-[14px] max-sm:p-2.5',
+                  'flex items-start gap-3 rounded-[14px] px-3 py-2.5 max-sm:p-2.5',
                   followupBg[item.tone] || 'bg-[#f8fbff] dark:bg-blue-500/10',
                 )}
               >
                 <span
                   className={cx(
-                    'size-[34px] grid place-items-center rounded-[10px] shrink-0',
+                    'grid size-[34px] shrink-0 place-items-center rounded-[10px]',
                     toneIcon[item.tone],
                   )}
                 >
@@ -810,7 +829,7 @@ export default function DashboardPage() {
                 </span>
                 <span>
                   <strong className="block">{item.title}</strong>
-                  <small className="block mt-0.5 text-text-muted text-[0.75rem]">{item.detail}</small>
+                  <small className="mt-0.5 block text-[0.75rem] text-text-muted">{item.detail}</small>
                 </span>
               </li>
             ))}
@@ -823,7 +842,7 @@ export default function DashboardPage() {
         <MonthSnapshotCard events={calendarEvents} onNavigate={navigate} />
       </div>
 
-      <footer className="flex justify-between gap-3 text-text-faint text-[0.78rem] max-sm:grid max-sm:grid-cols-1">
+      <footer className="flex justify-between gap-3 text-[0.78rem] text-text-faint max-sm:grid max-sm:grid-cols-1">
         <span>EduConsult CRM &nbsp; v1.0.0</span>
         <span>© {now.getFullYear()} Education Consultancy CRM. All rights reserved.</span>
       </footer>

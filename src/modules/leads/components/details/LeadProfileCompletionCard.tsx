@@ -29,7 +29,9 @@ export default function LeadProfileCompletionCard({ lead }: { lead: LeadRecord }
           <h3 className="m-0 text-[0.98rem] font-semibold text-[#1b3a57] dark:text-text-strong">
             Profile Completion
           </h3>
-          <p className="m-0 mt-1 text-[0.75rem] text-[#8b97a8]">Separate from Lead Score</p>
+          <p className="m-0 mt-1 text-[0.75rem] text-[#8b97a8]">
+            Section checklist. Lead Score counts every filled field.
+          </p>
         </div>
         <span className="text-[1.1rem] font-bold tabular-nums text-primary">{percent}%</span>
       </header>
