@@ -112,11 +112,11 @@ export type LeadAssignmentHistoryItem = {
 };
 
 export type LeadDocumentStatus =
-  | 'PENDING'
-  | 'VERIFIED'
-  | 'REJECTED'
-  | 'EXPIRED'
-  | 'REPLACED';
+  | "PENDING"
+  | "VERIFIED"
+  | "REJECTED"
+  | "EXPIRED"
+  | "REPLACED";
 
 export type LeadDocumentItem = {
   id: string;
@@ -153,7 +153,7 @@ export type LeadDocumentChecklistItem = {
   name: string;
   isRequired: boolean;
   isSensitive: boolean;
-  checklistStatus: 'Missing' | 'Pending' | 'Verified' | 'Rejected' | 'Expired';
+  checklistStatus: "Missing" | "Pending" | "Verified" | "Rejected" | "Expired";
   completed: boolean;
   document: LeadDocumentItem | null;
 };

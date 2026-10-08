@@ -23,6 +23,7 @@ function upsertNotificationCache(
   event: NotificationCreatedEvent,
 ): NotificationListResponse {
   const incoming: AppNotification = {
+    ...event.notification,
     id: event.notification.id,
     title: event.notification.title,
     body: event.notification.body,
@@ -104,6 +105,18 @@ export default function SocketRealtimeProvider({ children }: { children: ReactNo
         toastId: `notification:${event.notification.id}`,
         autoClose: 4000,
       })
+
+      if (
+        event.notification.browser &&
+        typeof Notification !== 'undefined' &&
+        Notification.permission === 'granted'
+      ) {
+        try {
+          new Notification(event.notification.title, { body: event.notification.body || undefined })
+        } catch {
+          // Browser notifications are optional and depend on permission.
+        }
+      }
 
       // Email notifications → refetch thread/list/messages once (no polling).
       const type = event.notification.type || ''

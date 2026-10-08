@@ -20,7 +20,7 @@ function isMacPlatform() {
   return /mac/i.test(navigator.platform || navigator.userAgent)
 }
 
-function collectPermissions(items: NavItem[]): Array<{ to: string; permission?: string }> {
+function collectPermissions(items: NavItem[]): Array<{ to: string; permission?: string | string[] }> {
   return items.flatMap((item) => [
     { to: item.to, permission: item.permission },
     ...(item.children ? collectPermissions(item.children) : []),

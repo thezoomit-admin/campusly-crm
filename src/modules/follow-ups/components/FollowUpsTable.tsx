@@ -1,6 +1,6 @@
 import { Tooltip } from 'antd'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Calendar03Icon, CancelCircleIcon, CheckmarkCircle02Icon } from '@hugeicons/core-free-icons'
+import { Calendar03Icon, CancelCircleIcon, CheckmarkCircle02Icon, Notification03Icon } from '@hugeicons/core-free-icons'
 import { DataTable } from '@/components/common/Tables'
 import type { FollowUpRecord } from '../types'
 import { followUpColumns } from '../utils/followUpColumns'
@@ -19,6 +19,7 @@ type FollowUpsTableProps = {
   onComplete?: (row: FollowUpRecord) => void
   onReschedule?: (row: FollowUpRecord) => void
   onCancel?: (row: FollowUpRecord) => void
+  onEditReminder?: (row: FollowUpRecord) => void
 }
 
 export default function FollowUpsTable({
@@ -33,6 +34,7 @@ export default function FollowUpsTable({
   onComplete,
   onReschedule,
   onCancel,
+  onEditReminder,
 }: FollowUpsTableProps) {
   const columns = [
     ...followUpColumns,
@@ -41,7 +43,7 @@ export default function FollowUpsTable({
           {
             title: 'Actions',
             key: 'actions',
-            width: 132,
+            width: 168,
             align: 'center' as const,
             render: (_: unknown, row: FollowUpRecord) => {
               if (!OPEN.has(row.status)) return '—'
@@ -69,6 +71,16 @@ export default function FollowUpsTable({
                       className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-primary transition-colors hover:border-primary hover:bg-primary/5"
                     >
                       <HugeiconsIcon icon={Calendar03Icon} size={15} color="currentColor" strokeWidth={1.7} />
+                    </button>
+                  </Tooltip>
+                  <Tooltip title="Edit reminder">
+                    <button
+                      type="button"
+                      aria-label={`Edit reminder for ${row.contact || 'contact'}`}
+                      onClick={() => onEditReminder?.(row)}
+                      className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-amber-600 transition-colors hover:border-amber-500 hover:bg-amber-50"
+                    >
+                      <HugeiconsIcon icon={Notification03Icon} size={15} color="currentColor" strokeWidth={1.7} />
                     </button>
                   </Tooltip>
                   <Tooltip title="Cancel">

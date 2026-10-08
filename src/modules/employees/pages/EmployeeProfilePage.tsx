@@ -929,8 +929,8 @@ export default function EmployeeProfilePage() {
                             onClick={() =>
                               navigate(
                                 employee.user?.id
-                                  ? `/reports?employeeId=${employee.id}&ownerId=${employee.user.id}`
-                                  : '/reports',
+                                  ? `/reports?tab=employee-performance&detail=${employee.user.id}`
+                                  : '/reports?tab=employee-performance',
                               )
                             }
                           />

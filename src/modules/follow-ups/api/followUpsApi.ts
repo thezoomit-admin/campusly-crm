@@ -30,6 +30,14 @@ const followUpsApi = baseApi.injectEndpoints({
         })}`,
       providesTags: [{ type: 'FollowUps', id: 'LIST' }],
     }),
+    getFollowUp: builder.query<{ followUp: FollowUpRecord }, string>({
+      query: (id) => `/follow-ups/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'FollowUps', id }],
+    }),
+    updateFollowUpReminder: builder.mutation<{ followUp: FollowUpRecord }, { id: string; reminder: string }>({
+      query: ({ id, reminder }) => ({ url: `/follow-ups/${id}/reminder`, method: 'POST', body: { reminder } }),
+      invalidatesTags: [{ type: 'FollowUps', id: 'LIST' }],
+    }),
     listLeadFollowUps: builder.query<FollowUpListResponse, string>({
       query: (leadId) => `/follow-ups/lead/${leadId}`,
       providesTags: (_r, _e, leadId) => [
@@ -118,6 +126,8 @@ const followUpsApi = baseApi.injectEndpoints({
 
 export const {
   useListFollowUpsQuery,
+  useGetFollowUpQuery,
+  useUpdateFollowUpReminderMutation,
   useListLeadFollowUpsQuery,
   useCreateFollowUpMutation,
   useCompleteFollowUpMutation,

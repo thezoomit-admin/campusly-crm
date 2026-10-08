@@ -1,4 +1,6 @@
 import { Button } from 'antd'
+import { useSearchParams } from 'react-router-dom'
+import { EmployeePerformanceDetailPage, EmployeePerformancePage } from '@/modules/performance'
 import type { MetricRow, ReportTabId } from '../types'
 import {
   CONVERSION_TREND,
@@ -16,6 +18,12 @@ const card = 'rounded-2xl border border-border bg-surface p-4'
 type ReportTabPanelProps = {
   tabId: ReportTabId
   onDrillDown: (metric: string) => void
+}
+
+function EmployeePerformanceTab() {
+  const [params] = useSearchParams()
+  if (params.get('detail')) return <EmployeePerformanceDetailPage />
+  return <EmployeePerformancePage embedded />
 }
 
 function MetricsGrid({
@@ -130,6 +138,10 @@ export default function ReportTabPanel({ tabId, onDrillDown }: ReportTabPanelPro
       title: 'Document Status Report',
       subtitle: 'Document processing status and verification workload.',
     },
+  }
+
+  if (tabId === 'employee-performance') {
+    return <EmployeePerformanceTab />
   }
 
   const meta = titles[tabId]

@@ -1,10 +1,10 @@
-import type { ActivityFeedItem } from '@/types'
-import LeadMetaCampaignHistory from '@/modules/meta-leads/components/LeadMetaCampaignHistory'
-import type { MasterOption } from '../../hooks/useLeadMasterOptions'
-import type { LeadRecord } from '../../types'
-import { activityTitle, formatDisplayDateTime } from '../../utils/leadDetails'
-import LeadProfileCompletionCard from './LeadProfileCompletionCard'
-import LeadQualificationSummaryCard from './LeadQualificationSummaryCard'
+import type { ActivityFeedItem } from "@/types";
+import LeadMetaCampaignHistory from "@/modules/meta-leads/components/LeadMetaCampaignHistory";
+import type { MasterOption } from "../../hooks/useLeadMasterOptions";
+import type { LeadRecord } from "../../types";
+import { activityTitle, formatDisplayDateTime } from "../../utils/leadDetails";
+import LeadProfileCompletionCard from "./LeadProfileCompletionCard";
+import LeadQualificationSummaryCard from "./LeadQualificationSummaryCard";
 
 export default function LeadDetailsSidebar({
   lead,
@@ -14,22 +14,22 @@ export default function LeadDetailsSidebar({
   onViewActivities,
   onUpdateQualification,
 }: {
-  lead: LeadRecord
-  activities: ActivityFeedItem[]
+  lead: LeadRecord;
+  activities: ActivityFeedItem[];
   options: {
-    fit: MasterOption[]
-    financial: MasterOption[]
-    studyIntent: MasterOption[]
-    appReady: MasterOption[]
-    timeline: MasterOption[]
-    result: MasterOption[]
-    unqualified: MasterOption[]
-  }
-  canQualify: boolean
-  onViewActivities: () => void
-  onUpdateQualification?: () => void
+    fit: MasterOption[];
+    financial: MasterOption[];
+    studyIntent: MasterOption[];
+    appReady: MasterOption[];
+    timeline: MasterOption[];
+    result: MasterOption[];
+    unqualified: MasterOption[];
+  };
+  canQualify: boolean;
+  onViewActivities: () => void;
+  onUpdateQualification?: () => void;
 }) {
-  const recent = activities.slice(0, 5)
+  const recent = activities.slice(0, 5);
 
   return (
     <aside className="grid content-start gap-4">
@@ -58,7 +58,9 @@ export default function LeadDetailsSidebar({
           </button>
         </header>
         {recent.length === 0 ? (
-          <p className="m-0 text-[0.84rem] text-[#8b97a8]">No activities recorded yet.</p>
+          <p className="m-0 text-[0.84rem] text-[#8b97a8]">
+            No activities recorded yet.
+          </p>
         ) : (
           <ol className="m-0 grid list-none gap-4 p-0">
             {recent.map((item, index) => (
@@ -72,7 +74,7 @@ export default function LeadDetailsSidebar({
                 </p>
                 <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
                   {formatDisplayDateTime(item.occurredAt)}
-                  {item.user?.fullName ? ` by ${item.user.fullName}` : ''}
+                  {item.user?.fullName ? ` by ${item.user.fullName}` : ""}
                 </p>
               </li>
             ))}
@@ -80,5 +82,5 @@ export default function LeadDetailsSidebar({
         )}
       </section>
     </aside>
-  )
+  );
 }

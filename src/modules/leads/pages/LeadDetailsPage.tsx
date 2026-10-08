@@ -306,11 +306,15 @@ export default function LeadDetailsPage() {
   const [logConversationOpen, setLogConversationOpen] = useState(false);
   const [logConversationSaving, setLogConversationSaving] = useState(false);
   const [documentOpen, setDocumentOpen] = useState(false);
-  const [defaultDocTypeCode, setDefaultDocTypeCode] = useState<string | undefined>();
+  const [defaultDocTypeCode, setDefaultDocTypeCode] = useState<
+    string | undefined
+  >();
   const [showArchivedDocs, setShowArchivedDocs] = useState(false);
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [duplicateName, setDuplicateName] = useState("");
-  const [verifyTarget, setVerifyTarget] = useState<LeadDocumentItem | null>(null);
+  const [verifyTarget, setVerifyTarget] = useState<LeadDocumentItem | null>(
+    null,
+  );
   const [deleteTarget, setDeleteTarget] = useState<LeadDocumentItem | null>(
     null,
   );
@@ -373,8 +377,16 @@ export default function LeadDetailsPage() {
       { value: "PASSPORT", label: "Passport", parentCode: "PERSONAL" },
       { value: "NID", label: "NID", parentCode: "PERSONAL" },
       { value: "IELTS", label: "IELTS", parentCode: "LANGUAGE" },
-      { value: "TRANSCRIPT", label: "Academic Transcript", parentCode: "ACADEMIC" },
-      { value: "BANK_STATEMENT", label: "Bank Statement", parentCode: "FINANCIAL" },
+      {
+        value: "TRANSCRIPT",
+        label: "Academic Transcript",
+        parentCode: "ACADEMIC",
+      },
+      {
+        value: "BANK_STATEMENT",
+        label: "Bank Statement",
+        parentCode: "FINANCIAL",
+      },
       { value: "OTHER", label: "Other Document", parentCode: "OTHER" },
     ];
   }, [documentTypeData]);
@@ -485,13 +497,18 @@ export default function LeadDetailsPage() {
         status?: number;
         data?: { code?: string; message?: string; actions?: string[] };
       };
-      if (apiError?.status === 409 || apiError?.data?.code === "DUPLICATE_DOCUMENT") {
+      if (
+        apiError?.status === 409 ||
+        apiError?.data?.code === "DUPLICATE_DOCUMENT"
+      ) {
         pendingUploadRef.current = body;
         setDuplicateName(body.name || "This");
         setDuplicateOpen(true);
         return;
       }
-      toast.error(getApiError(error, "Unable to upload the document. Please try again."));
+      toast.error(
+        getApiError(error, "Unable to upload the document. Please try again."),
+      );
     }
   }
 
@@ -1153,13 +1170,7 @@ export default function LeadDetailsPage() {
     if (tab === "more" && !moreVisibleKeys.includes(moreTab)) {
       syncWorkspaceTabs("more", moreVisibleKeys[0] || "communications");
     }
-  }, [
-    tab,
-    moreTab,
-    canViewFollowUp,
-    moreVisibleKeys,
-    syncWorkspaceTabs,
-  ]);
+  }, [tab, moreTab, canViewFollowUp, moreVisibleKeys, syncWorkspaceTabs]);
 
   if (isError) {
     return (
@@ -1358,7 +1369,9 @@ export default function LeadDetailsPage() {
                   canDelete={canDeleteDocument}
                   canVerify={canVerifyDocument}
                   showArchived={showArchivedDocs}
-                  onToggleArchived={() => setShowArchivedDocs((value) => !value)}
+                  onToggleArchived={() =>
+                    setShowArchivedDocs((value) => !value)
+                  }
                   onAdd={() => {
                     setDefaultDocTypeCode(undefined);
                     setDocumentOpen(true);
@@ -1604,12 +1617,15 @@ export default function LeadDetailsPage() {
         open={Boolean(deleteTarget)}
         loading={documentDeleting}
         title="Archive document?"
-        itemName={deleteTarget?.name || deleteTarget?.fileName || "this document"}
+        itemName={
+          deleteTarget?.name || deleteTarget?.fileName || "this document"
+        }
         message={
           deleteTarget ? (
             <>
-              Archive <strong>{deleteTarget.name || deleteTarget.fileName}</strong>?
-              It will be hidden from the active document list.
+              Archive{" "}
+              <strong>{deleteTarget.name || deleteTarget.fileName}</strong>? It
+              will be hidden from the active document list.
             </>
           ) : undefined
         }

@@ -130,6 +130,7 @@ export const baseApi = createApi({
     "FollowUps",
     "Reports",
     "Dashboard",
+    "Performance",
     "Notifications",
     "Communications",
     "Campaigns",
