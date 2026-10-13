@@ -18,7 +18,7 @@ export default function LeadFormModal({ open, onClose, onSubmit }: LeadFormModal
         form={form}
         layout="vertical"
         onFinish={(values) => {
-          onSubmit?.(values)
+          onSubmit?.(values) 
           form.resetFields()
           onClose()
         }}

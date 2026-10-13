@@ -8,12 +8,24 @@ import {
   photoCameraBadge,
   photoUploadSpin,
   statusPill,
-} from '../../../styles/admin'
-import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from 'react'
-import { Link, useLocation, useNavigate, useOutletContext, useParams } from 'react-router-dom'
-import { Spin } from 'antd'
-import { HugeiconsIcon } from '@hugeicons/react'
-import type { IconSvgElement } from '@hugeicons/react'
+} from "../../../styles/admin";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from "react-router-dom";
+import { Spin } from "antd";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { IconSvgElement } from "@hugeicons/react";
 import {
   AnalyticsUpIcon,
   Briefcase01Icon,
@@ -31,239 +43,253 @@ import {
   Shield01Icon,
   UserIcon,
   UserGroupIcon,
-} from '@hugeicons/core-free-icons'
+} from "@hugeicons/core-free-icons";
 import {
   useLazyGetEmployeePerformanceQuery,
   useLazyGetEmployeeQuery,
   useLazyListEmployeeAuditLogsQuery,
   useUploadEmployeePhotoMutation,
-} from '@/redux/features/employees/employeesApi'
-import { useAdminPasswordResetMutation } from '@/redux/features/users/usersApi'
-import { getApiError } from '@/lib/api'
-import { toast } from 'react-toastify'
-import { PrimaryButton } from '@/components/ui'
-import { PageHeader } from '@/components/common/Navigation'
-import { PageMeta } from '@/components/common/Meta'
-import { hasPermission } from '../../../lib/access'
+} from "@/redux/features/employees/employeesApi";
+import { useAdminPasswordResetMutation } from "@/redux/features/users/usersApi";
+import { getApiError } from "@/lib/api";
+import { toast } from "react-toastify";
+import { PrimaryButton } from "@/components/ui";
+import { PageHeader } from "@/components/common/Navigation";
+import { PageMeta } from "@/components/common/Meta";
+import { hasPermission } from "../../../lib/access";
 import type {
   AuthSession,
   EmployeeAuditLog,
   EmployeeCrmAccess,
   EmployeePerformanceSummary,
   EmployeeRecord,
-} from '../../../types'
+} from "../../../types";
 type ProfileSection = {
-  id: string
-  label: string
-  icon: IconSvgElement
-}
+  id: string;
+  label: string;
+  icon: IconSvgElement;
+};
 
 const SECTIONS: ProfileSection[] = [
-  { id: 'personal', label: 'Personal', icon: UserIcon },
-  { id: 'contact', label: 'Contact', icon: Contact01Icon },
-  { id: 'employment', label: 'Employment', icon: Briefcase01Icon },
-  { id: 'organization', label: 'Organization', icon: Building03Icon },
-  { id: 'crm', label: 'CRM access', icon: Shield01Icon },
-  { id: 'emergency', label: 'Emergency', icon: Call02Icon },
-  { id: 'documents', label: 'Documents', icon: File01Icon },
-  { id: 'performance', label: 'Performance', icon: AnalyticsUpIcon },
-  { id: 'history', label: 'Audit history', icon: Clock01Icon },
-]
+  { id: "personal", label: "Personal", icon: UserIcon },
+  { id: "contact", label: "Contact", icon: Contact01Icon },
+  { id: "employment", label: "Employment", icon: Briefcase01Icon },
+  { id: "organization", label: "Organization", icon: Building03Icon },
+  { id: "crm", label: "CRM access", icon: Shield01Icon },
+  { id: "emergency", label: "Emergency", icon: Call02Icon },
+  { id: "documents", label: "Documents", icon: File01Icon },
+  { id: "performance", label: "Performance", icon: AnalyticsUpIcon },
+  { id: "history", label: "Audit history", icon: Clock01Icon },
+];
 
 const AUDIT_ACTION_LABELS: Record<string, string> = {
-  EMPLOYEE_CREATED: 'Employee created',
-  EMPLOYEE_UPDATED: 'Profile updated',
-  EMPLOYEE_STATUS_CHANGED: 'Status changed',
-  EMPLOYEE_PHOTO_UPDATED: 'Profile photo updated',
-  EMPLOYEE_DOCUMENT_UPLOADED: 'Document uploaded',
-  EMPLOYEE_DOCUMENT_DELETED: 'Document deleted',
-}
+  EMPLOYEE_CREATED: "Employee created",
+  EMPLOYEE_UPDATED: "Profile updated",
+  EMPLOYEE_STATUS_CHANGED: "Status changed",
+  EMPLOYEE_PHOTO_UPDATED: "Profile photo updated",
+  EMPLOYEE_DOCUMENT_UPLOADED: "Document uploaded",
+  EMPLOYEE_DOCUMENT_DELETED: "Document deleted",
+};
 
 function formatAuditSummary(log: EmployeeAuditLog) {
-  const meta = (log.metadata || {}) as Record<string, unknown>
-  if (log.action === 'EMPLOYEE_STATUS_CHANGED') {
-    const fromStatus = typeof meta.fromStatus === 'string' ? meta.fromStatus : null
-    const toStatus = typeof meta.toStatus === 'string' ? meta.toStatus : null
+  const meta = (log.metadata || {}) as Record<string, unknown>;
+  if (log.action === "EMPLOYEE_STATUS_CHANGED") {
+    const fromStatus =
+      typeof meta.fromStatus === "string" ? meta.fromStatus : null;
+    const toStatus = typeof meta.toStatus === "string" ? meta.toStatus : null;
     if (fromStatus && toStatus) {
-      return `Status: ${fromStatus} → ${toStatus}`
+      return `Status: ${fromStatus} → ${toStatus}`;
     }
   }
-  if (typeof meta.type === 'string' && typeof meta.fileName === 'string') {
-    return `${meta.type}: ${meta.fileName}`
+  if (typeof meta.type === "string" && typeof meta.fileName === "string") {
+    return `${meta.type}: ${meta.fileName}`;
   }
-  if (typeof meta.employeeCode === 'string') {
-    return meta.employeeCode
+  if (typeof meta.employeeCode === "string") {
+    return meta.employeeCode;
   }
-  return AUDIT_ACTION_LABELS[log.action] || log.action
+  return AUDIT_ACTION_LABELS[log.action] || log.action;
 }
 
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024
-const PHOTO_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/jpg'])
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const PHOTO_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/jpg",
+]);
 
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
-  NID: 'NID / Identity document',
-  PHOTOGRAPH: 'Photograph',
-  CV: 'CV / Resume',
-  EDUCATIONAL_CERTIFICATE: 'Educational certificate',
-  APPOINTMENT_LETTER: 'Appointment letter',
-  JOINING_DOCUMENT: 'Joining document',
-  OTHER: 'Other',
-}
+  NID: "NID / Identity document",
+  PHOTOGRAPH: "Photograph",
+  CV: "CV / Resume",
+  EDUCATIONAL_CERTIFICATE: "Educational certificate",
+  APPOINTMENT_LETTER: "Appointment letter",
+  JOINING_DOCUMENT: "Joining document",
+  OTHER: "Other",
+};
 
 const GENDER_LABELS: Record<string, string> = {
-  MALE: 'Male',
-  FEMALE: 'Female',
-  OTHER: 'Other',
-}
+  MALE: "Male",
+  FEMALE: "Female",
+  OTHER: "Other",
+};
 
 const MARITAL_LABELS: Record<string, string> = {
-  SINGLE: 'Single',
-  MARRIED: 'Married',
-  DIVORCED: 'Divorced',
-  WIDOWED: 'Widowed',
-  OTHER: 'Other',
-}
+  SINGLE: "Single",
+  MARRIED: "Married",
+  DIVORCED: "Divorced",
+  WIDOWED: "Widowed",
+  OTHER: "Other",
+};
 
 const USER_STATUS_LABELS: Record<string, string> = {
-  ACTIVE: 'Active',
-  INACTIVE: 'Inactive',
-  SUSPENDED: 'Suspended',
-  INVITED: 'Invited',
-}
+  ACTIVE: "Active",
+  INACTIVE: "Inactive",
+  SUSPENDED: "Suspended",
+  INVITED: "Invited",
+};
 
 function displayValue(value?: string | null) {
-  const trimmed = value?.trim()
-  return trimmed ? trimmed : '—'
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : "—";
 }
 
 function formatPrettyDate(value?: string | Date | null) {
   if (!value) {
-    return '—'
+    return "—";
   }
-  const raw = typeof value === 'string' ? value.slice(0, 10) : value.toISOString().slice(0, 10)
-  const [year, month, day] = raw.split('-').map(Number)
+  const raw =
+    typeof value === "string"
+      ? value.slice(0, 10)
+      : value.toISOString().slice(0, 10);
+  const [year, month, day] = raw.split("-").map(Number);
   if (!year || !month || !day) {
-    return '—'
+    return "—";
   }
-  return new Date(year, month - 1, day).toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  return new Date(year, month - 1, day).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function formatDateTime(value?: string | Date | null) {
   if (!value) {
-    return '—'
+    return "—";
   }
-  const date = value instanceof Date ? value : new Date(value)
+  const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) {
-    return '—'
+    return "—";
   }
-  return date.toLocaleString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return date.toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function ageFromDate(value?: string | null) {
   if (!value) {
-    return null
+    return null;
   }
-  const [year, month, day] = value.slice(0, 10).split('-').map(Number)
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
   if (!year || !month || !day) {
-    return null
+    return null;
   }
-  const birth = new Date(year, month - 1, day)
-  const today = new Date()
-  let age = today.getFullYear() - birth.getFullYear()
-  const monthDiff = today.getMonth() - birth.getMonth()
+  const birth = new Date(year, month - 1, day);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-    age -= 1
+    age -= 1;
   }
-  return age >= 0 ? age : null
+  return age >= 0 ? age : null;
 }
 
 function formatTenure(joiningDate?: string | null) {
   if (!joiningDate) {
-    return '—'
+    return "—";
   }
-  const [year, month, day] = joiningDate.slice(0, 10).split('-').map(Number)
+  const [year, month, day] = joiningDate.slice(0, 10).split("-").map(Number);
   if (!year || !month || !day) {
-    return '—'
+    return "—";
   }
-  const start = new Date(year, month - 1, day)
-  const now = new Date()
-  let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())
+  const start = new Date(year, month - 1, day);
+  const now = new Date();
+  let months =
+    (now.getFullYear() - start.getFullYear()) * 12 +
+    (now.getMonth() - start.getMonth());
   if (now.getDate() < start.getDate()) {
-    months -= 1
+    months -= 1;
   }
   if (months < 0) {
-    return '—'
+    return "—";
   }
-  const years = Math.floor(months / 12)
-  const remaining = months % 12
+  const years = Math.floor(months / 12);
+  const remaining = months % 12;
   if (years === 0 && remaining === 0) {
-    return 'Joined this month'
+    return "Joined this month";
   }
   if (years === 0) {
-    return remaining === 1 ? '1 month' : `${remaining} months`
+    return remaining === 1 ? "1 month" : `${remaining} months`;
   }
   if (remaining === 0) {
-    return years === 1 ? '1 year' : `${years} years`
+    return years === 1 ? "1 year" : `${years} years`;
   }
-  return `${years} yr ${remaining} mo`
+  return `${years} yr ${remaining} mo`;
 }
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) {
-    return `${bytes} B`
+    return `${bytes} B`;
   }
   if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / 1024).toFixed(1)} KB`;
   }
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function crmAccessLabel(access: EmployeeCrmAccess) {
-  if (access === 'ENABLED') {
-    return 'Enabled'
+  if (access === "ENABLED") {
+    return "Enabled";
   }
-  if (access === 'INVITED') {
-    return 'Invited'
+  if (access === "INVITED") {
+    return "Invited";
   }
-  if (access === 'DISABLED') {
-    return 'Disabled'
+  if (access === "DISABLED") {
+    return "Disabled";
   }
-  return 'No access'
+  return "No access";
 }
 
 function employeeInitials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
+  const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) {
-    return 'E'
+    return "E";
   }
   return parts
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || '')
-    .join('')
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("");
 }
 
 function photoSrc(employee: EmployeeRecord) {
   if (!employee.photoUrl) {
-    return ''
+    return "";
   }
-  if (employee.photoUrl.startsWith('http') || employee.photoUrl.startsWith('/')) {
-    return employee.photoUrl
+  if (
+    employee.photoUrl.startsWith("http") ||
+    employee.photoUrl.startsWith("/")
+  ) {
+    return employee.photoUrl;
   }
-  return `/api/employees/${employee.id}/photo`
+  return `/api/employees/${employee.id}/photo`;
 }
 
 function documentHref(employeeId: string, documentId: string) {
-  return `/api/employees/${employeeId}/documents/${documentId}`
+  return `/api/employees/${employeeId}/documents/${documentId}`;
 }
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -272,7 +298,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
       <dt>{label}</dt>
       <dd>{children}</dd>
     </div>
-  )
+  );
 }
 
 function ProfileCard({
@@ -281,216 +307,245 @@ function ProfileCard({
   icon,
   children,
 }: {
-  id: string
-  title: string
-  icon: IconSvgElement
-  children: ReactNode
+  id: string;
+  title: string;
+  icon: IconSvgElement;
+  children: ReactNode;
 }) {
   return (
-    <article id={id} className="scroll-mt-4 rounded-2xl border border-border bg-surface px-6 py-[22px] shadow-soft [&_header]:mb-5 [&_header]:flex [&_header]:items-center [&_header]:gap-3 [&_h3]:m-0 [&_h3]:text-base">
+    <article
+      id={id}
+      className="scroll-mt-4 rounded-2xl border border-border bg-surface px-6 py-[22px] shadow-soft [&_header]:mb-5 [&_header]:flex [&_header]:items-center [&_header]:gap-3 [&_h3]:m-0 [&_h3]:text-base"
+    >
       <header>
         <span className="grid h-[30px] w-[30px] place-items-center rounded-[9px] bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] text-primary">
-          <HugeiconsIcon icon={icon} size={16} color="currentColor" strokeWidth={1.7} />
+          <HugeiconsIcon
+            icon={icon}
+            size={16}
+            color="currentColor"
+            strokeWidth={1.7}
+          />
         </span>
         <h3>{title}</h3>
       </header>
       {children}
     </article>
-  )
+  );
 }
 
 export default function EmployeeProfilePage() {
-  const { id } = useParams()
-  const auth = useOutletContext<AuthSession>()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const canEdit = hasPermission(auth, 'employee:edit')
-  const canManageEmployeeDocs = hasPermission(auth, 'employee_document:manage')
-  const canViewPerformance = hasPermission(auth, 'employee_performance:view')
-  const canViewAudit = hasPermission(auth, ['audit:view', 'employee:view', 'employee:edit'])
-  const canResendInvite = hasPermission(auth, 'user:configure')
+  const { id } = useParams();
+  const auth = useOutletContext<AuthSession>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const canEdit = hasPermission(auth, "employee:edit");
+  const canManageEmployeeDocs = hasPermission(auth, "employee_document:manage");
+  const canViewPerformance = hasPermission(auth, "employee_performance:view");
+  const canViewAudit = hasPermission(auth, [
+    "audit:view",
+    "employee:view",
+    "employee:edit",
+  ]);
+  const canResendInvite = hasPermission(auth, "user:configure");
 
-  const [employee, setEmployee] = useState<EmployeeRecord | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [activeSection, setActiveSection] = useState(SECTIONS[0].id)
-  const [photoUploading, setPhotoUploading] = useState(false)
-  const [photoError, setPhotoError] = useState('')
-  const [localPhotoPreview, setLocalPhotoPreview] = useState('')
-  const [inviteSending, setInviteSending] = useState(false)
-  const [auditLogs, setAuditLogs] = useState<EmployeeAuditLog[]>([])
-  const [auditLoading, setAuditLoading] = useState(false)
-  const [performance, setPerformance] = useState<EmployeePerformanceSummary | null>(null)
-  const [performanceLoading, setPerformanceLoading] = useState(false)
-  const [getEmployee] = useLazyGetEmployeeQuery()
-  const [listEmployeeAuditLogs] = useLazyListEmployeeAuditLogsQuery()
-  const [getEmployeePerformance] = useLazyGetEmployeePerformanceQuery()
-  const [uploadEmployeePhoto] = useUploadEmployeePhotoMutation()
-  const [adminPasswordReset] = useAdminPasswordResetMutation()
+  const [employee, setEmployee] = useState<EmployeeRecord | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [activeSection, setActiveSection] = useState(SECTIONS[0].id);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const [localPhotoPreview, setLocalPhotoPreview] = useState("");
+  const [inviteSending, setInviteSending] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<EmployeeAuditLog[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [performance, setPerformance] =
+    useState<EmployeePerformanceSummary | null>(null);
+  const [performanceLoading, setPerformanceLoading] = useState(false);
+  const [getEmployee] = useLazyGetEmployeeQuery();
+  const [listEmployeeAuditLogs] = useLazyListEmployeeAuditLogsQuery();
+  const [getEmployeePerformance] = useLazyGetEmployeePerformanceQuery();
+  const [uploadEmployeePhoto] = useUploadEmployeePhotoMutation();
+  const [adminPasswordReset] = useAdminPasswordResetMutation();
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
 
     async function load() {
       if (!id) {
-        setError('Employee not found.')
-        setLoading(false)
-        return
+        setError("Employee not found.");
+        setLoading(false);
+        return;
       }
-      setLoading(true)
+      setLoading(true);
       try {
-        const data = await getEmployee(id).unwrap()
+        const data = await getEmployee(id).unwrap();
         if (cancelled) {
-          return
+          return;
         }
-        setEmployee(data.employee)
-        setError('')
+        setEmployee(data.employee);
+        setError("");
       } catch (err) {
         if (cancelled) {
-          return
+          return;
         }
-        setEmployee(null)
-        setError(getApiError(err, 'Unable to load employee profile.'))
+        setEmployee(null);
+        setError(getApiError(err, "Unable to load employee profile."));
       }
-      setLoading(false)
+      setLoading(false);
     }
 
-    void load()
+    void load();
     return () => {
-      cancelled = true
-    }
-  }, [id, getEmployee])
+      cancelled = true;
+    };
+  }, [id, getEmployee]);
 
   useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
     async function loadExtras() {
       if (!id) {
-        return
+        return;
       }
       if (canViewAudit) {
-        setAuditLoading(true)
+        setAuditLoading(true);
         try {
-          const data = await listEmployeeAuditLogs(id).unwrap()
+          const data = await listEmployeeAuditLogs(id).unwrap();
           if (!cancelled) {
-            setAuditLogs(data.logs)
+            setAuditLogs(data.logs);
           }
         } catch {
           if (!cancelled) {
-            setAuditLogs([])
+            setAuditLogs([]);
           }
         }
         if (!cancelled) {
-          setAuditLoading(false)
+          setAuditLoading(false);
         }
       }
       if (canViewPerformance) {
-        setPerformanceLoading(true)
+        setPerformanceLoading(true);
         try {
-          const data = await getEmployeePerformance(id).unwrap()
+          const data = await getEmployeePerformance(id).unwrap();
           if (!cancelled) {
-            setPerformance(data.performance)
+            setPerformance(data.performance);
           }
         } catch {
           if (!cancelled) {
-            setPerformance(null)
+            setPerformance(null);
           }
         }
         if (!cancelled) {
-          setPerformanceLoading(false)
+          setPerformanceLoading(false);
         }
       }
     }
-    void loadExtras()
+    void loadExtras();
     return () => {
-      cancelled = true
-    }
-  }, [id, canViewAudit, canViewPerformance, listEmployeeAuditLogs, getEmployeePerformance])
+      cancelled = true;
+    };
+  }, [
+    id,
+    canViewAudit,
+    canViewPerformance,
+    listEmployeeAuditLogs,
+    getEmployeePerformance,
+  ]);
 
   useEffect(() => {
     if (!location.hash || !employee?.id) {
-      return
+      return;
     }
-    const sectionId = location.hash.replace('#', '')
+    const sectionId = location.hash.replace("#", "");
     if (!SECTIONS.some((item) => item.id === sectionId)) {
-      return
+      return;
     }
     const timer = window.setTimeout(() => {
-      document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      setActiveSection(sectionId)
-    }, 160)
-    return () => window.clearTimeout(timer)
-  }, [location.hash, employee?.id])
+      document
+        .getElementById(sectionId)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setActiveSection(sectionId);
+    }, 160);
+    return () => window.clearTimeout(timer);
+  }, [location.hash, employee?.id]);
 
-  const age = useMemo(() => ageFromDate(employee?.dateOfBirth), [employee?.dateOfBirth])
-  const photo = localPhotoPreview || (employee ? photoSrc(employee) : '')
-  const documents = employee?.documents ?? []
+  const age = useMemo(
+    () => ageFromDate(employee?.dateOfBirth),
+    [employee?.dateOfBirth],
+  );
+  const photo = localPhotoPreview || (employee ? photoSrc(employee) : "");
+  const documents = employee?.documents ?? [];
   const visibleSections = useMemo(
     () =>
       SECTIONS.filter((section) => {
-        if (section.id === 'performance') {
-          return canViewPerformance
+        if (section.id === "performance") {
+          return canViewPerformance;
         }
-        if (section.id === 'history') {
-          return canViewAudit
+        if (section.id === "history") {
+          return canViewAudit;
         }
-        return true
+        return true;
       }),
     [canViewPerformance, canViewAudit],
-  )
+  );
 
   useEffect(
     () => () => {
       if (localPhotoPreview) {
-        URL.revokeObjectURL(localPhotoPreview)
+        URL.revokeObjectURL(localPhotoPreview);
       }
     },
     [localPhotoPreview],
-  )
+  );
 
   async function onProfilePhotoChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0] || null
-    event.target.value = ''
+    const file = event.target.files?.[0] || null;
+    event.target.value = "";
     if (!file || !employee || photoUploading) {
-      return
+      return;
     }
     if (!PHOTO_TYPES.has(file.type) || file.size > MAX_PHOTO_BYTES) {
-      setPhotoError('Use a JPG, PNG, or WEBP image of 5 MB or less.')
-      return
+      setPhotoError("Use a JPG, PNG, or WEBP image of 5 MB or less.");
+      return;
     }
 
-    const preview = URL.createObjectURL(file)
+    const preview = URL.createObjectURL(file);
     setLocalPhotoPreview((current) => {
       if (current) {
-        URL.revokeObjectURL(current)
+        URL.revokeObjectURL(current);
       }
-      return preview
-    })
-    setPhotoError('')
-    setPhotoUploading(true)
+      return preview;
+    });
+    setPhotoError("");
+    setPhotoUploading(true);
     try {
-      const data = await uploadEmployeePhoto({ id: employee.id, file }).unwrap()
-      setEmployee(data.employee)
+      const data = await uploadEmployeePhoto({
+        id: employee.id,
+        file,
+      }).unwrap();
+      setEmployee(data.employee);
       setLocalPhotoPreview((current) => {
         if (current) {
-          URL.revokeObjectURL(current)
+          URL.revokeObjectURL(current);
         }
-        return ''
-      })
+        return "";
+      });
     } catch (err) {
-      setPhotoError(getApiError(err, 'Unable to upload the profile photo.'))
+      setPhotoError(getApiError(err, "Unable to upload the profile photo."));
       setLocalPhotoPreview((current) => {
         if (current) {
-          URL.revokeObjectURL(current)
+          URL.revokeObjectURL(current);
         }
-        return ''
-      })
+        return "";
+      });
     }
-    setPhotoUploading(false)
+    setPhotoUploading(false);
   }
 
   function scrollToSection(sectionId: string) {
-    setActiveSection(sectionId)
-    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setActiveSection(sectionId);
+    document
+      .getElementById(sectionId)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   if (!loading && (error || !employee)) {
@@ -502,57 +557,77 @@ export default function EmployeeProfilePage() {
         />
         <PageHeader
           title="Employee Profile"
-          subtitle={error || 'This employee could not be found.'}
+          subtitle={error || "This employee could not be found."}
           breadcrumbs={[
-            { title: 'Dashboard', path: '/dashboard' },
-            { title: 'Employees', path: '/employees' },
-            { title: 'Profile' },
+            { title: "Dashboard", path: "/dashboard" },
+            { title: "Employees", path: "/employees" },
+            { title: "Profile" },
           ]}
           extra={
-            <PrimaryButton variant="outline" onClick={() => navigate('/employees')} label="Back to Employees" />
+            <PrimaryButton
+              variant="outline"
+              onClick={() => navigate("/employees")}
+              label="Back to Employees"
+            />
           }
         />
         <div className={`${adminEmpty}`}>
           <strong>Employee profile unavailable</strong>
-          <p>{error || 'This employee could not be found.'}</p>
-          <PrimaryButton variant="outline" onClick={() => navigate('/employees')} label="Back to Employees" />
+          <p>{error || "This employee could not be found."}</p>
+          <PrimaryButton
+            variant="outline"
+            onClick={() => navigate("/employees")}
+            label="Back to Employees"
+          />
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className={`grid min-w-0 max-w-full gap-5 overflow-x-clip [&_.ant-spin-nested-loading]:grid [&_.ant-spin-nested-loading]:gap-6 [&_.ant-spin-nested-loading]:overflow-visible [&_.ant-spin-container]:grid [&_.ant-spin-container]:gap-6 [&_.ant-spin-container]:overflow-visible`}>
+    <div
+      className={`grid min-w-0 max-w-full gap-5 overflow-x-clip [&_.ant-spin-nested-loading]:grid [&_.ant-spin-nested-loading]:gap-6 [&_.ant-spin-nested-loading]:overflow-visible [&_.ant-spin-container]:grid [&_.ant-spin-container]:gap-6 [&_.ant-spin-container]:overflow-visible`}
+    >
       <PageMeta
-        title={employee?.fullName ? `${employee.fullName} — Employee` : 'Employee Profile'}
+        title={
+          employee?.fullName
+            ? `${employee.fullName} — Employee`
+            : "Employee Profile"
+        }
         description={
           employee
             ? `View employment, contact, organization, and CRM access details for ${employee.fullName}.`
-            : 'View employee profile details in EduConsult CRM.'
+            : "View employee profile details in EduConsult CRM."
         }
       />
       <PageHeader
-        title={employee?.fullName || 'Employee Profile'}
+        title={employee?.fullName || "Employee Profile"}
         subtitle="Employee Details"
         breadcrumbs={[
-          { title: 'Dashboard', path: '/dashboard' },
-          { title: 'Employees', path: '/employees' },
-          { title: employee?.employeeCode || 'Details' },
+          { title: "Dashboard", path: "/dashboard" },
+          { title: "Employees", path: "/employees" },
+          { title: employee?.employeeCode || "Details" },
         ]}
         extra={
           employee ? (
             <>
-              <PrimaryButton variant="outline" onClick={() => navigate('/employees')} label="Back to list" />
+              <PrimaryButton
+                variant="outline"
+                onClick={() => navigate("/employees")}
+                label="Back to list"
+              />
               {canManageEmployeeDocs ? (
                 <PrimaryButton
                   variant="outline"
-                  onClick={() => navigate(`/employees/${employee.id}/edit#documents`)}
+                  onClick={() =>
+                    navigate(`/employees/${employee.id}/edit#documents`)
+                  }
                   label="Manage documents"
                 />
               ) : employee.canViewDocuments !== false ? (
                 <PrimaryButton
                   variant="outline"
-                  onClick={() => scrollToSection('documents')}
+                  onClick={() => scrollToSection("documents")}
                   label="View documents"
                 />
               ) : null}
@@ -560,7 +635,14 @@ export default function EmployeeProfilePage() {
                 <PrimaryButton
                   variant="primary"
                   label="Edit profile"
-                  icon={<HugeiconsIcon icon={PencilEdit02Icon} size={16} color="currentColor" strokeWidth={1.6} />}
+                  icon={
+                    <HugeiconsIcon
+                      icon={PencilEdit02Icon}
+                      size={16}
+                      color="currentColor"
+                      strokeWidth={1.6}
+                    />
+                  }
                   onClick={() => navigate(`/employees/${employee.id}/edit`)}
                 />
               ) : null}
@@ -575,7 +657,9 @@ export default function EmployeeProfilePage() {
             <section className="flex items-start justify-between gap-7 rounded-[20px] border border-border bg-[linear-gradient(135deg,color-mix(in_srgb,var(--color-primary)_12%,var(--color-surface))_0%,var(--color-surface)_52%),var(--color-surface)] px-8 py-7 shadow-soft max-[720px]:flex-col">
               <div className="flex min-w-0 gap-[22px] max-[720px]:flex-col">
                 {canEdit ? (
-                  <div className={`relative shrink-0${photoUploading ? ` ${isUploading}` : ''}`}>
+                  <div
+                    className={`relative shrink-0${photoUploading ? ` ${isUploading}` : ""}`}
+                  >
                     <input
                       id="employee-profile-photo"
                       className="sr-only"
@@ -590,9 +674,15 @@ export default function EmployeeProfilePage() {
                     >
                       <span className="relative block h-24 w-24 overflow-hidden rounded-[28px]">
                         {photo ? (
-                          <img className="grid h-24 w-24 shrink-0 place-items-center rounded-[28px] border-[3px] border-surface bg-[var(--avatar-bg)] text-[1.7rem] font-bold text-[var(--avatar-fg)] object-cover shadow-[0_8px_20px_rgba(18,32,51,0.08)]" src={photo} alt="" />
+                          <img
+                            className="grid h-24 w-24 shrink-0 place-items-center rounded-[28px] border-[3px] border-surface bg-[var(--avatar-bg)] text-[1.7rem] font-bold text-[var(--avatar-fg)] object-cover shadow-[0_8px_20px_rgba(18,32,51,0.08)]"
+                            src={photo}
+                            alt=""
+                          />
                         ) : (
-                          <span className="grid h-24 w-24 shrink-0 place-items-center rounded-[28px] border-[3px] border-surface bg-[var(--avatar-bg)] text-[1.7rem] font-bold text-[var(--avatar-fg)] object-cover shadow-[0_8px_20px_rgba(18,32,51,0.08)] is-fallback">{employeeInitials(employee.fullName)}</span>
+                          <span className="grid h-24 w-24 shrink-0 place-items-center rounded-[28px] border-[3px] border-surface bg-[var(--avatar-bg)] text-[1.7rem] font-bold text-[var(--avatar-fg)] object-cover shadow-[0_8px_20px_rgba(18,32,51,0.08)] is-fallback">
+                            {employeeInitials(employee.fullName)}
+                          </span>
                         )}
                         {photoUploading ? (
                           <span className={`${photoUploadSpin}`}>
@@ -600,75 +690,144 @@ export default function EmployeeProfilePage() {
                           </span>
                         ) : null}
                       </span>
-                      <span className={`${photoCameraBadge} photo-camera-badge`} aria-hidden>
-                        <HugeiconsIcon icon={Camera01Icon} size={16} color="currentColor" strokeWidth={1.8} />
+                      <span
+                        className={`${photoCameraBadge} photo-camera-badge`}
+                        aria-hidden
+                      >
+                        <HugeiconsIcon
+                          icon={Camera01Icon}
+                          size={16}
+                          color="currentColor"
+                          strokeWidth={1.8}
+                        />
                       </span>
-                      <span className="sr-only">{photoUploading ? 'Uploading profile photo' : 'Change profile photo'}</span>
+                      <span className="sr-only">
+                        {photoUploading
+                          ? "Uploading profile photo"
+                          : "Change profile photo"}
+                      </span>
                     </label>
-                    {photoError ? <p className={`${fieldError}`}>{photoError}</p> : null}
+                    {photoError ? (
+                      <p className={`${fieldError}`}>{photoError}</p>
+                    ) : null}
                   </div>
                 ) : photo ? (
-                  <img className="grid h-24 w-24 shrink-0 place-items-center rounded-[28px] border-[3px] border-surface bg-[var(--avatar-bg)] text-[1.7rem] font-bold text-[var(--avatar-fg)] object-cover shadow-[0_8px_20px_rgba(18,32,51,0.08)]" src={photo} alt="" />
+                  <img
+                    className="grid h-24 w-24 shrink-0 place-items-center rounded-[28px] border-[3px] border-surface bg-[var(--avatar-bg)] text-[1.7rem] font-bold text-[var(--avatar-fg)] object-cover shadow-[0_8px_20px_rgba(18,32,51,0.08)]"
+                    src={photo}
+                    alt=""
+                  />
                 ) : (
-                  <span className="grid h-24 w-24 shrink-0 place-items-center rounded-[28px] border-[3px] border-surface bg-[var(--avatar-bg)] text-[1.7rem] font-bold text-[var(--avatar-fg)] object-cover shadow-[0_8px_20px_rgba(18,32,51,0.08)] is-fallback">{employeeInitials(employee.fullName)}</span>
+                  <span className="grid h-24 w-24 shrink-0 place-items-center rounded-[28px] border-[3px] border-surface bg-[var(--avatar-bg)] text-[1.7rem] font-bold text-[var(--avatar-fg)] object-cover shadow-[0_8px_20px_rgba(18,32,51,0.08)] is-fallback">
+                    {employeeInitials(employee.fullName)}
+                  </span>
                 )}
                 <div className="min-w-0 [&_h1]:my-1.5 [&_h1]:text-[1.7rem] [&_h1]:leading-tight [&_h1]:tracking-[-0.03em] [&_p]:mb-4 [&_p]:mt-0 [&_p]:text-text-muted">
-                  <div className="text-[0.78rem] font-bold tracking-[0.04em] text-text-muted uppercase">{employee.employeeCode}</div>
+                  <div className="text-[0.78rem] font-bold tracking-[0.04em] text-text-muted uppercase">
+                    {employee.employeeCode}
+                  </div>
                   <h1>{employee.fullName}</h1>
                   <p>
-                    {[employee.designation?.name, employee.department?.name, employee.team?.name]
+                    {[
+                      employee.designation?.name,
+                      employee.department?.name,
+                      employee.team?.name,
+                    ]
                       .filter(Boolean)
-                      .join(' · ') || 'No assignment recorded'}
+                      .join(" · ") || "No assignment recorded"}
                   </p>
                   <div className="flex flex-wrap gap-2.5">
-                    <span className={employmentStatusPillClass(employee.employmentStatus?.code)}>
-                      {employee.employmentStatus?.name || 'Unknown status'}
+                    <span
+                      className={employmentStatusPillClass(
+                        employee.employmentStatus?.code,
+                      )}
+                    >
+                      {employee.employmentStatus?.name || "Unknown status"}
                     </span>
-                    <span className={crmAccessPillClass(employee.crmAccess.toLowerCase())}>
+                    <span
+                      className={crmAccessPillClass(
+                        employee.crmAccess.toLowerCase(),
+                      )}
+                    >
                       CRM {crmAccessLabel(employee.crmAccess)}
                     </span>
                     {employee.employmentType?.name ? (
-                      <span className={`${statusPill} bg-[color-mix(in_srgb,var(--color-primary)_10%,var(--color-surface))] text-primary`}>{employee.employmentType.name}</span>
+                      <span
+                        className={`${statusPill} bg-[color-mix(in_srgb,var(--color-primary)_10%,var(--color-surface))] text-primary`}
+                      >
+                        {employee.employmentType.name}
+                      </span>
                     ) : null}
                   </div>
                 </div>
               </div>
             </section>
 
-            <section className="grid grid-cols-1 gap-4 min-[1101px]:grid-cols-4 [&_article]:flex [&_article]:items-start [&_article]:gap-3.5 [&_article]:rounded-2xl [&_article]:border [&_article]:border-border [&_article]:bg-surface [&_article]:px-5 [&_article]:py-[18px] [&_article]:shadow-soft [&_article_svg]:mt-0.5 [&_article_svg]:text-primary [&_span]:block [&_span]:text-[0.75rem] [&_span]:text-text-muted [&_strong]:mt-1.5 [&_strong]:block [&_strong]:text-[0.95rem] [&_a]:text-inherit [&_a]:no-underline hover:[&_a]:text-primary hover:[&_a]:underline" aria-label="Employment snapshot">
+            <section
+              className="grid grid-cols-1 gap-4 min-[1101px]:grid-cols-4 [&_article]:flex [&_article]:items-start [&_article]:gap-3.5 [&_article]:rounded-2xl [&_article]:border [&_article]:border-border [&_article]:bg-surface [&_article]:px-5 [&_article]:py-[18px] [&_article]:shadow-soft [&_article_svg]:mt-0.5 [&_article_svg]:text-primary [&_span]:block [&_span]:text-[0.75rem] [&_span]:text-text-muted [&_strong]:mt-1.5 [&_strong]:block [&_strong]:text-[0.95rem] [&_a]:text-inherit [&_a]:no-underline hover:[&_a]:text-primary hover:[&_a]:underline"
+              aria-label="Employment snapshot"
+            >
               <article>
-                <HugeiconsIcon icon={Calendar03Icon} size={18} color="currentColor" strokeWidth={1.7} />
+                <HugeiconsIcon
+                  icon={Calendar03Icon}
+                  size={18}
+                  color="currentColor"
+                  strokeWidth={1.7}
+                />
                 <div>
                   <span>Joining date</span>
                   <strong>{formatPrettyDate(employee.joiningDate)}</strong>
                 </div>
               </article>
               <article>
-                <HugeiconsIcon icon={Clock01Icon} size={18} color="currentColor" strokeWidth={1.7} />
+                <HugeiconsIcon
+                  icon={Clock01Icon}
+                  size={18}
+                  color="currentColor"
+                  strokeWidth={1.7}
+                />
                 <div>
                   <span>Tenure</span>
                   <strong>{formatTenure(employee.joiningDate)}</strong>
                 </div>
               </article>
               <article>
-                <HugeiconsIcon icon={UserGroupIcon} size={18} color="currentColor" strokeWidth={1.7} />
+                <HugeiconsIcon
+                  icon={UserGroupIcon}
+                  size={18}
+                  color="currentColor"
+                  strokeWidth={1.7}
+                />
                 <div>
                   <span>Reporting manager</span>
                   <strong>
                     {employee.reportingManager ? (
-                      <Link to={`/employees/${employee.reportingManager.id}`}>{employee.reportingManager.fullName}</Link>
+                      <Link
+                        className="text-primary"
+                        to={`/employees/${employee.reportingManager.id}`}
+                        style={{ color: "var(--primary)" }}
+                      >
+                        {employee.reportingManager.fullName}
+                      </Link>
                     ) : (
-                      '—'
+                      "—"
                     )}
                   </strong>
                 </div>
               </article>
               <article>
-                <HugeiconsIcon icon={Mail01Icon} size={18} color="currentColor" strokeWidth={1.7} />
+                <HugeiconsIcon
+                  icon={Mail01Icon}
+                  size={18}
+                  color="currentColor"
+                  strokeWidth={1.7}
+                />
                 <div>
                   <span>Official email</span>
                   <strong>
-                    <a href={`mailto:${employee.officialEmail}`}>{employee.officialEmail}</a>
+                    <a href={`mailto:${employee.officialEmail}`}>
+                      {employee.officialEmail}
+                    </a>
                   </strong>
                 </div>
               </article>
@@ -676,140 +835,255 @@ export default function EmployeeProfilePage() {
 
             <div className="grid grid-cols-1 items-start gap-x-8 gap-y-5 min-[1101px]:grid-cols-[220px_minmax(0,1fr)]">
               <aside className="sticky top-4 z-6 grid items-start gap-4 self-start max-[1100px]:top-3 max-[1100px]:bg-page-bg max-[1100px]:pb-1 max-[960px]:top-[7.75rem]">
-                <nav className="grid gap-1.5 rounded-2xl border border-border bg-surface p-2.5 shadow-soft max-[1100px]:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]" aria-label="Profile sections">
+                <nav
+                  className="grid gap-1.5 rounded-2xl border border-border bg-surface p-2.5 shadow-soft max-[1100px]:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]"
+                  aria-label="Profile sections"
+                >
                   {visibleSections.map((section) => {
-                    const active = activeSection === section.id
+                    const active = activeSection === section.id;
                     return (
                       <button
                         key={section.id}
                         type="button"
                         className={[
-                          'flex w-full cursor-pointer items-center gap-2.5 rounded-[10px] border-0 px-3 py-2.5 text-left font-[inherit] transition-colors',
+                          "flex w-full cursor-pointer items-center gap-2.5 rounded-[10px] border-0 px-3 py-2.5 text-left font-[inherit] transition-colors",
                           active
-                            ? 'bg-section-tab-active-bg font-semibold text-section-tab-active-fg'
-                            : 'bg-section-tab-bg text-section-tab-fg hover:bg-section-tab-hover-bg',
-                        ].join(' ')}
-                        aria-current={active ? 'true' : undefined}
+                            ? "bg-section-tab-active-bg font-semibold text-section-tab-active-fg"
+                            : "bg-section-tab-bg text-section-tab-fg hover:bg-section-tab-hover-bg",
+                        ].join(" ")}
+                        aria-current={active ? "true" : undefined}
                         onClick={() => scrollToSection(section.id)}
                       >
-                        <HugeiconsIcon icon={section.icon} size={16} color="currentColor" strokeWidth={1.7} />
+                        <HugeiconsIcon
+                          icon={section.icon}
+                          size={16}
+                          color="currentColor"
+                          strokeWidth={1.7}
+                        />
                         <span>{section.label}</span>
                       </button>
-                    )
+                    );
                   })}
                 </nav>
 
                 <div className="rounded-2xl border border-border bg-surface p-4 [&_h4]:mb-3.5 [&_h4]:mt-0 [&_h4]:text-[0.86rem] [&_p]:mb-3 [&_p]:mt-0 [&_p]:flex [&_p]:items-start [&_p]:gap-2.5 [&_p]:text-[0.84rem] [&_p]:text-text-muted [&_p:last-child]:mb-0 [&_a]:text-inherit [&_a]:no-underline hover:[&_a]:text-primary">
                   <h4>Primary contact</h4>
                   <p>
-                    <HugeiconsIcon icon={Call02Icon} size={14} color="currentColor" strokeWidth={1.7} />
-                    {employee.mobile ? <a href={`tel:${employee.mobile}`}>{employee.mobile}</a> : '—'}
-                  </p>
-                  <p>
-                    <HugeiconsIcon icon={Mail01Icon} size={14} color="currentColor" strokeWidth={1.7} />
-                    {employee.personalEmail ? (
-                      <a href={`mailto:${employee.personalEmail}`}>{employee.personalEmail}</a>
+                    <HugeiconsIcon
+                      icon={Call02Icon}
+                      size={14}
+                      color="currentColor"
+                      strokeWidth={1.7}
+                    />
+                    {employee.mobile ? (
+                      <a href={`tel:${employee.mobile}`}>{employee.mobile}</a>
                     ) : (
-                      'No personal email'
+                      "—"
                     )}
                   </p>
                   <p>
-                    <HugeiconsIcon icon={Location01Icon} size={14} color="currentColor" strokeWidth={1.7} />
+                    <HugeiconsIcon
+                      icon={Mail01Icon}
+                      size={14}
+                      color="currentColor"
+                      strokeWidth={1.7}
+                    />
+                    {employee.personalEmail ? (
+                      <a href={`mailto:${employee.personalEmail}`}>
+                        {employee.personalEmail}
+                      </a>
+                    ) : (
+                      "No personal email"
+                    )}
+                  </p>
+                  <p>
+                    <HugeiconsIcon
+                      icon={Location01Icon}
+                      size={14}
+                      color="currentColor"
+                      strokeWidth={1.7}
+                    />
                     {displayValue(employee.presentAddress)}
                   </p>
                 </div>
               </aside>
 
               <div className="grid gap-5">
-                <ProfileCard id="personal" title="Personal information" icon={UserIcon}>
+                <ProfileCard
+                  id="personal"
+                  title="Personal information"
+                  icon={UserIcon}
+                >
                   <dl className="m-0 grid grid-cols-1 gap-x-10 gap-y-5 min-[721px]:grid-cols-2 [&_dt]:text-[0.76rem] [&_dt]:tracking-[0.03em] [&_dt]:text-text-muted [&_dt]:uppercase [&_dd]:mt-1.5 [&_dd]:break-words [&_dd]:text-text [&_a]:text-primary [&_a]:no-underline hover:[&_a]:underline">
                     <Field label="Full name">{employee.fullName}</Field>
                     <Field label="Employee ID">{employee.employeeCode}</Field>
-                    <Field label="Gender">{employee.gender ? GENDER_LABELS[employee.gender] || employee.gender : '—'}</Field>
+                    <Field label="Gender">
+                      {employee.gender
+                        ? GENDER_LABELS[employee.gender] || employee.gender
+                        : "—"}
+                    </Field>
                     <Field label="Date of birth">
                       {formatPrettyDate(employee.dateOfBirth)}
-                      {age != null ? <span className="font-medium text-text-muted"> ({age} years)</span> : null}
+                      {age != null ? (
+                        <span className="font-medium text-text-muted">
+                          {" "}
+                          ({age} years)
+                        </span>
+                      ) : null}
                     </Field>
-                    <Field label="Nationality">{displayValue(employee.nationality)}</Field>
+                    <Field label="Nationality">
+                      {displayValue(employee.nationality)}
+                    </Field>
                     <Field label="NID / Passport no.">
                       {employee.canViewSensitive === false
-                        ? 'Restricted'
+                        ? "Restricted"
                         : displayValue(employee.identityNumber)}
                     </Field>
                     <Field label="Marital status">
-                      {employee.maritalStatus ? MARITAL_LABELS[employee.maritalStatus] || employee.maritalStatus : '—'}
+                      {employee.maritalStatus
+                        ? MARITAL_LABELS[employee.maritalStatus] ||
+                          employee.maritalStatus
+                        : "—"}
                     </Field>
                   </dl>
                 </ProfileCard>
 
-                <ProfileCard id="contact" title="Contact information" icon={Contact01Icon}>
+                <ProfileCard
+                  id="contact"
+                  title="Contact information"
+                  icon={Contact01Icon}
+                >
                   <dl className="m-0 grid grid-cols-1 gap-x-10 gap-y-5 min-[721px]:grid-cols-2 [&_dt]:text-[0.76rem] [&_dt]:tracking-[0.03em] [&_dt]:text-text-muted [&_dt]:uppercase [&_dd]:mt-1.5 [&_dd]:break-words [&_dd]:text-text [&_a]:text-primary [&_a]:no-underline hover:[&_a]:underline">
                     <Field label="Personal mobile">
-                      {employee.mobile ? <a href={`tel:${employee.mobile}`}>{employee.mobile}</a> : '—'}
+                      {employee.mobile ? (
+                        <a href={`tel:${employee.mobile}`}>{employee.mobile}</a>
+                      ) : (
+                        "—"
+                      )}
                     </Field>
                     <Field label="Personal email">
                       {employee.personalEmail ? (
-                        <a href={`mailto:${employee.personalEmail}`}>{employee.personalEmail}</a>
+                        <a href={`mailto:${employee.personalEmail}`}>
+                          {employee.personalEmail}
+                        </a>
                       ) : (
-                        '—'
+                        "—"
                       )}
                     </Field>
                     <Field label="Official email">
-                      <a href={`mailto:${employee.officialEmail}`}>{employee.officialEmail}</a>
+                      <a href={`mailto:${employee.officialEmail}`}>
+                        {employee.officialEmail}
+                      </a>
                     </Field>
-                    <Field label="Present address">{displayValue(employee.presentAddress)}</Field>
-                    <Field label="Permanent address">{displayValue(employee.permanentAddress)}</Field>
+                    <Field label="Present address">
+                      {displayValue(employee.presentAddress)}
+                    </Field>
+                    <Field label="Permanent address">
+                      {displayValue(employee.permanentAddress)}
+                    </Field>
                   </dl>
                 </ProfileCard>
 
-                <ProfileCard id="employment" title="Employment information" icon={Briefcase01Icon}>
+                <ProfileCard
+                  id="employment"
+                  title="Employment information"
+                  icon={Briefcase01Icon}
+                >
                   <dl className="m-0 grid grid-cols-1 gap-x-10 gap-y-5 min-[721px]:grid-cols-2 [&_dt]:text-[0.76rem] [&_dt]:tracking-[0.03em] [&_dt]:text-text-muted [&_dt]:uppercase [&_dd]:mt-1.5 [&_dd]:break-words [&_dd]:text-text [&_a]:text-primary [&_a]:no-underline hover:[&_a]:underline">
-                    <Field label="Designation">{displayValue(employee.designation?.name)}</Field>
-                    <Field label="Employment type">{displayValue(employee.employmentType?.name)}</Field>
-                    <Field label="Employment status">{displayValue(employee.employmentStatus?.name)}</Field>
-                    <Field label="Joining date">{formatPrettyDate(employee.joiningDate)}</Field>
-                    <Field label="Tenure">{formatTenure(employee.joiningDate)}</Field>
-                    <Field label="Resignation date">{formatPrettyDate(employee.resignationDate)}</Field>
-                    <Field label="Termination date">{formatPrettyDate(employee.terminationDate)}</Field>
+                    <Field label="Designation">
+                      {displayValue(employee.designation?.name)}
+                    </Field>
+                    <Field label="Employment type">
+                      {displayValue(employee.employmentType?.name)}
+                    </Field>
+                    <Field label="Employment status">
+                      {displayValue(employee.employmentStatus?.name)}
+                    </Field>
+                    <Field label="Joining date">
+                      {formatPrettyDate(employee.joiningDate)}
+                    </Field>
+                    <Field label="Tenure">
+                      {formatTenure(employee.joiningDate)}
+                    </Field>
+                    <Field label="Resignation date">
+                      {formatPrettyDate(employee.resignationDate)}
+                    </Field>
+                    <Field label="Termination date">
+                      {formatPrettyDate(employee.terminationDate)}
+                    </Field>
                     {employee.canViewSensitive !== false ? (
                       <>
-                        <Field label="Termination reason">{displayValue(employee.terminationReason)}</Field>
-                        <Field label="Termination remarks">{displayValue(employee.terminationRemarks)}</Field>
+                        <Field label="Termination reason">
+                          {displayValue(employee.terminationReason)}
+                        </Field>
+                        <Field label="Termination remarks">
+                          {displayValue(employee.terminationRemarks)}
+                        </Field>
                       </>
                     ) : null}
-                    <Field label="Rejoining date">{formatPrettyDate(employee.rejoiningDate)}</Field>
+                    <Field label="Rejoining date">
+                      {formatPrettyDate(employee.rejoiningDate)}
+                    </Field>
                   </dl>
                 </ProfileCard>
 
-                <ProfileCard id="organization" title="Organization structure" icon={Building03Icon}>
+                <ProfileCard
+                  id="organization"
+                  title="Organization structure"
+                  icon={Building03Icon}
+                >
                   <dl className="m-0 grid grid-cols-1 gap-x-10 gap-y-5 min-[721px]:grid-cols-2 [&_dt]:text-[0.76rem] [&_dt]:tracking-[0.03em] [&_dt]:text-text-muted [&_dt]:uppercase [&_dd]:mt-1.5 [&_dd]:break-words [&_dd]:text-text [&_a]:text-primary [&_a]:no-underline hover:[&_a]:underline">
-                    <Field label="Department">{displayValue(employee.department?.name)}</Field>
-                    <Field label="Team">{displayValue(employee.team?.name)}</Field>
+                    <Field label="Department">
+                      {displayValue(employee.department?.name)}
+                    </Field>
+                    <Field label="Team">
+                      {displayValue(employee.team?.name)}
+                    </Field>
                     <Field label="Reporting manager">
                       {employee.reportingManager ? (
                         <>
-                          <Link to={`/employees/${employee.reportingManager.id}`}>{employee.reportingManager.fullName}</Link>
-                          <span className="font-medium text-text-muted"> ({employee.reportingManager.employeeCode})</span>
+                          <Link
+                            to={`/employees/${employee.reportingManager.id}`}
+                          >
+                            {employee.reportingManager.fullName}
+                          </Link>
+                          <span className="font-medium text-text-muted">
+                            {" "}
+                            ({employee.reportingManager.employeeCode})
+                          </span>
                         </>
                       ) : (
-                        '—'
+                        "—"
                       )}
                     </Field>
-                    <Field label="CRM role">{displayValue(employee.role?.name)}</Field>
+                    <Field label="CRM role">
+                      {displayValue(employee.role?.name)}
+                    </Field>
                   </dl>
                 </ProfileCard>
 
                 <ProfileCard id="crm" title="CRM access" icon={Shield01Icon}>
                   <dl className="m-0 grid grid-cols-1 gap-x-10 gap-y-5 min-[721px]:grid-cols-2 [&_dt]:text-[0.76rem] [&_dt]:tracking-[0.03em] [&_dt]:text-text-muted [&_dt]:uppercase [&_dd]:mt-1.5 [&_dd]:break-words [&_dd]:text-text [&_a]:text-primary [&_a]:no-underline hover:[&_a]:underline">
-                    <Field label="CRM access">{crmAccessLabel(employee.crmAccess)}</Field>
-                    <Field label="Linked account">{employee.user ? 'Yes' : 'No CRM user'}</Field>
-                    <Field label="Username">{displayValue(employee.user?.username)}</Field>
-                    <Field label="Account status">
-                      {employee.user?.status ? USER_STATUS_LABELS[employee.user.status] || employee.user.status : '—'}
+                    <Field label="CRM access">
+                      {crmAccessLabel(employee.crmAccess)}
                     </Field>
-                    <Field label="Role key">{displayValue(employee.role?.key)}</Field>
+                    <Field label="Linked account">
+                      {employee.user ? "Yes" : "No CRM user"}
+                    </Field>
+                    <Field label="Username">
+                      {displayValue(employee.user?.username)}
+                    </Field>
+                    <Field label="Account status">
+                      {employee.user?.status
+                        ? USER_STATUS_LABELS[employee.user.status] ||
+                          employee.user.status
+                        : "—"}
+                    </Field>
+                    <Field label="Role key">
+                      {displayValue(employee.role?.key)}
+                    </Field>
                   </dl>
-                  {canResendInvite && employee.user?.status === 'INVITED' ? (
+                  {canResendInvite && employee.user?.status === "INVITED" ? (
                     <div className="mt-5">
                       <PrimaryButton
                         size="sm"
@@ -819,61 +1093,88 @@ export default function EmployeeProfilePage() {
                         onClick={() => {
                           void (async () => {
                             if (!employee.user?.id) {
-                              return
+                              return;
                             }
-                            setInviteSending(true)
+                            setInviteSending(true);
                             try {
-                              const data = await adminPasswordReset(employee.user.id).unwrap()
+                              const data = await adminPasswordReset(
+                                employee.user.id,
+                              ).unwrap();
                               toast.success(
                                 data.devResetPath
                                   ? `Invite resent. Dev link: ${data.devResetPath}`
-                                  : data.message || `Invite resent to ${employee.officialEmail}.`,
-                              )
+                                  : data.message ||
+                                      `Invite resent to ${employee.officialEmail}.`,
+                              );
                             } catch (err) {
-                              toast.error(getApiError(err, 'Unable to resend invite.'))
+                              toast.error(
+                                getApiError(err, "Unable to resend invite."),
+                              );
                             } finally {
-                              setInviteSending(false)
+                              setInviteSending(false);
                             }
-                          })()
+                          })();
                         }}
                       />
                       <p className="mt-2 mb-0 text-[0.82rem] text-text-muted">
-                        Sends a fresh password-setup link to {employee.officialEmail}.
+                        Sends a fresh password-setup link to{" "}
+                        {employee.officialEmail}.
                       </p>
                     </div>
                   ) : null}
                 </ProfileCard>
 
-                <ProfileCard id="emergency" title="Emergency contact" icon={Call02Icon}>
+                <ProfileCard
+                  id="emergency"
+                  title="Emergency contact"
+                  icon={Call02Icon}
+                >
                   {employee.canViewSensitive === false ? (
-                    <p className="m-0 text-text-muted">Sensitive emergency contact details are restricted for your role.</p>
+                    <p className="m-0 text-text-muted">
+                      Sensitive emergency contact details are restricted for
+                      your role.
+                    </p>
                   ) : (
                     <dl className="m-0 grid grid-cols-1 gap-x-10 gap-y-5 min-[721px]:grid-cols-2 [&_dt]:text-[0.76rem] [&_dt]:tracking-[0.03em] [&_dt]:text-text-muted [&_dt]:uppercase [&_dd]:mt-1.5 [&_dd]:break-words [&_dd]:text-text [&_a]:text-primary [&_a]:no-underline hover:[&_a]:underline">
-                      <Field label="Contact name">{displayValue(employee.emergencyName)}</Field>
-                      <Field label="Relationship">{displayValue(employee.emergencyRelationship)}</Field>
+                      <Field label="Contact name">
+                        {displayValue(employee.emergencyName)}
+                      </Field>
+                      <Field label="Relationship">
+                        {displayValue(employee.emergencyRelationship)}
+                      </Field>
                       <Field label="Mobile">
                         {employee.emergencyMobile ? (
-                          <a href={`tel:${employee.emergencyMobile}`}>{employee.emergencyMobile}</a>
+                          <a href={`tel:${employee.emergencyMobile}`}>
+                            {employee.emergencyMobile}
+                          </a>
                         ) : (
-                          '—'
+                          "—"
                         )}
                       </Field>
-                      <Field label="Address">{displayValue(employee.emergencyAddress)}</Field>
+                      <Field label="Address">
+                        {displayValue(employee.emergencyAddress)}
+                      </Field>
                     </dl>
                   )}
                 </ProfileCard>
 
                 <ProfileCard id="documents" title="Documents" icon={File01Icon}>
                   {employee.canViewDocuments === false ? (
-                    <p className="m-0 text-text-muted">Employee documents are restricted for your role.</p>
+                    <p className="m-0 text-text-muted">
+                      Employee documents are restricted for your role.
+                    </p>
                   ) : documents.length === 0 ? (
-                    <p className="m-0 text-text-muted">No documents have been uploaded for this employee.</p>
+                    <p className="m-0 text-text-muted">
+                      No documents have been uploaded for this employee.
+                    </p>
                   ) : (
                     <ul className="m-0 grid list-none gap-3 p-0 [&_li]:flex [&_li]:items-center [&_li]:justify-between [&_li]:gap-3 [&_li]:rounded-xl [&_li]:border [&_li]:border-border-subtle [&_li]:bg-[color-mix(in_srgb,var(--color-page-bg)_70%,var(--color-surface))] [&_li]:px-3.5 [&_li]:py-3 max-[720px]:[&_li]:grid [&_strong]:block [&_span]:block [&_span]:text-[0.8rem] [&_span]:text-text-muted">
                       {documents.map((doc) => (
                         <li key={doc.id}>
                           <div>
-                            <strong>{DOCUMENT_TYPE_LABELS[doc.type] || doc.type}</strong>
+                            <strong>
+                              {DOCUMENT_TYPE_LABELS[doc.type] || doc.type}
+                            </strong>
                             <span>
                               {doc.fileName} · {formatFileSize(doc.fileSize)}
                             </span>
@@ -884,7 +1185,12 @@ export default function EmployeeProfilePage() {
                             target="_blank"
                             rel="noreferrer"
                           >
-                            <HugeiconsIcon icon={Download01Icon} size={15} color="currentColor" strokeWidth={1.7} />
+                            <HugeiconsIcon
+                              icon={Download01Icon}
+                              size={15}
+                              color="currentColor"
+                              strokeWidth={1.7}
+                            />
                             View
                           </a>
                         </li>
@@ -897,27 +1203,42 @@ export default function EmployeeProfilePage() {
                         size="sm"
                         variant="outline"
                         label="Manage documents"
-                        onClick={() => navigate(`/employees/${employee.id}/edit#documents`)}
+                        onClick={() =>
+                          navigate(`/employees/${employee.id}/edit#documents`)
+                        }
                       />
                     </div>
                   ) : null}
                 </ProfileCard>
 
                 {canViewPerformance ? (
-                  <ProfileCard id="performance" title="Performance" icon={AnalyticsUpIcon}>
+                  <ProfileCard
+                    id="performance"
+                    title="Performance"
+                    icon={AnalyticsUpIcon}
+                  >
                     {performanceLoading ? (
                       <Spin size="small" />
                     ) : !performance?.available ? (
                       <p className="m-0 text-text-muted">
-                        {performance?.message || 'Performance metrics are not available for this employee.'}
+                        {performance?.message ||
+                          "Performance metrics are not available for this employee."}
                       </p>
                     ) : (
                       <>
                         <dl className="m-0 grid grid-cols-2 gap-x-10 gap-y-5 min-[721px]:grid-cols-3 [&_dt]:text-[0.76rem] [&_dt]:tracking-[0.03em] [&_dt]:text-text-muted [&_dt]:uppercase [&_dd]:mt-1.5 [&_dd]:break-words [&_dd]:text-text">
-                          <Field label="Follow-ups due">{performance.summary?.due ?? 0}</Field>
-                          <Field label="Completed">{performance.summary?.completed ?? 0}</Field>
-                          <Field label="On time">{performance.summary?.onTime ?? 0}</Field>
-                          <Field label="Overdue">{performance.summary?.overdue ?? 0}</Field>
+                          <Field label="Follow-ups due">
+                            {performance.summary?.due ?? 0}
+                          </Field>
+                          <Field label="Completed">
+                            {performance.summary?.completed ?? 0}
+                          </Field>
+                          <Field label="On time">
+                            {performance.summary?.onTime ?? 0}
+                          </Field>
+                          <Field label="Overdue">
+                            {performance.summary?.overdue ?? 0}
+                          </Field>
                           <Field label="Completion rate">{`${performance.summary?.completionRate ?? 0}%`}</Field>
                           <Field label="On-time rate">{`${performance.summary?.onTimeRate ?? 0}%`}</Field>
                         </dl>
@@ -930,7 +1251,7 @@ export default function EmployeeProfilePage() {
                               navigate(
                                 employee.user?.id
                                   ? `/reports?tab=employee-performance&detail=${employee.user.id}`
-                                  : '/reports?tab=employee-performance',
+                                  : "/reports?tab=employee-performance",
                               )
                             }
                           />
@@ -947,11 +1268,17 @@ export default function EmployeeProfilePage() {
                 ) : null}
 
                 {canViewAudit ? (
-                  <ProfileCard id="history" title="Audit history" icon={Clock01Icon}>
+                  <ProfileCard
+                    id="history"
+                    title="Audit history"
+                    icon={Clock01Icon}
+                  >
                     {auditLoading ? (
                       <Spin size="small" />
                     ) : auditLogs.length === 0 ? (
-                      <p className="m-0 text-text-muted">No profile changes have been recorded yet.</p>
+                      <p className="m-0 text-text-muted">
+                        No profile changes have been recorded yet.
+                      </p>
                     ) : (
                       <ul className="m-0 grid list-none gap-3 p-0">
                         {auditLogs.map((log) => (
@@ -967,7 +1294,9 @@ export default function EmployeeProfilePage() {
                             </span>
                             <span className="mt-1 block text-[0.78rem] text-text-muted">
                               {formatDateTime(log.createdAt)}
-                              {log.user ? ` · Changed by ${log.user.fullName}` : ''}
+                              {log.user
+                                ? ` · Changed by ${log.user.fullName}`
+                                : ""}
                             </span>
                           </li>
                         ))}
@@ -977,7 +1306,8 @@ export default function EmployeeProfilePage() {
                 ) : null}
 
                 <p className="m-0 text-[0.8rem] text-text-muted">
-                  Record created {formatDateTime(employee.createdAt)} · Last updated {formatDateTime(employee.updatedAt)}
+                  Record created {formatDateTime(employee.createdAt)} · Last
+                  updated {formatDateTime(employee.updatedAt)}
                 </p>
               </div>
             </div>
@@ -987,5 +1317,5 @@ export default function EmployeeProfilePage() {
         )}
       </Spin>
     </div>
-  )
+  );
 }

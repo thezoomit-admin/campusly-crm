@@ -26,69 +26,83 @@ import {
   statusConfirmPanel,
   tableWrap,
   adminTableRowStatusUpdated,
-} from '../../../styles/admin'
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
-import { Link, useLocation, useNavigate, useOutletContext } from 'react-router-dom'
+} from "../../../styles/admin";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useOutletContext,
+} from "react-router-dom";
 import {
   useLazyListEmployeeOptionsQuery,
   useLazyListEmployeesQuery,
   useUpdateEmployeeStatusMutation,
-} from '@/redux/features/employees/employeesApi'
-import { getApiError, toQuery } from '@/lib/api'
-import { HugeiconsIcon } from '@hugeicons/react'
-import type { IconSvgElement } from '@hugeicons/react'
+} from "@/redux/features/employees/employeesApi";
+import { getApiError, toQuery } from "@/lib/api";
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { IconSvgElement } from "@hugeicons/react";
 import {
   Cancel01Icon,
   File01Icon,
   PencilEdit02Icon,
   UserCheck01Icon,
   ViewIcon,
-} from '@hugeicons/core-free-icons'
-import { Spin } from 'antd'
-import type { Dayjs } from 'dayjs'
-import dayjs from 'dayjs'
-import { PrimaryButton } from '@/components/ui'
-import { FormDatePicker, FormInput, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
-import { PageHeader } from '@/components/common/Navigation'
-import ExportActions from '@/components/common/Export/ExportActions'
-import { PageMeta } from '@/components/common/Meta'
-import { RowActionMenu, type RowActionItem } from '@/components/common/Dropdowns'
-import { hasPermission } from '../../../lib/access'
-import { readUrlSearchQuery } from '@/lib/url'
+} from "@hugeicons/core-free-icons";
+import { Spin } from "antd";
+import type { Dayjs } from "dayjs";
+import dayjs from "dayjs";
+import { PrimaryButton } from "@/components/ui";
+import {
+  FormDatePicker,
+  FormInput,
+  FormSelect,
+  FormSwitch,
+  FormTextArea,
+} from "@/components/common/Forms";
+import { PageHeader } from "@/components/common/Navigation";
+import ExportActions from "@/components/common/Export/ExportActions";
+import { PageMeta } from "@/components/common/Meta";
+import {
+  RowActionMenu,
+  type RowActionItem,
+} from "@/components/common/Dropdowns";
+import { hasPermission } from "../../../lib/access";
+import { readUrlSearchQuery } from "@/lib/url";
 import type {
   AuthSession,
   EmployeeCrmAccess,
   EmployeeOptions,
   EmployeeRecord,
-} from '../../../types'
-type ToastState = { text: string; type: 'success' | 'error' }
+} from "../../../types";
+type ToastState = { text: string; type: "success" | "error" };
 
 type Filters = {
-  search: string
-  departmentId: string
-  teamId: string
-  designationId: string
-  roleId: string
-  employmentTypeId: string
-  employmentStatusId: string
-  reportingManagerId: string
-  joiningFrom: string
-  joiningTo: string
-}
+  search: string;
+  departmentId: string;
+  teamId: string;
+  designationId: string;
+  roleId: string;
+  employmentTypeId: string;
+  employmentStatusId: string;
+  reportingManagerId: string;
+  joiningFrom: string;
+  joiningTo: string;
+};
 
 const EMPTY_FILTERS: Filters = {
-  search: '',
-  departmentId: '',
-  teamId: '',
-  designationId: '',
-  roleId: '',
-  employmentTypeId: '',
-  employmentStatusId: '',
-  reportingManagerId: '',
-  joiningFrom: '',
-  joiningTo: '',
-}
+  search: "",
+  departmentId: "",
+  teamId: "",
+  designationId: "",
+  roleId: "",
+  employmentTypeId: "",
+  employmentStatusId: "",
+  reportingManagerId: "",
+  joiningFrom: "",
+  joiningTo: "",
+};
 
 const EMPTY_OPTIONS: EmployeeOptions = {
   departments: [],
@@ -97,144 +111,171 @@ const EMPTY_OPTIONS: EmployeeOptions = {
   employmentStatuses: [],
   roles: [],
   managers: [],
-}
+};
 
 function ActionIcon({ icon }: { icon: IconSvgElement }) {
-  return <HugeiconsIcon icon={icon} size={16} color="currentColor" strokeWidth={1.5} />
+  return (
+    <HugeiconsIcon
+      icon={icon}
+      size={16}
+      color="currentColor"
+      strokeWidth={1.5}
+    />
+  );
 }
 
-function FieldLabel({ children, required }: { children: ReactNode; required?: boolean }) {
-  return <span className={fieldLabelClass(required)}>{children}</span>
+function FieldLabel({
+  children,
+  required,
+}: {
+  children: ReactNode;
+  required?: boolean;
+}) {
+  return <span className={fieldLabelClass(required)}>{children}</span>;
 }
 
 function asSelectString(value: unknown) {
-  return typeof value === 'string' ? value : ''
+  return typeof value === "string" ? value : "";
 }
 
 function toDayjs(value: string) {
-  return value ? dayjs(value) : null
+  return value ? dayjs(value) : null;
 }
 
 function toDateString(value: Dayjs | null) {
-  return value ? value.format('YYYY-MM-DD') : ''
+  return value ? value.format("YYYY-MM-DD") : "";
 }
 
 function employeeInitials(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean)
+  const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) {
-    return 'E'
+    return "E";
   }
   return parts
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || '')
-    .join('')
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("");
 }
 
 function formatJoiningDate(value?: string | null) {
   if (!value) {
-    return '—'
+    return "—";
   }
-  const [year, month, day] = value.slice(0, 10).split('-').map(Number)
+  const [year, month, day] = value.slice(0, 10).split("-").map(Number);
   if (!year || !month || !day) {
-    return '—'
+    return "—";
   }
-  return new Date(year, month - 1, day).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
+  return new Date(year, month - 1, day).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function crmAccessLabel(access: EmployeeCrmAccess) {
-  if (access === 'ENABLED') {
-    return 'Enabled'
+  if (access === "ENABLED") {
+    return "Enabled";
   }
-  if (access === 'INVITED') {
-    return 'Invited'
+  if (access === "INVITED") {
+    return "Invited";
   }
-  if (access === 'DISABLED') {
-    return 'Disabled'
+  if (access === "DISABLED") {
+    return "Disabled";
   }
-  return 'No access'
+  return "No access";
 }
 
 function employeePhotoSrc(employeeId: string, photoUrl?: string | null) {
   if (!photoUrl) {
-    return ''
+    return "";
   }
-  if (photoUrl.startsWith('http') || photoUrl.startsWith('/')) {
-    return photoUrl
+  if (photoUrl.startsWith("http") || photoUrl.startsWith("/")) {
+    return photoUrl;
   }
-  return `/api/employees/${employeeId}/photo`
+  return `/api/employees/${employeeId}/photo`;
 }
 
 function EmployeeAvatar({
   name,
   employeeId,
   photoUrl,
-  size = 'sm',
+  size = "sm",
 }: {
-  name: string
-  employeeId: string
-  photoUrl?: string | null
-  size?: 'sm' | 'lg'
+  name: string;
+  employeeId: string;
+  photoUrl?: string | null;
+  size?: "sm" | "lg";
 }) {
-  const src = employeePhotoSrc(employeeId, photoUrl)
+  const src = employeePhotoSrc(employeeId, photoUrl);
   if (src) {
-    return <img className={`${employeeAvatar} ${size === 'lg' ? employeeAvatarLg : employeeAvatarSm}`} src={src} alt="" />
+    return (
+      <img
+        className={`${employeeAvatar} ${size === "lg" ? employeeAvatarLg : employeeAvatarSm}`}
+        src={src}
+        alt=""
+      />
+    );
   }
   return (
-    <span className={`${employeeAvatar} ${size === 'lg' ? employeeAvatarLg : employeeAvatarSm}`}>
+    <span
+      className={`${employeeAvatar} ${size === "lg" ? employeeAvatarLg : employeeAvatarSm}`}
+    >
       {employeeInitials(name)}
     </span>
-  )
+  );
 }
 
 export default function EmployeesPage() {
-  const auth = useOutletContext<AuthSession>()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const canCreate = hasPermission(auth, 'employee:create')
-  const canEdit = hasPermission(auth, 'employee:edit')
-  const canManageEmployeeDocs = hasPermission(auth, 'employee_document:manage')
+  const auth = useOutletContext<AuthSession>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const canCreate = hasPermission(auth, "employee:create");
+  const canEdit = hasPermission(auth, "employee:edit");
+  const canManageEmployeeDocs = hasPermission(auth, "employee_document:manage");
 
-  const [employees, setEmployees] = useState<EmployeeRecord[]>([])
-  const [loadedFilters, setLoadedFilters] = useState<Filters>(EMPTY_FILTERS)
-  const [options, setOptions] = useState<EmployeeOptions>(EMPTY_OPTIONS)
+  const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
+  const [loadedFilters, setLoadedFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [options, setOptions] = useState<EmployeeOptions>(EMPTY_OPTIONS);
   const [filters, setFilters] = useState<Filters>({
     ...EMPTY_FILTERS,
     search: readUrlSearchQuery(location.search),
-  })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   type StatusPrompt = {
-    employee: EmployeeRecord
-    nextStatusId: string
-    resignationDate: string
-    terminationDate: string
-    terminationReason: string
-    terminationRemarks: string
-    rejoiningDate: string
-  }
-  const [statusPrompt, setStatusPrompt] = useState<StatusPrompt | null>(null)
-  const [statusSaving, setStatusSaving] = useState(false)
-  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null)
-  const [statusFlashId, setStatusFlashId] = useState<string | null>(null)
-  const [toast, setToast] = useState<ToastState | null>(null)
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const statusFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const syncedSearch = useRef(false)
-  const [listEmployeeOptions] = useLazyListEmployeeOptionsQuery()
-  const [listEmployees] = useLazyListEmployeesQuery()
-  const [updateEmployeeStatus] = useUpdateEmployeeStatusMutation()
+    employee: EmployeeRecord;
+    nextStatusId: string;
+    resignationDate: string;
+    terminationDate: string;
+    terminationReason: string;
+    terminationRemarks: string;
+    rejoiningDate: string;
+  };
+  const [statusPrompt, setStatusPrompt] = useState<StatusPrompt | null>(null);
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+  const [statusFlashId, setStatusFlashId] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const statusFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncedSearch = useRef(false);
+  const [listEmployeeOptions] = useLazyListEmployeeOptionsQuery();
+  const [listEmployees] = useLazyListEmployeesQuery();
+  const [updateEmployeeStatus] = useUpdateEmployeeStatusMutation();
 
   const filterTeams = useMemo(() => {
     if (filters.departmentId) {
-      return options.departments.find((item) => item.id === filters.departmentId)?.teams ?? []
+      return (
+        options.departments.find((item) => item.id === filters.departmentId)
+          ?.teams ?? []
+      );
     }
-    return options.departments.flatMap((item) => item.teams)
-  }, [filters.departmentId, options.departments])
-  const hasActiveFilters = Object.entries(filters).some(([key, value]) => key !== 'search' && Boolean(value)) || Boolean(filters.search.trim())
+    return options.departments.flatMap((item) => item.teams);
+  }, [filters.departmentId, options.departments]);
+  const hasActiveFilters =
+    Object.entries(filters).some(
+      ([key, value]) => key !== "search" && Boolean(value),
+    ) || Boolean(filters.search.trim());
   const filterSignature = [
     filters.departmentId,
     filters.teamId,
@@ -245,37 +286,37 @@ export default function EmployeesPage() {
     filters.reportingManagerId,
     filters.joiningFrom,
     filters.joiningTo,
-  ].join('|')
+  ].join("|");
 
-  function showToast(text: string, type: ToastState['type'] = 'success') {
-    setToast({ text, type })
+  function showToast(text: string, type: ToastState["type"] = "success") {
+    setToast({ text, type });
     if (toastTimer.current) {
-      clearTimeout(toastTimer.current)
+      clearTimeout(toastTimer.current);
     }
-    toastTimer.current = setTimeout(() => setToast(null), 2800)
+    toastTimer.current = setTimeout(() => setToast(null), 2800);
   }
 
   useEffect(() => {
-    const text = (location.state as { toast?: string } | null)?.toast
+    const text = (location.state as { toast?: string } | null)?.toast;
     if (!text) {
-      return
+      return;
     }
-    showToast(text)
-    navigate('.', { replace: true, state: {} })
-  }, [location.state, navigate])
+    showToast(text);
+    navigate(".", { replace: true, state: {} });
+  }, [location.state, navigate]);
 
   function flashStatusRow(id: string) {
-    setStatusFlashId(id)
+    setStatusFlashId(id);
     if (statusFlashTimer.current) {
-      clearTimeout(statusFlashTimer.current)
+      clearTimeout(statusFlashTimer.current);
     }
-    statusFlashTimer.current = setTimeout(() => setStatusFlashId(null), 1200)
+    statusFlashTimer.current = setTimeout(() => setStatusFlashId(null), 1200);
   }
 
   async function loadOptions() {
     try {
-      const data = await listEmployeeOptions().unwrap()
-      setOptions(data)
+      const data = await listEmployeeOptions().unwrap();
+      setOptions(data);
     } catch {
       // keep previous options
     }
@@ -293,9 +334,9 @@ export default function EmployeesPage() {
       reportingManagerId: filters.reportingManagerId,
       joiningFrom: filters.joiningFrom,
       joiningTo: filters.joiningTo,
-    }
+    };
     if (!opts?.silent) {
-      setLoading(true)
+      setLoading(true);
     }
     try {
       const data = await listEmployees({
@@ -309,57 +350,59 @@ export default function EmployeesPage() {
         reportingManagerId: query.reportingManagerId || undefined,
         joiningFrom: query.joiningFrom || undefined,
         joiningTo: query.joiningTo || undefined,
-      }).unwrap()
-      setEmployees(data.employees)
-      setLoadedFilters(query)
-      setError('')
+      }).unwrap();
+      setEmployees(data.employees);
+      setLoadedFilters(query);
+      setError("");
     } catch (err) {
-      setError(getApiError(err, 'Unable to load employees.'))
+      setError(getApiError(err, "Unable to load employees."));
     }
     if (!opts?.silent) {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    void loadOptions()
-  }, [])
+    void loadOptions();
+  }, []);
 
   useEffect(() => {
-    void loadList()
-  }, [filterSignature])
+    void loadList();
+  }, [filterSignature]);
 
   useEffect(() => {
-    const next = readUrlSearchQuery(location.search)
-    setFilters((current) => (current.search === next ? current : { ...current, search: next }))
+    const next = readUrlSearchQuery(location.search);
+    setFilters((current) =>
+      current.search === next ? current : { ...current, search: next },
+    );
     if (syncedSearch.current) {
-      void loadList({ search: next })
+      void loadList({ search: next });
     }
-    syncedSearch.current = true
-  }, [location.search])
+    syncedSearch.current = true;
+  }, [location.search]);
 
   useEffect(
     () => () => {
       if (toastTimer.current) {
-        clearTimeout(toastTimer.current)
+        clearTimeout(toastTimer.current);
       }
       if (statusFlashTimer.current) {
-        clearTimeout(statusFlashTimer.current)
+        clearTimeout(statusFlashTimer.current);
       }
     },
     [],
-  )
+  );
 
   function openCreate() {
-    navigate('/employees/new')
+    navigate("/employees/new");
   }
 
   function openEmployee(employee: EmployeeRecord) {
-    navigate(`/employees/${employee.id}`)
+    navigate(`/employees/${employee.id}`);
   }
 
   function clearFilters() {
-    setFilters(EMPTY_FILTERS)
+    setFilters(EMPTY_FILTERS);
   }
 
   function openStatusPrompt(employee: EmployeeRecord, nextStatusId?: string) {
@@ -367,45 +410,60 @@ export default function EmployeesPage() {
       employee,
       nextStatusId:
         nextStatusId ||
-        options.employmentStatuses.find((item) => item.id !== employee.employmentStatus?.id)?.id ||
+        options.employmentStatuses.find(
+          (item) => item.id !== employee.employmentStatus?.id,
+        )?.id ||
         employee.employmentStatus?.id ||
-        '',
-      resignationDate: employee.resignationDate || dayjs().format('YYYY-MM-DD'),
-      terminationDate: employee.terminationDate || dayjs().format('YYYY-MM-DD'),
-      terminationReason: employee.terminationReason || '',
-      terminationRemarks: employee.terminationRemarks || '',
-      rejoiningDate: employee.rejoiningDate || dayjs().format('YYYY-MM-DD'),
-    })
+        "",
+      resignationDate: employee.resignationDate || dayjs().format("YYYY-MM-DD"),
+      terminationDate: employee.terminationDate || dayjs().format("YYYY-MM-DD"),
+      terminationReason: employee.terminationReason || "",
+      terminationRemarks: employee.terminationRemarks || "",
+      rejoiningDate: employee.rejoiningDate || dayjs().format("YYYY-MM-DD"),
+    });
   }
 
-  async function toggleEmploymentStatus(employee: EmployeeRecord, next: 'ACTIVE' | 'INACTIVE') {
+  async function toggleEmploymentStatus(
+    employee: EmployeeRecord,
+    next: "ACTIVE" | "INACTIVE",
+  ) {
     if (statusUpdatingId || statusSaving) {
-      return
+      return;
     }
-    const previousCode = employee.employmentStatus?.code || ''
-    if (next === 'ACTIVE' && ['RESIGNED', 'TERMINATED', 'INACTIVE'].includes(previousCode)) {
-      const activeId = options.employmentStatuses.find((item) => item.code === 'ACTIVE')?.id
-      openStatusPrompt(employee, activeId)
-      return
+    const previousCode = employee.employmentStatus?.code || "";
+    if (
+      next === "ACTIVE" &&
+      ["RESIGNED", "TERMINATED", "INACTIVE"].includes(previousCode)
+    ) {
+      const activeId = options.employmentStatuses.find(
+        (item) => item.code === "ACTIVE",
+      )?.id;
+      openStatusPrompt(employee, activeId);
+      return;
     }
-    setStatusUpdatingId(employee.id)
+    setStatusUpdatingId(employee.id);
     try {
-      const data = await updateEmployeeStatus({ id: employee.id, body: { status: next } }).unwrap()
-      const nextName = data.employee.employmentStatus?.name || (next === 'ACTIVE' ? 'Active' : 'Inactive')
-      showToast(`${employee.fullName} is now ${nextName}.`)
-      flashStatusRow(employee.id)
-      await Promise.all([loadList({ silent: true }), loadOptions()])
+      const data = await updateEmployeeStatus({
+        id: employee.id,
+        body: { status: next },
+      }).unwrap();
+      const nextName =
+        data.employee.employmentStatus?.name ||
+        (next === "ACTIVE" ? "Active" : "Inactive");
+      showToast(`${employee.fullName} is now ${nextName}.`);
+      flashStatusRow(employee.id);
+      await Promise.all([loadList({ silent: true }), loadOptions()]);
     } catch (err) {
-      showToast(getApiError(err, 'Unable to change status.'), 'error')
+      showToast(getApiError(err, "Unable to change status."), "error");
     }
-    setStatusUpdatingId(null)
+    setStatusUpdatingId(null);
   }
 
   async function changeStatus() {
     if (!statusPrompt) {
-      return
+      return;
     }
-    setStatusSaving(true)
+    setStatusSaving(true);
     try {
       const data = await updateEmployeeStatus({
         id: statusPrompt.employee.id,
@@ -417,26 +475,29 @@ export default function EmployeesPage() {
           terminationRemarks: statusPrompt.terminationRemarks || undefined,
           rejoiningDate: statusPrompt.rejoiningDate || undefined,
         },
-      }).unwrap()
-      const nextName = data.employee.employmentStatus?.name || 'updated'
-      showToast(`${statusPrompt.employee.fullName} is now ${nextName}.`)
-      flashStatusRow(statusPrompt.employee.id)
-      setStatusPrompt(null)
-      await Promise.all([loadList({ silent: true }), loadOptions()])
+      }).unwrap();
+      const nextName = data.employee.employmentStatus?.name || "updated";
+      showToast(`${statusPrompt.employee.fullName} is now ${nextName}.`);
+      flashStatusRow(statusPrompt.employee.id);
+      setStatusPrompt(null);
+      await Promise.all([loadList({ silent: true }), loadOptions()]);
     } catch (err) {
-      showToast(getApiError(err, 'Unable to change status.'), 'error')
+      showToast(getApiError(err, "Unable to change status."), "error");
     }
-    setStatusSaving(false)
+    setStatusSaving(false);
   }
 
   const promptStatus = statusPrompt
-    ? options.employmentStatuses.find((item) => item.id === statusPrompt.nextStatusId)
-    : null
-  const promptPreviousCode = statusPrompt?.employee.employmentStatus?.code || ''
+    ? options.employmentStatuses.find(
+        (item) => item.id === statusPrompt.nextStatusId,
+      )
+    : null;
+  const promptPreviousCode =
+    statusPrompt?.employee.employmentStatus?.code || "";
   const promptIsRejoining =
     Boolean(promptStatus) &&
-    ['RESIGNED', 'TERMINATED', 'INACTIVE'].includes(promptPreviousCode) &&
-    ['ACTIVE', 'PROBATION'].includes(promptStatus?.code || '')
+    ["RESIGNED", "TERMINATED", "INACTIVE"].includes(promptPreviousCode) &&
+    ["ACTIVE", "PROBATION"].includes(promptStatus?.code || "");
 
   return (
     <div className={`${adminPage}`}>
@@ -447,7 +508,10 @@ export default function EmployeesPage() {
       <PageHeader
         title="Employees"
         subtitle="Manage employee records, assignments, and employment status."
-        breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Employees' }]}
+        breadcrumbs={[
+          { title: "Dashboard", path: "/dashboard" },
+          { title: "Employees" },
+        ]}
         extra={
           <div className="flex flex-wrap items-center gap-2">
             <ExportActions
@@ -459,13 +523,17 @@ export default function EmployeesPage() {
                 designationId: loadedFilters.designationId || undefined,
                 roleId: loadedFilters.roleId || undefined,
                 employmentTypeId: loadedFilters.employmentTypeId || undefined,
-                employmentStatusId: loadedFilters.employmentStatusId || undefined,
-                reportingManagerId: loadedFilters.reportingManagerId || undefined,
+                employmentStatusId:
+                  loadedFilters.employmentStatusId || undefined,
+                reportingManagerId:
+                  loadedFilters.reportingManagerId || undefined,
                 joiningFrom: loadedFilters.joiningFrom || undefined,
                 joiningTo: loadedFilters.joiningTo || undefined,
               })}`}
             />
-            {canCreate ? <PrimaryButton onClick={openCreate} label="Create Employee" /> : null}
+            {canCreate ? (
+              <PrimaryButton onClick={openCreate} label="Create Employee" />
+            ) : null}
           </div>
         }
       />
@@ -473,74 +541,145 @@ export default function EmployeesPage() {
       <section className={`${adminFilters} ${adminFiltersEmployees}`}>
         <FormInput.Search
           allowClear
-          enterButton="Search"
           loading={loading}
           placeholder="Search ID, name, mobile, email, designation, department, team, or role"
           value={filters.search}
-          onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))}
+          onChange={(event) =>
+            setFilters((current) => ({
+              ...current,
+              search: event.target.value,
+            }))
+          }
           onSearch={() => {
-            void loadList()
+            void loadList();
           }}
         />
         <FormSelect
           allowClear
           placeholder="All departments"
           value={filters.departmentId || undefined}
-          options={options.departments.map((item) => ({ value: item.id, label: item.name }))}
+          options={options.departments.map((item) => ({
+            value: item.id,
+            label: item.name,
+          }))}
           onChange={(value) =>
-            setFilters((current) => ({ ...current, departmentId: asSelectString(value), teamId: '' }))
+            setFilters((current) => ({
+              ...current,
+              departmentId: asSelectString(value),
+              teamId: "",
+            }))
           }
         />
         <FormSelect
           allowClear
           placeholder="All teams"
           value={filters.teamId || undefined}
-          options={filterTeams.map((item) => ({ value: item.id, label: item.name }))}
-          onChange={(value) => setFilters((current) => ({ ...current, teamId: asSelectString(value) }))}
+          options={filterTeams.map((item) => ({
+            value: item.id,
+            label: item.name,
+          }))}
+          onChange={(value) =>
+            setFilters((current) => ({
+              ...current,
+              teamId: asSelectString(value),
+            }))
+          }
         />
         <FormSelect
           allowClear
           placeholder="All designations"
           value={filters.designationId || undefined}
-          options={options.designations.map((item) => ({ value: item.id, label: item.name }))}
-          onChange={(value) => setFilters((current) => ({ ...current, designationId: asSelectString(value) }))}
+          options={options.designations.map((item) => ({
+            value: item.id,
+            label: item.name,
+          }))}
+          onChange={(value) =>
+            setFilters((current) => ({
+              ...current,
+              designationId: asSelectString(value),
+            }))
+          }
         />
         <FormSelect
           allowClear
           placeholder="All roles"
           value={filters.roleId || undefined}
-          options={options.roles.map((item) => ({ value: item.id, label: item.name }))}
-          onChange={(value) => setFilters((current) => ({ ...current, roleId: asSelectString(value) }))}
+          options={options.roles.map((item) => ({
+            value: item.id,
+            label: item.name,
+          }))}
+          onChange={(value) =>
+            setFilters((current) => ({
+              ...current,
+              roleId: asSelectString(value),
+            }))
+          }
         />
         <FormSelect
           allowClear
           placeholder="All employment types"
           value={filters.employmentTypeId || undefined}
-          options={options.employmentTypes.map((item) => ({ value: item.id, label: item.name }))}
-          onChange={(value) => setFilters((current) => ({ ...current, employmentTypeId: asSelectString(value) }))}
+          options={options.employmentTypes.map((item) => ({
+            value: item.id,
+            label: item.name,
+          }))}
+          onChange={(value) =>
+            setFilters((current) => ({
+              ...current,
+              employmentTypeId: asSelectString(value),
+            }))
+          }
         />
         <FormSelect
           allowClear
           placeholder="All statuses"
           value={filters.employmentStatusId || undefined}
-          options={options.employmentStatuses.map((item) => ({ value: item.id, label: item.name }))}
-          onChange={(value) => setFilters((current) => ({ ...current, employmentStatusId: asSelectString(value) }))}
+          options={options.employmentStatuses.map((item) => ({
+            value: item.id,
+            label: item.name,
+          }))}
+          onChange={(value) =>
+            setFilters((current) => ({
+              ...current,
+              employmentStatusId: asSelectString(value),
+            }))
+          }
         />
         <FormDatePicker
           allowClear
           placeholder="Joined from"
           aria-label="Joining date from"
           value={toDayjs(filters.joiningFrom)}
-          disabledDate={(current) => Boolean(filters.joiningTo && current.isAfter(dayjs(filters.joiningTo), 'day'))}
-          onChange={(value) => setFilters((current) => ({ ...current, joiningFrom: toDateString(value) }))}
+          disabledDate={(current) =>
+            Boolean(
+              filters.joiningTo &&
+              current.isAfter(dayjs(filters.joiningTo), "day"),
+            )
+          }
+          onChange={(value) =>
+            setFilters((current) => ({
+              ...current,
+              joiningFrom: toDateString(value),
+            }))
+          }
         />
         <FormDatePicker
           allowClear
           placeholder="Joined to"
           aria-label="Joining date to"
           value={toDayjs(filters.joiningTo)}
-          disabledDate={(current) => Boolean(filters.joiningFrom && current.isBefore(dayjs(filters.joiningFrom), 'day'))}
-          onChange={(value) => setFilters((current) => ({ ...current, joiningTo: toDateString(value) }))}
+          disabledDate={(current) =>
+            Boolean(
+              filters.joiningFrom &&
+              current.isBefore(dayjs(filters.joiningFrom), "day"),
+            )
+          }
+          onChange={(value) =>
+            setFilters((current) => ({
+              ...current,
+              joiningTo: toDateString(value),
+            }))
+          }
         />
         <FormSelect
           allowClear
@@ -550,15 +689,30 @@ export default function EmployeesPage() {
             value: item.id,
             label: `${item.fullName} (${item.employeeCode})`,
           }))}
-          onChange={(value) => setFilters((current) => ({ ...current, reportingManagerId: asSelectString(value) }))}
+          onChange={(value) =>
+            setFilters((current) => ({
+              ...current,
+              reportingManagerId: asSelectString(value),
+            }))
+          }
         />
-        <PrimaryButton variant="outline" disabled={!hasActiveFilters} onClick={clearFilters} label="Clear filters" />
+        <PrimaryButton
+          variant="outline"
+          disabled={!hasActiveFilters}
+          onClick={clearFilters}
+          label="Clear filters"
+        />
       </section>
 
       {error ? (
         <p className={`${adminBanner}`}>
-          {error}{' '}
-          <PrimaryButton type="button" className={`${linkBtn}`} onClick={() => void loadList()} label="Retry" />
+          {error}{" "}
+          <PrimaryButton
+            type="button"
+            className={`${linkBtn}`}
+            onClick={() => void loadList()}
+            label="Retry"
+          />
         </p>
       ) : null}
 
@@ -567,25 +721,39 @@ export default function EmployeesPage() {
           {!loading && employees.length === 0 ? (
             <div className={`${adminEmpty}`}>
               <strong>
-                {error ? 'Unable to load employees' : hasActiveFilters ? 'No matching employees' : 'No employees yet'}
+                {error
+                  ? "Unable to load employees"
+                  : hasActiveFilters
+                    ? "No matching employees"
+                    : "No employees yet"}
               </strong>
               <p>
                 {error
                   ? error
                   : hasActiveFilters
-                    ? 'Try a different search or clear the current filters.'
-                    : 'Create an employee record to start managing staff in the CRM.'}
+                    ? "Try a different search or clear the current filters."
+                    : "Create an employee record to start managing staff in the CRM."}
               </p>
               {error ? (
-                <PrimaryButton variant="outline" onClick={() => void loadList()} label="Retry" />
+                <PrimaryButton
+                  variant="outline"
+                  onClick={() => void loadList()}
+                  label="Retry"
+                />
               ) : hasActiveFilters ? (
-                <PrimaryButton variant="outline" onClick={clearFilters} label="Clear filters" />
+                <PrimaryButton
+                  variant="outline"
+                  onClick={clearFilters}
+                  label="Clear filters"
+                />
               ) : canCreate ? (
                 <PrimaryButton onClick={openCreate} label="Create Employee" />
               ) : null}
             </div>
           ) : (
-            <table className={`${adminTable} [&_th]:align-middle [&_th]:whitespace-nowrap [&_td]:align-middle [&_td]:whitespace-nowrap`}>
+            <table
+              className={`${adminTable} [&_th]:align-middle [&_th]:whitespace-nowrap [&_td]:align-middle [&_td]:whitespace-nowrap`}
+            >
               <thead>
                 <tr>
                   <th>Employee</th>
@@ -605,23 +773,33 @@ export default function EmployeesPage() {
                 {employees.map((employee) => (
                   <tr
                     key={employee.id}
-                    className={statusFlashId === employee.id ? adminTableRowStatusUpdated : undefined}
+                    className={
+                      statusFlashId === employee.id
+                        ? adminTableRowStatusUpdated
+                        : undefined
+                    }
                     onClick={() => openEmployee(employee)}
                   >
                     <td>
                       <div className="flex min-w-[180px] items-center gap-2.5">
-                        <EmployeeAvatar name={employee.fullName} employeeId={employee.id} photoUrl={employee.photoUrl} />
+                        <EmployeeAvatar
+                          name={employee.fullName}
+                          employeeId={employee.id}
+                          photoUrl={employee.photoUrl}
+                        />
                         <div>
                           <div className="font-[650]">{employee.fullName}</div>
-                          <div className={`${muted}`}>{employee.officialEmail}</div>
+                          <div className={`${muted}`}>
+                            {employee.officialEmail}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td>{employee.employeeCode}</td>
-                    <td>{employee.designation?.name || '—'}</td>
-                    <td>{employee.department?.name || '—'}</td>
-                    <td>{employee.team?.name || '—'}</td>
-                    <td>{employee.employmentType?.name || '—'}</td>
+                    <td>{employee.designation?.name || "—"}</td>
+                    <td>{employee.department?.name || "—"}</td>
+                    <td>{employee.team?.name || "—"}</td>
+                    <td>{employee.employmentType?.name || "—"}</td>
                     <td>
                       {employee.reportingManager ? (
                         <Link
@@ -632,68 +810,78 @@ export default function EmployeesPage() {
                           {employee.reportingManager.fullName}
                         </Link>
                       ) : (
-                        '—'
+                        "—"
                       )}
                     </td>
                     <td>{formatJoiningDate(employee.joiningDate)}</td>
                     <td onClick={(event) => event.stopPropagation()}>
                       <FormSwitch
-                        checked={employee.employmentStatus?.code === 'ACTIVE'}
+                        checked={employee.employmentStatus?.code === "ACTIVE"}
                         checkedChildren="Active"
                         unCheckedChildren={
-                          employee.employmentStatus?.code === 'ACTIVE'
-                            ? 'Inactive'
-                            : employee.employmentStatus?.name || 'Inactive'
+                          employee.employmentStatus?.code === "ACTIVE"
+                            ? "Inactive"
+                            : employee.employmentStatus?.name || "Inactive"
                         }
                         disabled={!canEdit}
                         loading={statusUpdatingId === employee.id}
                         onChange={(checked) => {
-                          void toggleEmploymentStatus(employee, checked ? 'ACTIVE' : 'INACTIVE')
+                          void toggleEmploymentStatus(
+                            employee,
+                            checked ? "ACTIVE" : "INACTIVE",
+                          );
                         }}
                       />
                     </td>
                     <td>
-                      <span className={crmAccessPillClass(employee.crmAccess.toLowerCase())}>
+                      <span
+                        className={crmAccessPillClass(
+                          employee.crmAccess.toLowerCase(),
+                        )}
+                      >
                         {crmAccessLabel(employee.crmAccess)}
                       </span>
                     </td>
-                    <td className={`${rowActions}`} onClick={(event) => event.stopPropagation()}>
+                    <td
+                      className={`${rowActions}`}
+                      onClick={(event) => event.stopPropagation()}
+                    >
                       <RowActionMenu
                         items={(
                           [
                             {
-                              key: 'view',
-                              label: 'View',
+                              key: "view",
+                              label: "View",
                               icon: <ActionIcon icon={ViewIcon} />,
                               onSelect: () => {
-                                openEmployee(employee)
+                                openEmployee(employee);
                               },
                             },
                             canEdit
                               ? {
-                                  key: 'edit',
-                                  label: 'Edit',
+                                  key: "edit",
+                                  label: "Edit",
                                   icon: <ActionIcon icon={PencilEdit02Icon} />,
                                   onSelect: () => {
-                                    navigate(`/employees/${employee.id}/edit`)
+                                    navigate(`/employees/${employee.id}/edit`);
                                   },
                                 }
                               : null,
                             canEdit
                               ? {
-                                  key: 'status',
-                                  label: 'Change Status',
+                                  key: "status",
+                                  label: "Change Status",
                                   icon: <ActionIcon icon={UserCheck01Icon} />,
                                   onSelect: () => openStatusPrompt(employee),
                                 }
                               : null,
                             canManageEmployeeDocs
                               ? {
-                                  key: 'documents',
-                                  label: 'Manage Documents',
+                                  key: "documents",
+                                  label: "Manage Documents",
                                   icon: <ActionIcon icon={File01Icon} />,
                                   onSelect: () => {
-                                    navigate(`/employees/${employee.id}/edit`)
+                                    navigate(`/employees/${employee.id}/edit`);
                                   },
                                 }
                               : null,
@@ -715,7 +903,7 @@ export default function EmployeesPage() {
               className={`${modalBackdrop}`}
               onClick={() => {
                 if (!statusSaving) {
-                  setStatusPrompt(null)
+                  setStatusPrompt(null);
                 }
               }}
             >
@@ -733,37 +921,57 @@ export default function EmployeesPage() {
                     className={`${modalClose}`}
                     aria-label="Close"
                     disabled={statusSaving}
-                    onClick={() => setStatusPrompt(null)} icon={<HugeiconsIcon icon={Cancel01Icon} size={18} color="currentColor" strokeWidth={1.5} />} />
+                    onClick={() => setStatusPrompt(null)}
+                    icon={
+                      <HugeiconsIcon
+                        icon={Cancel01Icon}
+                        size={18}
+                        color="currentColor"
+                        strokeWidth={1.5}
+                      />
+                    }
+                  />
                 </div>
                 <p className={`${statusConfirmCopy}`}>
-                  Update employment status for <strong>{statusPrompt.employee.fullName}</strong>.
+                  Update employment status for{" "}
+                  <strong>{statusPrompt.employee.fullName}</strong>.
                 </p>
                 <label className={`${adminForm}`}>
                   <FieldLabel required>New status</FieldLabel>
                   <FormSelect
                     value={statusPrompt.nextStatusId || undefined}
-                    options={options.employmentStatuses.map((item) => ({ value: item.id, label: item.name }))}
+                    options={options.employmentStatuses.map((item) => ({
+                      value: item.id,
+                      label: item.name,
+                    }))}
                     onChange={(value) =>
                       setStatusPrompt((current) =>
-                        current ? { ...current, nextStatusId: asSelectString(value) } : current,
+                        current
+                          ? { ...current, nextStatusId: asSelectString(value) }
+                          : current,
                       )
                     }
                   />
                 </label>
-                {promptStatus?.code === 'RESIGNED' ? (
+                {promptStatus?.code === "RESIGNED" ? (
                   <label className={`${adminForm}`}>
                     <FieldLabel required>Resignation date</FieldLabel>
                     <FormDatePicker
                       value={toDayjs(statusPrompt.resignationDate)}
                       onChange={(value) =>
                         setStatusPrompt((current) =>
-                          current ? { ...current, resignationDate: toDateString(value) } : current,
+                          current
+                            ? {
+                                ...current,
+                                resignationDate: toDateString(value),
+                              }
+                            : current,
                         )
                       }
                     />
                   </label>
                 ) : null}
-                {promptStatus?.code === 'TERMINATED' ? (
+                {promptStatus?.code === "TERMINATED" ? (
                   <>
                     <label className={`${adminForm}`}>
                       <FieldLabel required>Termination date</FieldLabel>
@@ -771,7 +979,12 @@ export default function EmployeesPage() {
                         value={toDayjs(statusPrompt.terminationDate)}
                         onChange={(value) =>
                           setStatusPrompt((current) =>
-                            current ? { ...current, terminationDate: toDateString(value) } : current,
+                            current
+                              ? {
+                                  ...current,
+                                  terminationDate: toDateString(value),
+                                }
+                              : current,
                           )
                         }
                       />
@@ -782,7 +995,12 @@ export default function EmployeesPage() {
                         value={statusPrompt.terminationReason}
                         onChange={(event) =>
                           setStatusPrompt((current) =>
-                            current ? { ...current, terminationReason: event.target.value } : current,
+                            current
+                              ? {
+                                  ...current,
+                                  terminationReason: event.target.value,
+                                }
+                              : current,
                           )
                         }
                       />
@@ -794,7 +1012,12 @@ export default function EmployeesPage() {
                         value={statusPrompt.terminationRemarks}
                         onChange={(event) =>
                           setStatusPrompt((current) =>
-                            current ? { ...current, terminationRemarks: event.target.value } : current,
+                            current
+                              ? {
+                                  ...current,
+                                  terminationRemarks: event.target.value,
+                                }
+                              : current,
                           )
                         }
                       />
@@ -808,28 +1031,48 @@ export default function EmployeesPage() {
                       value={toDayjs(statusPrompt.rejoiningDate)}
                       onChange={(value) =>
                         setStatusPrompt((current) =>
-                          current ? { ...current, rejoiningDate: toDateString(value) } : current,
+                          current
+                            ? { ...current, rejoiningDate: toDateString(value) }
+                            : current,
                         )
                       }
                     />
                   </label>
                 ) : null}
                 <p className={`${statusConfirmMeta}`}>
-                  Current status: <strong>{statusPrompt.employee.employmentStatus?.name || '—'}</strong>
+                  Current status:{" "}
+                  <strong>
+                    {statusPrompt.employee.employmentStatus?.name || "—"}
+                  </strong>
                   {promptStatus ? (
                     <>
-                      {' → '}
+                      {" → "}
                       New status: <strong>{promptStatus.name}</strong>
                     </>
                   ) : null}
-                  {['INACTIVE', 'RESIGNED', 'TERMINATED'].includes(promptStatus?.code || '')
-                    ? ' · Linked CRM login will be disabled.'
+                  {["INACTIVE", "RESIGNED", "TERMINATED"].includes(
+                    promptStatus?.code || "",
+                  )
+                    ? " · Linked CRM login will be disabled."
                     : null}
-                  {promptIsRejoining ? ' · Employee ID stays the same. CRM login may be restored.' : null}
+                  {promptIsRejoining
+                    ? " · Employee ID stays the same. CRM login may be restored."
+                    : null}
                 </p>
                 <div className={`${formActions}`}>
-                  <PrimaryButton loading={statusSaving} disabled={!statusPrompt.nextStatusId} onClick={() => void changeStatus()} label="Change Status" />
-                  <PrimaryButton type="button" variant="outline" disabled={statusSaving} onClick={() => setStatusPrompt(null)} label="Cancel" />
+                  <PrimaryButton
+                    loading={statusSaving}
+                    disabled={!statusPrompt.nextStatusId}
+                    onClick={() => void changeStatus()}
+                    label="Change Status"
+                  />
+                  <PrimaryButton
+                    type="button"
+                    variant="outline"
+                    disabled={statusSaving}
+                    onClick={() => setStatusPrompt(null)}
+                    label="Cancel"
+                  />
                 </div>
               </div>
             </div>,
@@ -846,5 +1089,5 @@ export default function EmployeesPage() {
           )
         : null}
     </div>
-  )
+  );
 }
