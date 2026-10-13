@@ -90,6 +90,7 @@ export type EmployeePerformanceRow = PerformanceMetrics & {
   employeeId: string | null
   employeeCode: string | null
   name: string
+  photoUrl: string | null
   departmentId: string | null
   departmentName: string
   kpis: KpiResult[]
@@ -116,19 +117,30 @@ export type PerformanceList = {
   }
 }
 
+export type PerformanceDetailEmployee = {
+  userId: string
+  employeeId: string | null
+  employeeCode: string | null
+  name: string
+  photoUrl: string | null
+  email: string | null
+  phone: string | null
+  designation: string | null
+  employmentType: string | null
+  employmentStatus: string | null
+  joiningDate: string | null
+  teamName: string | null
+  reportingManager: string | null
+  departmentId: string | null
+  departmentName: string
+}
+
 export type PerformanceDetail = {
   from: string
   to: string
   preset: string
   message: string | null
-  employee: {
-    userId: string
-    employeeId: string | null
-    employeeCode: string | null
-    name: string
-    departmentId: string | null
-    departmentName: string
-  }
+  employee: PerformanceDetailEmployee
   metrics: PerformanceMetrics
   kpis: KpiResult[]
   overallScoreEnabled: boolean
