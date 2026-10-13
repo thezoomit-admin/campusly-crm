@@ -258,16 +258,39 @@ export default function ServiceItemsPage({
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (value: ServiceItemRecord["status"]) => (
-        <Tag color={value === "ACTIVE" ? "green" : "default"}>
-          {value === "ACTIVE" ? "Active" : "Inactive"}
-        </Tag>
-      ),
+      width: 140,
+      render: (_: ServiceItemRecord["status"], row: ServiceItemRecord) =>
+        canChangeStatus ? (
+          <span onClick={(event) => event.stopPropagation()}>
+            <Popconfirm
+              title={`${row.status === "ACTIVE" ? "Deactivate" : "Activate"} service item?`}
+              description={
+                row.status === "ACTIVE"
+                  ? "It will be hidden from new offers and packages."
+                  : "It will become available for new offers and packages."
+              }
+              okText={row.status === "ACTIVE" ? "Deactivate" : "Activate"}
+              onConfirm={() => toggleStatus(row)}
+            >
+              <FormSwitch
+                checked={row.status === "ACTIVE"}
+                loading={changingStatus}
+                checkedChildren="Active"
+                unCheckedChildren="Inactive"
+                aria-label={`${row.status === "ACTIVE" ? "Deactivate" : "Activate"} ${row.name}`}
+              />
+            </Popconfirm>
+          </span>
+        ) : (
+          <Tag color={row.status === "ACTIVE" ? "green" : "default"}>
+            {row.status === "ACTIVE" ? "Active" : "Inactive"}
+          </Tag>
+        ),
     },
     {
       title: "Actions",
       key: "actions",
-      width: 180,
+      width: 120,
       render: (_: unknown, row: ServiceItemRecord) => (
         <Space onClick={(event) => event.stopPropagation()}>
           <Tooltip title="View">
@@ -285,24 +308,6 @@ export default function ServiceItemsPage({
                 onClick={() => openItem(row, "edit")}
               />
             </Tooltip>
-          ) : null}
-          {canChangeStatus ? (
-            <Popconfirm
-              title={`${row.status === "ACTIVE" ? "Deactivate" : "Activate"} service item?`}
-              description={
-                row.status === "ACTIVE"
-                  ? "It will be hidden from new offers and packages."
-                  : "It will become available for new offers and packages."
-              }
-              okText={row.status === "ACTIVE" ? "Deactivate" : "Activate"}
-              onConfirm={() => toggleStatus(row)}
-            >
-              <FormSwitch
-                checked={row.status === "ACTIVE"}
-                loading={changingStatus}
-                aria-label={`${row.status === "ACTIVE" ? "Deactivate" : "Activate"} ${row.name}`}
-              />
-            </Popconfirm>
           ) : null}
         </Space>
       ),

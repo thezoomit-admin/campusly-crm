@@ -1637,6 +1637,17 @@ export type {
   ChangeStatusEmailPayload,
 } from "./ChangeStatusModal";
 
+export { default as ScheduleMeetingModal } from "./ScheduleMeetingModal";
+export type {
+  ScheduleMeetingPayload,
+  ScheduleMeetingInitialValues,
+} from "./ScheduleMeetingModal";
+export {
+  buildMeetingNotes,
+  meetingStartIso,
+  parseMeetingNotes,
+} from "./ScheduleMeetingModal";
+
 export function CloseLeadModal({
   open,
   saving,

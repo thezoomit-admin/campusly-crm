@@ -8,6 +8,9 @@ import {
   journeyStageIndex,
   type FollowUpCountdownUrgency,
 } from '../../utils/leadDetails'
+import LeadUpcomingMeetingCard, {
+  type UpcomingMeetingInfo,
+} from './LeadUpcomingMeetingCard'
 
 function pad2(value: number) {
   return String(value).padStart(2, '0')
@@ -59,7 +62,19 @@ const COUNTDOWN_TONES: Record<
   },
 }
 
-export default function LeadJourneyBar({ lead }: { lead: LeadRecord }) {
+export default function LeadJourneyBar({
+  lead,
+  meeting = null,
+  canEditMeeting = false,
+  onRescheduleMeeting,
+  onCancelMeeting,
+}: {
+  lead: LeadRecord
+  meeting?: UpcomingMeetingInfo | null
+  canEditMeeting?: boolean
+  onRescheduleMeeting?: () => void
+  onCancelMeeting?: () => void
+}) {
   const currentIndex = journeyStageIndex(lead.statusCode, lead.status)
   const [, setTick] = useState(0)
 
@@ -73,7 +88,7 @@ export default function LeadJourneyBar({ lead }: { lead: LeadRecord }) {
   const tone = COUNTDOWN_TONES[countdown?.urgency ?? 'safe']
 
   return (
-    <section className="grid gap-3 rounded-2xl border border-[#e7eef5] bg-surface p-4 shadow-[0_10px_28px_rgba(22,50,79,0.035)] xl:grid-cols-[minmax(0,1fr)_300px] dark:border-border">
+    <section className="grid gap-3 rounded-2xl border border-[#e7eef5] bg-surface p-4 shadow-[0_10px_28px_rgba(22,50,79,0.035)] xl:grid-cols-[minmax(0,1fr)_minmax(260px,300px)_minmax(260px,300px)] dark:border-border">
       <div className="min-w-0">
         <h3 className="mt-0 mb-2 text-[0.92rem] font-semibold text-[#1b3a57] dark:text-text-strong">Lead Journey</h3>
         <ol className="m-0 flex list-none items-start gap-0 overflow-x-auto pt-4 pb-1 pl-0">
@@ -132,17 +147,22 @@ export default function LeadJourneyBar({ lead }: { lead: LeadRecord }) {
         </ol>
       </div>
 
-      <div className={`flex flex-col justify-center rounded-xl border px-3 py-2.5 transition-colors duration-300 ${tone.card}`}>
-        <p className="m-0 flex items-center gap-1.5 text-[0.82rem] font-semibold text-[#1b3a57] dark:text-text-strong">
-          <span className={`grid size-6 place-items-center rounded-full ${tone.iconWrap}`}>
-            <HugeiconsIcon icon={Clock01Icon} size={13} color={tone.iconColor} strokeWidth={1.8} />
+      <div className={`flex flex-col justify-center rounded-xl border px-2.5 py-1.5 transition-colors duration-300 ${tone.card}`}>
+        <p className="m-0 flex items-center gap-1 text-[0.75rem] font-semibold text-[#1b3a57] dark:text-text-strong">
+          <span className={`grid size-5 place-items-center rounded-full ${tone.iconWrap}`}>
+            <HugeiconsIcon icon={Clock01Icon} size={11} color={tone.iconColor} strokeWidth={1.8} />
           </span>
           Next Follow Up
+          {countdown?.urgency === 'overdue' ? (
+            <span className={`ml-auto text-[0.62rem] font-medium ${tone.status}`}>Overdue</span>
+          ) : countdown?.urgency === 'soon' ? (
+            <span className={`ml-auto text-[0.62rem] font-medium ${tone.status}`}>Due soon</span>
+          ) : null}
         </p>
 
         {countdown ? (
           <>
-            <div className="mt-2 flex items-start justify-center gap-1 text-center sm:gap-1.5">
+            <div className="mt-1 flex items-start justify-center gap-0.5 text-center sm:gap-1">
               <CountdownUnit value={pad2(countdown.days)} label="Days" labelClass={tone.unitLabel} />
               <CountdownSep />
               <CountdownUnit value={pad2(countdown.hours)} label="Hours" labelClass={tone.unitLabel} />
@@ -151,27 +171,30 @@ export default function LeadJourneyBar({ lead }: { lead: LeadRecord }) {
               <CountdownSep />
               <CountdownUnit value={pad2(countdown.secs)} label="Secs" labelClass={tone.unitLabel} />
             </div>
-            {countdown.urgency === 'overdue' ? (
-              <p className={`mt-1 mb-0 text-center text-[0.68rem] font-medium ${tone.status}`}>Overdue</p>
-            ) : countdown.urgency === 'soon' ? (
-              <p className={`mt-1 mb-0 text-center text-[0.68rem] font-medium ${tone.status}`}>Due soon</p>
-            ) : null}
-            <p className="mt-2 mb-0 flex w-full items-center justify-center gap-1.5 text-[0.84rem] font-semibold text-[#3d5166] dark:text-text">
-              <HugeiconsIcon icon={Calendar03Icon} size={16} color={tone.calendarColor} strokeWidth={1.7} />
+            <p className="mt-1 mb-0 flex w-full items-center justify-center gap-1 text-[0.75rem] font-semibold text-[#3d5166] dark:text-text">
+              <HugeiconsIcon icon={Calendar03Icon} size={13} color={tone.calendarColor} strokeWidth={1.7} />
               <span className="min-w-0 truncate">{formatFollowUpStamp(lead.nextFollowUp?.dueAt)}</span>
             </p>
           </>
         ) : (
-          <p className="mt-2 mb-0 text-center text-[0.8rem] text-[#8b97a8]">No follow-up scheduled</p>
+          <p className="mt-1 mb-0 text-center text-[0.75rem] text-[#8b97a8]">No follow-up scheduled</p>
         )}
       </div>
+
+      <LeadUpcomingMeetingCard
+        meeting={meeting}
+        canEdit={canEditMeeting}
+        compact
+        onReschedule={onRescheduleMeeting}
+        onCancel={onCancelMeeting}
+      />
     </section>
   )
 }
 
 function CountdownSep() {
   return (
-    <span className="pt-0.5 text-[1.05rem] font-bold leading-none text-[#1b3a57] dark:text-text-strong" aria-hidden>
+    <span className="pt-0.5 text-[0.9rem] font-bold leading-none text-[#1b3a57] dark:text-text-strong" aria-hidden>
       :
     </span>
   )
@@ -187,11 +210,11 @@ function CountdownUnit({
   labelClass?: string
 }) {
   return (
-    <div className="min-w-[36px]">
-      <p className="m-0 text-[1.2rem] font-bold tabular-nums leading-none tracking-tight text-[#1b3a57] dark:text-text-strong">
+    <div className="min-w-[30px]">
+      <p className="m-0 text-[1rem] font-bold tabular-nums leading-none tracking-tight text-[#1b3a57] dark:text-text-strong">
         {value}
       </p>
-      <p className={`m-0 mt-0.5 text-[0.62rem] font-medium ${labelClass}`}>{label}</p>
+      <p className={`m-0 mt-px text-[0.58rem] font-medium ${labelClass}`}>{label}</p>
     </div>
   )
 }
