@@ -265,29 +265,10 @@ export default function PackagesPage({
       title: "Status",
       dataIndex: "status",
       key: "status",
-      render: (value: PackageRecord["status"]) => (
-        <Tag color={value === "ACTIVE" ? "green" : "default"}>{value === "ACTIVE" ? "Active" : "Inactive"}</Tag>
-      ),
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 180,
-      render: (_: unknown, row: PackageRecord) => (
-        <Space onClick={(event) => event.stopPropagation()}>
-          <Tooltip title="View">
-            <Button aria-label={`View ${row.name}`} icon={<HugeiconsIcon icon={ViewIcon} size={16} />} onClick={() => openItem(row, "view")} />
-          </Tooltip>
-          {canManage ? (
-            <Tooltip title="Edit">
-              <Button
-                aria-label={`Edit ${row.name}`}
-                icon={<HugeiconsIcon icon={PencilEdit02Icon} size={16} />}
-                onClick={() => openItem(row, "edit")}
-              />
-            </Tooltip>
-          ) : null}
-          {canManage ? (
+      width: 140,
+      render: (_: PackageRecord["status"], row: PackageRecord) =>
+        canManage ? (
+          <span onClick={(event) => event.stopPropagation()}>
             <Popconfirm
               title={`${row.status === "ACTIVE" ? "Deactivate" : "Activate"} package?`}
               description={
@@ -301,9 +282,35 @@ export default function PackagesPage({
               <FormSwitch
                 checked={row.status === "ACTIVE"}
                 loading={changingStatus}
+                checkedChildren="Active"
+                unCheckedChildren="Inactive"
                 aria-label={`${row.status === "ACTIVE" ? "Deactivate" : "Activate"} ${row.name}`}
               />
             </Popconfirm>
+          </span>
+        ) : (
+          <Tag color={row.status === "ACTIVE" ? "green" : "default"}>
+            {row.status === "ACTIVE" ? "Active" : "Inactive"}
+          </Tag>
+        ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 120,
+      render: (_: unknown, row: PackageRecord) => (
+        <Space onClick={(event) => event.stopPropagation()}>
+          <Tooltip title="View">
+            <Button aria-label={`View ${row.name}`} icon={<HugeiconsIcon icon={ViewIcon} size={16} />} onClick={() => openItem(row, "view")} />
+          </Tooltip>
+          {canManage ? (
+            <Tooltip title="Edit">
+              <Button
+                aria-label={`Edit ${row.name}`}
+                icon={<HugeiconsIcon icon={PencilEdit02Icon} size={16} />}
+                onClick={() => openItem(row, "edit")}
+              />
+            </Tooltip>
           ) : null}
         </Space>
       ),

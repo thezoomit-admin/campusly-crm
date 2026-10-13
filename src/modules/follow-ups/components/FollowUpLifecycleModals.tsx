@@ -240,11 +240,16 @@ export function CancelFollowUpModal({
   }, [open])
 
   return (
-    <AntModal open={open} onClose={onClose} title="Cancel Follow-up" width={480}>
+    <AntModal
+      open={open}
+      onClose={onClose}
+      title={followUp?.type === 'Meeting' ? 'Cancel Meeting' : 'Cancel Follow-up'}
+      width={480}
+    >
       <div className="grid gap-3">
         {followUp ? (
           <p className="m-0 rounded-lg bg-[#f7fafc] px-3 py-2 text-sm text-[#3d5166] dark:bg-hover-bg dark:text-text">
-            {followUp.type} · {followUp.due} · {followUp.contact}
+            {followUp.type} · {followUp.due || formatDisplayDateTime(followUp.dueAt)} · {followUp.contact}
           </p>
         ) : null}
         <label className="grid gap-1.5 text-sm">
@@ -253,13 +258,27 @@ export function CancelFollowUpModal({
             autoSize={{ minRows: 2, maxRows: 5 }}
             maxLength={1000}
             value={reason}
-            placeholder="Why is this follow-up no longer needed?"
+            placeholder={
+              followUp?.type === 'Meeting'
+                ? 'Why is this meeting being cancelled?'
+                : 'Why is this follow-up no longer needed?'
+            }
             onChange={(event) => setReason(event.target.value)}
           />
         </label>
         <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton type="button" variant="outline" onClick={onClose} label="Keep Follow-up" />
-          <PrimaryButton type="button" loading={saving} onClick={() => void onSubmit(reason.trim())} label="Cancel Follow-up" />
+          <PrimaryButton
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            label={followUp?.type === 'Meeting' ? 'Keep Meeting' : 'Keep Follow-up'}
+          />
+          <PrimaryButton
+            type="button"
+            loading={saving}
+            onClick={() => void onSubmit(reason.trim())}
+            label={followUp?.type === 'Meeting' ? 'Cancel Meeting' : 'Cancel Follow-up'}
+          />
         </div>
       </div>
     </AntModal>
