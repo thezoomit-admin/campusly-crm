@@ -101,7 +101,6 @@ import {
   LeadNotesPanel,
   LeadPaymentsPanel,
   LeadServicesPanel,
-  LeadTimelinePanel,
 } from "../components/details/LeadTabPanels";
 import FileDocumentsPanel from "../components/details/FileDocumentsPanel";
 import {
@@ -916,7 +915,7 @@ export default function LeadDetailsPage() {
       setSearchParams(
         (prev) => {
           const params = new URLSearchParams(prev);
-          params.set("tab", "followups");
+          params.set("tab", "activities");
           params.delete("section");
           params.delete("followUp");
           return params;
@@ -1473,6 +1472,7 @@ export default function LeadDetailsPage() {
             canAssign={canChangeOwner}
             canCreateApplication={canCreateApplication}
             onCreateApplication={() => setApplicationOpen(true)}
+            studentId={lead.student?.id}
             onHandover={() => setHandoverOpen(true)}
             onEdit={() => navigate(`/leads/${id}/edit`)}
             onReopenLead={() => {
@@ -1597,12 +1597,6 @@ export default function LeadDetailsPage() {
                   <LeadStudyVisaPanel lead={lead} options={options} />
                 </div>
               ) : null}
-              {tab === "timeline" ? (
-                <LeadTimelinePanel
-                  items={activities}
-                  loading={activityLoading && activities.length === 0}
-                />
-              ) : null}
               {tab === "notes" ? (
                 <LeadNotesPanel
                   notes={noteHistory}
@@ -1658,8 +1652,19 @@ export default function LeadDetailsPage() {
               {tab === "activities" ? (
                 <LeadActivitiesPanel
                   activities={activities}
-                  canAdd={canAddActivity}
-                  onAdd={() => setActivityOpen(true)}
+                  followUps={canViewFollowUp ? followUps : []}
+                  loading={activityLoading && activities.length === 0}
+                  followUpsLoading={followUpsLoading}
+                  canEditFollowUp={canEditFollowUp}
+                  onCompleteFollowUp={(item) =>
+                    openFollowUpActions(item, "complete")
+                  }
+                  onRescheduleFollowUp={(item) =>
+                    openFollowUpActions(item, "reschedule")
+                  }
+                  onCancelFollowUp={(item) =>
+                    openFollowUpActions(item, "cancel")
+                  }
                 />
               ) : null}
               {tab === "assignments" ? (
@@ -1732,7 +1737,7 @@ export default function LeadDetailsPage() {
               canQualify={canQualify}
               canCreateApplication={canCreateApplication}
               onCreateApplication={() => setApplicationOpen(true)}
-              onViewActivities={() => setTab("timeline")}
+              onViewActivities={() => setTab("activities")}
               onUpdateQualification={() => setQualifyOpen(true)}
             />
           </div>
@@ -1959,7 +1964,7 @@ export default function LeadDetailsPage() {
         onSendEmail={onSendStatusEmail}
         onViewHistory={() => {
           setStatusOpen(false);
-          setTab("timeline");
+          setTab("activities");
         }}
       />
       <CloseLeadModal

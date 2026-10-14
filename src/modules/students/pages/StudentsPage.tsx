@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -9,6 +10,7 @@ import StudentsTable from '../components/StudentsTable'
 import type { StudentRow } from '../types'
 
 export default function StudentsPage() {
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
@@ -16,6 +18,8 @@ export default function StudentsPage() {
 
   const { data, isFetching, isError } = useListStudentsQuery({
     search: debouncedSearch,
+    page,
+    limit,
   })
 
   const rows = useMemo(() => (data?.items || []) as StudentRow[], [data?.items])
@@ -28,7 +32,7 @@ export default function StudentsPage() {
       />
       <PageHeader
         title="Students"
-        subtitle="Student profiles are created automatically from Converted leads when the first application is opened."
+        subtitle="One student per converted lead. Open a row for shared profile, documents, and all university applications."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Students' }]}
       />
 
@@ -53,6 +57,7 @@ export default function StudentsPage() {
           total={data?.total || rows.length}
           onPageChange={setPage}
           onLimitChange={setLimit}
+          onRowClick={(row) => navigate(`/students/${row.id}`)}
         />
       </div>
     </div>

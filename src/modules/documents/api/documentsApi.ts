@@ -9,6 +9,8 @@ export type DocumentListParams = {
   verified?: string
   expired?: string
   missing?: string
+  uploadedById?: string
+  ownerId?: string
   page?: number
   limit?: number
 }
@@ -31,6 +33,8 @@ const documentsApi = baseApi.injectEndpoints({
           verified: params?.verified,
           expired: params?.expired,
           missing: params?.missing,
+          uploadedById: params?.uploadedById,
+          ownerId: params?.ownerId,
           page: params?.page ? String(params.page) : undefined,
           limit: params?.limit ? String(params.limit) : undefined,
         })}`,

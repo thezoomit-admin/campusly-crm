@@ -1,5 +1,6 @@
 export { default as StudentsPage } from './pages/StudentsPage'
+export { default as StudentDetailsPage } from './pages/StudentDetailsPage'
 export { default as StudentFilters } from './components/StudentFilters'
 export { default as StudentsTable } from './components/StudentsTable'
 export { default as StudentFormModal } from './components/StudentFormModal'
-export type { StudentRow, StudentFormValues } from './types'
+export type { StudentRow, StudentFormValues, StudentDetail } from './types'

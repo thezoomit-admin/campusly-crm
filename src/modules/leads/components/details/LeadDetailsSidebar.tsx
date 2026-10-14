@@ -77,7 +77,7 @@ export default function LeadDetailsSidebar({
             className="cursor-pointer border-0 bg-transparent p-0 text-[0.78rem] font-medium text-primary hover:underline"
             onClick={onViewActivities}
           >
-            View Timeline
+            View Activities
           </button>
         </header>
         {recent.length === 0 ? (
@@ -93,7 +93,12 @@ export default function LeadDetailsSidebar({
                 ) : null}
                 <span className="absolute top-1.5 left-0 size-3.5 rounded-full border-[3px] border-[#e7f8ef] bg-primary dark:border-[color-mix(in_srgb,var(--color-primary)_24%,transparent)]" />
                 <p className="m-0 text-[0.88rem] font-semibold text-[#17324f] dark:text-text-strong">
-                  {activityTitle(item.action, item.details, item.outcome)}
+                  {activityTitle(
+                    item.action,
+                    item.details,
+                    item.outcome,
+                    item.actionKey,
+                  )}
                 </p>
                 <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
                   {formatDisplayDateTime(item.occurredAt)}

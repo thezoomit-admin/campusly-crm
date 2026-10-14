@@ -38,6 +38,7 @@ import {
 import { Skeleton } from 'antd'
 import { PrimaryButton } from '@/components/ui'
 import { FormSelect } from '@/components/common/Forms'
+import { useGetRoleQuery, useListPermissionsQuery } from '@/redux/features/roles/rolesApi'
 import type {
   AdminUser,
   DataScopeLevel,
@@ -48,6 +49,12 @@ import type {
   UserSession,
   UserStatus,
 } from '../../../types'
+import {
+  UserApplicationsPanel,
+  UserAssignedLeadsPanel,
+  UserDocumentsPanel,
+  UserPerformancePanel,
+} from './UserDetailResourcePanels'
 
 export type UserForm = {
   fullName: string
@@ -298,6 +305,24 @@ export function UserViewLayout({
     const now = new Date()
     return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()
   }).length
+  const assignedLeadCount = selected?.assignedLeadCount ?? 0
+  const activeApplicationCount = selected?.activeApplicationCount ?? 0
+  const pendingDocumentCount = selected?.pendingDocumentCount ?? 0
+  const roleId = selected?.role?.id || form.roleId
+  const { data: roleData, isFetching: roleLoading } = useGetRoleQuery(roleId, {
+    skip: !roleId || viewTab !== 'permissions',
+  })
+  const { data: permissionsData, isFetching: permissionsLoading } = useListPermissionsQuery(undefined, {
+    skip: viewTab !== 'permissions',
+  })
+  const rolePermissionIds = new Set(roleData?.role.permissionIds || [])
+  const rolePermissions = (permissionsData?.permissions || []).filter((item) => rolePermissionIds.has(item.id))
+  const permissionsByModule = rolePermissions.reduce<Record<string, typeof rolePermissions>>((acc, item) => {
+    const key = item.module || 'General'
+    if (!acc[key]) acc[key] = []
+    acc[key].push(item)
+    return acc
+  }, {})
 
   return (
     <div className="grid grid-cols-1 rounded-2xl border border-[#e8edf6] bg-[#f7f8fd] shadow-soft dark:border-border dark:bg-[#151b22] min-[961px]:grid-cols-[248px_minmax(0,1fr)]">
@@ -463,39 +488,55 @@ export function UserViewLayout({
                   </span>
                   <h4>Activity / Summary</h4>
                 </header>
-                <div className="grid grid-cols-1 gap-3 max-[960px]:grid-cols-1 min-[961px]:grid-cols-4">
-                  <div className="rounded-2xl p-3.5 text-left bg-[#eef1ff] text-[#5b67e8]">
+                <div className="grid grid-cols-1 gap-3 max-[960px]:grid-cols-1 min-[961px]:grid-cols-4 [&_button]:cursor-pointer [&_button]:border-0 [&_button]:text-left [&_strong]:mt-1 [&_strong]:block [&_strong]:text-[1.35rem] [&_b]:mt-1 [&_b]:block [&_b]:text-[0.82rem] [&_p]:m-0 [&_p]:mt-0.5 [&_p]:text-[0.72rem] [&_p]:opacity-90">
+                  <button
+                    type="button"
+                    className="rounded-2xl p-3.5 bg-[#eef1ff] text-[#5b67e8]"
+                    onClick={() => onTabChange('leads')}
+                  >
                     <span className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-[10px] bg-white">
                       <HugeiconsIcon icon={UserGroupIcon} size={18} color="currentColor" strokeWidth={1.7} />
                     </span>
-                    <strong>0</strong>
+                    <strong>{assignedLeadCount}</strong>
                     <b>Assigned Leads</b>
                     <p>Total leads assigned</p>
-                  </div>
-                  <div className="rounded-2xl p-3.5 text-left bg-[#f3efff] text-[#6d4ee8] dark:bg-[rgba(122,90,248,0.14)]">
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-2xl p-3.5 bg-[#f3efff] text-[#6d4ee8] dark:bg-[rgba(122,90,248,0.14)]"
+                    onClick={() => onTabChange('applications')}
+                  >
                     <span className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-[10px] bg-white">
                       <HugeiconsIcon icon={LicenseIcon} size={18} color="currentColor" strokeWidth={1.7} />
                     </span>
-                    <strong>0</strong>
+                    <strong>{activeApplicationCount}</strong>
                     <b>Active Applications</b>
                     <p>In progress applications</p>
-                  </div>
-                  <div className="rounded-2xl p-3.5 text-left bg-[#fff3e8] text-[#d46b08] dark:bg-[rgba(212,107,8,0.16)]">
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-2xl p-3.5 bg-[#fff3e8] text-[#d46b08] dark:bg-[rgba(212,107,8,0.16)]"
+                    onClick={() => onTabChange('documents')}
+                  >
                     <span className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-[10px] bg-white">
                       <HugeiconsIcon icon={DocumentAttachmentIcon} size={18} color="currentColor" strokeWidth={1.7} />
                     </span>
-                    <strong>0</strong>
+                    <strong>{pendingDocumentCount}</strong>
                     <b>Pending Documents</b>
                     <p>Awaiting approval</p>
-                  </div>
-                  <div className="rounded-2xl p-3.5 text-left bg-[#e8f8ef] text-[#1f9d5d]">
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-2xl p-3.5 bg-[#e8f8ef] text-[#1f9d5d]"
+                    onClick={() => onTabChange('performance')}
+                  >
                     <span className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-[10px] bg-white">
                       <HugeiconsIcon icon={Task01Icon} size={18} color="currentColor" strokeWidth={1.7} />
                     </span>
                     <strong>{monthActivity}</strong>
                     <b>This Month Activity</b>
                     <p>Total activities</p>
-                  </div>
+                  </button>
                 </div>
               </article>
 
@@ -611,6 +652,50 @@ export function UserViewLayout({
                 </article>
               )}
 
+              <article className="rounded-[18px] border border-[#e8edf6] bg-white px-[18px] py-4 shadow-[0_8px_20px_rgba(36,50,77,0.04)] dark:border-border dark:bg-surface [&_header]:mb-3.5 [&_header]:flex [&_header]:items-center [&_header]:gap-2 [&_h4]:m-0 [&_h4]:text-[0.95rem] [&_h4]:text-[#24324d] dark:[&_h4]:text-text-strong">
+                <header>
+                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[#eef1ff] text-[#5b67e8]">
+                    <HugeiconsIcon icon={Shield01Icon} size={16} color="currentColor" strokeWidth={1.7} />
+                  </span>
+                  <h4>Role permissions</h4>
+                </header>
+                {roleLoading || permissionsLoading ? (
+                  <Skeleton active paragraph={{ rows: 4 }} />
+                ) : !roleId ? (
+                  <p className={`${muted}`}>No role is assigned to this user.</p>
+                ) : rolePermissions.length === 0 ? (
+                  <p className={`${muted}`}>
+                    {roleName !== '—'
+                      ? `${roleName} has no permissions configured yet.`
+                      : 'No permissions are available for this role.'}
+                  </p>
+                ) : (
+                  <div className="grid gap-3">
+                    <p className={`${muted} m-0`}>
+                      Permissions inherited from <strong>{roleData?.role.name || roleName}</strong>.
+                    </p>
+                    {Object.entries(permissionsByModule).map(([moduleName, items]) => (
+                      <div key={moduleName} className="rounded-xl border border-[#e8edf6] px-3 py-2.5 dark:border-border">
+                        <strong className="mb-2 block text-[0.82rem] text-[#24324d] dark:text-text-strong">
+                          {moduleName}
+                        </strong>
+                        <div className="flex flex-wrap gap-1.5">
+                          {items.map((item) => (
+                            <span
+                              key={item.id}
+                              className="inline-flex rounded-full bg-[#eef1ff] px-2.5 py-0.5 text-[0.72rem] font-semibold text-[#4f5de4]"
+                              title={item.description || item.key}
+                            >
+                              {item.resource}:{item.action}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </article>
+
               {canConfigure ? (
                 <article className="rounded-[18px] border border-[#e8edf6] bg-white px-[18px] py-4 shadow-[0_8px_20px_rgba(36,50,77,0.04)] dark:border-border dark:bg-surface [&_header]:mb-3.5 [&_header]:flex [&_header]:items-center [&_header]:gap-2 [&_h4]:m-0 [&_h4]:text-[0.95rem] [&_h4]:text-[#24324d] dark:[&_h4]:text-text-strong">
                   <header>
@@ -619,26 +704,32 @@ export function UserViewLayout({
                     </span>
                     <h4>Sessions</h4>
                   </header>
-                  {sessions.map((session) => (
-                    <div key={session.id} className={`${sessionRow}`}>
-                      <div>
-                        <strong>{session.userAgent || 'Unknown device'}</strong>
-                        <div className={`${muted}`}>
-                          Login: {formatDate(session.createdAt)} · Last active: {formatDate(session.lastActiveAt)}
+                  {detailLoading ? (
+                    <Skeleton active paragraph={{ rows: 3 }} />
+                  ) : sessions.length === 0 ? (
+                    <p className={`${muted}`}>No sessions recorded for this user.</p>
+                  ) : (
+                    sessions.map((session) => (
+                      <div key={session.id} className={`${sessionRow}`}>
+                        <div>
+                          <strong>{session.userAgent || 'Unknown device'}</strong>
+                          <div className={`${muted}`}>
+                            Login: {formatDate(session.createdAt)} · Last active: {formatDate(session.lastActiveAt)}
+                          </div>
                         </div>
+                        {session.active ? (
+                          <PrimaryButton
+                            size="sm"
+                            variant="outline"
+                            onClick={() => void onRevokeSession(session.id)}
+                            label="Logout Session"
+                          />
+                        ) : (
+                          <span className={`${muted}`}>{session.revokedAt ? 'Revoked' : 'Expired'}</span>
+                        )}
                       </div>
-                      {session.active ? (
-                        <PrimaryButton
-                          size="sm"
-                          variant="outline"
-                          onClick={() => void onRevokeSession(session.id)}
-                          label="Logout Session"
-                        />
-                      ) : (
-                        <span className={`${muted}`}>{session.revokedAt ? 'Revoked' : 'Expired'}</span>
-                      )}
-                    </div>
-                  ))}
+                    ))
+                  )}
                   <div className={`${formActions}`}>
                     <PrimaryButton size="sm" variant="outline" onClick={() => void onForceLogout()} label="Force Logout" />
                     <PrimaryButton
@@ -653,45 +744,20 @@ export function UserViewLayout({
             </div>
           ) : null}
 
-          {viewTab === 'leads' ||
-          viewTab === 'applications' ||
-          viewTab === 'documents' ||
-          viewTab === 'performance' ? (
-            <article className="rounded-[18px] border border-[#e8edf6] bg-white px-[18px] py-4 shadow-[0_8px_20px_rgba(36,50,77,0.04)] dark:border-border dark:bg-surface [&_header]:mb-3.5 [&_header]:flex [&_header]:items-center [&_header]:gap-2 [&_h4]:m-0 [&_h4]:text-[0.95rem] [&_h4]:text-[#24324d] dark:[&_h4]:text-text-strong min-h-[180px]">
-              <header>
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-[#eef1ff] text-[#5b67e8]">
-                  <HugeiconsIcon
-                    icon={
-                      viewTab === 'leads'
-                        ? UserGroupIcon
-                        : viewTab === 'applications'
-                          ? LicenseIcon
-                          : viewTab === 'documents'
-                            ? File01Icon
-                            : AnalyticsUpIcon
-                    }
-                    size={16}
-                    color="currentColor"
-                    strokeWidth={1.7}
-                  />
-                </span>
-                <h4>
-                  {viewTab === 'leads'
-                    ? 'Assigned Leads'
-                    : viewTab === 'applications'
-                      ? 'Applications'
-                      : viewTab === 'documents'
-                        ? 'Documents'
-                        : 'Performance'}
-                </h4>
-              </header>
-              <p className={`${muted}`}>
-                {viewTab === 'leads'
-                  ? `No assigned lead records to show yet. Inactive owner leads: ${selected?.inactiveOwnerLeadCount ?? 0}.`
-                  : 'No records available for this section yet.'}
-              </p>
-            </article>
+          {viewTab === 'leads' && selected ? (
+            <div className="grid gap-3">
+              {(selected.inactiveOwnerLeadCount ?? 0) > 0 ? (
+                <div className="rounded-xl border border-[#fff1e6] bg-[#fff8f1] px-3.5 py-2.5 text-[0.82rem] text-[#c2410c] dark:border-[rgba(194,65,12,0.35)] dark:bg-[rgba(194,65,12,0.12)]">
+                  This user is not active and still owns {selected.inactiveOwnerLeadCount} lead
+                  {(selected.inactiveOwnerLeadCount ?? 0) === 1 ? '' : 's'}. Consider reassigning them.
+                </div>
+              ) : null}
+              <UserAssignedLeadsPanel userId={selected.id} />
+            </div>
           ) : null}
+          {viewTab === 'applications' && selected ? <UserApplicationsPanel userId={selected.id} /> : null}
+          {viewTab === 'documents' && selected ? <UserDocumentsPanel userId={selected.id} /> : null}
+          {viewTab === 'performance' && selected ? <UserPerformancePanel userId={selected.id} /> : null}
         </div>
       </section>
     </div>

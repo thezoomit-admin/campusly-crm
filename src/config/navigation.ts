@@ -65,6 +65,12 @@ export const APP_NAV_GROUPS: NavGroup[] = [
             icon: "users",
             permission: "lead:assign",
           },
+          {
+            to: "/leads/closed",
+            label: "Lost/Close Leads",
+            icon: "users",
+            permission: "lead:view",
+          },
         ],
       },
       {
@@ -238,6 +244,7 @@ const PAGE_KEYWORDS: Record<string, string[]> = {
   "/leads": ["prospect", "enquiry", "inquiry"],
   "/leads/mine": ["assigned", "my leads", "workload", "follow-up"],
   "/leads/pool": ["unassigned", "queue", "assign", "distribution"],
+  "/leads/closed": ["lost", "closed", "inactive", "archive"],
   "/applications": ["admission", "apply"],
   "/students": ["learner", "client"],
   "/service-items": ["services", "catalog", "pricing", "offer", "package"],

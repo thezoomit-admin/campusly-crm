@@ -42,8 +42,10 @@ function isPathActive(pathname: string, to: string) {
       (pathname.startsWith('/leads/') &&
         pathname !== '/leads/mine' &&
         pathname !== '/leads/pool' &&
+        pathname !== '/leads/closed' &&
         !pathname.startsWith('/leads/mine/') &&
-        !pathname.startsWith('/leads/pool/'))
+        !pathname.startsWith('/leads/pool/') &&
+        !pathname.startsWith('/leads/closed/'))
     )
   }
   return pathname === to || pathname.startsWith(`${to}/`)
