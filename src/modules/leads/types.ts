@@ -367,6 +367,31 @@ export type LeadRecord = {
     outcome?: string | null;
   } | null;
   statusChange?: LeadStatusChange;
+  applications?: LeadApplicationSummary[];
+  student?: LeadStudentSummary | null;
+  hasCrmFile?: boolean;
+  crmFile?: { id: string; code: string; status: string } | null;
+};
+
+export type LeadApplicationSummary = {
+  id: string;
+  code: string;
+  university: string | null;
+  program: string | null;
+  intake: string | null;
+  status: string;
+  countryName: string | null;
+  submittedAt: string | null;
+  createdAt: string;
+};
+
+export type LeadStudentSummary = {
+  id: string;
+  studentCode: string;
+  name: string;
+  status: string;
+  destination: string | null;
+  program: string | null;
 };
 
 export type LeadFormState = {

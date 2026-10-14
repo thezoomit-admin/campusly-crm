@@ -42,6 +42,8 @@ export default function LeadWorkspaceHeader({
   onAddActivity,
   onUploadFile,
   onAssign,
+  canCreateApplication,
+  onCreateApplication,
 }: {
   lead: LeadRecord;
   degreeOptions?: MasterOption[];
@@ -61,6 +63,8 @@ export default function LeadWorkspaceHeader({
   onAddActivity?: () => void;
   onUploadFile?: () => void;
   onAssign?: () => void;
+  canCreateApplication?: boolean;
+  onCreateApplication?: () => void;
 }) {
   const studyLevel =
     optionLabel(degreeOptions, lead.preferredDegreeCode) ||
@@ -83,6 +87,20 @@ export default function LeadWorkspaceHeader({
   return (
     <section className="rounded-2xl border border-[#e7eef5] bg-surface px-4 py-4 shadow-[0_10px_28px_rgba(22,50,79,0.035)] md:px-5 dark:border-border">
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        {canCreateApplication && onCreateApplication ? (
+          <PrimaryButton
+            type="button"
+            size="sm"
+            variant="primary"
+            icon={<HugeiconsIcon icon={Mortarboard01Icon} size={15} />}
+            onClick={onCreateApplication}
+            label={
+              (lead.applications?.length || 0) > 0
+                ? "Add Application"
+                : "Create Application"
+            }
+          />
+        ) : null}
         {showDuplicateReview ? (
           <PrimaryButton
             type="button"

@@ -1,4 +1,17 @@
-export type ApplicationRow = Record<string, string>
+export type ApplicationRow = {
+  id: string
+  code?: string
+  applicant: string
+  university: string
+  program: string
+  intake: string
+  counsellor: string
+  status: string
+  country?: string
+  submitted: string
+  leadId?: string | null
+  leadCode?: string | null
+}
 
 export type ApplicationFormValues = {
   applicant: string
@@ -6,3 +19,15 @@ export type ApplicationFormValues = {
   program: string
   intake: string
 }
+
+export const APPLICATION_PIPELINE_STATUSES = [
+  'Draft',
+  'Documents Pending',
+  'Under Review',
+  'Submitted',
+  'Offer Received',
+  'Visa Processing',
+  'Enrolled',
+  'Rejected',
+  'Withdrawn',
+] as const

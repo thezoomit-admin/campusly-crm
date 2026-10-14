@@ -2,7 +2,12 @@ import type { ActivityFeedItem } from "@/types";
 import LeadMetaCampaignHistory from "@/modules/meta-leads/components/LeadMetaCampaignHistory";
 import type { MasterOption } from "../../hooks/useLeadMasterOptions";
 import type { LeadRecord } from "../../types";
-import { activityTitle, formatDisplayDateTime } from "../../utils/leadDetails";
+import {
+  activityTitle,
+  formatDisplayDateTime,
+  isConvertedLeadStatus,
+} from "../../utils/leadDetails";
+import LeadApplicationsCard from "./LeadApplicationsCard";
 import LeadProfileCompletionCard from "./LeadProfileCompletionCard";
 import LeadQualificationSummaryCard from "./LeadQualificationSummaryCard";
 
@@ -11,6 +16,8 @@ export default function LeadDetailsSidebar({
   activities,
   options,
   canQualify,
+  canCreateApplication,
+  onCreateApplication,
   onViewActivities,
   onUpdateQualification,
 }: {
@@ -26,14 +33,30 @@ export default function LeadDetailsSidebar({
     unqualified: MasterOption[];
   };
   canQualify: boolean;
+  canCreateApplication?: boolean;
+  onCreateApplication?: () => void;
   onViewActivities: () => void;
   onUpdateQualification?: () => void;
 }) {
   const recent = activities.slice(0, 5);
+  const showApplications = isConvertedLeadStatus(
+    lead.statusCode,
+    lead.status,
+    lead.statusChange?.current?.behaviorKey,
+  ) || (lead.applications?.length || 0) > 0 || Boolean(lead.student);
 
   return (
     <aside className="grid content-start gap-4">
       <LeadProfileCompletionCard lead={lead} />
+
+      {showApplications ? (
+        <LeadApplicationsCard
+          applications={lead.applications}
+          student={lead.student}
+          canCreate={canCreateApplication}
+          onCreate={onCreateApplication}
+        />
+      ) : null}
 
       <LeadQualificationSummaryCard
         lead={lead}

@@ -78,6 +78,7 @@ import type {
 import type { LeadDocumentItem } from "../types";
 import {
   LEAD_PRIMARY_TABS,
+  isConvertedLeadStatus,
   parseLeadMoreTab,
   parseLeadPrimaryTab,
   type LeadMoreTabKey,
@@ -86,6 +87,7 @@ import {
 import LeadWorkspaceHeader from "../components/details/LeadWorkspaceHeader";
 import LeadJourneyBar from "../components/details/LeadJourneyBar";
 import LeadDetailsSidebar from "../components/details/LeadDetailsSidebar";
+import CreateApplicationModal from "@/modules/applications/components/CreateApplicationModal";
 import LeadOverviewPanels, {
   LeadAcademicPanel,
   LeadStudyVisaPanel,
@@ -265,6 +267,21 @@ export default function LeadDetailsPage() {
   const canDeleteLead =
     hasPermission(auth, "lead:delete") ||
     Boolean(lead?.isDuplicate && canManageDuplicate);
+  const canConvert = hasPermission(auth, "lead:convert");
+  const leadIsConverted = isConvertedLeadStatus(
+    lead?.statusCode,
+    lead?.status,
+    lead?.statusChange?.current?.behaviorKey,
+  );
+  const canCreateApplication = Boolean(canConvert && leadIsConverted);
+  const showFileDocumentsTab = Boolean(
+    leadIsConverted ||
+      lead?.hasCrmFile ||
+      (lead?.applications?.length || 0) > 0 ||
+      lead?.statusCode === "FILE_OPENED" ||
+      lead?.statusChange?.current?.behaviorKey === "file_opened" ||
+      lead?.status?.trim().toLowerCase() === "file opened",
+  );
 
   const { data: activityData, isFetching: activityLoading } =
     useListActivityFeedQuery(
@@ -405,6 +422,7 @@ export default function LeadDetailsPage() {
   const [qualifyOpen, setQualifyOpen] = useState(false);
   const [priorityOpen, setPriorityOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
+  const [applicationOpen, setApplicationOpen] = useState(false);
   const [statusErrors, setStatusErrors] = useState<Record<string, string>>({});
   const [closeOpen, setCloseOpen] = useState(false);
   const [closeErrors, setCloseErrors] = useState<Record<string, string>>({});
@@ -1453,6 +1471,8 @@ export default function LeadDetailsPage() {
             canManageDuplicate={canManageDuplicate}
             canOverridePriority={canOverridePriority}
             canAssign={canChangeOwner}
+            canCreateApplication={canCreateApplication}
+            onCreateApplication={() => setApplicationOpen(true)}
             onHandover={() => setHandoverOpen(true)}
             onEdit={() => navigate(`/leads/${id}/edit`)}
             onReopenLead={() => {
@@ -1493,10 +1513,7 @@ export default function LeadDetailsPage() {
                 (item) =>
                   (item.key !== "followups" || canViewFollowUp) &&
                   (item.key !== "more" || moreVisibleKeys.length > 0) &&
-                  (item.key !== "file-documents" ||
-                    lead.statusCode === "FILE_OPENED" ||
-                    lead.statusChange?.current?.behaviorKey === "file_opened" ||
-                    lead.status.trim().toLowerCase() === "file opened"),
+                  (item.key !== "file-documents" || showFileDocumentsTab),
               ).map((item) => {
                 const active = tab === item.key;
                 return (
@@ -1713,11 +1730,25 @@ export default function LeadDetailsPage() {
               activities={activities}
               options={options}
               canQualify={canQualify}
+              canCreateApplication={canCreateApplication}
+              onCreateApplication={() => setApplicationOpen(true)}
               onViewActivities={() => setTab("timeline")}
               onUpdateQualification={() => setQualifyOpen(true)}
             />
           </div>
         </>
+      ) : null}
+
+      {lead ? (
+        <CreateApplicationModal
+          open={applicationOpen && canCreateApplication}
+          lead={lead}
+          onClose={() => setApplicationOpen(false)}
+          onCreated={(applicationId) => {
+            void refreshLeadWorkspace();
+            navigate(`/applications/${applicationId}`);
+          }}
+        />
       ) : null}
 
       <ScheduleMeetingModal
