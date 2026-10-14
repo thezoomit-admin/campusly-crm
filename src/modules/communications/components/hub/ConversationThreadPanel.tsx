@@ -65,7 +65,7 @@ export default function ConversationThreadPanel({
 
   if (!selected) {
     return (
-      <section className="grid min-h-0 place-items-center bg-[#fbfcfe] px-6 text-center">
+      <section className="grid min-h-0 place-items-center bg-input-bg px-6 text-center">
         <Empty description="Select a conversation to view messages" />
       </section>
     )
@@ -76,8 +76,8 @@ export default function ConversationThreadPanel({
     (selected.processingStatus === 'FAILED' || selected.processingStatus === 'PENDING')
 
   return (
-    <section className="flex min-h-0 min-w-0 flex-col bg-white">
-      <header className="flex items-start justify-between gap-3 border-b border-[#e8edf5] px-4 py-3">
+    <section className="flex min-h-0 min-w-0 flex-col bg-surface">
+      <header className="flex items-start justify-between gap-3 border-b border-border-subtle px-4 py-3">
         <div className="flex min-w-0 items-start gap-3">
           <span
             className={`grid size-11 shrink-0 place-items-center rounded-full text-[0.8rem] font-bold ${avatarTone(selected.channel)}`}
@@ -86,9 +86,9 @@ export default function ConversationThreadPanel({
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="m-0 truncate text-[1rem] font-semibold text-[#0f172a]">{name}</h2>
+              <h2 className="m-0 truncate text-[1rem] font-semibold text-text-strong">{name}</h2>
               {selected.lead ? (
-                <span className="rounded-md bg-[#eff6ff] px-2 py-0.5 text-[0.7rem] font-semibold text-[#2563eb]">
+                <span className="rounded-md bg-[#eff6ff] px-2 py-0.5 text-[0.7rem] font-semibold text-[#2563eb] dark:bg-blue-500/15 dark:text-link">
                   Lead
                 </span>
               ) : null}
@@ -96,12 +96,12 @@ export default function ConversationThreadPanel({
                 {STATUS_LABELS[selected.processingStatus]}
               </span>
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-[0.78rem] text-[#64748b]">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-[0.78rem] text-text-muted">
               <ChannelIcon channel={selected.channel} size={14} />
               <span>{selected.senderPhone || selected.senderEmail || CHANNEL_LABELS[selected.channel]}</span>
               {selected.currentLocation || selected.preferredCountryCode ? (
                 <>
-                  <span className="text-[#cbd5e1]">·</span>
+                  <span className="text-text-faint">·</span>
                   <span>{selected.currentLocation || selected.preferredCountryCode}</span>
                 </>
               ) : null}
@@ -121,7 +121,7 @@ export default function ConversationThreadPanel({
         </div>
       </header>
 
-      <nav className="flex gap-1 overflow-x-auto border-b border-[#e8edf5] px-3">
+      <nav className="flex gap-1 overflow-x-auto border-b border-border-subtle px-3">
         {(
           [
             ['conversation', 'Conversation'],
@@ -137,8 +137,8 @@ export default function ConversationThreadPanel({
             onClick={() => setTab(key)}
             className={`cursor-pointer border-0 border-b-2 bg-transparent px-3 py-2.5 text-[0.84rem] font-medium ${
               tab === key
-                ? 'border-[#3b82f6] font-semibold text-[#2563eb]'
-                : 'border-transparent text-[#64748b] hover:text-text'
+                ? 'border-[#3b82f6] font-semibold text-link'
+                : 'border-transparent text-text-muted hover:text-text'
             }`}
           >
             {label}
@@ -147,26 +147,26 @@ export default function ConversationThreadPanel({
       </nav>
 
       {selected.lead ? (
-        <div className="mx-4 mt-3 flex items-center justify-between gap-2 rounded-xl bg-[#ecfdf5] px-3 py-2 text-[0.8rem] text-[#047857]">
+        <div className="mx-4 mt-3 flex items-center justify-between gap-2 rounded-xl bg-[#ecfdf5] px-3 py-2 text-[0.8rem] text-[#047857] dark:bg-emerald-500/15 dark:text-emerald-300">
           <span>This conversation is linked with a lead.</span>
           <Link
             to={`/leads/${selected.lead.id}`}
-            className="inline-flex items-center gap-1 font-semibold text-[#047857] no-underline hover:underline"
+            className="inline-flex items-center gap-1 font-semibold text-inherit no-underline hover:underline"
           >
             View Lead Details →
           </Link>
         </div>
       ) : null}
 
-      <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+      <div ref={scrollerRef} className="min-h-0 flex-1 overflow-y-auto bg-input-bg px-4 py-4 dark:bg-[#0f1a1f]">
         {loading && sorted.length === 0 ? (
           <div className="grid min-h-40 place-items-center">
             <Spin />
           </div>
         ) : tab !== 'conversation' ? (
-          <div className="grid min-h-40 place-items-center text-[0.9rem] text-[#64748b]">
+          <div className="grid min-h-40 place-items-center text-[0.9rem] text-text-muted">
             {tab === 'profile' && selected.lead ? (
-              <Link to={`/leads/${selected.lead.id}`} className="font-semibold text-[#2563eb]">
+              <Link to={`/leads/${selected.lead.id}`} className="font-semibold text-link">
                 Open full lead profile →
               </Link>
             ) : (
@@ -190,7 +190,7 @@ export default function ConversationThreadPanel({
               return (
                 <div key={item.id} className="grid gap-3">
                   {showStamp ? (
-                    <div className="text-center text-[0.72rem] font-medium text-[#94a3b8]">
+                    <div className="text-center text-[0.72rem] font-medium text-text-faint">
                       {formatThreadStamp(item.eventAt)}
                     </div>
                   ) : null}
@@ -205,14 +205,14 @@ export default function ConversationThreadPanel({
                     <div
                       className={`max-w-[min(100%,420px)] rounded-2xl px-3.5 py-2.5 text-[0.88rem] leading-relaxed ${
                         outgoing
-                          ? 'rounded-br-md bg-[#dcf8c6] text-[#14532d]'
-                          : 'rounded-bl-md bg-[#f1f5f9] text-[#0f172a]'
+                          ? 'rounded-br-md bg-[#dcf8c6] text-[#14532d] dark:bg-[#005c4b] dark:text-[#e9edef]'
+                          : 'rounded-bl-md bg-hover-bg text-text-strong dark:bg-[#1f2c33]'
                       }`}
                     >
                       <p className="m-0 whitespace-pre-wrap">{body}</p>
                       <div
                         className={`mt-1 flex items-center justify-end gap-1 text-[0.68rem] ${
-                          outgoing ? 'text-[#3f6212]' : 'text-[#94a3b8]'
+                          outgoing ? 'text-[#3f6212] dark:text-[#8696a0]' : 'text-text-faint'
                         }`}
                       >
                         <span>{formatBubbleTime(item.eventAt)}</span>
@@ -227,24 +227,24 @@ export default function ConversationThreadPanel({
         )}
       </div>
 
-      <footer className="border-t border-[#e8edf5] bg-white p-3">
+      <footer className="border-t border-border-subtle bg-surface p-3">
         {showReprocess ? (
           <div className="mb-2 flex justify-end">
             <button
               type="button"
               disabled={reprocessing}
               onClick={() => onReprocess?.(selected)}
-              className="cursor-pointer rounded-lg border border-[#93c5fd] bg-[#eff6ff] px-3 py-1.5 text-[0.78rem] font-semibold text-[#2563eb] disabled:cursor-not-allowed disabled:opacity-60"
+              className="cursor-pointer rounded-lg border border-[#93c5fd] bg-[#eff6ff] px-3 py-1.5 text-[0.78rem] font-semibold text-[#2563eb] disabled:cursor-not-allowed disabled:opacity-60 dark:border-blue-500/40 dark:bg-blue-500/15 dark:text-link"
             >
               {reprocessing ? 'Reprocessing…' : 'Reprocess'}
             </button>
           </div>
         ) : null}
         <div className="flex items-end gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-[#e2e8f0] bg-[#f8fafc] px-3 py-2">
+          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-border bg-input-bg px-3 py-2">
             <button
               type="button"
-              className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-[#94a3b8] hover:bg-white"
+              className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-text-faint hover:bg-surface"
               aria-label="Attach"
             >
               <HugeiconsIcon icon={Attachment01Icon} size={16} color="currentColor" strokeWidth={1.7} />
@@ -254,11 +254,11 @@ export default function ConversationThreadPanel({
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder="Type a message…"
-              className="max-h-28 min-h-[24px] min-w-0 flex-1 resize-none border-0 bg-transparent text-[0.9rem] text-text-strong outline-none placeholder:text-[#94a3b8]"
+              className="max-h-28 min-h-[24px] min-w-0 flex-1 resize-none border-0 bg-transparent text-[0.9rem] text-text-strong outline-none placeholder:text-text-faint"
             />
             <button
               type="button"
-              className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-[#94a3b8] hover:bg-white"
+              className="inline-flex size-8 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-text-faint hover:bg-surface"
               aria-label="Emoji"
             >
               <HugeiconsIcon icon={SmileIcon} size={16} color="currentColor" strokeWidth={1.7} />
@@ -278,7 +278,7 @@ export default function ConversationThreadPanel({
           <QuickBtn icon={Image01Icon} label="Image" />
           <button
             type="button"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#d1fae5] bg-[#ecfdf5] px-2.5 py-1.5 text-[0.75rem] font-semibold text-[#047857]"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#d1fae5] bg-[#ecfdf5] px-2.5 py-1.5 text-[0.75rem] font-semibold text-[#047857] dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300"
           >
             WhatsApp Template ▾
           </button>
@@ -293,7 +293,7 @@ function IconBtn({ label, children }: { label: string; children: ReactNode }) {
     <button
       type="button"
       aria-label={label}
-      className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-[#64748b] hover:bg-[#f1f5f9] hover:text-[#0f172a]"
+      className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border-0 bg-transparent text-text-muted hover:bg-hover-bg hover:text-text-strong"
     >
       {children}
     </button>
@@ -310,7 +310,7 @@ function QuickBtn({
   return (
     <button
       type="button"
-      className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-[#e2e8f0] bg-white px-2.5 py-1.5 text-[0.75rem] font-medium text-[#475569] hover:bg-[#f8fafc]"
+      className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[0.75rem] font-medium text-text-muted hover:bg-hover-bg"
     >
       <HugeiconsIcon icon={icon} size={13} color="currentColor" strokeWidth={1.7} />
       {label}

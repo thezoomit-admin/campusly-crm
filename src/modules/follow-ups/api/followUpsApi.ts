@@ -29,6 +29,7 @@ const followUpsApi = baseApi.injectEndpoints({
           status: params?.status,
         })}`,
       providesTags: [{ type: 'FollowUps', id: 'LIST' }],
+      keepUnusedDataFor: 30,
     }),
     getFollowUp: builder.query<{ followUp: FollowUpRecord }, string>({
       query: (id) => `/follow-ups/${id}`,

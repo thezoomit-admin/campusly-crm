@@ -221,7 +221,7 @@ export default function CommunicationHubPage() {
         </p>
       ) : null}
 
-      <div className="grid min-h-[560px] overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-[0_8px_30px_rgba(15,23,42,0.04)] lg:h-[calc(100vh-220px)] lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(380px,420px)_minmax(0,1fr)_minmax(260px,300px)]">
+      <div className="grid min-h-[560px] overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_8px_30px_rgba(15,23,42,0.04)] dark:shadow-none lg:h-[calc(100vh-220px)] lg:grid-cols-[minmax(360px,420px)_minmax(0,1fr)] xl:grid-cols-[minmax(380px,420px)_minmax(0,1fr)_minmax(260px,300px)]">
         <div className={`min-h-0 ${selectedHubId ? 'hidden lg:flex' : 'flex'} flex-col`}>
           <ConversationListPanel
             items={filteredItems}
@@ -236,11 +236,11 @@ export default function CommunicationHubPage() {
           />
         </div>
 
-        <div className={`min-h-0 ${selectedHubId ? 'flex' : 'hidden lg:flex'} flex-col`}>
+        <div className={`min-h-0 ${selectedHubId ? 'flex' : 'hidden lg:flex'} flex-col bg-surface`}>
           {selectedHubId ? (
             <button
               type="button"
-              className="cursor-pointer border-0 border-b border-[#e8edf5] bg-transparent px-4 py-2 text-left text-[0.85rem] text-[#2563eb] lg:hidden"
+              className="cursor-pointer border-0 border-b border-border-subtle bg-transparent px-4 py-2 text-left text-[0.85rem] text-link lg:hidden"
               onClick={() => setSearchParams({})}
             >
               ← Back to inbox
@@ -302,10 +302,10 @@ function ChannelPill({
 }) {
   const activeTone =
     tone === 'whatsapp'
-      ? 'border-[#86efac] bg-[#ecfdf5] text-[#047857]'
+      ? 'border-[#86efac] bg-[#ecfdf5] text-[#047857] dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300'
       : tone === 'email'
-        ? 'border-[#fdba74] bg-[#fff7ed] text-[#c2410c]'
-        : 'border-[#93c5fd] bg-[#eff6ff] text-[#2563eb]'
+        ? 'border-[#fdba74] bg-[#fff7ed] text-[#c2410c] dark:border-orange-500/40 dark:bg-orange-500/15 dark:text-orange-300'
+        : 'border-[#93c5fd] bg-[#eff6ff] text-[#2563eb] dark:border-blue-500/40 dark:bg-blue-500/15 dark:text-link'
 
   return (
     <button
@@ -314,14 +314,14 @@ function ChannelPill({
       className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-[0.8rem] font-medium transition-colors ${
         active
           ? activeTone
-          : 'border-[#e2e8f0] bg-white text-[#475569] hover:bg-[#f8fafc]'
+          : 'border-border bg-surface text-text-muted hover:bg-hover-bg'
       }`}
     >
       {icon}
       <span>{label}</span>
       <span
         className={`rounded-full px-1.5 text-[0.7rem] font-bold ${
-          active ? 'bg-white/80 text-inherit' : 'bg-[#f1f5f9] text-[#64748b]'
+          active ? 'bg-surface/80 text-inherit' : 'bg-hover-bg text-text-muted'
         }`}
       >
         {count}

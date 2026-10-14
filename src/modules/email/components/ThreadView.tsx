@@ -168,8 +168,8 @@ export default function ThreadView({ threadId, settings, embedded = false, class
   }
 
   return (
-    <div className={`flex min-h-0 min-w-0 max-w-full flex-col overflow-hidden ${className}`}>
-      <header className="flex min-w-0 flex-wrap items-start justify-between gap-3 border-b border-border-subtle px-4 py-3">
+    <div className={`flex min-h-0 min-w-0 max-w-full flex-col overflow-hidden bg-surface ${className}`}>
+      <header className="flex min-w-0 flex-wrap items-start justify-between gap-3 border-b border-border-subtle bg-surface px-4 py-3">
         <div className="grid min-w-0 max-w-full flex-1 gap-1 overflow-hidden">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h3 className="m-0 min-w-0 max-w-full truncate text-[1rem] font-semibold text-text-strong">

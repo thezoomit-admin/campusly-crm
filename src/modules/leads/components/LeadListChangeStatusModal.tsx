@@ -5,12 +5,7 @@ import { getApiError, getApiErrorFields } from '@/lib/api'
 import { hasPermission } from '@/lib/access'
 import type { AuthSession } from '@/types'
 import { useCreateActivityMutation, useListActivityFeedQuery } from '@/redux/features/activities/activitiesApi'
-import {
-  useCancelFollowUpMutation,
-  useCreateFollowUpMutation,
-  useListLeadFollowUpsQuery,
-  useRescheduleFollowUpMutation,
-} from '@/modules/follow-ups/api/followUpsApi'
+import { useCreateFollowUpMutation } from '@/modules/follow-ups/api/followUpsApi'
 import {
   useSendEmailMessageMutation,
   useStartLeadEmailMutation,
@@ -42,7 +37,6 @@ export default function LeadListChangeStatusModal({
   const options = useLeadMasterOptions()
   const canUpdateStatus = hasPermission(auth, 'lead:update_status')
   const canFollowUp = hasPermission(auth, 'follow_up:create')
-  const canEditFollowUp = hasPermission(auth, 'follow_up:edit')
   const canAddActivity = hasPermission(auth, 'activity:create')
   const canViewActivity = hasPermission(auth, 'activity:view')
   const canUploadDocument = hasPermission(auth, 'document:upload')
@@ -57,14 +51,9 @@ export default function LeadListChangeStatusModal({
     { relatedId: leadId || '' },
     { skip: !open || !leadId || !canViewActivity },
   )
-  const { data: followUpData } = useListLeadFollowUpsQuery(leadId || '', {
-    skip: !open || !leadId || (!canFollowUp && !canEditFollowUp),
-  })
 
   const [updateStatus, { isLoading: statusSaving }] = useUpdateLeadStatusMutation()
   const [createFollowUp, { isLoading: followUpSaving }] = useCreateFollowUpMutation()
-  const [rescheduleFollowUp, { isLoading: rescheduling }] = useRescheduleFollowUpMutation()
-  const [cancelFollowUp, { isLoading: cancelling }] = useCancelFollowUpMutation()
   const [createActivity, { isLoading: activitySaving }] = useCreateActivityMutation()
   const [uploadLeadDocument, { isLoading: documentUploading }] = useUploadLeadDocumentMutation()
   const [startLeadEmail] = useStartLeadEmailMutation()
@@ -104,6 +93,27 @@ export default function LeadListChangeStatusModal({
       const channelNote = body.channels.length > 0 ? `Channel: ${body.channels.join(', ')}` : ''
       const remarks = [body.remarks.trim(), channelNote].filter(Boolean).join('\n')
 
+      const followUpType = body.channels.includes('CALL')
+        ? 'Call'
+        : body.channels.includes('WHATSAPP')
+          ? 'WhatsApp'
+          : body.channels.includes('EMAIL')
+            ? 'Email'
+            : body.channels.includes('SMS')
+              ? 'SMS'
+              : 'Call'
+      const previousDue = lead.nextFollowUp?.dueAt ? dayjs(lead.nextFollowUp.dueAt) : null
+      const nextDueAt = body.nextFollowUpAt
+        ? previousDue?.isValid()
+          ? dayjs(body.nextFollowUpAt)
+              .hour(previousDue.hour())
+              .minute(previousDue.minute())
+              .second(0)
+              .millisecond(0)
+              .toISOString()
+          : dayjs(body.nextFollowUpAt).hour(10).minute(0).second(0).millisecond(0).toISOString()
+        : undefined
+
       await updateStatus({
         id: leadId,
         body: {
@@ -112,63 +122,11 @@ export default function LeadListChangeStatusModal({
           lostReasonCode: body.lostReasonCode,
           override: body.override,
           overrideReason: body.overrideReason,
+          nextFollowUpAt: nextDueAt,
+          followUpType,
+          channels: body.channels,
         },
       }).unwrap()
-
-      if (body.nextFollowUpAt) {
-        const followUpType = body.channels.includes('CALL')
-          ? 'Call'
-          : body.channels.includes('WHATSAPP')
-            ? 'WhatsApp'
-            : body.channels.includes('EMAIL')
-              ? 'Email'
-              : body.channels.includes('SMS')
-                ? 'SMS'
-                : 'Call'
-        const reason = body.remarks.trim() || 'Next follow-up updated with status change'
-        const previousDue = lead.nextFollowUp?.dueAt ? dayjs(lead.nextFollowUp.dueAt) : null
-        const nextDueAt = previousDue?.isValid()
-          ? dayjs(body.nextFollowUpAt)
-              .hour(previousDue.hour())
-              .minute(previousDue.minute())
-              .second(0)
-              .millisecond(0)
-              .toISOString()
-          : dayjs(body.nextFollowUpAt).hour(10).minute(0).second(0).millisecond(0).toISOString()
-
-        const followUps = followUpData?.items || []
-        if (lead.nextFollowUp && canEditFollowUp) {
-          const currentNextId = lead.nextFollowUp.id
-          await rescheduleFollowUp({
-            id: currentNextId,
-            body: { dueAt: nextDueAt, reason },
-          }).unwrap()
-
-          const otherOpen = followUps.filter(
-            (item) =>
-              item.id !== currentNextId &&
-              ['Pending', 'Due Soon', 'Overdue'].includes(item.status),
-          )
-          for (const item of otherOpen) {
-            await cancelFollowUp({
-              id: item.id,
-              body: { reason: 'Superseded by status change follow-up' },
-            }).unwrap()
-          }
-        } else if (canFollowUp) {
-          await createFollowUp({
-            leadId,
-            type: followUpType,
-            dueAt: nextDueAt,
-            priority: 'Medium',
-            purpose: 'Other',
-            purposeOther: 'Status change follow-up',
-            notes: body.remarks,
-            nextAction: body.remarks.slice(0, 200) || 'Follow up after status change',
-            reminder: 'No Reminder',
-          }).unwrap()
-        }
-      }
 
       if (body.scheduleMeeting && body.meeting) {
         const meeting = body.meeting
@@ -262,7 +220,7 @@ export default function LeadListChangeStatusModal({
     <ChangeStatusModal
       open={open && ready && canChangeStatus}
       saving={
-        statusSaving || followUpSaving || rescheduling || cancelling || activitySaving || documentUploading
+        statusSaving || followUpSaving || activitySaving || documentUploading
       }
       emailSending={emailSending}
       leadName={lead?.name || 'Lead'}

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
+import { Select } from 'antd'
 import { Cancel01Icon, FilterIcon } from '@hugeicons/core-free-icons'
 import HugeIcon from '@/components/ui/Icon/HugeIcon'
 import { PrimaryButton } from '@/components/ui'
 import type { PerformanceList, PerformanceQuery } from '../api/performanceApi'
 import { PRESETS } from '../format'
 
-const selectClass =
+const inputClass =
   'h-10 w-full rounded-xl border border-border bg-surface px-3 text-sm text-text'
 
 function cx(...parts: Array<string | false | undefined | null>) {
@@ -124,27 +125,25 @@ export default function PerformanceFilterDrawer({
               </div>
 
               <div className="grid gap-4">
-                <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
-                  Date range
-                  <select
-                    className={selectClass}
+                <div className="grid gap-1.5">
+                  <span className="text-xs font-semibold text-text-muted">Date range</span>
+                  <Select
+                    className="w-full"
                     value={draft.preset || 'this_month'}
-                    onChange={(event) => onChange({ preset: event.target.value })}
-                  >
-                    {PRESETS.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    options={PRESETS.map((item) => ({
+                      value: item.id,
+                      label: item.label,
+                    }))}
+                    onChange={(value) => onChange({ preset: value })}
+                  />
+                </div>
 
                 {draft.preset === 'custom' ? (
                   <div className="grid grid-cols-2 gap-3">
                     <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
                       From
                       <input
-                        className={selectClass}
+                        className={inputClass}
                         type="date"
                         value={draft.from || ''}
                         onChange={(event) => onChange({ from: event.target.value })}
@@ -153,7 +152,7 @@ export default function PerformanceFilterDrawer({
                     <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
                       To
                       <input
-                        className={selectClass}
+                        className={inputClass}
                         type="date"
                         value={draft.to || ''}
                         onChange={(event) => onChange({ to: event.target.value })}
@@ -162,127 +161,123 @@ export default function PerformanceFilterDrawer({
                   </div>
                 ) : null}
 
-                <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
-                  Department
-                  <select
-                    className={selectClass}
+                <div className="grid gap-1.5">
+                  <span className="text-xs font-semibold text-text-muted">Department</span>
+                  <Select
+                    className="w-full"
                     value={draft.departmentId || 'all'}
-                    onChange={(event) =>
-                      onChange({ departmentId: event.target.value })
-                    }
-                  >
-                    <option value="all">All Teams</option>
-                    {options?.departments.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    options={[
+                      { value: 'all', label: 'All Teams' },
+                      ...(options?.departments.map((item) => ({
+                        value: item.id,
+                        label: item.name,
+                      })) ?? []),
+                    ]}
+                    onChange={(value) => onChange({ departmentId: value })}
+                  />
+                </div>
 
-                <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
-                  Employee
-                  <select
-                    className={selectClass}
+                <div className="grid gap-1.5">
+                  <span className="text-xs font-semibold text-text-muted">Employee</span>
+                  <Select
+                    className="w-full"
                     value={draft.userId || 'all'}
-                    onChange={(event) => onChange({ userId: event.target.value })}
-                  >
-                    <option value="all">All Employees</option>
-                    {options?.employees.map((item) => (
-                      <option key={item.userId} value={item.userId}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    options={[
+                      { value: 'all', label: 'All Employees' },
+                      ...(options?.employees.map((item) => ({
+                        value: item.userId,
+                        label: item.name,
+                      })) ?? []),
+                    ]}
+                    onChange={(value) => onChange({ userId: value })}
+                  />
+                </div>
 
-                <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
-                  Country
-                  <select
-                    className={selectClass}
+                <div className="grid gap-1.5">
+                  <span className="text-xs font-semibold text-text-muted">Country</span>
+                  <Select
+                    className="w-full"
                     value={draft.country || 'all'}
-                    onChange={(event) => onChange({ country: event.target.value })}
-                  >
-                    <option value="all">All Countries</option>
-                    {options?.countries.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    options={[
+                      { value: 'all', label: 'All Countries' },
+                      ...(options?.countries.map((item) => ({
+                        value: item,
+                        label: item,
+                      })) ?? []),
+                    ]}
+                    onChange={(value) => onChange({ country: value })}
+                  />
+                </div>
 
-                <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
-                  Lead source
-                  <select
-                    className={selectClass}
+                <div className="grid gap-1.5">
+                  <span className="text-xs font-semibold text-text-muted">Lead source</span>
+                  <Select
+                    className="w-full"
                     value={draft.source || 'all'}
-                    onChange={(event) => onChange({ source: event.target.value })}
-                  >
-                    <option value="all">All Channels</option>
-                    {options?.sources.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    options={[
+                      { value: 'all', label: 'All Channels' },
+                      ...(options?.sources.map((item) => ({
+                        value: item,
+                        label: item,
+                      })) ?? []),
+                    ]}
+                    onChange={(value) => onChange({ source: value })}
+                  />
+                </div>
 
-                <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
-                  Campaign
-                  <select
-                    className={selectClass}
+                <div className="grid gap-1.5">
+                  <span className="text-xs font-semibold text-text-muted">Campaign</span>
+                  <Select
+                    className="w-full"
                     value={draft.campaignId || 'all'}
-                    onChange={(event) =>
-                      onChange({ campaignId: event.target.value })
-                    }
-                  >
-                    <option value="all">All Campaigns</option>
-                    {options?.campaigns.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    options={[
+                      { value: 'all', label: 'All Campaigns' },
+                      ...(options?.campaigns.map((item) => ({
+                        value: item.id,
+                        label: item.name,
+                      })) ?? []),
+                    ]}
+                    onChange={(value) => onChange({ campaignId: value })}
+                  />
+                </div>
 
-                <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
-                  Status
-                  <select
-                    className={selectClass}
+                <div className="grid gap-1.5">
+                  <span className="text-xs font-semibold text-text-muted">Status</span>
+                  <Select
+                    className="w-full"
                     value={draft.status || 'all'}
-                    onChange={(event) => onChange({ status: event.target.value })}
-                  >
-                    <option value="all">All Statuses</option>
-                    {options?.statuses.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    options={[
+                      { value: 'all', label: 'All Statuses' },
+                      ...(options?.statuses.map((item) => ({
+                        value: item,
+                        label: item,
+                      })) ?? []),
+                    ]}
+                    onChange={(value) => onChange({ status: value })}
+                  />
+                </div>
 
-                <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
-                  Priority
-                  <select
-                    className={selectClass}
+                <div className="grid gap-1.5">
+                  <span className="text-xs font-semibold text-text-muted">Priority</span>
+                  <Select
+                    className="w-full"
                     value={draft.priority || 'all'}
-                    onChange={(event) => onChange({ priority: event.target.value })}
-                  >
-                    <option value="all">All Priorities</option>
-                    {options?.priorities.map((item) => (
-                      <option key={item} value={item}>
-                        {item}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    options={[
+                      { value: 'all', label: 'All Priorities' },
+                      ...(options?.priorities.map((item) => ({
+                        value: item,
+                        label: item,
+                      })) ?? []),
+                    ]}
+                    onChange={(value) => onChange({ priority: value })}
+                  />
+                </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
                     Score from
                     <input
-                      className={selectClass}
+                      className={inputClass}
                       type="number"
                       min={0}
                       value={draft.scoreMin || ''}
@@ -294,7 +289,7 @@ export default function PerformanceFilterDrawer({
                   <label className="grid gap-1.5 text-xs font-semibold text-text-muted">
                     Score to
                     <input
-                      className={selectClass}
+                      className={inputClass}
                       type="number"
                       min={0}
                       value={draft.scoreMax || ''}

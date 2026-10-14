@@ -67,13 +67,13 @@ export function isUnread(event: CommunicationEvent) {
 export function avatarTone(channel: CommunicationChannel) {
   switch (channel) {
     case 'WHATSAPP':
-      return 'bg-[#e8f8ef] text-[#128c7e]'
+      return 'bg-[#e8f8ef] text-[#128c7e] dark:bg-emerald-500/15 dark:text-emerald-300'
     case 'EMAIL':
-      return 'bg-[#fff4e8] text-[#c2410c]'
+      return 'bg-[#fff4e8] text-[#c2410c] dark:bg-orange-500/15 dark:text-orange-300'
     case 'META_FACEBOOK':
     case 'META_INSTAGRAM':
-      return 'bg-[#e8f1ff] text-[#1877f2]'
+      return 'bg-[#e8f1ff] text-[#1877f2] dark:bg-blue-500/15 dark:text-sky-300'
     default:
-      return 'bg-[#eef2ff] text-[#3b82f6]'
+      return 'bg-[#eef2ff] text-[#3b82f6] dark:bg-blue-500/15 dark:text-link'
   }
 }
