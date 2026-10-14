@@ -220,6 +220,9 @@ const leadsApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { id }) => [
         { type: "Leads", id },
         ...LEAD_COLLECTION_TAGS,
+        { type: "FollowUps", id: "LIST" },
+        { type: "FollowUps", id },
+        "FollowUps",
         "Activities",
         "Dashboard",
         "Pipeline",

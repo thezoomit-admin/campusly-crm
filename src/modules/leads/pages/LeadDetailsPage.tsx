@@ -659,34 +659,21 @@ export default function LeadDetailsPage() {
         .filter(Boolean)
         .join("\n");
 
-      await updateStatus({
-        id,
-        body: {
-          statusCode: body.statusCode,
-          remarks,
-          lostReasonCode: body.lostReasonCode,
-          override: body.override,
-          overrideReason: body.overrideReason,
-        },
-      }).unwrap();
-
-      if (body.nextFollowUpAt) {
-        const followUpType = body.channels.includes("CALL")
-          ? "Call"
-          : body.channels.includes("WHATSAPP")
-            ? "WhatsApp"
-            : body.channels.includes("EMAIL")
-              ? "Email"
-              : body.channels.includes("SMS")
-                ? "SMS"
-                : "Call";
-        const reason =
-          body.remarks.trim() || "Next follow-up updated with status change";
-        // Preserve time-of-day from the current next follow-up (date picker is date-only).
-        const previousDue = lead.nextFollowUp?.dueAt
-          ? dayjs(lead.nextFollowUp.dueAt)
-          : null;
-        const nextDueAt = previousDue?.isValid()
+      const followUpType = body.channels.includes("CALL")
+        ? "Call"
+        : body.channels.includes("WHATSAPP")
+          ? "WhatsApp"
+          : body.channels.includes("EMAIL")
+            ? "Email"
+            : body.channels.includes("SMS")
+              ? "SMS"
+              : "Call";
+      // Preserve time-of-day from the current next follow-up (date picker is date-only).
+      const previousDue = lead.nextFollowUp?.dueAt
+        ? dayjs(lead.nextFollowUp.dueAt)
+        : null;
+      const nextDueAt = body.nextFollowUpAt
+        ? previousDue?.isValid()
           ? dayjs(body.nextFollowUpAt)
               .hour(previousDue.hour())
               .minute(previousDue.minute())
@@ -698,43 +685,22 @@ export default function LeadDetailsPage() {
               .minute(0)
               .second(0)
               .millisecond(0)
-              .toISOString();
+              .toISOString()
+        : undefined;
 
-        if (lead.nextFollowUp && canEditFollowUp) {
-          // Reschedule so the old open follow-up is closed; otherwise getLead still
-          // returns the earliest open dueAt and the countdown/UI never updates.
-          const currentNextId = lead.nextFollowUp.id;
-          await rescheduleFollowUp({
-            id: currentNextId,
-            body: { dueAt: nextDueAt, reason },
-          }).unwrap();
-
-          const otherOpen = followUps.filter(
-            (item) =>
-              item.id !== currentNextId &&
-              ["Pending", "Due Soon", "Overdue"].includes(item.status),
-          );
-          for (const item of otherOpen) {
-            await cancelFollowUp({
-              id: item.id,
-              body: { reason: "Superseded by status change follow-up" },
-            }).unwrap();
-          }
-        } else if (canFollowUp) {
-          await createFollowUp({
-            leadId: id,
-            type: followUpType,
-            dueAt: nextDueAt,
-            priority: "Medium",
-            purpose: "Other",
-            purposeOther: "Status change follow-up",
-            notes: body.remarks,
-            nextAction:
-              body.remarks.slice(0, 200) || "Follow up after status change",
-            reminder: "No Reminder",
-          }).unwrap();
-        }
-      }
+      await updateStatus({
+        id,
+        body: {
+          statusCode: body.statusCode,
+          remarks,
+          lostReasonCode: body.lostReasonCode,
+          override: body.override,
+          overrideReason: body.overrideReason,
+          nextFollowUpAt: nextDueAt,
+          followUpType,
+          channels: body.channels,
+        },
+      }).unwrap();
 
       if (body.scheduleMeeting && body.meeting) {
         const meeting = body.meeting;

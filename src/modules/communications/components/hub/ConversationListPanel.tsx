@@ -29,17 +29,17 @@ export default function ConversationListPanel({
   onSelect,
 }: Props) {
   return (
-    <aside className="flex min-h-0 w-full min-w-0 flex-col overflow-x-hidden border-r border-[#e8edf5] bg-white">
-      <div className="grid gap-3 border-b border-[#e8edf5] p-3">
+    <aside className="flex min-h-0 w-full min-w-0 flex-col overflow-x-hidden border-r border-border-subtle bg-surface">
+      <div className="grid gap-3 border-b border-border-subtle p-3">
         <Input.Search
           allowClear
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
           placeholder="Search conversations"
-          className="w-full min-w-0 [&_.ant-input-affix-wrapper]:!rounded-lg [&_.ant-input-affix-wrapper]:!bg-white [&_.ant-input-search-button]:!rounded-e-lg"
+          className="w-full min-w-0 [&_.ant-input-affix-wrapper]:!rounded-lg [&_.ant-input-affix-wrapper]:!bg-surface [&_.ant-input-search-button]:!rounded-e-lg"
         />
 
-        <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#f1f5f9] p-1">
+        <div className="grid grid-cols-3 gap-1 rounded-xl bg-hover-bg p-1">
           {(
             [
               { key: 'all', label: 'All', count: counts.all },
@@ -55,8 +55,8 @@ export default function ConversationListPanel({
                 onClick={() => onListTabChange(tab.key)}
                 className={`min-w-0 cursor-pointer truncate rounded-lg border-0 px-1.5 py-1.5 text-[0.72rem] font-semibold transition-colors ${
                   active
-                    ? 'bg-white text-[#2563eb] shadow-sm'
-                    : 'bg-transparent text-[#64748b] hover:text-text'
+                    ? 'bg-surface text-link shadow-sm'
+                    : 'bg-transparent text-text-muted hover:text-text'
                 }`}
               >
                 {tab.label} {tab.count}
@@ -87,8 +87,8 @@ export default function ConversationListPanel({
                     onClick={() => onSelect(item.hubId)}
                     className={`flex w-full cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 text-left transition-colors ${
                       active
-                        ? 'border-[#93c5fd] bg-[#eff6ff]'
-                        : 'border-transparent hover:bg-[#f8fafc]'
+                        ? 'border-[#93c5fd] bg-[#eff6ff] dark:border-blue-500/40 dark:bg-blue-500/15'
+                        : 'border-transparent hover:bg-hover-bg'
                     }`}
                   >
                     <span
@@ -100,7 +100,7 @@ export default function ConversationListPanel({
                       <span className="flex items-start justify-between gap-2">
                         <span className="flex min-w-0 items-center gap-1.5">
                           <span
-                            className={`truncate text-[0.9rem] text-[#0f172a] ${
+                            className={`truncate text-[0.9rem] text-text-strong ${
                               unread ? 'font-bold' : 'font-semibold'
                             }`}
                           >
@@ -108,14 +108,14 @@ export default function ConversationListPanel({
                           </span>
                           <ChannelIcon channel={item.channel} size={13} />
                         </span>
-                        <time className="shrink-0 text-[0.7rem] text-[#94a3b8]">
+                        <time className="shrink-0 text-[0.7rem] text-text-faint">
                           {formatRelativeTime(item.at)}
                         </time>
                       </span>
                       <span className="flex items-center justify-between gap-2">
                         <span
                           className={`truncate text-[0.8rem] ${
-                            unread ? 'text-[#334155]' : 'text-[#94a3b8]'
+                            unread ? 'text-text' : 'text-text-faint'
                           }`}
                         >
                           {item.preview}

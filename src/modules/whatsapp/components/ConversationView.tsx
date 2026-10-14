@@ -306,8 +306,8 @@ export default function ConversationView({
   }
 
   return (
-    <div className={`flex min-h-0 flex-col ${className}`}>
-      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border-subtle px-4 py-3">
+    <div className={`flex min-h-0 flex-col bg-surface ${className}`}>
+      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border-subtle bg-surface px-4 py-3">
         <div className="grid min-w-0 gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="m-0 truncate text-[1rem] font-semibold text-text-strong">

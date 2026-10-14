@@ -1,11 +1,15 @@
-import { Tooltip } from 'antd'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { Calendar03Icon, CancelCircleIcon, CheckmarkCircle02Icon, Notification03Icon } from '@hugeicons/core-free-icons'
-import { DataTable } from '@/components/common/Tables'
+import {
+  Calendar03Icon,
+  Cancel01Icon,
+  CheckmarkCircle02Icon,
+  Notification03Icon,
+  ViewIcon,
+} from '@hugeicons/core-free-icons'
+import { DataTable, type DataTableActionItem } from '@/components/common/Tables'
 import type { FollowUpRecord } from '../types'
 import { followUpColumns } from '../utils/followUpColumns'
-
-const OPEN = new Set(['Pending', 'Due Soon', 'Overdue'])
+import { isOpenFollowUp } from '../utils/followUpList'
 
 type FollowUpsTableProps = {
   data: FollowUpRecord[]
@@ -19,6 +23,7 @@ type FollowUpsTableProps = {
   onComplete?: (row: FollowUpRecord) => void
   onReschedule?: (row: FollowUpRecord) => void
   onCancel?: (row: FollowUpRecord) => void
+  onViewDetails?: (row: FollowUpRecord) => void
   onEditReminder?: (row: FollowUpRecord) => void
 }
 
@@ -34,79 +39,94 @@ export default function FollowUpsTable({
   onComplete,
   onReschedule,
   onCancel,
+  onViewDetails,
   onEditReminder,
 }: FollowUpsTableProps) {
-  const columns = [
-    ...followUpColumns,
-    ...(canEdit
-      ? [
-          {
-            title: 'Actions',
-            key: 'actions',
-            width: 168,
-            align: 'center' as const,
-            render: (_: unknown, row: FollowUpRecord) => {
-              if (!OPEN.has(row.status)) return '—'
-              return (
-                <div
-                  className="flex items-center justify-center gap-1.5"
-                  onClick={(event) => event.stopPropagation()}
-                  onMouseDown={(event) => event.stopPropagation()}
-                >
-                  <Tooltip title="Complete">
-                    <button
-                      type="button"
-                      aria-label={`Complete follow-up for ${row.contact || 'contact'}`}
-                      onClick={() => onComplete?.(row)}
-                      className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-emerald-600 transition-colors hover:border-emerald-500 hover:bg-emerald-50"
-                    >
-                      <HugeiconsIcon icon={CheckmarkCircle02Icon} size={15} color="currentColor" strokeWidth={1.7} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip title="Reschedule">
-                    <button
-                      type="button"
-                      aria-label={`Reschedule follow-up for ${row.contact || 'contact'}`}
-                      onClick={() => onReschedule?.(row)}
-                      className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-primary transition-colors hover:border-primary hover:bg-primary/5"
-                    >
-                      <HugeiconsIcon icon={Calendar03Icon} size={15} color="currentColor" strokeWidth={1.7} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip title="Edit reminder">
-                    <button
-                      type="button"
-                      aria-label={`Edit reminder for ${row.contact || 'contact'}`}
-                      onClick={() => onEditReminder?.(row)}
-                      className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-amber-600 transition-colors hover:border-amber-500 hover:bg-amber-50"
-                    >
-                      <HugeiconsIcon icon={Notification03Icon} size={15} color="currentColor" strokeWidth={1.7} />
-                    </button>
-                  </Tooltip>
-                  <Tooltip title="Cancel">
-                    <button
-                      type="button"
-                      aria-label={`Cancel follow-up for ${row.contact || 'contact'}`}
-                      onClick={() => onCancel?.(row)}
-                      className="grid size-8 cursor-pointer place-items-center rounded-lg border border-[#d1d5db] text-red-500 transition-colors hover:border-red-400 hover:bg-red-50"
-                    >
-                      <HugeiconsIcon icon={CancelCircleIcon} size={15} color="currentColor" strokeWidth={1.7} />
-                    </button>
-                  </Tooltip>
-                </div>
-              )
-            },
-          },
-        ]
-      : []),
-  ]
+  const resolveActions = (record: Record<string, unknown>): DataTableActionItem[] => {
+    const row = record as unknown as FollowUpRecord
+    const open = isOpenFollowUp(row.status)
+    const items: DataTableActionItem[] = []
+
+    if (canEdit && open) {
+      items.push(
+        {
+          key: 'complete',
+          label: 'Mark as Completed',
+          icon: (
+            <HugeiconsIcon
+              icon={CheckmarkCircle02Icon}
+              size={14}
+              color="currentColor"
+              strokeWidth={1.7}
+            />
+          ),
+          onClick: () => onComplete?.(row),
+        },
+        {
+          key: 'reschedule',
+          label: 'Reschedule',
+          icon: (
+            <HugeiconsIcon
+              icon={Calendar03Icon}
+              size={14}
+              color="currentColor"
+              strokeWidth={1.7}
+            />
+          ),
+          onClick: () => onReschedule?.(row),
+        },
+        {
+          key: 'cancel',
+          label: 'Cancel',
+          danger: true,
+          icon: (
+            <HugeiconsIcon
+              icon={Cancel01Icon}
+              size={14}
+              color="currentColor"
+              strokeWidth={1.7}
+            />
+          ),
+          onClick: () => onCancel?.(row),
+        },
+      )
+    }
+
+    items.push({
+      key: 'view',
+      label: 'View Details',
+      icon: (
+        <HugeiconsIcon icon={ViewIcon} size={14} color="currentColor" strokeWidth={1.7} />
+      ),
+      onClick: () => onViewDetails?.(row),
+    })
+
+    if (canEdit && open && onEditReminder) {
+      items.push({
+        key: 'reminder',
+        label: 'Edit reminder',
+        icon: (
+          <HugeiconsIcon
+            icon={Notification03Icon}
+            size={14}
+            color="currentColor"
+            strokeWidth={1.7}
+          />
+        ),
+        onClick: () => onEditReminder(row),
+      })
+    }
+
+    return items
+  }
 
   return (
     <DataTable
       loading={loading}
       data={data}
-      columns={columns}
+      columns={followUpColumns}
       rowKey="id"
+      selectRow
       isPaginate
       currentPage={page}
       setCurrentPage={onPageChange}
@@ -114,6 +134,14 @@ export default function FollowUpsTable({
       setLimit={onLimitChange}
       total={total}
       showSizeChanger={total > 10}
+      alwaysShowPagination={total > 0}
+      actions={resolveActions}
+      actionsMode="dropdown"
+      actionsAlign="center"
+      pagination={{
+        showTotal: (count: number, range: [number, number]) =>
+          `Showing ${range[0]}-${range[1]} of ${count} follow-ups`,
+      }}
     />
   )
 }
