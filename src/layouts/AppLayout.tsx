@@ -86,7 +86,7 @@ function navLinkClass({
     .join(" ");
 }
 
-const NESTED_LEAD_PAGES = ["/leads/pool", "/leads/mine"];
+const NESTED_LEAD_PAGES = ["/leads/pool", "/leads/mine", "/leads/closed"];
 
 function matchesPath(pathname: string, to: string): boolean {
   if (pathname !== to && !pathname.startsWith(`${to}/`)) {

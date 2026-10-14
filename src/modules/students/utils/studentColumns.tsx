@@ -9,6 +9,13 @@ export const studentColumns: ColumnsType<StudentRow> = [
   { title: 'Program', dataIndex: 'program', key: 'program', render: (v: string) => v || '—' },
   { title: 'Counsellor', dataIndex: 'counsellor', key: 'counsellor', render: (v: string) => v || '—' },
   {
+    title: 'Apps',
+    dataIndex: 'applicationsCount',
+    key: 'applicationsCount',
+    width: 72,
+    render: (v: number | undefined) => (v == null ? '—' : String(v)),
+  },
+  {
     title: 'Status',
     dataIndex: 'status',
     key: 'status',

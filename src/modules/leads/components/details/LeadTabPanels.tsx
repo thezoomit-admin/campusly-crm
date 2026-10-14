@@ -1,12 +1,20 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { Input, Modal, Tag } from "antd";
 import { toast } from "react-toastify";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Add01Icon,
+  Calendar03Icon,
+  Call02Icon,
+  Cancel01Icon,
+  CheckmarkCircle02Icon,
+  Clock01Icon,
   Delete02Icon,
   File01Icon,
+  Mail01Icon,
+  Note01Icon,
+  UserIcon,
   ViewIcon,
 } from "@hugeicons/core-free-icons";
 import { PrimaryButton } from "@/components/ui";
@@ -17,6 +25,11 @@ import { baseApi } from "@/redux/api/baseApi";
 import type { ActivityFeedItem } from "@/types";
 import type { CommunicationEvent } from "@/modules/communications/types";
 import { CHANNEL_LABELS, STATUS_LABELS } from "@/modules/communications/types";
+import {
+  FOLLOW_UP_OPEN_STATUSES,
+  type FollowUpRecord,
+} from "@/modules/follow-ups/types";
+import { followUpStatusClass } from "@/modules/follow-ups/utils/followUpStatus";
 import {
   useCancelPaymentMutation,
   useGeneratePaymentReceiptMutation,
@@ -36,9 +49,11 @@ import type {
   LeadStatusHistoryItem,
 } from "../../types";
 import {
+  activityIconKind,
   activityTitle,
   formatDisplayDateTime,
   LEAD_MORE_TABS,
+  type LeadActivityIconKind,
   type LeadMoreTabKey,
 } from "../../utils/leadDetails";
 import LeadPackageOfferPanel from "@/modules/packages/components/LeadPackageOfferPanel";
@@ -47,6 +62,59 @@ import {
   LeadListPagination,
   useLeadListPagination,
 } from "./LeadListPagination";
+
+const OPEN_FOLLOW_UP = new Set<string>(FOLLOW_UP_OPEN_STATUSES);
+
+const ACTIVITY_ICON_MAP: Record<
+  LeadActivityIconKind,
+  (typeof Note01Icon)
+> = {
+  note: Note01Icon,
+  meeting: Calendar03Icon,
+  "follow-up": Clock01Icon,
+  call: Call02Icon,
+  email: Mail01Icon,
+  whatsapp: Call02Icon,
+  sms: Mail01Icon,
+  counselling: UserIcon,
+  document: File01Icon,
+  payment: File01Icon,
+  status: CheckmarkCircle02Icon,
+  assignment: UserIcon,
+  check: CheckmarkCircle02Icon,
+  cancel: Cancel01Icon,
+  system: Clock01Icon,
+};
+
+type ActivityTimelineEntry =
+  | {
+      kind: "open-follow-up";
+      id: string;
+      sortAt: number;
+      followUp: FollowUpRecord;
+    }
+  | {
+      kind: "feed";
+      id: string;
+      sortAt: number;
+      item: ActivityFeedItem;
+    };
+
+function ActivityTypeIcon({
+  kind,
+}: {
+  kind: LeadActivityIconKind;
+}) {
+  const icon = ACTIVITY_ICON_MAP[kind] || Clock01Icon;
+  return (
+    <span
+      className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-[#eef7f2] text-primary dark:bg-[color-mix(in_srgb,var(--color-primary)_16%,transparent)]"
+      aria-hidden
+    >
+      <HugeiconsIcon icon={icon} size={15} color="currentColor" strokeWidth={1.8} />
+    </span>
+  );
+}
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -458,7 +526,12 @@ export function LeadTimelinePanel({
                 <div className="min-w-0 flex-1 overflow-hidden">
                   <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
                     <p className="m-0 min-w-0 break-all text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
-                      {activityTitle(item.action, item.details, item.outcome)}
+                      {activityTitle(
+                        item.action,
+                        item.details,
+                        item.outcome,
+                        item.actionKey,
+                      )}
                     </p>
                     <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
                       {formatDisplayDateTime(item.occurredAt)}
@@ -493,79 +566,221 @@ export function LeadTimelinePanel({
 
 export function LeadActivitiesPanel({
   activities,
-  onAdd,
-  canAdd,
+  followUps = [],
+  loading,
+  followUpsLoading,
+  canEditFollowUp,
+  onCompleteFollowUp,
+  onRescheduleFollowUp,
+  onCancelFollowUp,
 }: {
   activities: ActivityFeedItem[];
-  onAdd: () => void;
-  canAdd: boolean;
+  followUps?: FollowUpRecord[];
+  loading?: boolean;
+  followUpsLoading?: boolean;
+  canEditFollowUp?: boolean;
+  onCompleteFollowUp?: (item: FollowUpRecord) => void;
+  onRescheduleFollowUp?: (item: FollowUpRecord) => void;
+  onCancelFollowUp?: (item: FollowUpRecord) => void;
 }) {
-  const items = activities.filter((item) => item.source === "activity");
+  const timeline = useMemo(() => {
+    const openFollowUps = followUps.filter((item) =>
+      OPEN_FOLLOW_UP.has(item.status),
+    );
+    const openIds = new Set(openFollowUps.map((item) => item.id));
+
+    const openEntries: ActivityTimelineEntry[] = openFollowUps.map(
+      (followUp) => ({
+        kind: "open-follow-up" as const,
+        id: `follow-up:${followUp.id}`,
+        sortAt: followUp.dueAt
+          ? new Date(followUp.dueAt).getTime()
+          : followUp.createdAt
+            ? new Date(followUp.createdAt).getTime()
+            : 0,
+        followUp,
+      }),
+    );
+
+    const feedEntries: ActivityTimelineEntry[] = activities
+      .filter((item) => {
+        const metaFollowUpId = item.metadata?.followUpId;
+        if (
+          typeof metaFollowUpId === "string" &&
+          openIds.has(metaFollowUpId) &&
+          (item.actionKey === "FOLLOW_UP_CREATED" ||
+            item.actionKey === "FOLLOW_UP_RESCHEDULED")
+        ) {
+          return false;
+        }
+        if (
+          item.actionKey === "FOLLOW_UP" &&
+          (item.outcome || "").toLowerCase() === "scheduled" &&
+          openFollowUps.some((followUp) =>
+            `${item.details || ""} ${item.action || ""}`
+              .toLowerCase()
+              .includes(followUp.type.toLowerCase()),
+          )
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .map((item) => ({
+        kind: "feed" as const,
+        id: item.id,
+        sortAt: item.occurredAt ? new Date(item.occurredAt).getTime() : 0,
+        item,
+      }));
+
+    return [...openEntries, ...feedEntries].sort((a, b) => b.sortAt - a.sortAt);
+  }, [activities, followUps]);
+
   const { page, pageSize, setPage, setPageSize, pageItems, total } =
-    useLeadListPagination(items);
+    useLeadListPagination(timeline);
+
+  const isLoading =
+    Boolean(loading && activities.length === 0) ||
+    Boolean(followUpsLoading && followUps.length === 0 && activities.length === 0);
 
   return (
-    <LeadSectionCard
-      title="Activities"
-      extra={
-        canAdd ? (
-          <PrimaryButton
-            type="button"
-            className="inline-flex cursor-pointer items-center gap-1 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[0.82rem] font-medium text-primary hover:bg-hover-bg"
-            onClick={onAdd}
-            label="Add activity"
-          />
-        ) : null
-      }
-    >
-      {items.length === 0 ? (
+    <LeadSectionCard title="Activities">
+      {isLoading ? (
+        <p className="m-0 text-[0.88rem] text-[#8b97a8]">Loading activities…</p>
+      ) : timeline.length === 0 ? (
         <p className="m-0 text-[0.88rem] text-[#8b97a8]">
           No activities recorded for this lead yet.
         </p>
       ) : (
         <>
           <ol className="m-0 grid min-w-0 list-none gap-0 p-0">
-            {pageItems.map((item, index) => (
-              <li
-                key={item.id}
-                className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
-              >
-                <span className="mt-1 size-3.5 shrink-0 rounded-full border-[3px] border-[#e7f8ef] bg-primary" />
-                {index < pageItems.length - 1 ? (
-                  <span className="absolute top-7 bottom-[-6px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
-                ) : null}
-                <div className="min-w-0 flex-1 overflow-hidden">
-                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="m-0 text-[0.72rem] font-medium uppercase tracking-wide text-[#8b97a8]">
-                        {item.action || item.category}
+            {pageItems.map((entry, index) => {
+              if (entry.kind === "open-follow-up") {
+                const item = entry.followUp;
+                const isMeeting = item.type === "Meeting";
+                const title = isMeeting ? "Meeting added" : "Follow-up added";
+                const iconKind = isMeeting ? "meeting" : "follow-up";
+                return (
+                  <li
+                    key={entry.id}
+                    className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
+                  >
+                    <ActivityTypeIcon kind={iconKind} />
+                    {index < pageItems.length - 1 ? (
+                      <span className="absolute top-10 bottom-[-6px] left-[15px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
+                    ) : null}
+                    <div className="min-w-0 flex-1 overflow-hidden">
+                      <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="m-0 min-w-0 break-all text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
+                            {title}
+                          </p>
+                          <p className="mt-1 mb-0 text-[0.78rem] text-[#8b97a8]">
+                            {item.type}
+                            {item.purpose ? ` · ${item.purpose}` : ""}
+                            {item.nextAction ? ` · ${item.nextAction}` : ""}
+                          </p>
+                        </div>
+                        <div className="flex shrink-0 flex-col items-end gap-1">
+                          <time className="text-[0.75rem] text-[#8b97a8]">
+                            {formatDisplayDateTime(item.dueAt) || item.due}
+                          </time>
+                          <span className={followUpStatusClass(item.status)}>
+                            {item.status}
+                          </span>
+                        </div>
+                      </div>
+                      {item.notes ? (
+                        <p className="mt-1 mb-0 max-w-full whitespace-pre-wrap break-all text-[0.82rem] text-[#5b6b7c]">
+                          {item.notes}
+                        </p>
+                      ) : null}
+                      <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
+                        {item.ownerName
+                          ? `Assigned to ${item.ownerName}`
+                          : "Unassigned"}
+                        {item.priority ? ` · ${item.priority} priority` : ""}
                       </p>
-                      <p className="m-0 min-w-0 break-all text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
-                        {activityTitle(item.action, item.details, item.outcome)}
-                      </p>
+                      {canEditFollowUp ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <PrimaryButton
+                            type="button"
+                            size="sm"
+                            onClick={() => onCompleteFollowUp?.(item)}
+                            label="Complete"
+                          />
+                          <PrimaryButton
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onRescheduleFollowUp?.(item)}
+                            label="Reschedule"
+                          />
+                          <PrimaryButton
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onCancelFollowUp?.(item)}
+                            label="Cancel"
+                          />
+                        </div>
+                      ) : null}
                     </div>
-                    <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
-                      {formatDisplayDateTime(item.occurredAt)}
-                    </time>
+                  </li>
+                );
+              }
+
+              const item = entry.item;
+              const title = activityTitle(
+                item.action,
+                item.details,
+                item.outcome,
+                item.actionKey,
+              );
+              const iconKind = activityIconKind(
+                title,
+                item.actionKey,
+                item.category,
+              );
+
+              return (
+                <li
+                  key={entry.id}
+                  className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
+                >
+                  <ActivityTypeIcon kind={iconKind} />
+                  {index < pageItems.length - 1 ? (
+                    <span className="absolute top-10 bottom-[-6px] left-[15px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
+                  ) : null}
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                      <p className="m-0 min-w-0 break-all text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
+                        {title}
+                      </p>
+                      <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
+                        {formatDisplayDateTime(item.occurredAt)}
+                      </time>
+                    </div>
+                    {item.outcome &&
+                    !title.toLowerCase().includes(item.outcome.toLowerCase()) ? (
+                      <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
+                        {item.outcome}
+                      </p>
+                    ) : null}
+                    {item.details ? (
+                      <p className="mt-1 mb-0 max-w-full whitespace-pre-wrap break-all text-[0.82rem] text-[#5b6b7c]">
+                        {item.details}
+                      </p>
+                    ) : null}
+                    <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
+                      {item.user?.fullName
+                        ? `Performed by ${item.user.fullName}`
+                        : "Performed by System"}
+                    </p>
                   </div>
-                  {item.outcome ? (
-                    <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
-                      Outcome: {item.outcome}
-                    </p>
-                  ) : null}
-                  {item.details ? (
-                    <p className="mt-1 mb-0 max-w-full whitespace-pre-wrap break-all text-[0.82rem] text-[#5b6b7c]">
-                      {item.details}
-                    </p>
-                  ) : null}
-                  <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
-                    {item.user?.fullName
-                      ? `Performed by ${item.user.fullName}`
-                      : "Performed by System"}
-                  </p>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ol>
           <LeadListPagination
             page={page}

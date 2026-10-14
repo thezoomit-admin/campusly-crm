@@ -18,7 +18,6 @@ import LeadFilters, {
 } from "../components/LeadFilters";
 import LeadListChangeStatusModal from "../components/LeadListChangeStatusModal";
 import LeadListCloseModal from "../components/LeadListCloseModal";
-import LeadListReopenModal from "../components/LeadListReopenModal";
 import LeadStatusTabs from "../components/LeadStatusTabs";
 import LeadsTable from "../components/LeadsTable";
 import type { LeadRow } from "../types";
@@ -36,15 +35,12 @@ export default function LeadsPage() {
   const [limit, setLimit] = useState(10);
   const [statusLeadId, setStatusLeadId] = useState<string | null>(null);
   const [closeLeadId, setCloseLeadId] = useState<string | null>(null);
-  const [reopenLeadId, setReopenLeadId] = useState<string | null>(null);
   const debouncedSearch = useDebounce(search, 300);
   const canCreate = hasPermission(auth, "lead:create");
   const canExport = hasPermission(auth, "lead:export");
   const canEdit = hasPermission(auth, "lead:edit");
   const canChangeStatus = hasPermission(auth, "lead:update_status");
   const canClose = hasPermission(auth, "lead:close");
-  const canReopen = hasPermission(auth, "lead:reopen");
-  const isClosedTab = status === "closed";
 
   const { data, isFetching, isError } = useListLeadsQuery({
     search: debouncedSearch,
@@ -69,10 +65,6 @@ export default function LeadsPage() {
 
   const closeCloseModal = useCallback(() => {
     setCloseLeadId(null);
-  }, []);
-
-  const closeReopenModal = useCallback(() => {
-    setReopenLeadId(null);
   }, []);
 
   return (
@@ -159,10 +151,9 @@ export default function LeadsPage() {
             limit={limit}
             total={data?.total || rows.length}
             canEdit={canEdit}
-            canChangeStatus={canChangeStatus && !isClosedTab}
-            canClose={canClose && !isClosedTab}
-            canReopen={canReopen && isClosedTab}
-            showStatus={status === "all" || isClosedTab}
+            canChangeStatus={canChangeStatus}
+            canClose={canClose}
+            showStatus={status === "all"}
             onPageChange={setPage}
             onLimitChange={(value) => {
               setLimit(value);
@@ -172,7 +163,6 @@ export default function LeadsPage() {
             onEdit={(row) => navigate(`/leads/${row.id}/edit`)}
             onChangeStatus={(row) => setStatusLeadId(row.id)}
             onCloseLead={(row) => setCloseLeadId(row.id)}
-            onReopen={(row) => setReopenLeadId(row.id)}
           />
         </div>
       </div>
@@ -188,12 +178,6 @@ export default function LeadsPage() {
         open={Boolean(closeLeadId)}
         auth={auth}
         onClose={closeCloseModal}
-      />
-      <LeadListReopenModal
-        leadId={reopenLeadId}
-        open={Boolean(reopenLeadId)}
-        auth={auth}
-        onClose={closeReopenModal}
       />
     </div>
   );

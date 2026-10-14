@@ -3,7 +3,6 @@ import type { MasterOption } from "../hooks/useLeadMasterOptions";
 
 export type LeadPrimaryTabKey =
   | "overview"
-  | "timeline"
   | "notes"
   | "attachments"
   | "file-documents"
@@ -20,18 +19,17 @@ export type LeadMoreTabKey =
   | "payments";
 
 /** @deprecated Prefer LeadPrimaryTabKey / LeadMoreTabKey — kept for gradual migration */
-export type LeadTabKey = LeadPrimaryTabKey | LeadMoreTabKey | "study";
+export type LeadTabKey = LeadPrimaryTabKey | LeadMoreTabKey | "study" | "timeline";
 
 export const LEAD_PRIMARY_TABS: Array<{
   key: LeadPrimaryTabKey;
   label: string;
 }> = [
   { key: "overview", label: "Overview" },
-  { key: "timeline", label: "Timeline" },
+  { key: "activities", label: "Activities" },
   { key: "notes", label: "Notes" },
   { key: "attachments", label: "Attachments" },
   { key: "file-documents", label: "File Documents" },
-  { key: "activities", label: "Activities" },
   { key: "assignments", label: "Assignment History" },
   { key: "followups", label: "Follow-up History" },
   { key: "more", label: "More" },
@@ -58,6 +56,7 @@ const LEGACY_PRIMARY_TAB_MAP: Record<string, LeadPrimaryTabKey> = {
   study: "overview",
   documents: "attachments",
   history: "assignments",
+  timeline: "activities",
   "follow-ups": "followups",
   services: "more",
   payments: "more",
@@ -382,12 +381,88 @@ export function completionRows(lead: LeadRecord): CompletionRow[] {
   ];
 }
 
+export type LeadActivityIconKind =
+  | "note"
+  | "meeting"
+  | "follow-up"
+  | "call"
+  | "email"
+  | "whatsapp"
+  | "sms"
+  | "counselling"
+  | "document"
+  | "payment"
+  | "status"
+  | "assignment"
+  | "check"
+  | "cancel"
+  | "system";
+
+function mentionsMeeting(...parts: Array<string | null | undefined>) {
+  return parts.join(" ").toLowerCase().includes("meeting");
+}
+
 export function activityTitle(
   action: string,
   details?: string | null,
   outcome?: string | null,
+  actionKey?: string | null,
 ) {
+  const key = (actionKey || "").toUpperCase();
   const outcomeText = (outcome || "").toLowerCase();
+  const text = `${action} ${details || ""} ${outcome || ""}`.toLowerCase();
+
+  if (key === "NOTE") return "Note added";
+  if (key === "MEETING") return "Meeting added";
+  if (key === "FOLLOW_UP" || key === "FOLLOW_UP_CREATED") {
+    return mentionsMeeting(action, details, outcome)
+      ? "Meeting added"
+      : "Follow-up added";
+  }
+  if (key === "FOLLOW_UP_COMPLETED") {
+    return mentionsMeeting(action, details, outcome)
+      ? "Meeting completed"
+      : "Follow-up completed";
+  }
+  if (key === "FOLLOW_UP_RESCHEDULED") {
+    return mentionsMeeting(action, details, outcome)
+      ? "Meeting rescheduled"
+      : "Follow-up rescheduled";
+  }
+  if (key === "FOLLOW_UP_CANCELLED") {
+    return mentionsMeeting(action, details, outcome)
+      ? "Meeting cancelled"
+      : "Follow-up cancelled";
+  }
+  if (key === "LEAD_REASSIGNED" || key.includes("REASSIGN")) {
+    return "Reassigned";
+  }
+  if (key === "LEAD_ASSIGNED") {
+    return text.includes("reassign") ? "Reassigned" : "Assigned";
+  }
+  if (key === "LEAD_CREATED") return "Lead created";
+  if (key === "LEAD_UPDATED") return "Profile updated";
+  if (key === "LEAD_STATUS_CHANGED") return "Status updated";
+  if (key === "LEAD_QUALIFIED" || key === "LEAD_PRIORITY_OVERRIDE") {
+    return key === "LEAD_PRIORITY_OVERRIDE"
+      ? "Priority updated"
+      : "Qualification updated";
+  }
+  if (key === "LEAD_CLOSED") return "Lead closed";
+  if (key === "LEAD_REOPENED") return "Lead reopened";
+  if (key === "LEAD_HANDED_OVER" || key.includes("HANDOVER"))
+    return "Handed over";
+  if (key === "CALL") return "Call logged";
+  if (key === "WHATSAPP") return "WhatsApp logged";
+  if (key === "EMAIL") return "Email logged";
+  if (key === "SMS") return "SMS logged";
+  if (key === "COUNSELLING") return "Counselling logged";
+  if (key === "DOCUMENT_REQUEST") return "Document requested";
+  if (key === "PAYMENT_DISCUSSION") return "Payment discussion";
+  if (key === "SERVICE_DISCUSSION") return "Service discussion";
+  if (key.includes("DOCUMENT")) return "Document updated";
+  if (key.includes("PAYMENT")) return "Payment updated";
+
   if (outcomeText) {
     if (outcomeText.includes("email received")) return "Email received";
     if (outcomeText.includes("email sent")) return "Email sent";
@@ -398,7 +473,7 @@ export function activityTitle(
       outcomeText.includes("email assigned") ||
       outcomeText.includes("lead reassigned")
     ) {
-      return "Lead reassigned";
+      return "Reassigned";
     }
     if (outcomeText.includes("attachment received"))
       return "Attachment received";
@@ -407,21 +482,42 @@ export function activityTitle(
       return "Document from email";
   }
 
-  const text = `${action} ${details || ""}`.toLowerCase();
   if (text.includes("lead reassigned") || text.includes("email assigned"))
-    return "Lead reassigned";
+    return "Reassigned";
+  if (text.includes("reassigned") || text.includes("assigned to"))
+    return "Reassigned";
   if (text.includes("handed over") || text.includes("handover"))
     return "Handed over";
   if (text.includes("qualif")) return "Qualification updated";
   if (text.includes("status")) return "Status updated";
   if (text.includes("created") || action.toLowerCase() === "lead created")
     return "Lead created";
-  if (text.includes("follow-up") || text.includes("follow up"))
-    return "Follow-up scheduled";
+  if (text.includes("meeting") && text.includes("reschedul"))
+    return "Meeting rescheduled";
+  if (text.includes("meeting") && text.includes("cancel"))
+    return "Meeting cancelled";
+  if (text.includes("meeting") && text.includes("complet"))
+    return "Meeting completed";
+  if (
+    text.includes("meeting") &&
+    (text.includes("added") ||
+      text.includes("scheduled") ||
+      text.includes("created") ||
+      action.toLowerCase() === "meeting")
+  ) {
+    return "Meeting added";
+  }
+  if (text.includes("follow-up") || text.includes("follow up")) {
+    if (text.includes("reschedul")) return "Follow-up rescheduled";
+    if (text.includes("cancel")) return "Follow-up cancelled";
+    if (text.includes("complet")) return "Follow-up completed";
+    return "Follow-up added";
+  }
   if (text.includes("updated") || text.includes("profile"))
     return "Profile updated";
   if (text.includes("note")) return "Note added";
   if (text.includes("call")) return "Call logged";
+  if (text.includes("whatsapp")) return "WhatsApp logged";
   if (text.includes("email received") || text.includes("received —"))
     return "Email received";
   if (text.includes("email bounced") || text.includes("email failed")) {
@@ -429,4 +525,58 @@ export function activityTitle(
   }
   if (text.includes("email")) return "Email sent";
   return action;
+}
+
+export function activityIconKind(
+  title: string,
+  actionKey?: string | null,
+  category?: string | null,
+): LeadActivityIconKind {
+  const key = (actionKey || "").toUpperCase();
+  const label = title.toLowerCase();
+
+  if (key === "NOTE" || label.includes("note")) return "note";
+  if (key === "MEETING" || label.includes("meeting")) return "meeting";
+  if (
+    key.startsWith("FOLLOW_UP") ||
+    key === "FOLLOW_UP" ||
+    label.includes("follow-up")
+  ) {
+    if (label.includes("completed")) return "check";
+    if (label.includes("cancelled")) return "cancel";
+    return "follow-up";
+  }
+  if (key === "CALL" || label.includes("call")) return "call";
+  if (key === "WHATSAPP" || label.includes("whatsapp")) return "whatsapp";
+  if (key === "EMAIL" || label.includes("email")) return "email";
+  if (key === "SMS" || label.includes("sms")) return "sms";
+  if (key === "COUNSELLING" || label.includes("counselling"))
+    return "counselling";
+  if (
+    key.includes("DOCUMENT") ||
+    label.includes("document") ||
+    label.includes("attachment")
+  ) {
+    return "document";
+  }
+  if (key.includes("PAYMENT") || label.includes("payment")) return "payment";
+  if (
+    key.includes("ASSIGN") ||
+    label.includes("reassigned") ||
+    label.includes("handed over")
+  ) {
+    return "assignment";
+  }
+  if (key.includes("STATUS") || label.includes("status")) return "status";
+  if (label.includes("completed") || label.includes("closed")) return "check";
+  if (label.includes("cancelled")) return "cancel";
+  if (category === "call") return "call";
+  if (category === "meeting") return "meeting";
+  if (category === "email") return "email";
+  if (category === "message") return "whatsapp";
+  if (category === "document") return "document";
+  if (category === "payment") return "payment";
+  if (category === "assignment") return "assignment";
+  if (category === "status") return "status";
+  return "system";
 }

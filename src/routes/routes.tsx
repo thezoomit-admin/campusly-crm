@@ -27,6 +27,7 @@ import { EmailInboxPage } from "../modules/email";
 import { CampaignsPage } from "../modules/campaigns";
 import { MetaLeadsPage } from "../modules/meta-leads";
 import {
+  ClosedLeadsPage,
   LeadCreatePage,
   LeadDetailsPage,
   LeadPoolPage,
@@ -41,7 +42,7 @@ import { ReportsPage } from "../modules/reports";
 import { RolesPage } from "../modules/roles/index";
 import { SettingsPage } from "../modules/settings";
 import { ServiceCatalogPage } from "../modules/service-items";
-import { StudentsPage } from "../modules/students";
+import { StudentDetailsPage, StudentsPage } from "../modules/students";
 import { UsersPage, UserDetailsPage } from "../modules/users/index";
 import PermissionRoute from "./PermissionRoute";
 import ProtectedRoute from "./ProtectedRoute";
@@ -95,6 +96,16 @@ const routes = [
             children: [{ path: "/leads/mine", element: <MyLeadsPage /> }],
           },
           {
+            element: (
+              <PermissionRoute
+                permission="lead:view"
+                deniedTitle="Lost/Close Leads"
+                deniedMessage="You do not have permission to access this page."
+              />
+            ),
+            children: [{ path: "/leads/closed", element: <ClosedLeadsPage /> }],
+          },
+          {
             element: <PermissionRoute permission="lead:view" />,
             children: [
               { path: "/leads", element: <LeadsPage /> },
@@ -112,6 +123,7 @@ const routes = [
                 element: <ApplicationDetailsPage />,
               },
               { path: "/students", element: <StudentsPage /> },
+              { path: "/students/:id", element: <StudentDetailsPage /> },
             ],
           },
           {

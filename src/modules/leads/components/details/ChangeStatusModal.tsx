@@ -155,7 +155,12 @@ function ActivityHistorySidebar({
                 ) : null}
                 <div className="min-w-0 flex-1">
                   <p className="m-0 break-words text-[0.86rem] font-semibold text-[#17324f] [overflow-wrap:anywhere] dark:text-text-strong">
-                    {activityTitle(item.action, item.details, item.outcome)}
+                    {activityTitle(
+                      item.action,
+                      item.details,
+                      item.outcome,
+                      item.actionKey,
+                    )}
                   </p>
                   {item.details ? (
                     <p className="mt-0.5 mb-0 line-clamp-2 break-words text-[0.78rem] text-[#5b6b7c] [overflow-wrap:anywhere]">

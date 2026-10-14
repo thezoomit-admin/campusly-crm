@@ -37,6 +37,7 @@ export type LeadListParams = {
   source?: string;
   priority?: string;
   country?: string;
+  ownerId?: string;
   duplicatesOnly?: boolean;
 };
 
@@ -107,6 +108,7 @@ const leadsApi = baseApi.injectEndpoints({
           source: params?.source,
           priority: params?.priority,
           country: params?.country,
+          ownerId: params?.ownerId,
           duplicatesOnly: params?.duplicatesOnly ? "true" : undefined,
         })}`,
       providesTags: [{ type: "Leads", id: "LIST" }],

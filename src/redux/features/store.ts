@@ -21,6 +21,7 @@ import '@/modules/follow-ups/api/followUpsApi'
 import '@/modules/reports/api/reportsApi'
 import '@/modules/dashboard/api/dashboardApi'
 import '@/modules/notifications/api/notificationsApi'
+import '@/modules/performance/api/performanceApi'
 
 export const store = configureStore({
   reducer,

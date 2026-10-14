@@ -10,6 +10,7 @@ type StudentsTableProps = {
   total: number
   onPageChange: (page: number) => void
   onLimitChange: (limit: number) => void
+  onRowClick?: (row: StudentRow) => void
 }
 
 export default function StudentsTable({
@@ -20,6 +21,7 @@ export default function StudentsTable({
   total,
   onPageChange,
   onLimitChange,
+  onRowClick,
 }: StudentsTableProps) {
   return (
     <DataTable
@@ -34,6 +36,14 @@ export default function StudentsTable({
       setLimit={onLimitChange}
       total={total}
       showSizeChanger={total > 10}
+      onRow={
+        onRowClick
+          ? (record) => ({
+              onClick: () => onRowClick(record as StudentRow),
+              className: 'cursor-pointer',
+            })
+          : undefined
+      }
     />
   )
 }

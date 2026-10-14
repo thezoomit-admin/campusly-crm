@@ -33,9 +33,22 @@ export default function LeadApplicationsCard({
       {student ? (
         <p className="m-0 mb-3 text-[0.82rem] text-text-muted">
           Student{' '}
-          <span className="font-semibold text-text-strong">{student.studentCode}</span>
+          <Link
+            to={`/students/${student.id}`}
+            className="font-semibold text-primary hover:underline"
+          >
+            {student.studentCode}
+          </Link>
           {' · '}
           {student.status}
+          <span className="block mt-1 text-[0.78rem]">
+            After conversion, use{' '}
+            <Link to={`/students/${student.id}`} className="text-primary hover:underline">
+              Student workspace
+            </Link>{' '}
+            for shared profile and{' '}
+            <span className="text-text-strong">Application details</span> for each university.
+          </span>
         </p>
       ) : null}
 

@@ -57,6 +57,9 @@ export type AdminUser = {
   updatedAt?: string | Date;
   acceptsLeadAssignment?: boolean;
   inactiveOwnerLeadCount?: number;
+  assignedLeadCount?: number;
+  activeApplicationCount?: number;
+  pendingDocumentCount?: number;
   dataScopes?: ScopeMap;
 };
 

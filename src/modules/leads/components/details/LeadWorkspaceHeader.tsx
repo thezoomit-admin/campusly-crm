@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Call02Icon,
@@ -44,6 +44,7 @@ export default function LeadWorkspaceHeader({
   onAssign,
   canCreateApplication,
   onCreateApplication,
+  studentId,
 }: {
   lead: LeadRecord;
   degreeOptions?: MasterOption[];
@@ -65,7 +66,9 @@ export default function LeadWorkspaceHeader({
   onAssign?: () => void;
   canCreateApplication?: boolean;
   onCreateApplication?: () => void;
+  studentId?: string | null;
 }) {
+  const navigate = useNavigate();
   const studyLevel =
     optionLabel(degreeOptions, lead.preferredDegreeCode) ||
     lead.preferredCourse ||
@@ -87,6 +90,16 @@ export default function LeadWorkspaceHeader({
   return (
     <section className="rounded-2xl border border-[#e7eef5] bg-surface px-4 py-4 shadow-[0_10px_28px_rgba(22,50,79,0.035)] md:px-5 dark:border-border">
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        {studentId ? (
+          <PrimaryButton
+            type="button"
+            size="sm"
+            variant="outline"
+            icon={<HugeiconsIcon icon={UserIcon} size={15} />}
+            label="Open Student"
+            onClick={() => navigate(`/students/${studentId}`)}
+          />
+        ) : null}
         {canCreateApplication && onCreateApplication ? (
           <PrimaryButton
             type="button"
