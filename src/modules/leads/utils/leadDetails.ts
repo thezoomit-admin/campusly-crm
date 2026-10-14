@@ -88,6 +88,7 @@ export const LEAD_TABS = [
   ...LEAD_MORE_TABS,
 ] as Array<{ key: LeadTabKey; label: string }>;
 
+/** Sales pipeline only — admission continues in Applications / Students. */
 export const LEAD_JOURNEY_STAGES = [
   { code: "NEW", label: "New" },
   { code: "CONTACTED", label: "Contacted" },
@@ -95,18 +96,53 @@ export const LEAD_JOURNEY_STAGES = [
   { code: "COUNSELLING", label: "Counselling" },
   { code: "OFFERED", label: "Offered" },
   { code: "CONVERTED", label: "Converted" },
-  { code: "FILE_OPENING_PENDING", label: "File Opening Pending" },
-  { code: "FILE_OPENED", label: "File Opened" },
 ] as const;
+
+/** Legacy post-conversion lead statuses still treated as converted for CTAs. */
+export const CONVERTED_LEAD_STATUS_CODES = new Set([
+  "CONVERTED",
+  "FILE_OPENING_PENDING",
+  "FILE_OPENED",
+]);
+
+export function isConvertedLeadStatus(
+  statusCode?: string | null,
+  statusName?: string | null,
+  behaviorKey?: string | null,
+) {
+  const code = (statusCode || "").trim().toUpperCase();
+  if (code && CONVERTED_LEAD_STATUS_CODES.has(code)) return true;
+  const behavior = (behaviorKey || "").trim().toLowerCase();
+  if (
+    behavior === "converted" ||
+    behavior === "file_opening_pending" ||
+    behavior === "file_opened"
+  ) {
+    return true;
+  }
+  const name = (statusName || "").trim().toLowerCase();
+  return (
+    name === "converted" ||
+    name === "file opening pending" ||
+    name === "file opened"
+  );
+}
 
 export function journeyStageIndex(
   statusCode?: string | null,
   statusName?: string | null,
 ) {
   const code = (statusCode || "").toUpperCase();
+  // Legacy admission statuses still render as Converted on the sales journey.
+  if (code === "FILE_OPENING_PENDING" || code === "FILE_OPENED") {
+    return LEAD_JOURNEY_STAGES.findIndex((stage) => stage.code === "CONVERTED");
+  }
   const byCode = LEAD_JOURNEY_STAGES.findIndex((stage) => stage.code === code);
   if (byCode >= 0) return byCode;
   const name = (statusName || "").trim().toLowerCase();
+  if (name === "file opening pending" || name === "file opened") {
+    return LEAD_JOURNEY_STAGES.findIndex((stage) => stage.code === "CONVERTED");
+  }
   const byName = LEAD_JOURNEY_STAGES.findIndex(
     (stage) => stage.label.toLowerCase() === name,
   );

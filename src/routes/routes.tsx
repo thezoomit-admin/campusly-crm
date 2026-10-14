@@ -3,7 +3,10 @@ import AppLayout from "../layouts/AppLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import { AccountPage } from "../modules/account";
 import { ActivityHistoryPage } from "../modules/activity-history";
-import { ApplicationsPage } from "../modules/applications";
+import {
+  ApplicationDetailsPage,
+  ApplicationsPage,
+} from "../modules/applications";
 import { AuditLogsPage } from "../modules/audit-logs";
 import {
   LoginPage,
@@ -104,6 +107,10 @@ const routes = [
             element: <PermissionRoute permission="lead:convert" />,
             children: [
               { path: "/applications", element: <ApplicationsPage /> },
+              {
+                path: "/applications/:id",
+                element: <ApplicationDetailsPage />,
+              },
               { path: "/students", element: <StudentsPage /> },
             ],
           },

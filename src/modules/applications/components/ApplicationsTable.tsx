@@ -10,6 +10,7 @@ type ApplicationsTableProps = {
   total: number
   onPageChange: (page: number) => void
   onLimitChange: (limit: number) => void
+  onRowClick?: (row: ApplicationRow) => void
 }
 
 export default function ApplicationsTable({
@@ -20,6 +21,7 @@ export default function ApplicationsTable({
   total,
   onPageChange,
   onLimitChange,
+  onRowClick,
 }: ApplicationsTableProps) {
   return (
     <DataTable
@@ -34,6 +36,14 @@ export default function ApplicationsTable({
       setLimit={onLimitChange}
       total={total}
       showSizeChanger={total > 10}
+      onRow={
+        onRowClick
+          ? (record) => ({
+              onClick: () => onRowClick(record as ApplicationRow),
+              className: 'cursor-pointer',
+            })
+          : undefined
+      }
     />
   )
 }

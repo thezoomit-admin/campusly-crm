@@ -1,4 +1,3 @@
-import { Button } from 'antd'
 import { useMemo, useState } from 'react'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
@@ -6,7 +5,6 @@ import { useDebounce } from '@/hooks/useDebounce'
 import { useListStudentsQuery } from '../api/studentsApi'
 import { adminCard, adminPage } from '../../../styles/admin'
 import StudentFilters from '../components/StudentFilters'
-import StudentFormModal from '../components/StudentFormModal'
 import StudentsTable from '../components/StudentsTable'
 import type { StudentRow } from '../types'
 
@@ -14,7 +12,6 @@ export default function StudentsPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
-  const [formOpen, setFormOpen] = useState(false)
   const debouncedSearch = useDebounce(search, 300)
 
   const { data, isFetching, isError } = useListStudentsQuery({
@@ -27,17 +24,12 @@ export default function StudentsPage() {
     <div className={adminPage}>
       <PageMeta
         title="Students"
-        description="Manage student profiles, academic progress, and advisory engagement in one place."
+        description="Student profiles created from Converted leads when applications are opened."
       />
       <PageHeader
         title="Students"
-        subtitle="Manage student profiles, academic progress, and advisory engagement in one place."
+        subtitle="Student profiles are created automatically from Converted leads when the first application is opened."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Students' }]}
-        extra={
-          <Button type="primary" onClick={() => setFormOpen(true)}>
-            Add student
-          </Button>
-        }
       />
 
       <div className={`${adminCard} grid gap-3`}>
@@ -63,8 +55,6 @@ export default function StudentsPage() {
           onLimitChange={setLimit}
         />
       </div>
-
-      <StudentFormModal open={formOpen} onClose={() => setFormOpen(false)} />
     </div>
   )
 }
