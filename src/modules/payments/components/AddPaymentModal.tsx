@@ -194,7 +194,14 @@ export default function AddPaymentModal({
             },
           ]}
         >
-          <InputNumber className="w-full" min={0.01} step={100} precision={2} placeholder="0.00" />
+          <InputNumber
+            className="w-full"
+            style={{ width: '100%' }}
+            min={0.01}
+            step={100}
+            precision={2}
+            placeholder="0.00"
+          />
         </Form.Item>
 
         <Form.Item

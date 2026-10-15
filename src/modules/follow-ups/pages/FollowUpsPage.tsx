@@ -266,13 +266,7 @@ export default function FollowUpsPage() {
         }
       />
 
-      <FollowUpSummaryCards
-        summary={summary}
-        onSelectTab={(next) => {
-          setTab(next)
-          resetPage()
-        }}
-      />
+      <FollowUpSummaryCards summary={summary} />
 
       <div className="overflow-hidden rounded-[20px] border border-border bg-surface shadow-soft">
         <div className="grid gap-3 border-b border-border px-3 py-3 sm:px-4">

@@ -1,6 +1,13 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Input, Modal, Popconfirm, Tag } from "antd";
 import { toast } from "react-toastify";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  Invoice01Icon,
+  Package01Icon,
+} from "@hugeicons/core-free-icons";
 import { PrimaryButton } from "@/components/ui";
 import { DeleteModal } from "@/components/common/Modals";
 import { getApiError } from "@/lib/api";
@@ -37,13 +44,31 @@ const ACTIVE_STATUSES: ServiceOfferStatus[] = ["ACCEPTED", "PAYMENT_PENDING", "P
 const OPEN_STATUSES: ServiceOfferStatus[] = ["DRAFT", "GENERATED", "SENT"];
 const CLOSED_STATUSES: ServiceOfferStatus[] = ["REJECTED", "EXPIRED", "CANCELLED"];
 
-const KIND_LABEL: Record<OfferLineKind, string> = {
-  PACKAGE_INCLUDED: "Included",
-  PACKAGE_OPTIONAL: "Optional",
-  SERVICE: "Service",
-  ADDITIONAL: "Additional",
-  CUSTOM_SERVICE: "Custom service",
-  CUSTOM_CHARGE: "Custom charge",
+const KIND_META: Record<OfferLineKind, { label: string; className: string }> = {
+  PACKAGE_INCLUDED: {
+    label: "Included",
+    className: "bg-nav-active-bg text-primary-active",
+  },
+  PACKAGE_OPTIONAL: {
+    label: "Optional",
+    className: "bg-[#eef4ff] text-[#3b6ae8]",
+  },
+  SERVICE: {
+    label: "Service",
+    className: "bg-[#f1f5f9] text-text-muted",
+  },
+  ADDITIONAL: {
+    label: "Additional",
+    className: "bg-[#fff7e8] text-[#9a6700]",
+  },
+  CUSTOM_SERVICE: {
+    label: "Custom",
+    className: "bg-[#f3e8ff] text-[#7c3aed]",
+  },
+  CUSTOM_CHARGE: {
+    label: "Charge",
+    className: "bg-[#fff1f0] text-danger",
+  },
 };
 
 const ACTION_COPY: Record<OfferStatusAction, { title: string; okText: string; description?: string }> = {
@@ -63,15 +88,6 @@ function dateTime(value: string | null) {
 
 function dateOnly(value: string | null) {
   return value ? new Date(value).toLocaleDateString() : "—";
-}
-
-function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
-  return (
-    <div className={`flex justify-between gap-3 ${strong ? "font-semibold text-[#17324f] dark:text-text-strong" : ""}`}>
-      <span>{label}</span>
-      <span>{value}</span>
-    </div>
-  );
 }
 
 function statusLine(offer: ServiceOfferRecord) {
@@ -97,6 +113,54 @@ function statusLine(offer: ServiceOfferRecord) {
   }
 }
 
+function KindBadge({ kind }: { kind: OfferLineKind }) {
+  const meta = KIND_META[kind];
+  return (
+    <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${meta.className}`}>
+      {meta.label}
+    </span>
+  );
+}
+
+function DetailSection({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
+  return (
+    <section className="rounded-xl border border-border bg-surface">
+      <div className="flex items-center justify-between gap-2 border-b border-border-subtle px-4 py-2.5">
+        <h4 className="m-0 text-[13px] font-semibold text-text">{title}</h4>
+        {action}
+      </div>
+      <div className="p-4">{children}</div>
+    </section>
+  );
+}
+
+function MoneyRow({
+  label,
+  value,
+  strong,
+  accent,
+  negative,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  accent?: boolean;
+  negative?: boolean;
+}) {
+  return (
+    <div className={`flex items-center justify-between gap-3 text-[13px] ${strong ? "pt-2" : ""}`}>
+      <span className={strong ? "font-semibold text-text" : "text-text-muted"}>{label}</span>
+      <span
+        className={`tabular-nums ${
+          accent ? "text-[15px] font-bold text-primary" : strong ? "font-semibold text-text" : "text-text"
+        } ${negative ? "text-danger" : ""}`}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function OfferDetails({
   offer,
   canRecordPayment,
@@ -110,122 +174,215 @@ function OfferDetails({
 }) {
   const discounted = Number(offer.lineDiscountTotal) > 0 || Number(offer.overallDiscountAmount) > 0;
   const payable = offer.status === "PAYMENT_PENDING" || offer.status === "PARTIALLY_PAID";
+  const active = ACTIVE_STATUSES.includes(offer.status);
+
   return (
-    <div className="grid gap-4 text-sm">
-      <div className="grid gap-1.5">
-        {offer.packageName ? (
-          <Row
-            label={`Package: ${offer.packageName} — Version ${offer.versionNumber}`}
-            value={formatMoney(offer.packagePrice)}
-          />
-        ) : null}
-        {offer.packageName && offer.packageDefaultPrice !== offer.packagePrice ? (
-          <p className="m-0 text-xs text-text-muted">Default package price {formatMoney(offer.packageDefaultPrice)}</p>
-        ) : null}
-        {offer.items.map((item) => (
-          <div key={item.id} className="flex justify-between gap-3 text-[#5d6b7c]">
-            <span>
-              {item.serviceName}
-              <span className="text-text-muted">
-                {" "}
-                · {KIND_LABEL[item.kind]}
-                {item.kind !== "PACKAGE_INCLUDED" && item.quantity > 1 ? ` · ${item.quantity} × ${formatMoney(item.offeredPrice)}` : ""}
+    <div className="grid gap-4 pt-1">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_300px]">
+        {/* Line items */}
+        <DetailSection title="Offer items">
+          {offer.packageName ? (
+            <div className="mb-3 flex items-start gap-2.5 rounded-lg border border-border-subtle bg-input-bg px-3 py-2.5 dark:bg-transparent">
+              <span className="mt-0.5 text-primary">
+                <HugeiconsIcon icon={Package01Icon} size={16} color="currentColor" strokeWidth={1.7} />
               </span>
-              {item.defaultPrice && item.defaultPrice !== item.offeredPrice && item.kind !== "PACKAGE_INCLUDED" ? (
-                <span className="block text-xs text-text-muted">
-                  Default {formatMoney(item.defaultPrice)} → Offered {formatMoney(item.offeredPrice)}
-                </span>
-              ) : null}
-              {Number(item.discountAmount) > 0 ? (
-                <span className="block text-xs text-text-muted">
-                  Discount {item.discountType === "PERCENTAGE" ? `${Number(item.discountValue)}%` : formatMoney(item.discountValue)} —{" "}
-                  {item.discountReason}
-                </span>
-              ) : null}
-            </span>
-            <span>{item.kind === "PACKAGE_INCLUDED" ? "In package" : formatMoney(item.lineTotal)}</span>
-          </div>
-        ))}
-        {Number(offer.fileOpeningCharge) > 0 ? <Row label="File opening charge" value={formatMoney(offer.fileOpeningCharge)} /> : null}
-      </div>
-      <div className="grid gap-1.5 rounded-xl bg-[#f8fafc] px-4 py-3 dark:bg-transparent">
-        <Row label="Gross amount" value={formatMoney(offer.grossTotal)} />
-        {discounted ? <Row label="Line item discount" value={`− ${formatMoney(offer.lineDiscountTotal)}`} /> : null}
-        <Row label="Subtotal" value={formatMoney(offer.subtotal)} />
-        {discounted ? (
-          <Row
-            label={`Overall discount${offer.overallDiscountReason ? ` — ${offer.overallDiscountReason}` : ""}`}
-            value={`− ${formatMoney(offer.overallDiscountAmount)}`}
-          />
-        ) : null}
-        <Row label="Final payable" value={formatMoney(offer.finalPayable)} strong />
-        {offer.initialPayment ? (
-          <>
-            <Row label="Initial payment" value={formatMoney(offer.initialPayment)} />
-            <Row label="Remaining due" value={formatMoney(offer.remainingAfterInitial)} />
-          </>
-        ) : null}
-        {offer.expectedDealValue !== offer.finalPayable ? (
-          <Row label="Expected deal value" value={formatMoney(offer.expectedDealValue)} />
-        ) : null}
-        {ACTIVE_STATUSES.includes(offer.status) ? (
-          <>
-            <Row label="Received" value={formatMoney(offer.paidAmount)} />
-            <Row label="Due" value={formatMoney(offer.dueAmount)} strong />
-          </>
-        ) : null}
-      </div>
-      {offer.installments.length ? (
-        <div className="grid gap-1.5">
-          <p className="m-0 font-medium">Payment plan</p>
-          {offer.installments.map((item) => (
-            <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 text-[#5d6b7c]">
-              <span>
-                Payment {item.sequence}: {item.purpose}
-                {item.dueDate ? <span className="text-text-muted"> · due {item.dueDate}</span> : null}
-                {item.paidAt ? (
-                  <span className="block text-xs text-text-muted">
-                    Received {dateTime(item.paidAt)}
-                    {item.paidBy ? ` by ${item.paidBy.fullName}` : ""}
-                  </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="m-0 text-[13px] font-semibold text-text">{offer.packageName}</p>
+                    <p className="mb-0 mt-0.5 text-[12px] text-text-faint">Package · Version {offer.versionNumber}</p>
+                  </div>
+                  <p className="m-0 text-[13px] font-semibold tabular-nums text-text">{formatMoney(offer.packagePrice)}</p>
+                </div>
+                {offer.packageDefaultPrice !== offer.packagePrice ? (
+                  <p className="mb-0 mt-1 text-[11px] text-text-faint">
+                    Default {formatMoney(offer.packageDefaultPrice)}
+                  </p>
                 ) : null}
-              </span>
-              <span className="flex items-center gap-2">
-                {formatMoney(item.amount)}
-                <Tag color={item.status === "PAID" ? "success" : item.status === "PARTIAL" ? "orange" : "default"}>
-                  {item.status === "PAID" ? "Paid" : item.status === "PARTIAL" ? "Partial" : "Pending"}
-                </Tag>
-                {canRecordPayment && payable && item.status !== "PAID" ? (
-                  <Popconfirm
-                    title="Record this payment as received?"
-                    okText="Record Payment"
-                    onConfirm={() => onPay(item.id)}
-                  >
-                    <PrimaryButton type="button" size="sm" variant="outline" label="Record Payment" loading={paying} />
-                  </Popconfirm>
-                ) : null}
-              </span>
+              </div>
             </div>
-          ))}
-        </div>
+          ) : null}
+
+          <div className="overflow-hidden rounded-lg border border-border">
+            <div className="hidden grid-cols-[minmax(0,1fr)_100px] gap-3 border-b border-border bg-input-bg px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-text-faint md:grid dark:bg-transparent">
+              <span>Item</span>
+              <span className="text-right">Amount</span>
+            </div>
+            <div className="divide-y divide-border-subtle">
+              {offer.items.map((item) => (
+                <div key={item.id} className="grid gap-1 px-3 py-2.5 md:grid-cols-[minmax(0,1fr)_100px] md:items-start md:gap-3">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="m-0 text-[13px] font-medium text-text">{item.serviceName}</p>
+                      <KindBadge kind={item.kind} />
+                    </div>
+                    {item.kind !== "PACKAGE_INCLUDED" && item.quantity > 1 ? (
+                      <p className="mb-0 mt-0.5 text-[12px] text-text-faint">
+                        {item.quantity} × {formatMoney(item.offeredPrice)}
+                      </p>
+                    ) : null}
+                    {item.defaultPrice && item.defaultPrice !== item.offeredPrice && item.kind !== "PACKAGE_INCLUDED" ? (
+                      <p className="mb-0 mt-0.5 text-[11px] text-text-faint">
+                        Default {formatMoney(item.defaultPrice)} → Offered {formatMoney(item.offeredPrice)}
+                      </p>
+                    ) : null}
+                    {Number(item.discountAmount) > 0 ? (
+                      <p className="mb-0 mt-0.5 text-[11px] text-text-faint">
+                        Discount{" "}
+                        {item.discountType === "PERCENTAGE"
+                          ? `${Number(item.discountValue)}%`
+                          : formatMoney(item.discountValue)}
+                        {item.discountReason ? ` · ${item.discountReason}` : ""}
+                      </p>
+                    ) : null}
+                    {item.remarks ? <p className="mb-0 mt-0.5 text-[11px] text-text-faint">{item.remarks}</p> : null}
+                  </div>
+                  <div className="text-left md:text-right">
+                    {item.kind === "PACKAGE_INCLUDED" ? (
+                      <span className="inline-flex rounded-md bg-nav-active-bg px-2 py-0.5 text-[11px] font-medium text-primary-active">
+                        In package
+                      </span>
+                    ) : (
+                      <p className="m-0 text-[13px] font-semibold tabular-nums text-text">{formatMoney(item.lineTotal)}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {Number(offer.fileOpeningCharge) > 0 ? (
+                <div className="grid gap-1 px-3 py-2.5 md:grid-cols-[minmax(0,1fr)_100px] md:items-center md:gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="m-0 text-[13px] font-medium text-text">File opening charge</p>
+                    <span className="inline-flex rounded-md bg-[#fff1f0] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-danger">
+                      Charge
+                    </span>
+                  </div>
+                  <p className="m-0 text-[13px] font-semibold tabular-nums text-text md:text-right">
+                    {formatMoney(offer.fileOpeningCharge)}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </DetailSection>
+
+        {/* Totals */}
+        <DetailSection title="Amount summary">
+          <div className="mb-3 rounded-lg bg-nav-active-bg px-3 py-3 dark:bg-transparent">
+            <p className="mb-1 mt-0 text-[11px] font-medium uppercase tracking-wide text-primary-active">Final payable</p>
+            <p className="m-0 text-[22px] font-bold leading-none tabular-nums text-primary">{formatMoney(offer.finalPayable)}</p>
+          </div>
+          <div className="grid gap-2">
+            <MoneyRow label="Gross amount" value={formatMoney(offer.grossTotal)} />
+            {discounted ? (
+              <MoneyRow label="Line item discount" value={`− ${formatMoney(offer.lineDiscountTotal)}`} negative />
+            ) : null}
+            <MoneyRow label="Subtotal" value={formatMoney(offer.subtotal)} />
+            {discounted ? (
+              <MoneyRow
+                label={offer.overallDiscountReason ? `Overall discount · ${offer.overallDiscountReason}` : "Overall discount"}
+                value={`− ${formatMoney(offer.overallDiscountAmount)}`}
+                negative
+              />
+            ) : null}
+            <div className="border-t border-border-subtle" />
+            <MoneyRow label="Final payable" value={formatMoney(offer.finalPayable)} strong accent />
+            {offer.initialPayment ? (
+              <>
+                <MoneyRow label="Initial payment" value={formatMoney(offer.initialPayment)} />
+                <MoneyRow label="Remaining due" value={formatMoney(offer.remainingAfterInitial)} />
+              </>
+            ) : null}
+            {offer.expectedDealValue !== offer.finalPayable ? (
+              <MoneyRow label="Expected deal value" value={formatMoney(offer.expectedDealValue)} />
+            ) : null}
+            {active ? (
+              <>
+                <div className="border-t border-border-subtle" />
+                <MoneyRow label="Received" value={formatMoney(offer.paidAmount)} />
+                <MoneyRow label="Due" value={formatMoney(offer.dueAmount)} strong />
+              </>
+            ) : null}
+          </div>
+        </DetailSection>
+      </div>
+
+      {offer.installments.length ? (
+        <DetailSection title="Payment plan">
+          <div className="grid gap-2">
+            {offer.installments.map((item) => {
+              const paid = item.status === "PAID";
+              const partial = item.status === "PARTIAL";
+              return (
+                <div
+                  key={item.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border-subtle px-3 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <p className="m-0 text-[13px] font-medium text-text">
+                      <span className="mr-1.5 text-text-faint">#{item.sequence}</span>
+                      {item.purpose}
+                    </p>
+                    <p className="mb-0 mt-0.5 text-[12px] text-text-faint">
+                      {item.dueDate ? `Due ${item.dueDate}` : "No due date"}
+                      {item.paidAt
+                        ? ` · Received ${dateTime(item.paidAt)}${item.paidBy ? ` by ${item.paidBy.fullName}` : ""}`
+                        : ""}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[13px] font-semibold tabular-nums text-text">{formatMoney(item.amount)}</span>
+                    <Tag color={paid ? "success" : partial ? "orange" : "default"} className="m-0!">
+                      {paid ? "Paid" : partial ? "Partial" : "Pending"}
+                    </Tag>
+                    {canRecordPayment && payable && !paid ? (
+                      <Popconfirm
+                        title="Record this payment as received?"
+                        okText="Record Payment"
+                        onConfirm={() => onPay(item.id)}
+                      >
+                        <PrimaryButton type="button" size="sm" variant="outline" label="Record" loading={paying} />
+                      </Popconfirm>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </DetailSection>
       ) : null}
+
       {offer.statusHistory.length ? (
-        <div className="grid gap-1.5">
-          <p className="m-0 font-medium">Status history</p>
-          <ol className="m-0 grid gap-1 pl-4 text-xs text-[#5d6b7c]">
-            {offer.statusHistory.map((entry) => (
-              <li key={entry.id}>
-                {entry.fromStatus ? `${STATUS_TAG[entry.fromStatus].label} → ` : "Created as "}
-                {STATUS_TAG[entry.toStatus].label}
-                <span className="text-text-muted">
-                  {" "}
-                  · {entry.changedBy?.fullName || "System"} · {dateTime(entry.createdAt)}
-                  {entry.reason ? ` — ${entry.reason}` : ""}
-                </span>
-              </li>
-            ))}
+        <DetailSection title="Status history">
+          <ol className="relative m-0 grid list-none gap-0 border-l border-border p-0 pl-4">
+            {offer.statusHistory.map((entry, index) => {
+              const isLast = index === offer.statusHistory.length - 1;
+              return (
+                <li key={entry.id} className={`relative pb-3 ${isLast ? "pb-0" : ""}`}>
+                  <span
+                    className={`absolute top-1.5 -left-[21px] size-2.5 rounded-full border-[2.5px] border-surface ${
+                      isLast ? "bg-primary" : "bg-border"
+                    }`}
+                  />
+                  <p className="m-0 text-[13px] font-medium text-text">
+                    {entry.fromStatus ? (
+                      <>
+                        {STATUS_TAG[entry.fromStatus].label}
+                        <span className="mx-1 text-text-faint">→</span>
+                        {STATUS_TAG[entry.toStatus].label}
+                      </>
+                    ) : (
+                      <>Created as {STATUS_TAG[entry.toStatus].label}</>
+                    )}
+                  </p>
+                  <p className="mb-0 mt-0.5 text-[12px] text-text-faint">
+                    {entry.changedBy?.fullName || "System"} · {dateTime(entry.createdAt)}
+                    {entry.reason ? ` · ${entry.reason}` : ""}
+                  </p>
+                </li>
+              );
+            })}
           </ol>
-        </div>
+        </DetailSection>
       ) : null}
     </div>
   );
@@ -344,26 +501,14 @@ export default function LeadPackageOfferPanel({
   }
 
   function actions(offer: ServiceOfferRecord) {
-    if (!canOffer) return null;
+    if (!canOffer) return { primary: [] as ReactNode[], secondary: [] as ReactNode[] };
     const allows = (status: ServiceOfferStatus) => offer.allowedTransitions.includes(status);
     const otherOpen = offers.find((item) => item.id !== offer.id && OPEN_STATUSES.includes(item.status));
-    const buttons = [];
+    const primary: ReactNode[] = [];
+    const secondary: ReactNode[] = [];
 
-    if (offer.status === "DRAFT" || offer.status === "GENERATED") {
-      buttons.push(
-        <PrimaryButton
-          key="edit"
-          type="button"
-          size="sm"
-          variant="outline"
-          label="Edit"
-          disabled={!context}
-          onClick={() => setEditor({ offer, revise: false })}
-        />,
-      );
-    }
     if (offer.status === "DRAFT") {
-      buttons.push(
+      primary.push(
         <Popconfirm
           key="generate"
           title="Generate this offer?"
@@ -375,10 +520,24 @@ export default function LeadPackageOfferPanel({
         </Popconfirm>,
       );
     }
-    if (allows("SENT")) buttons.push(confirmAction(offer, "send", true));
-    if (allows("ACCEPTED")) buttons.push(confirmAction(offer, "accept", offer.status === "SENT"));
+    if (allows("SENT")) primary.push(confirmAction(offer, "send", true));
+    if (allows("ACCEPTED")) primary.push(confirmAction(offer, "accept", offer.status === "SENT"));
+
+    if (offer.status === "DRAFT" || offer.status === "GENERATED") {
+      secondary.push(
+        <PrimaryButton
+          key="edit"
+          type="button"
+          size="sm"
+          variant="outline"
+          label="Edit"
+          disabled={!context}
+          onClick={() => setEditor({ offer, revise: false })}
+        />,
+      );
+    }
     if (allows("REJECTED")) {
-      buttons.push(
+      secondary.push(
         <PrimaryButton
           key="reject"
           type="button"
@@ -390,7 +549,7 @@ export default function LeadPackageOfferPanel({
       );
     }
     if (offer.revisable && !otherOpen) {
-      buttons.push(
+      secondary.push(
         <PrimaryButton
           key="revise"
           type="button"
@@ -403,30 +562,32 @@ export default function LeadPackageOfferPanel({
       );
     }
     if (offer.status === "DRAFT" && !offer.revisedFrom && !offer.generatedAt) {
-      buttons.push(
+      secondary.push(
         <PrimaryButton
           key="delete"
           type="button"
           size="sm"
           variant="text"
+          className="text-danger!"
           label="Delete"
           loading={deleting && deleteTarget?.id === offer.id}
           onClick={() => setDeleteTarget(offer)}
         />,
       );
     } else if (allows("CANCELLED")) {
-      buttons.push(
+      secondary.push(
         <PrimaryButton
           key="cancel"
           type="button"
           size="sm"
           variant="text"
+          className="text-danger!"
           label="Cancel Offer"
           onClick={() => openPrompt(offer, "cancel")}
         />,
       );
     }
-    return buttons;
+    return { primary, secondary };
   }
 
   return (
@@ -448,71 +609,101 @@ export default function LeadPackageOfferPanel({
       {isFetching && !data ? <p className="m-0 text-sm text-text-muted">Loading service offers…</p> : null}
       {isError ? <p className="m-0 text-sm text-danger">Unable to load service offers.</p> : null}
       {!isFetching && !isError && offers.length === 0 ? (
-        <p className="m-0 text-sm text-text-muted">
-          {canOffer
-            ? "No service offer yet. Create one from a package or from individual services."
-            : "No service offer yet. Creating one needs offer permission."}
-        </p>
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-input-bg px-4 py-10 text-center dark:bg-transparent">
+          <span className="mb-2 flex size-10 items-center justify-center rounded-full bg-nav-active-bg text-primary">
+            <HugeiconsIcon icon={Invoice01Icon} size={18} color="currentColor" strokeWidth={1.7} />
+          </span>
+          <p className="m-0 text-[13px] text-text-muted">
+            {canOffer
+              ? "No service offer yet. Create one from a package or individual services."
+              : "No service offer yet. Creating one needs offer permission."}
+          </p>
+        </div>
       ) : null}
+
       <div className="grid gap-3">
         {offers.map((offer) => {
           const status = STATUS_TAG[offer.status];
           const open = expanded === offer.id;
           const active = ACTIVE_STATUSES.includes(offer.status);
           const closed = CLOSED_STATUSES.includes(offer.status);
+          const offerActions = actions(offer);
           return (
-            <div
+            <article
               key={offer.id}
-              className={`rounded-xl border p-4 ${
-                active ? "border-[#52c41a] bg-[#f3fbf6] dark:bg-transparent" : "border-[#e7eef5] dark:border-border"
-              } ${closed ? "opacity-75" : ""}`}
+              className={`overflow-hidden rounded-2xl border bg-surface transition-shadow ${
+                active
+                  ? "border-primary/35 shadow-[0_0_0_1px_color-mix(in_srgb,var(--color-primary)_18%,transparent)]"
+                  : "border-border"
+              } ${closed ? "opacity-80" : ""} ${open ? "shadow-soft" : ""}`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="m-0 flex flex-wrap items-center gap-2 font-semibold text-[#17324f] dark:text-text-strong">
-                    Offer V{offer.offerVersion}
-                    <span className="font-normal text-text-muted">
-                      · {offer.packageName ? `${offer.packageName} — Version ${offer.versionNumber}` : "Custom service offer"}
-                    </span>
-                    <Tag color={status.color}>{status.label}</Tag>
-                    {active ? <Tag color="green">Active</Tag> : null}
-                  </p>
-                  <p className="m-0 text-xs text-text-muted">{statusLine(offer)}</p>
+              <div className="flex flex-wrap items-start justify-between gap-4 px-4 py-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="m-0 text-[15px] font-semibold text-text">
+                      Offer V{offer.offerVersion}
+                      <span className="ml-1.5 font-normal text-text-muted">
+                        · {offer.packageName ? `${offer.packageName} — v${offer.versionNumber}` : "Custom service offer"}
+                      </span>
+                    </h3>
+                    <Tag color={status.color} className="m-0!">
+                      {status.label}
+                    </Tag>
+                    {active ? (
+                      <span className="rounded-md bg-nav-active-bg px-2 py-0.5 text-[11px] font-semibold text-primary-active">
+                        Active
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mb-0 mt-1.5 text-[12px] text-text-faint">{statusLine(offer)}</p>
                   {offer.revisedFrom ? (
-                    <p className="m-0 text-xs text-text-muted">Revised from Offer V{offer.revisedFrom.offerVersion}</p>
+                    <p className="mb-0 mt-0.5 text-[12px] text-text-faint">
+                      Revised from Offer V{offer.revisedFrom.offerVersion}
+                    </p>
                   ) : null}
                 </div>
                 <div className="text-right">
-                  <p className="m-0 font-semibold">{formatMoney(offer.finalPayable)}</p>
-                  <p className="m-0 text-xs text-text-muted">
+                  <p className="m-0 text-[18px] font-bold tabular-nums text-text">{formatMoney(offer.finalPayable)}</p>
+                  <p className="mb-0 mt-0.5 text-[11px] font-medium uppercase tracking-wide text-text-faint">
                     {active ? `Received ${formatMoney(offer.paidAmount)}` : "Final payable"}
                   </p>
                 </div>
               </div>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <PrimaryButton
-                  type="button"
-                  size="sm"
-                  variant="text"
-                  label={open ? "Hide details" : "View details"}
-                  onClick={() => setExpanded(open ? null : offer.id)}
-                />
-                {canRecordPayment &&
-                (offer.status === "PAYMENT_PENDING" ||
-                  offer.status === "PARTIALLY_PAID" ||
-                  offer.status === "ACCEPTED") &&
-                Number(offer.dueAmount) > 0 ? (
+
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-subtle bg-input-bg px-4 py-2.5 dark:bg-transparent">
+                <div className="flex flex-wrap items-center gap-2">
                   <PrimaryButton
                     type="button"
                     size="sm"
-                    label="Add Payment"
-                    onClick={() => setPayOffer(offer)}
+                    variant="text"
+                    className="px-1.5!"
+                    icon={
+                      <HugeiconsIcon
+                        icon={open ? ArrowUp01Icon : ArrowDown01Icon}
+                        size={14}
+                        color="currentColor"
+                        strokeWidth={1.8}
+                      />
+                    }
+                    label={open ? "Hide details" : "View details"}
+                    onClick={() => setExpanded(open ? null : offer.id)}
                   />
+                  {canRecordPayment &&
+                  (offer.status === "PAYMENT_PENDING" ||
+                    offer.status === "PARTIALLY_PAID" ||
+                    offer.status === "ACCEPTED") &&
+                  Number(offer.dueAmount) > 0 ? (
+                    <PrimaryButton type="button" size="sm" label="Add Payment" onClick={() => setPayOffer(offer)} />
+                  ) : null}
+                  {offerActions.secondary}
+                </div>
+                {offerActions.primary.length ? (
+                  <div className="flex flex-wrap items-center gap-2">{offerActions.primary}</div>
                 ) : null}
-                {actions(offer)}
               </div>
+
               {open ? (
-                <div className="mt-3 border-t border-[#e7eef5] pt-3 dark:border-border">
+                <div className="border-t border-border bg-[#fbfcfd] px-4 py-4 dark:bg-transparent">
                   <OfferDetails
                     offer={offer}
                     canRecordPayment={canRecordPayment}
@@ -521,7 +712,7 @@ export default function LeadPackageOfferPanel({
                   />
                 </div>
               ) : null}
-            </div>
+            </article>
           );
         })}
       </div>
@@ -577,11 +768,7 @@ export default function LeadPackageOfferPanel({
         />
       ) : null}
 
-      <ReceiptViewModal
-        open={Boolean(receiptId)}
-        receiptId={receiptId}
-        onClose={() => setReceiptId(null)}
-      />
+      <ReceiptViewModal open={Boolean(receiptId)} receiptId={receiptId} onClose={() => setReceiptId(null)} />
     </LeadSectionCard>
   );
 }

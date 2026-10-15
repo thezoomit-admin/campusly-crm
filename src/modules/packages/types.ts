@@ -191,9 +191,12 @@ export type ServiceOfferRecord = {
 export type ServiceOfferContext = {
   lead: {
     id: string;
+    code?: string;
     name: string;
+    createdAt?: string;
     preferredCountryCode: string | null;
     preferredCountryName: string | null;
+    assignedTo?: { id: string; fullName: string } | null;
   };
   fileOpeningChargeDefault: string;
   discountLimitPercent: number;

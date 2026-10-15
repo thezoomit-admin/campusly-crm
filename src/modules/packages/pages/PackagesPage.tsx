@@ -210,7 +210,7 @@ export default function PackagesPage({
   useEffect(() => {
     if (!onCreateAction) return;
     onCreateAction(
-      canManage ? { label: "Create Package", onClick: openCreate } : null,
+      canManage ? { label: "+ Create Package", onClick: openCreate } : null,
     );
     return () => onCreateAction(null);
   }, [canManage, onCreateAction, openCreate]);
@@ -409,7 +409,7 @@ export default function PackagesPage({
               Create Package
             </Button>
           ) : null}
-          <div className="min-w-0 flex-[2]">
+          <div className="min-w-0 flex-2">
             <FormInput.Search
               allowClear
               placeholder="Search package or country"
@@ -658,7 +658,7 @@ export default function PackagesPage({
               Auto calculate
             </Button>
           ) : null}
-          <div className="mb-4 rounded-xl bg-[#f8fafc] px-4 py-3 text-sm dark:bg-transparent">
+          <div className="mb-4 rounded-xl bg-input-bg px-4 py-3 text-sm dark:bg-transparent">
             {pricedServices
               .filter((line) => line.inclusion === "INCLUDED")
               .map((line) => (

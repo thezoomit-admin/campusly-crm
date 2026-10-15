@@ -5,11 +5,10 @@ import {
   CalendarCheckIn01Icon,
   CheckmarkCircle02Icon,
 } from '@hugeicons/core-free-icons'
-import type { FollowUpSummary, FollowUpTab } from '../utils/followUpList'
+import type { FollowUpSummary } from '../utils/followUpList'
 
 type FollowUpSummaryCardsProps = {
   summary: FollowUpSummary
-  onSelectTab?: (tab: FollowUpTab) => void
 }
 
 function Trend({
@@ -46,7 +45,6 @@ const CARDS = [
   {
     key: 'dueToday' as const,
     label: 'Due Today',
-    tab: 'today' as FollowUpTab,
     icon: Calendar03Icon,
     iconWrap: 'bg-[#e7f8ef] text-[#16a34a]',
     valueClass: 'text-text-strong',
@@ -55,7 +53,6 @@ const CARDS = [
   {
     key: 'overdue' as const,
     label: 'Overdue',
-    tab: 'overdue' as FollowUpTab,
     icon: AlarmClockIcon,
     iconWrap: 'bg-[#ffe8ee] text-[#e11d48]',
     valueClass: 'text-[#e11d48]',
@@ -64,7 +61,6 @@ const CARDS = [
   {
     key: 'upcoming' as const,
     label: 'Upcoming',
-    tab: 'upcoming' as FollowUpTab,
     icon: CalendarCheckIn01Icon,
     iconWrap: 'bg-[#e8f1ff] text-[#2563eb]',
     valueClass: 'text-text-strong',
@@ -73,7 +69,6 @@ const CARDS = [
   {
     key: 'completedToday' as const,
     label: 'Completed Today',
-    tab: 'completed' as FollowUpTab,
     icon: CheckmarkCircle02Icon,
     iconWrap: 'bg-[#e7f8ef] text-[#16a34a]',
     valueClass: 'text-text-strong',
@@ -81,20 +76,15 @@ const CARDS = [
   },
 ]
 
-export default function FollowUpSummaryCards({
-  summary,
-  onSelectTab,
-}: FollowUpSummaryCardsProps) {
+export default function FollowUpSummaryCards({ summary }: FollowUpSummaryCardsProps) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {CARDS.map((card) => {
         const value = summary[card.key]
         return (
-          <button
+          <div
             key={card.key}
-            type="button"
-            onClick={() => onSelectTab?.(card.tab)}
-            className="cursor-pointer rounded-2xl border border-border bg-surface px-4 py-3.5 text-left shadow-soft transition-colors hover:border-primary/40"
+            className="rounded-2xl border border-border bg-surface px-4 py-3.5 shadow-soft"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -120,7 +110,7 @@ export default function FollowUpSummaryCards({
                 <span className="text-[11px] font-medium text-text-muted">Live count</span>
               )}
             </div>
-          </button>
+          </div>
         )
       })}
     </div>
