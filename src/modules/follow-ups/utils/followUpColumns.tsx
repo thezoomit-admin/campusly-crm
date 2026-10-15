@@ -1,4 +1,5 @@
 import type { ColumnsType } from 'antd/es/table'
+import { Tooltip } from 'antd'
 import { Link } from 'react-router-dom'
 import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
@@ -27,6 +28,14 @@ function typeIcon(type: string): IconSvgElement {
   if (key.includes('meeting') || key.includes('counselling')) return MeetingRoomIcon
   if (key.includes('document')) return DocumentAttachmentIcon
   return Call02Icon
+}
+
+const NEXT_ACTION_WORD_LIMIT = 3
+
+function truncateWords(text: string, limit = NEXT_ACTION_WORD_LIMIT): string {
+  const words = text.trim().split(/\s+/).filter(Boolean)
+  if (words.length <= limit) return text.trim()
+  return `${words.slice(0, limit).join(' ')}…`
 }
 
 function formatDueParts(dueAt?: string | null, fallback?: string) {
@@ -188,9 +197,20 @@ export const followUpColumns: ColumnsType<FollowUpRecord> = [
     title: 'Next Action',
     dataIndex: 'nextAction',
     key: 'nextAction',
-    width: 180,
-    ellipsis: true,
-    render: (value: string | null) => value || '—',
+    width: 120,
+    onHeaderCell: () => ({ style: { width: 120, maxWidth: 120 } }),
+    onCell: () => ({ style: { width: 120, maxWidth: 120 } }),
+    render: (value: string | null) => {
+      if (!value?.trim()) return '—'
+      const full = value.trim()
+      return (
+        <Tooltip title={full}>
+          <span className="block max-w-[104px] truncate cursor-default">
+            {truncateWords(full)}
+          </span>
+        </Tooltip>
+      )
+    },
   },
   {
     title: 'Status',

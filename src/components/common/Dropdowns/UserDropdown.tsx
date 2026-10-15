@@ -22,12 +22,28 @@ type QuickMenuItem = {
   permission?: string;
 };
 
-const ACCOUNT_MENUS = [
+type AccountMenuItem =
+  | {
+      key: string;
+      label: string;
+      to: string;
+      navIcon: NavIconName;
+      hugeIcon?: never;
+    }
+  | {
+      key: string;
+      label: string;
+      to: string;
+      navIcon?: never;
+      hugeIcon: typeof UserCircleIcon;
+    };
+
+const ACCOUNT_MENUS: AccountMenuItem[] = [
   {
     key: "dashboard",
     label: "Dashboard",
     to: "/dashboard",
-    navIcon: "grid" as const,
+    navIcon: "grid",
   },
   {
     key: "profile",
@@ -242,7 +258,7 @@ export default function UserDropdown({
       {shouldRender ? (
         <div
           className={[
-            "absolute top-[calc(100%+10px)] right-0 z-70 flex max-h-[min(70vh,480px)] w-[260px] origin-top-right flex-col overflow-hidden rounded-[10px] border border-border bg-surface p-0 shadow-card transition-[opacity,transform] ease-out",
+            "absolute top-[calc(100%+10px)] right-0 z-70 flex max-h-[min(70vh,480px)] w-65 origin-top-right flex-col overflow-hidden rounded-[10px] border border-border bg-surface p-0 shadow-card transition-[opacity,transform] ease-out",
             isVisible
               ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
               : "pointer-events-none -translate-y-1.5 scale-[0.97] opacity-0",
@@ -274,11 +290,11 @@ export default function UserDropdown({
                     className={menuItemClass(active)}
                     onClick={() => setIsOpen(false)}
                   >
-                    {"navIcon" in item && item.navIcon ? (
+                    {item.navIcon ? (
                       <NavIcon name={item.navIcon} size={15} />
                     ) : (
                       <HugeiconsIcon
-                        icon={item.hugeIcon!}
+                        icon={item.hugeIcon}
                         size={15}
                         color="currentColor"
                         strokeWidth={1.5}
