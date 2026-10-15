@@ -1648,9 +1648,14 @@ export {
   parseMeetingNotes,
 } from "./ScheduleMeetingModal";
 
+function CloseRequiredMark() {
+  return <span className="text-[#ef4444]"> *</span>;
+}
+
 export function CloseLeadModal({
   open,
   saving,
+  loading = false,
   currentStatus,
   options,
   lostReasons,
@@ -1661,6 +1666,7 @@ export function CloseLeadModal({
 }: {
   open: boolean;
   saving: boolean;
+  loading?: boolean;
   currentStatus: string;
   options: LeadStatusOption[];
   lostReasons: MasterOption[];
@@ -1676,6 +1682,7 @@ export function CloseLeadModal({
   const [statusCode, setStatusCode] = useState("");
   const [reasonCode, setReasonCode] = useState("");
   const [remarks, setRemarks] = useState("");
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const [confirming, setConfirming] = useState(false);
 
   const selected = options.find((item) => item.code === statusCode);
@@ -1685,14 +1692,15 @@ export function CloseLeadModal({
       : selected?.reasonCategory === "LEAD_CLOSE_REASON"
         ? closeReasons
         : [];
-  const remarksRequired = reasonCode.toUpperCase() === "OTHER";
   const dirty = Boolean(statusCode || reasonCode || remarks);
+  const mergedErrors = { ...localErrors, ...errors };
 
   useEffect(() => {
     if (!open) {
       setStatusCode("");
       setReasonCode("");
       setRemarks("");
+      setLocalErrors({});
       setConfirming(false);
     }
   }, [open]);
@@ -1713,6 +1721,18 @@ export function CloseLeadModal({
     });
   }
 
+  async function handleSubmit() {
+    const nextErrors: Record<string, string> = {};
+    if (!statusCode) nextErrors.statusCode = "Please select a status.";
+    if (selected && !reasonCode) {
+      nextErrors.reasonCode = "Please select a reason.";
+    }
+    if (!remarks.trim()) nextErrors.remarks = "Please provide a reason.";
+    setLocalErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
+    await onSubmit({ statusCode, reasonCode, remarks: remarks.trim() });
+  }
+
   const title =
     selected?.behaviorKey === "lost"
       ? "Mark Lead as Lost"
@@ -1726,89 +1746,116 @@ export function CloseLeadModal({
       onClose={requestClose}
       title={title}
       width={520}
-      mask={{ closable: !confirming }}
+      mask={{ closable: !confirming && !loading }}
     >
-      <div className="grid gap-3">
-        <label className="grid gap-1.5 text-sm">
-          <span>Current Status</span>
-          <input
-            readOnly
-            value={currentStatus}
-            className="h-10 rounded-lg border border-[#dbe4ee] bg-[#f7fafc] px-3 text-sm text-[#17324f] dark:border-border dark:bg-hover-bg dark:text-text"
-          />
-        </label>
-        <label className="grid gap-1.5 text-sm">
-          <span>New Status *</span>
-          <FormSelect
-            showSearch
-            optionFilterProp="label"
-            placeholder="Lost / Closed / Duplicate / Invalid"
-            value={statusCode || undefined}
-            options={options.map((item) => ({
-              value: item.code,
-              label: item.name,
-            }))}
-            onChange={(value) => {
-              setStatusCode(asSelectString(value));
-              setReasonCode("");
-            }}
-          />
-          {errors.statusCode ? (
-            <InputError>{errors.statusCode}</InputError>
-          ) : null}
-        </label>
-        {selected ? (
+      {loading ? (
+        <div className="grid min-h-[220px] place-items-center py-8">
+          <Spin />
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          <label className="grid gap-1.5 text-sm">
+            <span>Current Status</span>
+            <input
+              readOnly
+              value={currentStatus}
+              className="h-10 rounded-lg border border-[#dbe4ee] bg-[#f7fafc] px-3 text-sm text-[#17324f] dark:border-border dark:bg-hover-bg dark:text-text"
+            />
+          </label>
           <label className="grid gap-1.5 text-sm">
             <span>
-              {selected.behaviorKey === "lost" ? "Lost Reason *" : "Reason *"}
+              New Status
+              <CloseRequiredMark />
             </span>
             <FormSelect
               showSearch
               optionFilterProp="label"
-              placeholder="Select a reason"
-              value={reasonCode || undefined}
-              options={reasonOptions}
-              onChange={(value) => setReasonCode(asSelectString(value))}
+              placeholder="Lost / Closed / Duplicate / Invalid"
+              value={statusCode || undefined}
+              options={options.map((item) => ({
+                value: item.code,
+                label: item.name,
+              }))}
+              onChange={(value) => {
+                setStatusCode(asSelectString(value));
+                setReasonCode("");
+                setLocalErrors((current) => ({
+                  ...current,
+                  statusCode: "",
+                  reasonCode: "",
+                }));
+              }}
             />
-            {errors.reasonCode ? (
-              <InputError>{errors.reasonCode}</InputError>
+            {mergedErrors.statusCode ? (
+              <InputError>{mergedErrors.statusCode}</InputError>
             ) : null}
           </label>
-        ) : null}
-        <label className="grid gap-1.5 text-sm">
-          <span>
-            Remarks
-            {remarksRequired ? " *" : ""}
-          </span>
-          <FormTextArea
-            autoSize={{ minRows: 3, maxRows: 8 }}
-            maxLength={1000}
-            showCount
-            value={remarks}
-            placeholder={
-              remarksRequired
-                ? "Required when reason is Other"
-                : "Optional remarks"
-            }
-            onChange={(event) => setRemarks(event.target.value)}
-          />
-          {errors.remarks ? <InputError>{errors.remarks}</InputError> : null}
-        </label>
-        <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton
-            type="button"
-            variant="outline"
-            onClick={requestClose}
-            label="Cancel"
-          />
-          <PrimaryButton
-            type="button"
-            loading={saving}
-            onClick={() => void onSubmit({ statusCode, reasonCode, remarks })}
-            label="Confirm"
-          />
+          {selected ? (
+            <label className="grid gap-1.5 text-sm">
+              <span>
+                {selected.behaviorKey === "lost"
+                  ? "Lost Reason"
+                  : "Close Reason"}
+                <CloseRequiredMark />
+              </span>
+              <FormSelect
+                showSearch
+                optionFilterProp="label"
+                placeholder="Select a reason"
+                value={reasonCode || undefined}
+                options={reasonOptions}
+                onChange={(value) => {
+                  setReasonCode(asSelectString(value));
+                  setLocalErrors((current) => ({
+                    ...current,
+                    reasonCode: "",
+                  }));
+                }}
+              />
+              {mergedErrors.reasonCode ? (
+                <InputError>{mergedErrors.reasonCode}</InputError>
+              ) : null}
+            </label>
+          ) : null}
+          <label className="grid gap-1.5 text-sm">
+            <span>
+              Reason
+              <CloseRequiredMark />
+            </span>
+            <FormTextArea
+              autoSize={{ minRows: 3, maxRows: 8 }}
+              maxLength={1000}
+              showCount
+              value={remarks}
+              placeholder="Explain why this lead is being closed"
+              status={mergedErrors.remarks ? "error" : undefined}
+              onChange={(event) => {
+                setRemarks(event.target.value);
+                if (localErrors.remarks) {
+                  setLocalErrors((current) => ({ ...current, remarks: "" }));
+                }
+              }}
+            />
+            {mergedErrors.remarks ? (
+              <InputError>{mergedErrors.remarks}</InputError>
+            ) : null}
+          </label>
+          <div className="mt-2 flex justify-end gap-2">
+            <PrimaryButton
+              type="button"
+              variant="outline"
+              onClick={requestClose}
+              label="Cancel"
+            />
+            <PrimaryButton
+              type="button"
+              loading={saving}
+              onClick={() => void handleSubmit()}
+              label="Confirm"
+            />
+          </div>
         </div>
-      </div>
+      )}
     </AntModal>
   );
 }

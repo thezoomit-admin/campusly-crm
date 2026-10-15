@@ -11,6 +11,19 @@ function text(value: string | number | null | undefined) {
   return String(value)
 }
 
+/** Digits only — strips minus and other non-numeric characters. */
+export function sanitizeNonNegativeInt(value: string) {
+  return value.replace(/\D/g, '')
+}
+
+/** Non-negative decimal — digits and at most one `.`; no minus sign. */
+export function sanitizeNonNegativeDecimal(value: string) {
+  const cleaned = value.replace(/[^\d.]/g, '')
+  const dot = cleaned.indexOf('.')
+  if (dot === -1) return cleaned
+  return `${cleaned.slice(0, dot + 1)}${cleaned.slice(dot + 1).replace(/\./g, '')}`
+}
+
 /** Split a stored phone into dial code + national digits for the flag input. */
 function splitStoredPhone(phone: string | null | undefined, countryCode?: string | null) {
   const digits = (phone || '').replace(/\D/g, '')

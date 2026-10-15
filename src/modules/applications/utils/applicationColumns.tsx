@@ -10,7 +10,7 @@ export const applicationColumns: ColumnsType<ApplicationRow> = [
     key: 'code',
     render: (value: string, row) =>
       value ? (
-        <Link to={`/applications/${row.id}`} className="font-medium text-primary hover:underline">
+        <Link to={`/applications/${row.id}`} className="font-medium !text-primary hover:underline">
           {value}
         </Link>
       ) : (

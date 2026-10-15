@@ -407,11 +407,26 @@ export function activityTitle(
   details?: string | null,
   outcome?: string | null,
   actionKey?: string | null,
+  metadata?: Record<string, unknown> | null,
 ) {
   const key = (actionKey || "").toUpperCase();
   const outcomeText = (outcome || "").toLowerCase();
   const text = `${action} ${details || ""} ${outcome || ""}`.toLowerCase();
+  const metaEvent = String(metadata?.event || "").toUpperCase();
+  const looksLikeStatusChange =
+    key === "LEAD_STATUS_CHANGED" ||
+    metaEvent === "LEAD_STATUS_CHANGED" ||
+    (metadata?.previousStatus != null &&
+      metadata?.newStatus != null &&
+      String(metadata.previousStatus) !== "" &&
+      String(metadata.newStatus) !== "") ||
+    text.startsWith("status changed") ||
+    text.includes("status changed from");
 
+  if (key === "LEAD_CLOSED" || metaEvent === "LEAD_CLOSED") return "Lead closed";
+  if (key === "LEAD_REOPENED" || metaEvent === "LEAD_REOPENED")
+    return "Lead reopened";
+  if (looksLikeStatusChange) return "Status changed";
   if (key === "NOTE") return "Note added";
   if (key === "MEETING") return "Meeting added";
   if (key === "FOLLOW_UP" || key === "FOLLOW_UP_CREATED") {
@@ -442,7 +457,7 @@ export function activityTitle(
   }
   if (key === "LEAD_CREATED") return "Lead created";
   if (key === "LEAD_UPDATED") return "Profile updated";
-  if (key === "LEAD_STATUS_CHANGED") return "Status updated";
+  if (key === "LEAD_STATUS_CHANGED") return "Status changed";
   if (key === "LEAD_QUALIFIED" || key === "LEAD_PRIORITY_OVERRIDE") {
     return key === "LEAD_PRIORITY_OVERRIDE"
       ? "Priority updated"
@@ -535,6 +550,15 @@ export function activityIconKind(
   const key = (actionKey || "").toUpperCase();
   const label = title.toLowerCase();
 
+  if (
+    key.includes("STATUS") ||
+    key === "LEAD_CLOSED" ||
+    key === "LEAD_REOPENED" ||
+    category === "status" ||
+    label.includes("status")
+  ) {
+    return "status";
+  }
   if (key === "NOTE" || label.includes("note")) return "note";
   if (key === "MEETING" || label.includes("meeting")) return "meeting";
   if (

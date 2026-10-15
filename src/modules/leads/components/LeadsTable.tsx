@@ -13,6 +13,7 @@ type LeadsTableProps = {
   canClose?: boolean
   canReopen?: boolean
   showStatus?: boolean
+  showCloseMeta?: boolean
   onPageChange: (page: number) => void
   onLimitChange: (limit: number) => void
   onView: (row: LeadRow) => void
@@ -33,6 +34,7 @@ export default function LeadsTable({
   canClose,
   canReopen,
   showStatus = true,
+  showCloseMeta = false,
   onPageChange,
   onLimitChange,
   onView,
@@ -52,6 +54,7 @@ export default function LeadsTable({
         canClose,
         canReopen,
         showStatus,
+        showCloseMeta,
         onView,
         onEdit,
         onChangeStatus,

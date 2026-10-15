@@ -3,10 +3,10 @@ import { useCallback, useState } from "react";
 import { PageMeta } from "@/components/common/Meta";
 import { PageHeader } from "@/components/common/Navigation";
 import { PackagesPage } from "@/modules/packages";
-import { adminCard, adminPage } from "@/styles/admin";
+import { adminPage } from "@/styles/admin";
 import ServiceItemsPage from "./ServiceItemsPage";
 
-type CatalogTab = "services" | "packages" | "charges";
+type CatalogTab = "services" | "packages";
 
 export type CatalogCreateAction = {
   label: string;
@@ -16,7 +16,6 @@ export type CatalogCreateAction = {
 const TABS: Array<{ key: CatalogTab; label: string }> = [
   { key: "services", label: "Services" },
   { key: "packages", label: "Packages" },
-  { key: "charges", label: "Charges" },
 ];
 
 export default function ServiceCatalogPage() {
@@ -32,7 +31,7 @@ export default function ServiceCatalogPage() {
     <div className={adminPage}>
       <PageMeta
         title="Service & Package Management"
-        description="Manage services, package templates, and the charges used in lead offers."
+        description="Manage services and package templates used in lead offers."
       />
       <PageHeader
         title="Service & Package Management"
@@ -82,15 +81,6 @@ export default function ServiceCatalogPage() {
       ) : null}
       {tab === "packages" ? (
         <PackagesPage onCreateAction={registerCreate} />
-      ) : null}
-      {tab === "charges" ? (
-        <div className={`${adminCard} px-4 py-10 text-center`}>
-          <p className="m-0 text-base font-semibold">Custom charges</p>
-          <p className="mx-auto mt-2 max-w-md text-sm text-text-muted">
-            One-off charges are added on a lead’s own offer. They are not stored
-            as package templates.
-          </p>
-        </div>
       ) : null}
     </div>
   );

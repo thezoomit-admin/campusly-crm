@@ -34,7 +34,10 @@ export default function LeadsPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [statusLeadId, setStatusLeadId] = useState<string | null>(null);
-  const [closeLeadId, setCloseLeadId] = useState<string | null>(null);
+  const [closeLead, setCloseLead] = useState<{
+    id: string;
+    status: string;
+  } | null>(null);
   const debouncedSearch = useDebounce(search, 300);
   const canCreate = hasPermission(auth, "lead:create");
   const canExport = hasPermission(auth, "lead:export");
@@ -64,7 +67,7 @@ export default function LeadsPage() {
   }, []);
 
   const closeCloseModal = useCallback(() => {
-    setCloseLeadId(null);
+    setCloseLead(null);
   }, []);
 
   return (
@@ -162,7 +165,9 @@ export default function LeadsPage() {
             onView={(row) => navigate(`/leads/${row.id}`)}
             onEdit={(row) => navigate(`/leads/${row.id}/edit`)}
             onChangeStatus={(row) => setStatusLeadId(row.id)}
-            onCloseLead={(row) => setCloseLeadId(row.id)}
+            onCloseLead={(row) =>
+              setCloseLead({ id: row.id, status: row.status })
+            }
           />
         </div>
       </div>
@@ -174,9 +179,10 @@ export default function LeadsPage() {
         onClose={closeStatusModal}
       />
       <LeadListCloseModal
-        leadId={closeLeadId}
-        open={Boolean(closeLeadId)}
+        leadId={closeLead?.id || null}
+        open={Boolean(closeLead)}
         auth={auth}
+        currentStatus={closeLead?.status || ""}
         onClose={closeCloseModal}
       />
     </div>

@@ -17,6 +17,7 @@ type LeadColumnOptions = {
   canClose?: boolean;
   canReopen?: boolean;
   showStatus?: boolean;
+  showCloseMeta?: boolean;
   onView: (row: LeadRow) => void;
   onEdit: (row: LeadRow) => void;
   onChangeStatus?: (row: LeadRow) => void;
@@ -43,6 +44,7 @@ export function getLeadColumns({
   canClose,
   canReopen,
   showStatus = true,
+  showCloseMeta = false,
   onView,
   onEdit,
   onChangeStatus,
@@ -139,6 +141,27 @@ export function getLeadColumns({
         </span>
       ),
     });
+  }
+
+  if (showCloseMeta) {
+    columns.push(
+      {
+        title: "Closed By",
+        dataIndex: "closedBy",
+        key: "closedBy",
+        width: 140,
+        ellipsis: true,
+        render: (value: string | null | undefined) => emptyLeadValue(value),
+      },
+      {
+        title: "Reason",
+        dataIndex: "closeReason",
+        key: "closeReason",
+        width: 220,
+        ellipsis: true,
+        render: (value: string | null | undefined) => emptyLeadValue(value),
+      },
+    );
   }
 
   columns.push(

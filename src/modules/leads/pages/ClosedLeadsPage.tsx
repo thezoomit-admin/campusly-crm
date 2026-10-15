@@ -123,6 +123,7 @@ export default function ClosedLeadsPage() {
             canClose={false}
             canReopen={canReopen}
             showStatus
+            showCloseMeta
             onPageChange={setPage}
             onLimitChange={(value) => {
               setLimit(value);
