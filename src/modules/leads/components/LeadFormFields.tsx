@@ -7,12 +7,13 @@ import {
   formField,
   formFieldInvalid,
 } from '../../../styles/admin'
-import { useMemo, type ReactNode } from 'react'
+import { useMemo, type KeyboardEvent, type ReactNode } from 'react'
 import dayjs, { type Dayjs } from 'dayjs'
 import { FormDatePicker, FormInput, FormSelect, FormSwitch, FormTextArea } from '@/components/common/Forms'
 import type { LeadFormState } from '../types'
 import { useListCampaignOptionsQuery } from '@/modules/campaigns/api/campaignsApi'
 import { INTEGRATION_SOURCES, useLeadMasterOptions } from '../hooks/useLeadMasterOptions'
+import { sanitizeNonNegativeDecimal, sanitizeNonNegativeInt } from '../utils/leadForm'
 import LeadPhoneInput from './LeadPhoneInput'
 
 type FieldErrors = Record<string, string>
@@ -92,6 +93,12 @@ function toDayjs(value: string) {
 
 function toDateString(value: Dayjs | null) {
   return value ? value.format('YYYY-MM-DD') : ''
+}
+
+function blockNegativeNumberKeys(event: KeyboardEvent<HTMLInputElement>) {
+  if (event.key === '-' || event.key === '−' || event.key === '+' || event.key === 'e' || event.key === 'E') {
+    event.preventDefault()
+  }
 }
 
 const YES_NO = [
@@ -376,9 +383,11 @@ export default function LeadFormFields({
         <Field id="resultCgpa" label="Result / CGPA">
           <FormInput
             id="resultCgpa"
+            inputMode="decimal"
             value={form.resultCgpa}
             placeholder="e.g. 3.50"
-            onChange={(event) => onChange('resultCgpa', event.target.value)}
+            onKeyDown={blockNegativeNumberKeys}
+            onChange={(event) => onChange('resultCgpa', sanitizeNonNegativeDecimal(event.target.value))}
           />
         </Field>
         <Field
@@ -389,9 +398,11 @@ export default function LeadFormFields({
         >
           <FormInput
             id="studyGapYears"
+            inputMode="numeric"
             value={form.studyGapYears}
             placeholder="0"
-            onChange={(event) => onChange('studyGapYears', event.target.value)}
+            onKeyDown={blockNegativeNumberKeys}
+            onChange={(event) => onChange('studyGapYears', sanitizeNonNegativeInt(event.target.value))}
           />
         </Field>
       </FormSection>
@@ -422,9 +433,11 @@ export default function LeadFormFields({
             <Field id="overallScore" label="Overall Score" error={errors.overallScore}>
               <FormInput
                 id="overallScore"
+                inputMode="decimal"
                 value={form.overallScore}
                 placeholder="e.g. 6.5"
-                onChange={(event) => onChange('overallScore', event.target.value)}
+                onKeyDown={blockNegativeNumberKeys}
+                onChange={(event) => onChange('overallScore', sanitizeNonNegativeDecimal(event.target.value))}
               />
             </Field>
             <Field id="testDate" label="Test Date">
@@ -438,33 +451,41 @@ export default function LeadFormFields({
             <Field id="listening" label="Listening" error={errors.listening}>
               <FormInput
                 id="listening"
+                inputMode="decimal"
                 value={form.listening}
                 placeholder="Band / score"
-                onChange={(event) => onChange('listening', event.target.value)}
+                onKeyDown={blockNegativeNumberKeys}
+                onChange={(event) => onChange('listening', sanitizeNonNegativeDecimal(event.target.value))}
               />
             </Field>
             <Field id="reading" label="Reading" error={errors.reading}>
               <FormInput
                 id="reading"
+                inputMode="decimal"
                 value={form.reading}
                 placeholder="Band / score"
-                onChange={(event) => onChange('reading', event.target.value)}
+                onKeyDown={blockNegativeNumberKeys}
+                onChange={(event) => onChange('reading', sanitizeNonNegativeDecimal(event.target.value))}
               />
             </Field>
             <Field id="writing" label="Writing" error={errors.writing}>
               <FormInput
                 id="writing"
+                inputMode="decimal"
                 value={form.writing}
                 placeholder="Band / score"
-                onChange={(event) => onChange('writing', event.target.value)}
+                onKeyDown={blockNegativeNumberKeys}
+                onChange={(event) => onChange('writing', sanitizeNonNegativeDecimal(event.target.value))}
               />
             </Field>
             <Field id="speaking" label="Speaking" error={errors.speaking}>
               <FormInput
                 id="speaking"
+                inputMode="decimal"
                 value={form.speaking}
                 placeholder="Band / score"
-                onChange={(event) => onChange('speaking', event.target.value)}
+                onKeyDown={blockNegativeNumberKeys}
+                onChange={(event) => onChange('speaking', sanitizeNonNegativeDecimal(event.target.value))}
               />
             </Field>
           </>

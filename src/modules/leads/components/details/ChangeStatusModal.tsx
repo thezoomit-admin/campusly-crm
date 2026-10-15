@@ -160,6 +160,7 @@ function ActivityHistorySidebar({
                       item.details,
                       item.outcome,
                       item.actionKey,
+                      item.metadata,
                     )}
                   </p>
                   {item.details ? (
@@ -169,7 +170,9 @@ function ActivityHistorySidebar({
                   ) : null}
                   <p className="mt-0.5 mb-0 text-[0.72rem] text-[#8b97a8]">
                     {formatDisplayDateTime(item.occurredAt)}
-                    {item.user?.fullName ? ` · ${item.user.fullName}` : ''}
+                    {item.user?.fullName
+                      ? ` · Changed by ${item.user.fullName}`
+                      : ''}
                   </p>
                 </div>
               </li>

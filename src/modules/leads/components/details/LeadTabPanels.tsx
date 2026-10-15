@@ -29,7 +29,6 @@ import {
   FOLLOW_UP_OPEN_STATUSES,
   type FollowUpRecord,
 } from "@/modules/follow-ups/types";
-import { followUpStatusClass } from "@/modules/follow-ups/utils/followUpStatus";
 import {
   useCancelPaymentMutation,
   useGeneratePaymentReceiptMutation,
@@ -113,6 +112,89 @@ function ActivityTypeIcon({
     >
       <HugeiconsIcon icon={icon} size={15} color="currentColor" strokeWidth={1.8} />
     </span>
+  );
+}
+
+function readStatusLabels(item: ActivityFeedItem) {
+  const previous =
+    typeof item.metadata?.previousStatus === "string"
+      ? item.metadata.previousStatus.trim()
+      : "";
+  const next =
+    typeof item.metadata?.newStatus === "string"
+      ? item.metadata.newStatus.trim()
+      : "";
+  if (previous && next) return { previous, next };
+
+  const details = item.details || "";
+  const match =
+    details.match(/status changed from\s+(.+?)\s+to\s+(.+?)(?:\.|$)/i) ||
+    details.match(/reopened from\s+(.+?)\s+to\s+(.+?)(?:\.|$)/i) ||
+    details.match(/closed as\s+(.+?)(?:\s|\(|\.|$)/i);
+  if (match?.[1] && match?.[2]) {
+    return { previous: match[1].trim(), next: match[2].trim() };
+  }
+  if (match?.[1] && !match[2]) {
+    return { previous: previous || "—", next: match[1].trim() };
+  }
+  return { previous, next };
+}
+
+function statusChangeRemark(item: ActivityFeedItem) {
+  const remarks =
+    typeof item.metadata?.remarks === "string"
+      ? item.metadata.remarks.trim()
+      : typeof item.metadata?.reopenReason === "string"
+        ? item.metadata.reopenReason.trim()
+        : "";
+  if (remarks) return remarks;
+  const details = item.details || "";
+  const afterDot = details.includes(". ")
+    ? details.slice(details.indexOf(". ") + 2).trim()
+    : "";
+  if (
+    afterDot &&
+    !/^status changed/i.test(afterDot) &&
+    !/^lead (closed|reopened)/i.test(afterDot)
+  ) {
+    return afterDot;
+  }
+  return "";
+}
+
+function activityBadgeClass(status: string) {
+  return `${statusClass(status).replace("rounded-full", "rounded-md")} px-2 py-0.5 text-[0.72rem] font-semibold`;
+}
+
+function StatusChangeBadges({ item }: { item: ActivityFeedItem }) {
+  const { previous, next } = readStatusLabels(item);
+  if (!previous && !next) return null;
+  return (
+    <div className="flex max-w-full flex-wrap items-center justify-end gap-1.5">
+      <span className={activityBadgeClass(previous || "—")}>{previous || "—"}</span>
+      <span className="text-[0.75rem] font-semibold text-[#8b97a8]" aria-hidden>
+        →
+      </span>
+      <span className={activityBadgeClass(next || "—")}>{next || "—"}</span>
+    </div>
+  );
+}
+
+function StatusChangeRemark({ item }: { item: ActivityFeedItem }) {
+  const { previous, next } = readStatusLabels(item);
+  const remark = statusChangeRemark(item);
+  if (!previous && !next && item.details) {
+    return (
+      <p className="mt-1 mb-0 max-w-2xl whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
+        {item.details}
+      </p>
+    );
+  }
+  if (!remark) return null;
+  return (
+    <p className="mt-1 mb-0 max-w-2xl whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
+      {remark}
+    </p>
   );
 }
 
@@ -524,29 +606,52 @@ export function LeadTimelinePanel({
                   <span className="absolute top-7 bottom-[-6px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
                 ) : null}
                 <div className="min-w-0 flex-1 overflow-hidden">
-                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-                    <p className="m-0 min-w-0 break-all text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
-                      {activityTitle(
-                        item.action,
-                        item.details,
-                        item.outcome,
-                        item.actionKey,
-                      )}
-                    </p>
-                    <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
-                      {formatDisplayDateTime(item.occurredAt)}
-                    </time>
+                  <div className="flex min-w-0 items-start justify-between gap-3">
+                    <div className="min-w-0 max-w-2xl flex-1">
+                      <p className="m-0 break-words text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
+                        {activityTitle(
+                          item.action,
+                          item.details,
+                          item.outcome,
+                          item.actionKey,
+                          item.metadata,
+                        )}
+                      </p>
+                      {item.category === "status" ||
+                      (item.actionKey || "").toUpperCase().includes("STATUS") ||
+                      (item.actionKey || "").toUpperCase() === "LEAD_CLOSED" ||
+                      (item.actionKey || "").toUpperCase() === "LEAD_REOPENED" ? (
+                        <StatusChangeRemark item={item} />
+                      ) : item.details ? (
+                        <p className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
+                          {item.details}
+                        </p>
+                      ) : null}
+                      <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
+                        {item.category === "status" ||
+                        (item.actionKey || "").toUpperCase().includes("STATUS") ||
+                        (item.actionKey || "").toUpperCase() === "LEAD_CLOSED" ||
+                        (item.actionKey || "").toUpperCase() === "LEAD_REOPENED"
+                          ? item.user?.fullName
+                            ? `Changed by ${item.user.fullName}`
+                            : "Changed by System"
+                          : item.user?.fullName
+                            ? `Performed by ${item.user.fullName}`
+                            : "Performed by System"}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1.5 text-right">
+                      <time className="text-[0.75rem] text-[#8b97a8]">
+                        {formatDisplayDateTime(item.occurredAt)}
+                      </time>
+                      {item.category === "status" ||
+                      (item.actionKey || "").toUpperCase().includes("STATUS") ||
+                      (item.actionKey || "").toUpperCase() === "LEAD_CLOSED" ||
+                      (item.actionKey || "").toUpperCase() === "LEAD_REOPENED" ? (
+                        <StatusChangeBadges item={item} />
+                      ) : null}
+                    </div>
                   </div>
-                  {item.details ? (
-                    <p className="mt-1 mb-0 max-w-full whitespace-pre-wrap break-all text-[0.82rem] text-[#5b6b7c]">
-                      {item.details}
-                    </p>
-                  ) : null}
-                  <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
-                    {item.user?.fullName
-                      ? `Performed by ${item.user.fullName}`
-                      : "Performed by System"}
-                  </p>
                 </div>
               </li>
             ))}
@@ -670,9 +775,9 @@ export function LeadActivitiesPanel({
                       <span className="absolute top-10 bottom-[-6px] left-[15px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
                     ) : null}
                     <div className="min-w-0 flex-1 overflow-hidden">
-                      <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="m-0 min-w-0 break-all text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0 max-w-2xl flex-1">
+                          <p className="m-0 break-words text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
                             {title}
                           </p>
                           <p className="mt-1 mb-0 text-[0.78rem] text-[#8b97a8]">
@@ -680,21 +785,21 @@ export function LeadActivitiesPanel({
                             {item.purpose ? ` · ${item.purpose}` : ""}
                             {item.nextAction ? ` · ${item.nextAction}` : ""}
                           </p>
+                          {item.notes ? (
+                            <p className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
+                              {item.notes}
+                            </p>
+                          ) : null}
                         </div>
-                        <div className="flex shrink-0 flex-col items-end gap-1">
+                        <div className="flex shrink-0 flex-col items-end gap-1.5 text-right">
                           <time className="text-[0.75rem] text-[#8b97a8]">
                             {formatDisplayDateTime(item.dueAt) || item.due}
                           </time>
-                          <span className={followUpStatusClass(item.status)}>
+                          <span className={activityBadgeClass(item.status)}>
                             {item.status}
                           </span>
                         </div>
                       </div>
-                      {item.notes ? (
-                        <p className="mt-1 mb-0 max-w-full whitespace-pre-wrap break-all text-[0.82rem] text-[#5b6b7c]">
-                          {item.notes}
-                        </p>
-                      ) : null}
                       <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
                         {item.ownerName
                           ? `Assigned to ${item.ownerName}`
@@ -736,12 +841,19 @@ export function LeadActivitiesPanel({
                 item.details,
                 item.outcome,
                 item.actionKey,
+                item.metadata,
               );
               const iconKind = activityIconKind(
                 title,
                 item.actionKey,
                 item.category,
               );
+              const isStatusChange =
+                item.category === "status" ||
+                (item.actionKey || "").toUpperCase().includes("STATUS") ||
+                (item.actionKey || "").toUpperCase() === "LEAD_CLOSED" ||
+                (item.actionKey || "").toUpperCase() === "LEAD_REOPENED" ||
+                title.toLowerCase().includes("status");
 
               return (
                 <li
@@ -753,30 +865,42 @@ export function LeadActivitiesPanel({
                     <span className="absolute top-10 bottom-[-6px] left-[15px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
                   ) : null}
                   <div className="min-w-0 flex-1 overflow-hidden">
-                    <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-                      <p className="m-0 min-w-0 break-all text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
-                        {title}
-                      </p>
-                      <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
-                        {formatDisplayDateTime(item.occurredAt)}
-                      </time>
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0 max-w-2xl flex-1">
+                        <p className="m-0 break-words text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
+                          {title}
+                        </p>
+                        {item.outcome &&
+                        !title.toLowerCase().includes(item.outcome.toLowerCase()) &&
+                        !isStatusChange ? (
+                          <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
+                            {item.outcome}
+                          </p>
+                        ) : null}
+                        {isStatusChange ? (
+                          <StatusChangeRemark item={item} />
+                        ) : item.details ? (
+                          <p className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
+                            {item.details}
+                          </p>
+                        ) : null}
+                        <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
+                          {isStatusChange
+                            ? item.user?.fullName
+                              ? `Changed by ${item.user.fullName}`
+                              : "Changed by System"
+                            : item.user?.fullName
+                              ? `Performed by ${item.user.fullName}`
+                              : "Performed by System"}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1.5 text-right">
+                        <time className="text-[0.75rem] text-[#8b97a8]">
+                          {formatDisplayDateTime(item.occurredAt)}
+                        </time>
+                        {isStatusChange ? <StatusChangeBadges item={item} /> : null}
+                      </div>
                     </div>
-                    {item.outcome &&
-                    !title.toLowerCase().includes(item.outcome.toLowerCase()) ? (
-                      <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
-                        {item.outcome}
-                      </p>
-                    ) : null}
-                    {item.details ? (
-                      <p className="mt-1 mb-0 max-w-full whitespace-pre-wrap break-all text-[0.82rem] text-[#5b6b7c]">
-                        {item.details}
-                      </p>
-                    ) : null}
-                    <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
-                      {item.user?.fullName
-                        ? `Performed by ${item.user.fullName}`
-                        : "Performed by System"}
-                    </p>
                   </div>
                 </li>
               );

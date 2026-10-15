@@ -25,6 +25,8 @@ export type LeadRow = {
   hasPhoneDuplicate?: boolean;
   duplicateOfLeadId?: string | null;
   duplicateOf?: LeadDuplicateRef | null;
+  closedBy?: string | null;
+  closeReason?: string | null;
 };
 
 export type LeadPoolRow = {

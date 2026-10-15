@@ -98,6 +98,7 @@ export default function LeadDetailsSidebar({
                     item.details,
                     item.outcome,
                     item.actionKey,
+                    item.metadata,
                   )}
                 </p>
                 <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
