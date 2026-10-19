@@ -72,11 +72,11 @@ function navLinkClass({
   collapsed?: boolean;
 }) {
   return [
-    "flex items-center gap-2.5 rounded-xl px-3 py-[7px] text-[0.92rem] text-nav no-underline",
+    "flex items-center gap-2.5 rounded-xl px-3 py-[7px] text-[0.92rem] font-medium text-nav no-underline",
     "transition-[background-color,color] duration-200 ease-in-out [&_svg]:shrink-0 [&_svg]:text-icon [&_svg]:transition-colors [&_svg]:duration-200 [&_svg]:ease-in-out",
     sub ? "pl-10 text-[0.86rem]" : "",
     isActive
-      ? "bg-nav-active-bg font-semibold text-nav-active [&_svg]:text-nav-active hover:bg-nav-active-bg hover:text-nav-active"
+      ? "bg-nav-active-bg text-nav-active [&_svg]:text-nav-active hover:bg-nav-active-bg hover:text-nav-active"
       : "hover:bg-nav-hover-bg hover:text-nav-active hover:[&_svg]:text-nav-active",
     collapsed
       ? "max-[960px]:justify-start max-[960px]:px-3 max-[960px]:py-[9px] justify-center px-0 py-2.5"
@@ -86,7 +86,12 @@ function navLinkClass({
     .join(" ");
 }
 
-const NESTED_LEAD_PAGES = ["/leads/pool", "/leads/mine", "/leads/closed"];
+const NESTED_LEAD_PAGES = [
+  "/leads/new",
+  "/leads/pool",
+  "/leads/mine",
+  "/leads/closed",
+];
 
 function matchesPath(pathname: string, to: string): boolean {
   if (pathname !== to && !pathname.startsWith(`${to}/`)) {
@@ -94,6 +99,10 @@ function matchesPath(pathname: string, to: string): boolean {
   }
   if (to === "/leads") {
     return !NESTED_LEAD_PAGES.some((path) => matchesPath(pathname, path));
+  }
+  // Settings is a leaf page; nested admin tools under /settings/* have their own nav items.
+  if (to === "/settings") {
+    return pathname === "/settings";
   }
   return true;
 }
@@ -255,7 +264,7 @@ export default function AppLayout() {
           type="button"
           className={[
             navLinkClass({ isActive: false }),
-            "w-full cursor-pointer border-0 bg-transparent text-left font-normal font-[inherit] leading-[inherit]",
+            "w-full cursor-pointer border-0 bg-transparent text-left font-medium font-[inherit] leading-[inherit]",
             childActive ? "text-nav-active [&_svg]:text-nav-active" : "",
           ]
             .filter(Boolean)

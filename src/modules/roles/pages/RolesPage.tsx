@@ -2,6 +2,7 @@ import {
   adminCard,
   adminFilters,
   adminForm,
+  adminFormField,
   adminFormFields,
   adminFormSpan,
   adminPage,
@@ -153,6 +154,7 @@ export default function RolesPage() {
   const [checked, setChecked] = useState<string[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<RoleRecord | null>(null);
   const [deleteSaving, setDeleteSaving] = useState(false);
+  const [formSaving, setFormSaving] = useState(false);
   const [permissionSaving, setPermissionSaving] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
   const syncedSearch = useRef(false);
@@ -246,6 +248,9 @@ export default function RolesPage() {
   }
 
   function closeForm() {
+    if (formSaving) {
+      return;
+    }
     setFormOpen(false);
   }
 
@@ -258,6 +263,10 @@ export default function RolesPage() {
 
   async function saveRole(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (formSaving) {
+      return;
+    }
+    setFormSaving(true);
     try {
       if (selected) {
         await updateRole({ id: selected.id, body: form }).unwrap();
@@ -269,6 +278,8 @@ export default function RolesPage() {
       await load();
     } catch (err) {
       showApiError(err, "Unable to save role.");
+    } finally {
+      setFormSaving(false);
     }
   }
 
@@ -500,6 +511,7 @@ export default function RolesPage() {
                     className={`${modalClose}`}
                     aria-label="Close"
                     onClick={closeForm}
+                    disabled={formSaving}
                     icon={
                       <HugeiconsIcon
                         icon={Cancel01Icon}
@@ -522,9 +534,9 @@ export default function RolesPage() {
                 >
                   <fieldset
                     className={`${adminFormFields}`}
-                    disabled={formLocked}
+                    disabled={formLocked || formSaving}
                   >
-                    <label>
+                    <label className={`${adminFormSpan}`}>
                       Role Name
                       <FormInput
                         value={form.name}
@@ -535,25 +547,7 @@ export default function RolesPage() {
                           }))
                         }
                         required
-                        disabled={formLocked}
-                      />
-                    </label>
-                    <label>
-                      Status
-                      <FormSelect
-                        value={form.status}
-                        options={[
-                          { value: "ACTIVE", label: "Active" },
-                          { value: "INACTIVE", label: "Inactive" },
-                        ]}
-                        onChange={(value) =>
-                          setForm((current) => ({
-                            ...current,
-                            status: (asSelectString(value) ||
-                              "ACTIVE") as RecordStatus,
-                          }))
-                        }
-                        disabled={formLocked}
+                        disabled={formLocked || formSaving}
                       />
                     </label>
                     <label className={`${adminFormSpan}`}>
@@ -567,19 +561,41 @@ export default function RolesPage() {
                             description: event.target.value,
                           }))
                         }
-                        disabled={formLocked}
+                        disabled={formLocked || formSaving}
                       />
                     </label>
+                    <div className={`${adminFormSpan} ${adminFormField}`}>
+                      <span>Status</span>
+                      <span className="inline-flex w-fit">
+                        <FormSwitch
+                          checked={form.status === "ACTIVE"}
+                          checkedChildren="Active"
+                          unCheckedChildren="Inactive"
+                          disabled={formLocked || formSaving}
+                          onChange={(checked) =>
+                            setForm((current) => ({
+                              ...current,
+                              status: checked ? "ACTIVE" : "INACTIVE",
+                            }))
+                          }
+                        />
+                      </span>
+                    </div>
                   </fieldset>
                   <div className={`${formActions}`}>
                     <PrimaryButton
                       type="button"
                       variant="outline"
                       onClick={closeForm}
+                      disabled={formSaving}
                       label={formLocked ? "Close" : "Cancel"}
                     />
                     {!formLocked && (selected ? canEdit : canCreate) ? (
-                      <PrimaryButton type="submit" label="Save" />
+                      <PrimaryButton
+                        type="submit"
+                        loading={formSaving}
+                        label="Save"
+                      />
                     ) : null}
                   </div>
                 </form>

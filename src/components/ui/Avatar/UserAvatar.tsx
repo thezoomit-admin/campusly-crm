@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export function userPhotoSrc(photoUrl?: string | null) {
   if (!photoUrl) {
@@ -32,6 +32,10 @@ export default function UserAvatar({
 }) {
   const src = userPhotoSrc(photoUrl)
   const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    setFailed(false)
+  }, [src])
 
   return (
     <span className={className}>

@@ -7,6 +7,7 @@ import {
   Database01Icon,
   File01Icon,
   Folder01Icon,
+  Globe02Icon,
   GraduationCapIcon,
   IdCardIcon,
   Message01Icon,
@@ -34,6 +35,7 @@ const ICONS: Record<NavIconName, typeof DashboardSquare01Icon> = {
   settings: Settings01Icon,
   activity: Activity01Icon,
   message: Message01Icon,
+  globe: Globe02Icon,
 }
 
 type NavIconProps = {

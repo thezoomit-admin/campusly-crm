@@ -265,19 +265,27 @@ export default function UserDropdown({
           ].join(" ")}
           style={{ transitionDuration: `${CLOSE_MS}ms` }}
         >
-          <div className="shrink-0 border-b border-border-subtle px-3 py-2">
-            <p className="m-0 overflow-hidden text-[13px] leading-tight font-semibold text-ellipsis whitespace-nowrap text-text-strong">
-              {displayName}
-              {roleName ? (
-                <span className="font-normal text-text-muted">
-                  {" "}
-                  ({roleName})
-                </span>
-              ) : null}
-            </p>
-            <p className="mt-0.5 mb-0 overflow-hidden text-[11px] leading-tight text-ellipsis whitespace-nowrap text-text-muted">
-              {user.email}
-            </p>
+          <div className="flex shrink-0 items-center gap-2.5 border-b border-border-subtle px-3 py-2">
+            <UserAvatar
+              key={`menu-${user.photoUrl || user.id}`}
+              name={displayName}
+              photoUrl={user.photoUrl}
+              className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--color-primary)_16%,white)] text-[0.72rem] font-bold text-primary-active dark:bg-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] dark:text-nav-active [&_img]:size-full [&_img]:object-cover"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="m-0 overflow-hidden text-[13px] leading-tight font-semibold text-ellipsis whitespace-nowrap text-text-strong">
+                {displayName}
+                {roleName ? (
+                  <span className="font-normal text-text-muted">
+                    {" "}
+                    ({roleName})
+                  </span>
+                ) : null}
+              </p>
+              <p className="mt-0.5 mb-0 overflow-hidden text-[11px] leading-tight text-ellipsis whitespace-nowrap text-text-muted">
+                {user.email}
+              </p>
+            </div>
           </div>
 
           <ul className="m-0 flex list-none flex-col gap-px p-1.5">

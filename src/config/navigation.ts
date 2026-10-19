@@ -15,7 +15,8 @@ export type NavIconName =
   | "database"
   | "settings"
   | "activity"
-  | "message";
+  | "message"
+  | "globe";
 
 export type NavItem = {
   to: string;
@@ -48,11 +49,18 @@ export const APP_NAV_GROUPS: NavGroup[] = [
         permission: "lead:view",
         children: [
           {
+            to: "/leads/new",
+            label: "Create Lead",
+            icon: "users",
+            permission: "lead:create",
+          },
+          {
             to: "/leads",
             label: "All Leads",
             icon: "users",
             permission: "lead:view",
           },
+
           {
             to: "/leads/mine",
             label: "My Leads",
@@ -221,6 +229,12 @@ export const APP_NAV_GROUPS: NavGroup[] = [
         })),
       },
       {
+        to: "/settings/country-assignment",
+        label: "Country Assignment",
+        icon: "globe",
+        permission: "country_assignment:view",
+      },
+      {
         to: "/settings",
         label: "Settings",
         icon: "settings",
@@ -242,6 +256,7 @@ export type SearchablePage = {
 const PAGE_KEYWORDS: Record<string, string[]> = {
   "/dashboard": ["home", "overview", "summary"],
   "/leads": ["prospect", "enquiry", "inquiry"],
+  "/leads/new": ["create", "add lead", "new lead", "enquiry"],
   "/leads/mine": ["assigned", "my leads", "workload", "follow-up"],
   "/leads/pool": ["unassigned", "queue", "assign", "distribution"],
   "/leads/closed": ["lost", "closed", "inactive", "archive"],
@@ -278,8 +293,21 @@ const PAGE_KEYWORDS: Record<string, string[]> = {
   "/users": ["accounts", "login", "access"],
   "/roles": ["permissions", "access"],
   "/audit-logs": ["logs", "history", "security"],
-  "/master-data": ["catalog", "dropdowns", "settings"],
+  "/master-data": [
+    "catalog",
+    "dropdowns",
+    "settings",
+    "lead channel",
+    "lead source",
+  ],
   "/settings": ["config", "preferences"],
+  "/settings/country-assignment": [
+    "country",
+    "team",
+    "assignment",
+    "routing",
+    "territory",
+  ],
   "/profile": ["me", "photo", "account"],
   "/account": ["password", "security"],
 };

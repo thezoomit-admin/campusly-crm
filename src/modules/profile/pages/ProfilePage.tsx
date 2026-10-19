@@ -38,7 +38,12 @@ export default function ProfilePage() {
 
       <section className={`${adminCard} grid gap-6`}>
         <div className="flex items-center gap-4 [&_h3]:m-0 [&_h3]:text-[1.15rem] [&_h3]:text-text-strong [&_p]:mt-1 [&_p]:mb-0 [&_p]:text-[0.9rem] [&_p]:text-text-muted">
-          <UserAvatar name={name} photoUrl={user.photoUrl} className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-base font-bold text-on-primary [&_img]:h-full [&_img]:w-full [&_img]:object-cover" />
+          <UserAvatar
+            key={user.photoUrl || user.id}
+            name={name}
+            photoUrl={user.photoUrl}
+            className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full bg-primary text-base font-bold text-on-primary [&_img]:h-full [&_img]:w-full [&_img]:object-cover"
+          />
           <div>
             <h3>{displayValue(user.fullName)}</h3>
             <p>{auth.role?.name || 'No role assigned'}</p>

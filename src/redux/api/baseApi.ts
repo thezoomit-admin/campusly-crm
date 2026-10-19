@@ -109,6 +109,7 @@ export const baseApi = createApi({
     "EmployeeOptions",
     "MasterDataCategories",
     "MasterDataItems",
+    "MasterDataOptions",
     "MasterDataHistory",
     "ServiceItems",
     "ServiceItem",
@@ -137,6 +138,8 @@ export const baseApi = createApi({
     "MetaLeads",
     "WhatsApp",
     "Email",
+    "CountryAssignmentRules",
+    "CountryAssignmentFormOptions",
   ],
   endpoints: () => ({}),
 });

@@ -86,9 +86,13 @@ export const rowActionMenuItemDanger =
   "flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-2.5 py-2 text-left text-danger hover:bg-[color-mix(in_srgb,var(--color-danger)_16%,var(--color-surface))]";
 
 export const adminFormFields =
-  "m-0 grid min-w-0 grid-cols-1 gap-3 border-0 p-0 max-[960px]:grid-cols-1 sm:grid-cols-2";
+  "m-0 grid min-w-0 grid-cols-1 gap-2 border-0 p-0 max-[960px]:grid-cols-1 sm:grid-cols-2";
 
 export const adminFormSpan = "col-span-full";
+
+/** Non-label field stack (e.g. Status + switch) so clicks outside the control do not toggle. */
+export const adminFormField =
+  "grid gap-1 content-start";
 
 export const appToast =
   "fixed top-5 left-1/2 z-[1200] max-w-[min(420px,calc(100vw-32px))] -translate-x-1/2 rounded-[10px] px-4 py-3 text-[0.9rem] font-semibold shadow-[0_10px_28px_rgba(16,24,40,0.16)]";
@@ -108,7 +112,7 @@ export const adminSplit =
   "grid grid-cols-1 gap-4 max-[960px]:grid-cols-1 min-[961px]:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]";
 
 export const adminForm =
-  "grid gap-3 [&_label]:grid [&_label]:gap-1.5 [&_.ui-input]:w-full [&_.ui-select]:w-full [&_.ant-picker]:w-full";
+  "grid gap-2 [&_label]:grid [&_label]:gap-1 [&_.ui-input]:w-full [&_.ui-select]:w-full [&_.ant-picker]:w-full";
 
 export const fieldLabel = "inline-flex items-center";
 

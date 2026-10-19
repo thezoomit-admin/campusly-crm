@@ -15,6 +15,7 @@ import './activities/activitiesApi'
 import './auditLogs/auditLogsApi'
 import './search/searchApi'
 import './pipeline/pipelineApi'
+import '@/modules/settings/api/countryAssignmentApi'
 
 const authPersistConfig = {
   key: AUTH_PERSIST_KEY,

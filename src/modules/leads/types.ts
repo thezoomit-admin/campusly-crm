@@ -192,6 +192,9 @@ export type LeadOwner = {
   id: string | null;
   name: string;
   photoUrl?: string | null;
+  role?: { key: string; name: string } | null;
+  teamId?: string | null;
+  team?: { id: string; name: string } | null;
 } | null;
 export type LeadTeam = { id: string; name: string } | null;
 
