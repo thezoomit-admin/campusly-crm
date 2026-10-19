@@ -1139,7 +1139,22 @@ export default function UsersPage() {
                     </label>
                     {editingId ? null : (
                       <label>
-                        <FieldLabel>Password (optional)</FieldLabel>
+                        <span className="inline-flex items-center gap-1.5">
+                          <FieldLabel>Password (optional)</FieldLabel>
+                          <Tooltip title="Leave blank for the industrial invite flow. The user starts as Invited and sets their own password.">
+                            <span
+                              className="inline-flex text-[#8b97a8]"
+                              onClick={(event) => event.preventDefault()}
+                            >
+                              <HugeiconsIcon
+                                icon={InformationCircleIcon}
+                                size={14}
+                                color="currentColor"
+                                strokeWidth={1.8}
+                              />
+                            </span>
+                          </Tooltip>
+                        </span>
                         <FormInput.Password
                           value={form.password}
                           autoComplete="new-password"
@@ -1155,10 +1170,6 @@ export default function UsersPage() {
                           }
                           placeholder="Leave blank to email a secure setup invite"
                         />
-                        <p className={`${fieldHint}`}>
-                          Leave blank for the industrial invite flow. The user
-                          starts as Invited and sets their own password.
-                        </p>
                       </label>
                     )}
                     <label>

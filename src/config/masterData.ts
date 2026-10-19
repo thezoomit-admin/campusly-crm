@@ -15,6 +15,7 @@ export const MASTER_DATA_NAV_GROUPS: MasterDataNavGroup[] = [
     name: 'Lead Management',
     categories: [
       { key: 'LEAD_SOURCE', name: 'Lead Source' },
+      { key: 'LEAD_CHANNEL', name: 'Lead Channel' },
       { key: 'LEAD_STATUS', name: 'Lead Status' },
       { key: 'LEAD_TYPE', name: 'Lead Type' },
       { key: 'LEAD_PRIORITY', name: 'Lead Priority' },

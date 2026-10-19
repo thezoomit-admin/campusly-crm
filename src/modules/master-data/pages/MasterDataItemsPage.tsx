@@ -3,6 +3,7 @@ import {
   adminFilters,
   adminFiltersMaster,
   adminForm,
+  adminFormField,
   adminFormFields,
   adminFormSpan,
   adminPage,
@@ -198,6 +199,21 @@ type ItemForm = {
 
 const DESCRIPTION_MAX = 100;
 const NOTE_CHANNEL_DESCRIPTION_MAX = 500;
+
+const FORM_STATUS_OPTIONS: Array<{ value: RecordStatus; label: string }> = [
+  { value: "ACTIVE", label: "Active" },
+  { value: "INACTIVE", label: "Inactive" },
+];
+
+function isActiveInactiveOnlyStatus(
+  options: ReadonlyArray<{ value: string }>,
+) {
+  if (options.length !== 2) {
+    return false;
+  }
+  const values = new Set(options.map((option) => option.value));
+  return values.has("ACTIVE") && values.has("INACTIVE");
+}
 
 const EMPTY_FORM: ItemForm = {
   name: "",
@@ -1663,9 +1679,9 @@ export default function MasterDataItemsPage() {
                             }
                           />
                         </label>
-                        <label>
+                        <div className={`${adminFormField}`}>
                           <FieldLabel required>Status</FieldLabel>
-                          <div className="mt-1.5">
+                          <span className="inline-flex w-fit">
                             <FormSwitch
                               checked={form.status === "ACTIVE"}
                               checkedChildren="Active"
@@ -1678,8 +1694,8 @@ export default function MasterDataItemsPage() {
                                 }))
                               }
                             />
-                          </div>
-                        </label>
+                          </span>
+                        </div>
                       </>
                     ) : (
                       <>
@@ -1746,24 +1762,23 @@ export default function MasterDataItemsPage() {
                             />
                           </label>
                         ) : null}
-                        <label>
-                          Status
-                          <FormSelect
-                            value={form.status}
-                            options={[
-                              { value: "ACTIVE", label: "Active" },
-                              { value: "INACTIVE", label: "Inactive" },
-                            ]}
-                            onChange={(value) =>
-                              setForm((current) => ({
-                                ...current,
-                                status: (asSelectString(value) ||
-                                  "ACTIVE") as RecordStatus,
-                              }))
-                            }
-                            disabled={Boolean(selected?.isSystem)}
-                          />
-                        </label>
+                        {!isActiveInactiveOnlyStatus(FORM_STATUS_OPTIONS) ? (
+                          <label>
+                            Status
+                            <FormSelect
+                              value={form.status}
+                              options={FORM_STATUS_OPTIONS}
+                              onChange={(value) =>
+                                setForm((current) => ({
+                                  ...current,
+                                  status: (asSelectString(value) ||
+                                    "ACTIVE") as RecordStatus,
+                                }))
+                              }
+                              disabled={Boolean(selected?.isSystem)}
+                            />
+                          </label>
+                        ) : null}
                         {category?.extraFields === "leadStatus" ? (
                           <label>
                             Behavior
@@ -1886,6 +1901,27 @@ export default function MasterDataItemsPage() {
                             }
                           />
                         </label>
+                        {isActiveInactiveOnlyStatus(FORM_STATUS_OPTIONS) ? (
+                          <div
+                            className={`${adminFormSpan} ${adminFormField}`}
+                          >
+                            <span>Status</span>
+                            <span className="inline-flex w-fit">
+                              <FormSwitch
+                                checked={form.status === "ACTIVE"}
+                                checkedChildren="Active"
+                                unCheckedChildren="Inactive"
+                                disabled={Boolean(selected?.isSystem)}
+                                onChange={(checked) =>
+                                  setForm((current) => ({
+                                    ...current,
+                                    status: checked ? "ACTIVE" : "INACTIVE",
+                                  }))
+                                }
+                              />
+                            </span>
+                          </div>
+                        ) : null}
                       </>
                     )}
                   </fieldset>

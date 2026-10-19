@@ -1284,6 +1284,9 @@ export function AssignLeadModal({
   open,
   leadName,
   currentOwnerName,
+  currentOwnerId,
+  ownerTeamId,
+  ownerRoleKey,
   assignedTeamId,
   saving,
   onClose,
@@ -1292,6 +1295,9 @@ export function AssignLeadModal({
   open: boolean;
   leadName?: string | null;
   currentOwnerName?: string | null;
+  currentOwnerId?: string | null;
+  ownerTeamId?: string | null;
+  ownerRoleKey?: string | null;
   assignedTeamId?: string | null;
   saving: boolean;
   onClose: () => void;
@@ -1299,16 +1305,25 @@ export function AssignLeadModal({
 }) {
   const [ownerId, setOwnerId] = useState("");
   const [reason, setReason] = useState("");
+  // Reassign: prefer the current owner's team so teammates (e.g. Aus Call Executive)
+  // appear. Pool assign: use the lead's country-assigned team.
+  const teamId = currentOwnerId
+    ? ownerTeamId || assignedTeamId || undefined
+    : assignedTeamId || ownerTeamId || undefined;
+  const role =
+    ownerRoleKey === "counsellor" || ownerRoleKey === "call_executive"
+      ? ownerRoleKey
+      : "call_executive";
   const { data, isFetching } = useListLeadAssigneesQuery(
-    { teamId: assignedTeamId || undefined },
+    { teamId, role },
     { skip: !open },
   );
-  const options = (data?.items || []).map((user) => ({
-    value: user.id,
-    label: [user.name, user.role?.name, user.team?.name]
-      .filter(Boolean)
-      .join(" · "),
-  }));
+  const options = (data?.items || [])
+    .filter((user) => !currentOwnerId || user.id !== currentOwnerId)
+    .map((user) => ({
+      value: user.id,
+      label: user.name,
+    }));
 
   useEffect(() => {
     if (open) {
@@ -1348,7 +1363,8 @@ export function AssignLeadModal({
           />
           {!isFetching && options.length === 0 ? (
             <span className="text-xs text-text-muted">
-              No eligible Call Executives are available to receive this lead.
+              No other eligible teammates are available. Assignees need an
+              active CRM account and Active/Probation employment.
             </span>
           ) : null}
         </label>
@@ -1622,6 +1638,9 @@ export function ChangeOwnerModal({
       open={open}
       leadName={lead?.name}
       currentOwnerName={lead?.owner?.name}
+      currentOwnerId={lead?.owner?.id}
+      ownerTeamId={lead?.owner?.teamId || lead?.owner?.team?.id}
+      ownerRoleKey={lead?.owner?.role?.key}
       assignedTeamId={lead?.assignedTeam?.id}
       saving={Boolean(saving)}
       onClose={onClose}

@@ -1,7 +1,8 @@
 import dayjs from 'dayjs'
 import { useListMasterDataOptionsQuery } from '@/redux/features/masterData/masterDataApi'
 
-const INTEGRATION_SOURCES = new Set(['WEBSITE', 'META', 'WHATSAPP', 'EMAIL', 'FACEBOOK_LEAD_ADS', 'INSTAGRAM_LEAD_ADS'])
+/** System lead-ad sources only — not selectable on the manual lead form. */
+const INTEGRATION_SOURCES = new Set(['FACEBOOK_LEAD_ADS', 'INSTAGRAM_LEAD_ADS'])
 
 const CATEGORIES = [
   'COUNTRY',

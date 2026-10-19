@@ -193,66 +193,80 @@ export default function LeadWorkspaceHeader({
         ) : null}
       </div>
 
-      <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-center">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
+      <div className="flex w-full min-w-0 flex-col gap-4 lg:flex-row lg:items-center">
+        <div className="flex min-w-0 flex-1 basis-0 items-start gap-3">
           <span className="grid size-14 shrink-0 place-items-center rounded-full bg-primary text-[1.05rem] font-bold tracking-wide text-on-primary ring-4 ring-[color-mix(in_srgb,var(--color-primary)_14%,transparent)]">
             {leadInitials(lead.name)}
           </span>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="m-0 text-[1.35rem] font-semibold tracking-tight text-[#17324f] dark:text-text-strong">
-                {lead.name}
-              </h2>
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <h2
+              className="m-0 min-w-0 truncate text-[1.35rem] font-semibold tracking-tight text-[#17324f] dark:text-text-strong"
+              title={lead.name}
+            >
+              {lead.name}
+            </h2>
+            <div className="mt-1 mb-2 flex min-w-0 items-center gap-2">
               <span
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.72rem] font-semibold ${stageBadgeClass(lead.status)}`}
+                className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[0.72rem] font-semibold ${stageBadgeClass(lead.status)}`}
+                title={lead.status}
               >
-                <span className="size-1.5 rounded-full bg-current" />
+                <span className="size-1.5 shrink-0 rounded-full bg-current" />
                 {lead.status}
               </span>
+              <span className="size-1 shrink-0 rounded-full bg-[#d5dee8] dark:bg-border" />
+              <p className="m-0 min-w-0 truncate text-[0.82rem] text-[#8b97a8]" title={lead.code}>
+                Lead ID: {lead.code}
+              </p>
             </div>
-            <p className="mt-0.5 mb-2 text-[0.82rem] text-[#8b97a8]">
-              Lead ID: {lead.code}
-            </p>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.82rem] text-[#5b6b7c]">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 text-[0.82rem] text-[#5b6b7c]">
               {lead.phone ? (
-                <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex max-w-full min-w-0 items-center gap-1.5">
                   <HugeiconsIcon
                     icon={Call02Icon}
                     size={14}
                     color="currentColor"
                     strokeWidth={1.7}
+                    className="shrink-0"
                   />
-                  {lead.phone}
+                  <span className="truncate" title={lead.phone}>
+                    {lead.phone}
+                  </span>
                 </span>
               ) : null}
               {lead.email ? (
-                <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex max-w-full min-w-0 items-center gap-1.5">
                   <HugeiconsIcon
                     icon={Mail01Icon}
                     size={14}
                     color="currentColor"
                     strokeWidth={1.7}
+                    className="shrink-0"
                   />
-                  {lead.email}
+                  <span className="truncate" title={lead.email}>
+                    {lead.email}
+                  </span>
                 </span>
               ) : null}
               {lead.currentLocation || lead.country ? (
-                <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex max-w-full min-w-0 items-center gap-1.5">
                   <HugeiconsIcon
                     icon={Location01Icon}
                     size={14}
                     color="currentColor"
                     strokeWidth={1.7}
+                    className="shrink-0"
                   />
-                  {lead.currentLocation || lead.country}
+                  <span className="truncate" title={lead.currentLocation || lead.country || undefined}>
+                    {lead.currentLocation || lead.country}
+                  </span>
                 </span>
               ) : null}
             </div>
           </div>
         </div>
 
-        <div className="grid min-w-0 flex-[1.4] grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4">
+        <div className="grid min-w-0 flex-[1.4] basis-0 grid-cols-2 gap-x-5 gap-y-3 sm:grid-cols-4">
           <HeaderMeta
             icon={Globe02Icon}
             label="Lead Source"
@@ -273,7 +287,7 @@ export default function LeadWorkspaceHeader({
             label="Assigned To"
             value={lead.owner?.name || "Unassigned"}
             href={lead.owner?.id ? `/users/${lead.owner.id}` : undefined}
-            hint={lead.owner?.name ? "Counsellor" : undefined}
+            hint={lead.owner?.role?.name || undefined}
           />
         </div>
 
@@ -336,16 +350,24 @@ function HeaderMeta({
       {href ? (
         <Link
           to={href}
+          title={value}
           className="m-0 block truncate text-[0.88rem] font-semibold text-primary hover:underline"
         >
           {value}
         </Link>
       ) : (
-        <p className="m-0 truncate text-[0.88rem] font-semibold text-[#17324f] dark:text-text-strong">
+        <p
+          className="m-0 truncate text-[0.88rem] font-semibold text-[#17324f] dark:text-text-strong"
+          title={value}
+        >
           {value}
         </p>
       )}
-      {hint ? <p className="m-0 text-[0.7rem] text-[#8b97a8]">{hint}</p> : null}
+      {hint ? (
+        <p className="m-0 truncate text-[0.7rem] text-[#8b97a8]" title={hint}>
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }

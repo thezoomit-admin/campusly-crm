@@ -49,6 +49,13 @@ export default function LeadMarketingPanel({
   const channelOptions = options.channelItems
     .filter((item) => item.code && item.parentId === sourceId)
     .map((item) => ({ value: item.code as string, label: item.name }))
+  const sourceOptions = options.sourceItems
+    .filter((item) => {
+      if (!item.code) return false
+      if (item.code === sourceCode || item.code === lead.sourceCode) return true
+      return !item.isSystem
+    })
+    .map((item) => ({ value: item.code as string, label: item.name }))
   const { data: campaigns } = useListCampaignOptionsQuery(
     { sourceCode: sourceCode || lead.sourceCode || undefined },
     { skip: !(sourceCode || lead.sourceCode) },
@@ -144,7 +151,7 @@ export default function LeadMarketingPanel({
             optionFilterProp="label"
             placeholder="New source"
             value={sourceCode || undefined}
-            options={options.source}
+            options={sourceOptions}
             onChange={(value) => {
               setSourceCode(String(value || ''))
               setChannelCode('')

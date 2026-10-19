@@ -644,18 +644,20 @@ export default function DashboardPage() {
           {leadSources.length === 0 ? (
             <p className="m-0 py-8 text-center text-[0.85rem] text-text-faint">No leads in the last 30 days.</p>
           ) : (
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="mx-auto w-[min(100%,150px)] shrink-0 xl:w-[min(100%,170px)]">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="w-[min(100%,150px)] shrink-0 max-sm:w-[108px] xl:w-[min(100%,170px)]">
                 <DonutChart segments={leadSources} total={leadTotal} />
               </div>
-              <ul className="m-0 grid min-w-[140px] flex-1 list-none gap-1.5 p-0">
+              <ul className="m-0 grid min-w-0 flex-1 list-none gap-1.5 overflow-x-auto overscroll-x-contain p-0 [scrollbar-width:thin]">
                 {leadSources.map((source) => (
-                  <li key={source.label} className="flex justify-between gap-2 text-[0.8rem]">
-                    <span className="flex min-w-0 items-center gap-2">
+                  <li key={source.label} className="flex justify-between gap-2 text-[0.8rem] max-sm:min-w-max max-sm:gap-3">
+                    <span className="flex min-w-0 items-center gap-2 max-sm:min-w-max">
                       <i className="size-2 shrink-0 rounded-full" style={{ background: source.color }} />
-                      <span className="truncate">{source.label}</span>
+                      <span className="truncate max-sm:overflow-visible max-sm:text-clip max-sm:whitespace-nowrap">
+                        {source.label}
+                      </span>
                     </span>
-                    <span className="flex shrink-0 items-center gap-2">
+                    <span className="flex shrink-0 items-center gap-2 pr-0.5">
                       <em className="min-w-7 not-italic text-text-faint">{source.percent}%</em>
                       <strong className="min-w-5 text-right">{source.value}</strong>
                     </span>

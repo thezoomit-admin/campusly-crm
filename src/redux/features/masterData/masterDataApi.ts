@@ -56,6 +56,7 @@ const masterDataApi = baseApi.injectEndpoints({
           sortOrder?: number
           parentId?: string | null
           behaviorKey?: string | null
+          isSystem?: boolean
           extras?: Record<string, unknown> | null
         }>
       },
@@ -63,6 +64,10 @@ const masterDataApi = baseApi.injectEndpoints({
     >({
       query: ({ category, parentId }) =>
         `/master-data/options${toQuery({ category, parentId })}`,
+      providesTags: (_r, _e, params) => [
+        { type: 'MasterDataOptions', id: params.category },
+        { type: 'MasterDataOptions', id: 'LIST' },
+      ],
     }),
     createMasterDataItem: builder.mutation<{ item: MasterDataItem }, MasterDataItemPayload>({
       query: (body) => ({
@@ -72,6 +77,8 @@ const masterDataApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, body) => [
         { type: 'MasterDataItems', id: body.categoryKey },
+        { type: 'MasterDataOptions', id: body.categoryKey },
+        { type: 'MasterDataOptions', id: 'LIST' },
         'MasterDataCategories',
       ],
     }),
@@ -86,6 +93,8 @@ const masterDataApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, { body }) => [
         { type: 'MasterDataItems', id: body.categoryKey },
+        { type: 'MasterDataOptions', id: body.categoryKey },
+        { type: 'MasterDataOptions', id: 'LIST' },
         'MasterDataCategories',
       ],
     }),
@@ -96,6 +105,8 @@ const masterDataApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (_r, _e, { category }) => [
         { type: 'MasterDataItems', id: category },
+        { type: 'MasterDataOptions', id: category },
+        { type: 'MasterDataOptions', id: 'LIST' },
         'MasterDataCategories',
       ],
     }),
@@ -127,6 +138,8 @@ const masterDataApi = baseApi.injectEndpoints({
       },
       invalidatesTags: (_r, _e, { category }) => [
         { type: 'MasterDataItems', id: category },
+        { type: 'MasterDataOptions', id: category },
+        { type: 'MasterDataOptions', id: 'LIST' },
         'MasterDataCategories',
       ],
     }),

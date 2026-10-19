@@ -97,7 +97,7 @@ export default function ResetPasswordPage() {
           />
 
           {message ? (
-            <Alert type={success ? 'success' : 'error'} showIcon message={message} className="mb-4" />
+            <Alert type={success ? 'success' : 'error'} showIcon message={message} className="mb-6" />
           ) : null}
 
           <Form.Item className="mb-0!">

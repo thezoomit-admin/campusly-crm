@@ -40,7 +40,7 @@ import { PaymentsPage } from "../modules/payments";
 import { ProfilePage } from "../modules/profile";
 import { ReportsPage } from "../modules/reports";
 import { RolesPage } from "../modules/roles/index";
-import { SettingsPage } from "../modules/settings";
+import { CountryAssignmentPage, SettingsPage } from "../modules/settings";
 import { ServiceCatalogPage } from "../modules/service-items";
 import { StudentDetailsPage, StudentsPage } from "../modules/students";
 import { UsersPage, UserDetailsPage } from "../modules/users/index";
@@ -267,6 +267,17 @@ const routes = [
           {
             element: <PermissionRoute permission="settings:view" />,
             children: [{ path: "/settings", element: <SettingsPage /> }],
+          },
+          {
+            element: (
+              <PermissionRoute permission="country_assignment:view" />
+            ),
+            children: [
+              {
+                path: "/settings/country-assignment",
+                element: <CountryAssignmentPage />,
+              },
+            ],
           },
         ],
       },

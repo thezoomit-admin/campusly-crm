@@ -135,7 +135,16 @@ export default function LeadFormFields({
   const channelOptions = options.channelItems
     .filter((item) => item.code && item.parentId === sourceId)
     .map((item) => ({ value: item.code as string, label: item.name }))
-  const sourceOptions = options.source.filter((item) => lockAttribution || !INTEGRATION_SOURCES.has(item.value) || item.value === form.sourceCode)
+  // Show every active LEAD_SOURCE with a code, except system lead-ad sources
+  // (kept when already set / attribution locked so existing leads still display).
+  const sourceOptions = options.sourceItems
+    .filter((item) => {
+      if (!item.code) return false
+      if (lockAttribution || item.code === form.sourceCode) return true
+      if (item.isSystem) return false
+      return !INTEGRATION_SOURCES.has(item.code)
+    })
+    .map((item) => ({ value: item.code as string, label: item.name }))
   const { data: campaignData } = useListCampaignOptionsQuery(
     { sourceCode: form.sourceCode || undefined },
     { skip: !form.sourceCode },
