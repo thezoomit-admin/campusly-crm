@@ -275,11 +275,11 @@ export default function LeadDetailsPage() {
   const canCreateApplication = Boolean(canConvert && leadIsConverted);
   const showFileDocumentsTab = Boolean(
     leadIsConverted ||
-      lead?.hasCrmFile ||
-      (lead?.applications?.length || 0) > 0 ||
-      lead?.statusCode === "FILE_OPENED" ||
-      lead?.statusChange?.current?.behaviorKey === "file_opened" ||
-      lead?.status?.trim().toLowerCase() === "file opened",
+    lead?.hasCrmFile ||
+    (lead?.applications?.length || 0) > 0 ||
+    lead?.statusCode === "FILE_OPENED" ||
+    lead?.statusChange?.current?.behaviorKey === "file_opened" ||
+    lead?.status?.trim().toLowerCase() === "file opened",
   );
 
   const { data: activityData, isFetching: activityLoading } =
@@ -994,7 +994,9 @@ export default function LeadDetailsPage() {
   ) {
     const meeting = target || openMeetingFollowUp;
     if (!meeting || !canEditFollowUp || !lead) return;
-    const fromList = followUpData?.items?.find((item) => item.id === meeting.id);
+    const fromList = followUpData?.items?.find(
+      (item) => item.id === meeting.id,
+    );
     setSelectedFollowUp(
       fromList || {
         id: meeting.id,
@@ -1050,8 +1052,7 @@ export default function LeadDetailsPage() {
           id: meetingTarget.id,
           body: {
             reason:
-              payload.rescheduleReason ||
-              "Superseded by meeting reschedule",
+              payload.rescheduleReason || "Superseded by meeting reschedule",
           },
         }).unwrap();
       }
@@ -1402,7 +1403,8 @@ export default function LeadDetailsPage() {
     );
   }
 
-  const showMobileStickyCtas = Boolean(lead) && (canFollowUp || canScheduleMeeting);
+  const showMobileStickyCtas =
+    Boolean(lead) && (canFollowUp || canScheduleMeeting);
 
   return (
     <div
@@ -1726,8 +1728,7 @@ export default function LeadDetailsPage() {
             <div
               className="fixed inset-x-0 z-40 hidden border-t border-[#e7eef5] bg-surface/95 px-3 py-2.5 shadow-[0_-8px_24px_rgba(22,50,79,0.08)] backdrop-blur-md max-[960px]:flex dark:border-border"
               style={{
-                bottom:
-                  "calc(3.75rem + env(safe-area-inset-bottom, 0px))",
+                bottom: "calc(3.75rem + env(safe-area-inset-bottom, 0px))",
               }}
             >
               <div className="mx-auto flex w-full max-w-3xl gap-2 [&_.ant-btn]:min-h-11 [&_.ant-btn]:flex-1">

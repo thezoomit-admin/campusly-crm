@@ -352,8 +352,12 @@ export default function AppLayout() {
                 strokeWidth={1.5}
               />
             </button>
-            <span className="flex h-14 w-full min-w-0 items-center justify-center overflow-hidden max-[960px]:h-9 max-[960px]:w-auto">
-              <span className="flex max-w-full items-center justify-center">
+            <NavLink
+              to="/dashboard"
+              aria-label="Go to dashboard"
+              className="flex h-14 w-full min-w-0 cursor-pointer items-center justify-center overflow-hidden no-underline max-[960px]:h-9 max-[960px]:w-auto"
+            >
+              <span className="flex max-w-full cursor-pointer items-center justify-center">
                 <img
                   src="/campusly_logo_icon.png"
                   alt={collapsed ? "Campusly" : ""}
@@ -378,7 +382,7 @@ export default function AppLayout() {
                   </span>
                 </span>
               </span>
-            </span>
+            </NavLink>
           </div>
 
           <div className="relative z-60 hidden shrink-0 items-center gap-0.5 overflow-visible max-[960px]:flex">
