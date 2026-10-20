@@ -39,9 +39,9 @@ export default function LeadUpcomingMeetingCard({
 }) {
   if (!meeting) {
     return (
-      <div className="flex flex-col justify-center rounded-xl border border-[#dbe8f4] bg-[#f7fbff] px-2.5 py-1.5 dark:border-border dark:bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]">
-        <p className="m-0 flex items-center gap-1 text-[0.75rem] font-semibold text-[#1b3a57] dark:text-text-strong">
-          <span className="grid size-5 place-items-center rounded-full bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-primary">
+      <div className="flex min-w-0 flex-col justify-center rounded-xl border border-[#dbe8f4] bg-[#f7fbff] px-2 py-2 sm:px-2.5 sm:py-1.5 dark:border-border dark:bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]">
+        <p className="m-0 flex items-center gap-1 text-[0.7rem] font-semibold text-[#1b3a57] sm:text-[0.75rem] dark:text-text-strong">
+          <span className="grid size-5 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-primary">
             <HugeiconsIcon
               icon={Video01Icon}
               size={11}
@@ -49,9 +49,9 @@ export default function LeadUpcomingMeetingCard({
               strokeWidth={1.8}
             />
           </span>
-          Upcoming Meeting
+          <span className="min-w-0 truncate">Upcoming Meeting</span>
         </p>
-        <p className="mt-1 mb-0 text-center text-[0.75rem] text-[#8b97a8]">
+        <p className="mt-1.5 mb-0 text-center text-[0.7rem] text-[#8b97a8] sm:mt-1 sm:text-[0.75rem]">
           No meeting scheduled
         </p>
       </div>
@@ -65,9 +65,9 @@ export default function LeadUpcomingMeetingCard({
 
   if (compact) {
     return (
-      <div className="flex flex-col justify-center rounded-xl border border-[#dbe8f4] bg-[#f7fbff] px-2.5 py-1.5 transition-colors duration-300 dark:border-border dark:bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]">
-        <p className="m-0 flex items-center gap-1 text-[0.75rem] font-semibold text-[#1b3a57] dark:text-text-strong">
-          <span className="grid size-5 place-items-center rounded-full bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-primary">
+      <div className="flex min-w-0 flex-col justify-center rounded-xl border border-[#dbe8f4] bg-[#f7fbff] px-2 py-2 transition-colors duration-300 sm:px-2.5 sm:py-1.5 dark:border-border dark:bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]">
+        <p className="m-0 flex items-center gap-1 text-[0.7rem] font-semibold text-[#1b3a57] sm:text-[0.75rem] dark:text-text-strong">
+          <span className="grid size-5 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-primary">
             <HugeiconsIcon
               icon={Video01Icon}
               size={11}
@@ -75,10 +75,10 @@ export default function LeadUpcomingMeetingCard({
               strokeWidth={1.8}
             />
           </span>
-          Upcoming Meeting
+          <span className="min-w-0 truncate">Upcoming Meeting</span>
         </p>
 
-        <p className="mt-1 mb-0 truncate text-center text-[0.8rem] font-semibold leading-tight text-[#1b3a57] dark:text-text-strong">
+        <p className="mt-1 mb-0 truncate text-center text-[0.72rem] font-semibold leading-tight text-[#1b3a57] sm:text-[0.8rem] dark:text-text-strong">
           {title}
           {meta ? (
             <span className="font-normal text-[#8b97a8]"> · {meta}</span>

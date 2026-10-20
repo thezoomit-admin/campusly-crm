@@ -88,113 +88,130 @@ export default function LeadJourneyBar({
   const tone = COUNTDOWN_TONES[countdown?.urgency ?? 'safe']
 
   return (
-    <section className="grid gap-3 rounded-2xl border border-[#e7eef5] bg-surface p-4 shadow-[0_10px_28px_rgba(22,50,79,0.035)] xl:grid-cols-[minmax(0,1fr)_minmax(260px,300px)_minmax(260px,300px)] dark:border-border">
+    <section className="grid gap-3 rounded-2xl border border-[#e7eef5] bg-surface p-3 shadow-[0_10px_28px_rgba(22,50,79,0.035)] sm:p-4 xl:grid-cols-[minmax(0,1fr)_minmax(240px,300px)_minmax(240px,300px)] dark:border-border">
       <div className="min-w-0">
-        <h3 className="mt-0 mb-2 text-[0.92rem] font-semibold text-[#1b3a57] dark:text-text-strong">Lead Journey</h3>
-        <ol className="m-0 flex list-none items-start gap-0 overflow-x-auto pt-4 pb-1 pl-0">
-          {LEAD_JOURNEY_STAGES.map((stage, index) => {
-            const done = currentIndex > index
-            const current = currentIndex === index
-            return (
-              <li key={stage.code} className="relative flex min-w-[72px] flex-1 flex-col items-center gap-1.5 px-1">
-                {index < LEAD_JOURNEY_STAGES.length - 1 ? (
-                  <span
-                    className={`absolute top-[13px] left-[calc(50%+14px)] right-[calc(-50%+14px)] h-0.5 ${
-                      done ? 'bg-primary' : 'bg-[#e6eef6] dark:bg-border-subtle'
-                    }`}
-                  />
-                ) : null}
-                <span className="relative z-[1] grid size-7 place-items-center">
-                  {current ? (
+        <h3 className="mt-0 mb-2 text-[0.92rem] font-semibold text-[#1b3a57] dark:text-text-strong">
+          Lead Journey
+        </h3>
+        <div className="-mx-1 overflow-x-auto px-1 scrollbar-none">
+          <ol className="m-0 flex min-w-max list-none items-start gap-0 pt-3 pb-1 pl-0 sm:min-w-0 sm:pt-4">
+            {LEAD_JOURNEY_STAGES.map((stage, index) => {
+              const done = currentIndex > index
+              const current = currentIndex === index
+              return (
+                <li
+                  key={stage.code}
+                  className="relative flex w-[4.5rem] flex-col items-center gap-1.5 px-0.5 sm:min-w-[72px] sm:w-auto sm:flex-1 sm:px-1"
+                >
+                  {index < LEAD_JOURNEY_STAGES.length - 1 ? (
                     <span
-                      aria-hidden
-                      className="pointer-events-none absolute inset-[-5px] rounded-full bg-[color-mix(in_srgb,var(--color-primary)_32%,transparent)] animate-[journey-current-pulse_1.5s_ease-in-out_infinite]"
+                      className={`absolute top-[13px] left-[calc(50%+14px)] right-[calc(-50%+14px)] h-0.5 ${
+                        done ? 'bg-primary' : 'bg-[#e6eef6] dark:bg-border-subtle'
+                      }`}
                     />
                   ) : null}
-                  <span
-                    className={`relative grid size-7 place-items-center rounded-full text-[0.72rem] font-bold ${
-                      done
-                        ? 'bg-primary text-on-primary'
-                        : current
+                  <span className="relative z-[1] grid size-7 place-items-center">
+                    {current ? (
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-[-5px] rounded-full bg-[color-mix(in_srgb,var(--color-primary)_32%,transparent)] animate-[journey-current-pulse_1.5s_ease-in-out_infinite]"
+                      />
+                    ) : null}
+                    <span
+                      className={`relative grid size-7 place-items-center rounded-full text-[0.72rem] font-bold ${
+                        done
                           ? 'bg-primary text-on-primary'
-                          : 'border-2 border-[#d5dee8] bg-surface text-[#9aa6b2] dark:border-border'
+                          : current
+                            ? 'bg-primary text-on-primary'
+                            : 'border-2 border-[#d5dee8] bg-surface text-[#9aa6b2] dark:border-border'
+                      }`}
+                    >
+                      {done ? (
+                        <HugeiconsIcon icon={CheckmarkCircle02Icon} size={16} color="currentColor" strokeWidth={2} />
+                      ) : (
+                        index + 1
+                      )}
+                    </span>
+                  </span>
+                  <span
+                    className={`max-w-[72px] text-center text-[0.65rem] leading-tight sm:max-w-[88px] sm:text-[0.68rem] ${
+                      current
+                        ? 'font-semibold text-primary'
+                        : done
+                          ? 'font-medium text-[#3d5166] dark:text-text'
+                          : 'text-[#9aa6b2]'
                     }`}
                   >
-                    {done ? (
-                      <HugeiconsIcon icon={CheckmarkCircle02Icon} size={16} color="currentColor" strokeWidth={2} />
-                    ) : (
-                      index + 1
-                    )}
+                    {stage.label}
+                    {current ? (
+                      <span className="mt-0.5 block text-[0.58rem] font-medium text-primary sm:text-[0.6rem]">
+                        Current
+                      </span>
+                    ) : null}
                   </span>
-                </span>
-                <span
-                  className={`max-w-[88px] text-center text-[0.68rem] leading-tight ${
-                    current
-                      ? 'font-semibold text-primary'
-                      : done
-                        ? 'font-medium text-[#3d5166] dark:text-text'
-                        : 'text-[#9aa6b2]'
-                  }`}
-                >
-                  {stage.label}
-                  {current ? (
-                    <span className="mt-0.5 block text-[0.6rem] font-medium text-primary">Current</span>
-                  ) : null}
-                </span>
-              </li>
-            )
-          })}
-        </ol>
+                </li>
+              )
+            })}
+          </ol>
+        </div>
       </div>
 
-      <div className={`flex flex-col justify-center rounded-xl border px-2.5 py-1.5 transition-colors duration-300 ${tone.card}`}>
-        <p className="m-0 flex items-center gap-1 text-[0.75rem] font-semibold text-[#1b3a57] dark:text-text-strong">
-          <span className={`grid size-5 place-items-center rounded-full ${tone.iconWrap}`}>
-            <HugeiconsIcon icon={Clock01Icon} size={11} color={tone.iconColor} strokeWidth={1.8} />
-          </span>
-          Next Follow Up
-          {countdown?.urgency === 'overdue' ? (
-            <span className={`ml-auto text-[0.62rem] font-medium ${tone.status}`}>Overdue</span>
-          ) : countdown?.urgency === 'soon' ? (
-            <span className={`ml-auto text-[0.62rem] font-medium ${tone.status}`}>Due soon</span>
-          ) : null}
-        </p>
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:contents">
+        <div className={`flex min-w-0 flex-col justify-center rounded-xl border px-2 py-2 transition-colors duration-300 sm:px-2.5 sm:py-1.5 ${tone.card}`}>
+          <p className="m-0 flex items-center gap-1 text-[0.7rem] font-semibold text-[#1b3a57] sm:text-[0.75rem] dark:text-text-strong">
+            <span className={`grid size-5 shrink-0 place-items-center rounded-full ${tone.iconWrap}`}>
+              <HugeiconsIcon icon={Clock01Icon} size={11} color={tone.iconColor} strokeWidth={1.8} />
+            </span>
+            <span className="min-w-0 truncate">Next Follow Up</span>
+            {countdown?.urgency === 'overdue' ? (
+              <span className={`ml-auto shrink-0 text-[0.58rem] font-medium sm:text-[0.62rem] ${tone.status}`}>
+                Overdue
+              </span>
+            ) : countdown?.urgency === 'soon' ? (
+              <span className={`ml-auto shrink-0 text-[0.58rem] font-medium sm:text-[0.62rem] ${tone.status}`}>
+                Due soon
+              </span>
+            ) : null}
+          </p>
 
-        {countdown ? (
-          <>
-            <div className="mt-1 flex items-start justify-center gap-0.5 text-center sm:gap-1">
-              <CountdownUnit value={pad2(countdown.days)} label="Days" labelClass={tone.unitLabel} />
-              <CountdownSep />
-              <CountdownUnit value={pad2(countdown.hours)} label="Hours" labelClass={tone.unitLabel} />
-              <CountdownSep />
-              <CountdownUnit value={pad2(countdown.mins)} label="Mins" labelClass={tone.unitLabel} />
-              <CountdownSep />
-              <CountdownUnit value={pad2(countdown.secs)} label="Secs" labelClass={tone.unitLabel} />
-            </div>
-            <p className="mt-1 mb-0 flex w-full items-center justify-center gap-1 text-[0.75rem] font-semibold text-[#3d5166] dark:text-text">
-              <HugeiconsIcon icon={Calendar03Icon} size={13} color={tone.calendarColor} strokeWidth={1.7} />
-              <span className="min-w-0 truncate">{formatFollowUpStamp(lead.nextFollowUp?.dueAt)}</span>
+          {countdown ? (
+            <>
+              <div className="mt-1.5 flex items-start justify-center gap-0.5 text-center sm:mt-1 sm:gap-1">
+                <CountdownUnit value={pad2(countdown.days)} label="Days" labelClass={tone.unitLabel} />
+                <CountdownSep />
+                <CountdownUnit value={pad2(countdown.hours)} label="Hours" labelClass={tone.unitLabel} />
+                <CountdownSep />
+                <CountdownUnit value={pad2(countdown.mins)} label="Mins" labelClass={tone.unitLabel} />
+                <CountdownSep />
+                <CountdownUnit value={pad2(countdown.secs)} label="Secs" labelClass={tone.unitLabel} />
+              </div>
+              <p className="mt-1 mb-0 flex w-full items-center justify-center gap-1 text-[0.68rem] font-semibold text-[#3d5166] sm:text-[0.75rem] dark:text-text">
+                <HugeiconsIcon icon={Calendar03Icon} size={12} color={tone.calendarColor} strokeWidth={1.7} />
+                <span className="min-w-0 truncate">{formatFollowUpStamp(lead.nextFollowUp?.dueAt)}</span>
+              </p>
+            </>
+          ) : (
+            <p className="mt-1.5 mb-0 text-center text-[0.7rem] text-[#8b97a8] sm:mt-1 sm:text-[0.75rem]">
+              No follow-up scheduled
             </p>
-          </>
-        ) : (
-          <p className="mt-1 mb-0 text-center text-[0.75rem] text-[#8b97a8]">No follow-up scheduled</p>
-        )}
-      </div>
+          )}
+        </div>
 
-      <LeadUpcomingMeetingCard
-        meeting={meeting}
-        canEdit={canEditMeeting}
-        compact
-        onReschedule={onRescheduleMeeting}
-        onCancel={onCancelMeeting}
-      />
+        <LeadUpcomingMeetingCard
+          meeting={meeting}
+          canEdit={canEditMeeting}
+          compact
+          onReschedule={onRescheduleMeeting}
+          onCancel={onCancelMeeting}
+        />
+      </div>
     </section>
   )
 }
 
 function CountdownSep() {
   return (
-    <span className="pt-0.5 text-[0.9rem] font-bold leading-none text-[#1b3a57] dark:text-text-strong" aria-hidden>
+    <span className="pt-0.5 text-[0.8rem] font-bold leading-none text-[#1b3a57] sm:text-[0.9rem] dark:text-text-strong" aria-hidden>
       :
     </span>
   )
@@ -210,11 +227,11 @@ function CountdownUnit({
   labelClass?: string
 }) {
   return (
-    <div className="min-w-[30px]">
-      <p className="m-0 text-[1rem] font-bold tabular-nums leading-none tracking-tight text-[#1b3a57] dark:text-text-strong">
+    <div className="min-w-[26px] sm:min-w-[30px]">
+      <p className="m-0 text-[0.88rem] font-bold tabular-nums leading-none tracking-tight text-[#1b3a57] sm:text-[1rem] dark:text-text-strong">
         {value}
       </p>
-      <p className={`m-0 mt-px text-[0.58rem] font-medium ${labelClass}`}>{label}</p>
+      <p className={`m-0 mt-px text-[0.52rem] font-medium sm:text-[0.58rem] ${labelClass}`}>{label}</p>
     </div>
   )
 }

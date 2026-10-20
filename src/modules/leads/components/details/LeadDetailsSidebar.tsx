@@ -46,7 +46,7 @@ export default function LeadDetailsSidebar({
   ) || (lead.applications?.length || 0) > 0 || Boolean(lead.student);
 
   return (
-    <aside className="grid content-start gap-4">
+    <aside className="grid content-start gap-3 sm:gap-4">
       <LeadProfileCompletionCard lead={lead} />
 
       {showApplications ? (
@@ -67,9 +67,9 @@ export default function LeadDetailsSidebar({
 
       <LeadMetaCampaignHistory leadId={lead.id} />
 
-      <section className="rounded-2xl border border-[#e7eef5] bg-surface p-5 shadow-[0_10px_28px_rgba(22,50,79,0.035)] dark:border-border">
-        <header className="mb-4 flex items-center justify-between gap-3">
-          <h3 className="m-0 text-[0.98rem] font-semibold text-[#1b3a57] dark:text-text-strong">
+      <section className="rounded-2xl border border-[#e7eef5] bg-surface p-3.5 shadow-[0_10px_28px_rgba(22,50,79,0.035)] sm:p-5 dark:border-border">
+        <header className="mb-3 flex items-center justify-between gap-3 sm:mb-4">
+          <h3 className="m-0 text-[0.92rem] font-semibold text-[#1b3a57] sm:text-[0.98rem] dark:text-text-strong">
             Recent Activity
           </h3>
           <button

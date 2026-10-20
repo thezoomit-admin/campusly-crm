@@ -25,7 +25,7 @@ import LeadInfoField from "./LeadInfoField";
 import LeadSectionCard from "./LeadSectionCard";
 import LeadMarketingPanel from "./LeadMarketingPanel";
 
-const GRID = "grid gap-x-6 gap-y-5 sm:grid-cols-2 xl:grid-cols-3";
+const GRID = "grid gap-x-4 gap-y-4 sm:gap-x-6 sm:gap-y-5 sm:grid-cols-2 xl:grid-cols-3";
 
 export default function LeadOverviewPanels({
   lead,
