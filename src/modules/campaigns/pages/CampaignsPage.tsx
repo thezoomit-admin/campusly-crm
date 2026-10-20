@@ -20,6 +20,10 @@ import { statusClass } from "@/lib/statusClass";
 import type { AuthSession } from "@/types";
 import { adminCard, adminFilters, adminFiltersCompact, adminPage } from "@/styles/admin";
 import {
+  INTEGRATION_SOURCES,
+  useLeadMasterOptions,
+} from "@/modules/leads/hooks/useLeadMasterOptions";
+import {
   useCreateCampaignMutation,
   useListCampaignsQuery,
   useUpdateCampaignMutation,
@@ -38,17 +42,18 @@ const STATUS_OPTIONS: Array<{ value: CampaignStatus; label: string }> = [
   { value: "ARCHIVED", label: "Archived" },
 ];
 
-const CHANNEL_OPTIONS = [
-  { value: "Website", label: "Website" },
-  { value: "WhatsApp", label: "WhatsApp" },
-  { value: "Email", label: "Email" },
-  { value: "Meta", label: "Meta" },
-  { value: "Other", label: "Other" },
-];
+function labelFor(
+  options: Array<{ value: string; label: string }>,
+  code?: string | null,
+) {
+  if (!code) return "—";
+  return options.find((item) => item.value === code)?.label || code;
+}
 
 export default function CampaignsPage() {
   const auth = useOutletContext<AuthSession>();
   const canManage = hasPermission(auth, "campaign:manage");
+  const master = useLeadMasterOptions();
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string | undefined>();
@@ -57,6 +62,7 @@ export default function CampaignsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<CampaignRecord | null>(null);
   const [form] = Form.useForm<CampaignFormValues>();
+  const selectedSourceCode = Form.useWatch("sourceCode", form);
   const debouncedSearch = useDebounce(search, 300);
 
   const { data, isFetching, isError } = useListCampaignsQuery({
@@ -69,6 +75,51 @@ export default function CampaignsPage() {
   const [updateCampaign, { isLoading: updating }] = useUpdateCampaignMutation();
 
   const rows = useMemo(() => data?.items || [], [data?.items]);
+
+  const sourceOptions = useMemo(
+    () =>
+      master.sourceItems
+        .filter((item) => {
+          if (!item.code) return false;
+          if (item.code === selectedSourceCode || item.code === editing?.sourceCode) {
+            return true;
+          }
+          if (item.isSystem) return false;
+          return !INTEGRATION_SOURCES.has(item.code);
+        })
+        .map((item) => ({ value: item.code as string, label: item.name })),
+    [master.sourceItems, selectedSourceCode, editing?.sourceCode],
+  );
+
+  const selectedSourceId = useMemo(
+    () => master.sourceItems.find((item) => item.code === selectedSourceCode)?.id,
+    [master.sourceItems, selectedSourceCode],
+  );
+
+  const channelOptions = useMemo(() => {
+    const options = master.channelItems
+      .filter((item) => item.code && item.parentId === selectedSourceId)
+      .map((item) => ({ value: item.code as string, label: item.name }));
+
+    // Keep legacy / unmatched values visible while editing so the field isn't blank.
+    const current = editing?.channel;
+    if (
+      current &&
+      editing?.sourceCode === selectedSourceCode &&
+      !options.some((item) => item.value === current)
+    ) {
+      const known = master.channel.find((item) => item.value === current);
+      options.unshift({ value: current, label: known?.label || current });
+    }
+    return options;
+  }, [
+    master.channelItems,
+    master.channel,
+    selectedSourceId,
+    selectedSourceCode,
+    editing?.channel,
+    editing?.sourceCode,
+  ]);
 
   function openCreate() {
     setEditing(null);
@@ -120,13 +171,13 @@ export default function CampaignsPage() {
       title: "Source",
       dataIndex: "sourceCode",
       key: "sourceCode",
-      render: (v: string | null) => v || "—",
+      render: (v: string | null) => labelFor(master.source, v),
     },
     {
       title: "Channel",
       dataIndex: "channel",
       key: "channel",
-      render: (v: string | null) => v || "—",
+      render: (v: string | null) => labelFor(master.channel, v),
     },
     {
       title: "Status",
@@ -246,11 +297,11 @@ export default function CampaignsPage() {
         destroyOnClose
         width={560}
       >
-        <Form form={form} layout="vertical" className="mt-2">
+        <Form form={form} layout="vertical" className="mt-2" requiredMark>
           <FormInput
             name="name"
             label="Campaign name"
-            rules={[{ required: true, message: "Name is required" }]}
+            rules={[{ required: true, message: "Campaign name is required" }]}
             placeholder="Spring Intake Meta Ads"
           />
           {!editing ? (
@@ -263,25 +314,41 @@ export default function CampaignsPage() {
           <FormSelect
             name="status"
             label="Status"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: "Status is required" }]}
             options={STATUS_OPTIONS}
           />
           <div className="grid gap-0 sm:grid-cols-2 sm:gap-3">
-            <FormInput
+            <FormSelect
               name="sourceCode"
-              label="Lead source code"
-              placeholder="META / WEBSITE / …"
+              label="Lead source"
+              showSearch
+              optionFilterProp="label"
+              placeholder="Select source"
+              rules={[{ required: true, message: "Lead source is required" }]}
+              options={sourceOptions}
+              onChange={() => form.setFieldValue("channel", undefined)}
             />
             <FormSelect
               name="channel"
               label="Channel"
+              showSearch
+              optionFilterProp="label"
               allowClear
-              options={CHANNEL_OPTIONS}
-              placeholder="Select channel"
+              disabled={!selectedSourceCode}
+              options={channelOptions}
+              placeholder={
+                selectedSourceCode ? "Select channel" : "Select a source first"
+              }
+              rules={[{ required: true, message: "Channel is required" }]}
             />
           </div>
           <div className="grid gap-0 sm:grid-cols-2 sm:gap-3">
-            <FormInput name="startDate" label="Start date" type="date" />
+            <FormInput
+              name="startDate"
+              label="Start date"
+              type="date"
+              rules={[{ required: true, message: "Start date is required" }]}
+            />
             <FormInput name="endDate" label="End date" type="date" />
           </div>
           <FormInputNumber
