@@ -226,7 +226,10 @@ export default function LeadWorkspaceHeader({
                 {lead.status}
               </span>
               <span className="hidden size-1 shrink-0 rounded-full bg-[#d5dee8] sm:inline-block dark:bg-border" />
-              <p className="m-0 min-w-0 truncate text-[0.78rem] text-[#8b97a8] sm:text-[0.82rem]" title={lead.code}>
+              <p
+                className="m-0 min-w-0 truncate text-[0.78rem] text-[#8b97a8] sm:text-[0.82rem]"
+                title={lead.code}
+              >
                 Lead ID: {lead.code}
               </p>
             </div>
@@ -268,7 +271,10 @@ export default function LeadWorkspaceHeader({
                     strokeWidth={1.7}
                     className="shrink-0"
                   />
-                  <span className="truncate" title={lead.currentLocation || lead.country || undefined}>
+                  <span
+                    className="truncate"
+                    title={lead.currentLocation || lead.country || undefined}
+                  >
                     {lead.currentLocation || lead.country}
                   </span>
                 </span>
