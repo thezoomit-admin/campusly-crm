@@ -9,6 +9,7 @@ import {
   formatLeadCreatedOn,
   leadAvatarTone,
   leadDisplaySubtitle,
+  truncateLeadName,
 } from "./leadList";
 
 type LeadColumnOptions = {
@@ -57,21 +58,26 @@ export function getLeadColumns({
       dataIndex: "name",
       key: "name",
       width: 240,
+      ellipsis: true,
       render: (_value, row) => {
         const subtitle = leadDisplaySubtitle(row);
+        const fullName = row.name?.trim() || "";
         return (
-          <div className="flex min-w-0 items-center gap-2.5">
+          <div className="flex min-w-0 max-w-[220px] items-center gap-2.5">
             <span
               className={`grid size-9 shrink-0 place-items-center rounded-full text-[11px] font-bold ${leadAvatarTone(row.name)}`}
             >
               {leadInitials(row.name)}
             </span>
-            <div className="min-w-0">
-              <p className="m-0 truncate text-[13px] font-semibold text-[#0f9d8e]">
-                {row.name || "—"}
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <p
+                className="m-0 truncate text-[13px] font-semibold text-[#0f9d8e]"
+                title={fullName || undefined}
+              >
+                {truncateLeadName(row.name)}
               </p>
               {subtitle ? (
-                <p className="m-0 truncate text-[11px] text-text-faint">
+                <p className="m-0 truncate text-[11px] text-text-faint" title={subtitle}>
                   {subtitle}
                 </p>
               ) : null}

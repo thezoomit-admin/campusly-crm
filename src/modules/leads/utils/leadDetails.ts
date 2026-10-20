@@ -402,6 +402,67 @@ function mentionsMeeting(...parts: Array<string | null | undefined>) {
   return parts.join(" ").toLowerCase().includes("meeting");
 }
 
+/** Resolve follow-up lifecycle title from action key, metadata.event, or outcome. */
+function followUpLifecycleTitle(
+  action: string,
+  details?: string | null,
+  outcome?: string | null,
+  actionKey?: string | null,
+  metaEvent?: string | null,
+) {
+  const key = (actionKey || metaEvent || "").toUpperCase();
+  const outcomeText = (outcome || "").trim().toLowerCase();
+  const text = `${action} ${details || ""} ${outcome || ""}`.toLowerCase();
+  const isMeeting = mentionsMeeting(action, details, outcome);
+
+  const label = (
+    verb: "added" | "completed" | "rescheduled" | "cancelled",
+  ) => (isMeeting ? `Meeting ${verb}` : `Follow-up ${verb}`);
+
+  if (
+    key === "FOLLOW_UP_COMPLETED" ||
+    outcomeText === "completed" ||
+    text.includes("follow-up completed") ||
+    text.includes("follow up completed")
+  ) {
+    return label("completed");
+  }
+  if (
+    key === "FOLLOW_UP_RESCHEDULED" ||
+    outcomeText === "rescheduled" ||
+    text.includes("reschedul")
+  ) {
+    return label("rescheduled");
+  }
+  if (
+    key === "FOLLOW_UP_CANCELLED" ||
+    outcomeText === "cancelled" ||
+    text.includes("follow-up cancelled") ||
+    text.includes("follow up cancelled")
+  ) {
+    return label("cancelled");
+  }
+  if (
+    key === "FOLLOW_UP_CREATED" ||
+    key === "FOLLOW_UP" ||
+    outcomeText === "scheduled" ||
+    outcomeText === ""
+  ) {
+    // Completion outcomes (Interested, Connected, …) are stored with type FOLLOW_UP
+    // and a non-lifecycle outcome — treat those as completed.
+    if (
+      outcomeText &&
+      outcomeText !== "scheduled" &&
+      !outcomeText.includes("cancel") &&
+      !outcomeText.includes("reschedul")
+    ) {
+      return label("completed");
+    }
+    return label("added");
+  }
+  return null;
+}
+
 export function activityTitle(
   action: string,
   details?: string | null,
@@ -429,25 +490,18 @@ export function activityTitle(
   if (looksLikeStatusChange) return "Status changed";
   if (key === "NOTE") return "Note added";
   if (key === "MEETING") return "Meeting added";
-  if (key === "FOLLOW_UP" || key === "FOLLOW_UP_CREATED") {
-    return mentionsMeeting(action, details, outcome)
-      ? "Meeting added"
-      : "Follow-up added";
-  }
-  if (key === "FOLLOW_UP_COMPLETED") {
-    return mentionsMeeting(action, details, outcome)
-      ? "Meeting completed"
-      : "Follow-up completed";
-  }
-  if (key === "FOLLOW_UP_RESCHEDULED") {
-    return mentionsMeeting(action, details, outcome)
-      ? "Meeting rescheduled"
-      : "Follow-up rescheduled";
-  }
-  if (key === "FOLLOW_UP_CANCELLED") {
-    return mentionsMeeting(action, details, outcome)
-      ? "Meeting cancelled"
-      : "Follow-up cancelled";
+
+  const isFollowUpActivity =
+    key.startsWith("FOLLOW_UP") || metaEvent.startsWith("FOLLOW_UP");
+  if (isFollowUpActivity) {
+    const followUpTitle = followUpLifecycleTitle(
+      action,
+      details,
+      outcome,
+      key.startsWith("FOLLOW_UP") ? key : null,
+      metaEvent.startsWith("FOLLOW_UP") ? metaEvent : null,
+    );
+    if (followUpTitle) return followUpTitle;
   }
   if (key === "LEAD_REASSIGNED" || key.includes("REASSIGN")) {
     return "Reassigned";

@@ -147,18 +147,6 @@ export default function LeadListChangeStatusModal({
           .filter(Boolean)
           .join('\n')
 
-        if (canAddActivity) {
-          await createActivity({
-            type: 'MEETING',
-            notes: meetingNotes,
-            outcome: 'Scheduled',
-            nextAction: meeting.agenda || meeting.title || 'Scheduled meeting',
-            relatedType: 'lead',
-            relatedId: leadId,
-            relatedName: lead.name,
-          }).unwrap()
-        }
-
         if (canFollowUp && startIso) {
           await createFollowUp({
             leadId,
@@ -169,7 +157,20 @@ export default function LeadListChangeStatusModal({
             purposeOther: meeting.type || 'Scheduled meeting',
             notes: meetingNotes,
             nextAction: meeting.agenda || meeting.title || 'Scheduled meeting',
-            reminder: 'No Reminder',
+            reminder: '30 Minutes Before',
+          }).unwrap()
+        } else if (canAddActivity && startIso) {
+          const scheduledLabel = dayjs(startIso).format('MMM D, YYYY, h:mm A')
+          await createActivity({
+            type: 'MEETING',
+            notes: [`Scheduled for ${scheduledLabel}`, meetingNotes]
+              .filter(Boolean)
+              .join('\n'),
+            outcome: 'Scheduled',
+            nextAction: meeting.agenda || meeting.title || 'Scheduled meeting',
+            relatedType: 'lead',
+            relatedId: leadId,
+            relatedName: lead.name,
           }).unwrap()
         }
       }

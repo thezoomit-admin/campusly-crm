@@ -153,6 +153,20 @@ export function emptyLeadValue(value?: string | null) {
   return value
 }
 
+/** Keep table Name cells compact: first N words (and a char cap for long tokens). */
+export function truncateLeadName(name?: string | null, wordLimit = 4, charLimit = 32) {
+  const value = name?.trim()
+  if (!value) return '—'
+  const words = value.split(/\s+/).filter(Boolean)
+  let display = words.slice(0, wordLimit).join(' ')
+  const overWordLimit = words.length > wordLimit
+  const overCharLimit = display.length > charLimit
+  if (overCharLimit) {
+    display = display.slice(0, charLimit).trimEnd()
+  }
+  return overWordLimit || overCharLimit ? `${display}…` : display
+}
+
 export function leadDisplaySubtitle(row: LeadRow) {
   return row.subtitle?.trim() || ''
 }

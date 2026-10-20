@@ -116,7 +116,6 @@ const usersApi = baseApi.injectEndpoints({
       { message?: string; activated?: boolean },
       {
         id: string
-        currentPassword: string
         newPassword: string
         confirmPassword: string
       }

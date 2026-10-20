@@ -23,23 +23,31 @@ function upsertNotificationCache(
   event: NotificationCreatedEvent,
 ): NotificationListResponse {
   const incoming: AppNotification = {
-    ...event.notification,
     id: event.notification.id,
     title: event.notification.title,
     body: event.notification.body,
     link: event.notification.link,
     type: event.notification.type,
+    eventType: event.notification.eventType,
+    kind: event.notification.kind,
+    priority: event.notification.priority,
     status: event.notification.status,
     leadId: event.notification.leadId,
     followUpId: event.notification.followUpId,
     createdAt: event.notification.createdAt,
     readAt: event.notification.readAt,
+    browser: event.notification.browser,
+    payload: event.notification.payload,
+    actions: event.notification.actions,
+    deliveryStatus: event.notification.deliveryStatus,
   }
 
   const items = current?.items || []
   if (items.some((item) => item.id === incoming.id)) {
     return {
-      items,
+      items: items.map((item) =>
+        item.id === incoming.id ? { ...item, ...incoming } : item,
+      ),
       unreadCount: event.unreadCount,
     }
   }
@@ -93,6 +101,7 @@ export default function SocketRealtimeProvider({ children }: { children: ReactNo
     const onNotificationCreated = (event: NotificationCreatedEvent) => {
       if (!event?.notification?.id || !canViewNotifications) return
 
+      // Patch RTK cache only — no HTTP refetch. Socket is the live channel.
       dispatch(
         notificationsApi.util.updateQueryData('listNotifications', LIST_ARGS, (draft) => {
           const next = upsertNotificationCache(draft, event)
@@ -103,7 +112,7 @@ export default function SocketRealtimeProvider({ children }: { children: ReactNo
 
       toast.info(event.notification.title, {
         toastId: `notification:${event.notification.id}`,
-        autoClose: 4000,
+        autoClose: 5000,
       })
 
       if (

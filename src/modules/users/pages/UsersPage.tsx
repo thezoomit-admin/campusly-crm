@@ -233,7 +233,6 @@ export default function UsersPage() {
   const statusFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [passwordPrompt, setPasswordPrompt] = useState<AdminUser | null>(null);
   const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -548,7 +547,6 @@ export default function UsersPage() {
   function openChangePassword(user: AdminUser) {
     setPasswordPrompt(user);
     setPasswordForm({
-      currentPassword: "",
       newPassword: "",
       confirmPassword: "",
     });
@@ -561,7 +559,6 @@ export default function UsersPage() {
     }
     setPasswordPrompt(null);
     setPasswordForm({
-      currentPassword: "",
       newPassword: "",
       confirmPassword: "",
     });
@@ -585,7 +582,6 @@ export default function UsersPage() {
     try {
       const data = await adminChangePassword({
         id: passwordPrompt.id,
-        currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
         confirmPassword: passwordForm.confirmPassword,
       }).unwrap();
@@ -598,7 +594,6 @@ export default function UsersPage() {
       setPasswordSaving(false);
       setPasswordPrompt(null);
       setPasswordForm({
-        currentPassword: "",
         newPassword: "",
         confirmPassword: "",
       });
@@ -1305,8 +1300,7 @@ export default function UsersPage() {
                 </div>
                 <p className={`${muted}`}>
                   Set a new password for{" "}
-                  <strong>{passwordPrompt.fullName}</strong>. Enter your current
-                  password to confirm, then choose a new password.
+                  <strong>{passwordPrompt.fullName}</strong>.
                 </p>
                 <form
                   className={`${adminForm}`}
@@ -1319,20 +1313,6 @@ export default function UsersPage() {
                     className={`${adminFormFields}`}
                     disabled={passwordSaving}
                   >
-                    <label className={adminFormSpan}>
-                      <FieldLabel required>Current password</FieldLabel>
-                      <FormInput.Password
-                        value={passwordForm.currentPassword}
-                        autoComplete="current-password"
-                        onChange={(event) =>
-                          setPasswordForm((current) => ({
-                            ...current,
-                            currentPassword: event.target.value,
-                          }))
-                        }
-                        required
-                      />
-                    </label>
                     <label className={adminFormSpan}>
                       <FieldLabel required>New password</FieldLabel>
                       <FormInput.Password

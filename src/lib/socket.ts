@@ -67,6 +67,7 @@ export function connectSocket() {
   socket = io(resolveSocketUrl(), {
     path: '/socket.io',
     withCredentials: true,
+    // Prefer websocket; polling transport is only a fallback for connect, not API spam.
     transports: ['websocket', 'polling'],
     autoConnect: true,
     reconnection: true,
@@ -74,6 +75,15 @@ export function connectSocket() {
     reconnectionDelay: 1000,
     reconnectionDelayMax: 10000,
   })
+
+  if (import.meta.env.DEV) {
+    socket.on('connect', () => {
+      console.info('[socket] connected', socket?.id)
+    })
+    socket.on('disconnect', (reason) => {
+      console.info('[socket] disconnected', reason)
+    })
+  }
 
   socket.on('connect_error', (error) => {
     if (import.meta.env.DEV) {
