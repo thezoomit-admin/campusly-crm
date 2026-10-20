@@ -694,17 +694,30 @@ export function LeadActivitiesPanel({
     );
     const openIds = new Set(openFollowUps.map((item) => item.id));
 
+    const openMeetingNotes = new Set(
+      openFollowUps
+        .filter((followUp) => followUp.type === "Meeting")
+        .map((followUp) => (followUp.notes || "").trim())
+        .filter(Boolean),
+    );
+
     const openEntries: ActivityTimelineEntry[] = openFollowUps.map(
-      (followUp) => ({
-        kind: "open-follow-up" as const,
-        id: `follow-up:${followUp.id}`,
-        sortAt: followUp.dueAt
+      (followUp) => {
+        const isMeeting = followUp.type === "Meeting";
+        const addTime = followUp.createdAt
+          ? new Date(followUp.createdAt).getTime()
+          : 0;
+        const dueTime = followUp.dueAt
           ? new Date(followUp.dueAt).getTime()
-          : followUp.createdAt
-            ? new Date(followUp.createdAt).getTime()
-            : 0,
-        followUp,
-      }),
+          : 0;
+        return {
+          kind: "open-follow-up" as const,
+          id: `follow-up:${followUp.id}`,
+          // Meetings sit at add-time; scheduled time is shown in the card body.
+          sortAt: isMeeting ? addTime || dueTime : dueTime || addTime,
+          followUp,
+        };
+      },
     );
 
     const feedEntries: ActivityTimelineEntry[] = activities
@@ -728,6 +741,23 @@ export function LeadActivitiesPanel({
           )
         ) {
           return false;
+        }
+        // Hide duplicate "Meeting added" feed rows while the open meeting card is shown.
+        const isMeetingFeed =
+          (item.actionKey || "").toUpperCase() === "MEETING" ||
+          `${item.action || ""} ${item.details || ""}`
+            .toLowerCase()
+            .includes("meeting");
+        const outcome = (item.outcome || "").toLowerCase();
+        if (
+          isMeetingFeed &&
+          (outcome === "scheduled" || outcome === "rescheduled") &&
+          openMeetingNotes.size > 0
+        ) {
+          const details = (item.details || "").trim();
+          if (!details || openMeetingNotes.has(details)) {
+            return false;
+          }
         }
         return true;
       })
@@ -765,6 +795,12 @@ export function LeadActivitiesPanel({
                 const isMeeting = item.type === "Meeting";
                 const title = isMeeting ? "Meeting added" : "Follow-up added";
                 const iconKind = isMeeting ? "meeting" : "follow-up";
+                const addedAt =
+                  formatDisplayDateTime(item.createdAt) ||
+                  formatDisplayDateTime(item.dueAt) ||
+                  item.due;
+                const scheduledAt =
+                  formatDisplayDateTime(item.dueAt) || item.due;
                 return (
                   <li
                     key={entry.id}
@@ -785,6 +821,11 @@ export function LeadActivitiesPanel({
                             {item.purpose ? ` · ${item.purpose}` : ""}
                             {item.nextAction ? ` · ${item.nextAction}` : ""}
                           </p>
+                          {isMeeting && scheduledAt ? (
+                            <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
+                              Scheduled for {scheduledAt}
+                            </p>
+                          ) : null}
                           {item.notes ? (
                             <p className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
                               {item.notes}
@@ -793,7 +834,9 @@ export function LeadActivitiesPanel({
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1.5 text-right">
                           <time className="text-[0.75rem] text-[#8b97a8]">
-                            {formatDisplayDateTime(item.dueAt) || item.due}
+                            {isMeeting
+                              ? addedAt
+                              : formatDisplayDateTime(item.dueAt) || item.due}
                           </time>
                           <span className={activityBadgeClass(item.status)}>
                             {item.status}

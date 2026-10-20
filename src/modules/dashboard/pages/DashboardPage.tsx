@@ -5,6 +5,7 @@ import { PrimaryButton } from '@/components/ui'
 import { Spinner } from '@/components/common/Loading'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
+import { truncateLeadName } from '@/modules/leads/utils/leadList'
 import type { AuthSession } from '../../../types'
 import type { DashIconName, DashboardQuickAction } from '../types'
 
@@ -714,9 +715,13 @@ export default function DashboardPage() {
                         <span className="grid size-[34px] place-items-center rounded-full bg-[#e8f1ff] text-[0.72rem] font-bold text-[#3b82f6] dark:bg-blue-500/20 dark:text-[#93c5fd]">
                           {initials(lead.name)}
                         </span>
-                        <span>
-                          <strong className="block">{lead.name}</strong>
-                          <small className="block text-text-faint">{lead.email}</small>
+                        <span className="min-w-0">
+                          <strong className="block truncate" title={lead.name}>
+                            {truncateLeadName(lead.name, 4)}
+                          </strong>
+                          <small className="block truncate text-text-faint" title={lead.email}>
+                            {lead.email}
+                          </small>
                         </span>
                       </div>
                     </td>

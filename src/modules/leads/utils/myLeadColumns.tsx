@@ -9,6 +9,7 @@ import {
   emptyLeadValue,
   formatLeadCreatedOn,
   leadAvatarTone,
+  truncateLeadName,
 } from "./leadList";
 import {
   leadInitials,
@@ -64,15 +65,19 @@ export function getMyLeadColumns({
       dataIndex: "name",
       key: "name",
       width: 220,
+      ellipsis: true,
       render: (_value, row) => (
-        <div className="flex min-w-0 items-center gap-2.5">
+        <div className="flex min-w-0 max-w-[200px] items-center gap-2.5">
           <span
             className={`grid size-9 shrink-0 place-items-center rounded-full text-[11px] font-bold ${leadAvatarTone(row.name)}`}
           >
             {leadInitials(row.name)}
           </span>
-          <p className="m-0 truncate text-[13px] font-semibold text-text">
-            {row.name || "—"}
+          <p
+            className="m-0 min-w-0 flex-1 truncate text-[13px] font-semibold text-text"
+            title={row.name?.trim() || undefined}
+          >
+            {truncateLeadName(row.name)}
           </p>
         </div>
       ),

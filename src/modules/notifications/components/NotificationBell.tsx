@@ -59,7 +59,16 @@ export default function NotificationBell({ auth }: { auth: AuthSession | null | 
   const [selected, setSelected] = useState<AppNotification | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  const { data } = useListNotificationsQuery({ limit: 15 }, { skip: !canView })
+  // One initial fetch; live updates come from SocketRealtimeProvider (no polling).
+  const { data } = useListNotificationsQuery(
+    { limit: 15 },
+    {
+      skip: !canView,
+      refetchOnMountOrArgChange: false,
+      refetchOnFocus: false,
+      refetchOnReconnect: true,
+    },
+  )
   const [markRead] = useMarkNotificationReadMutation()
   const [archive] = useArchiveNotificationMutation()
   const [markAllRead] = useMarkAllNotificationsReadMutation()

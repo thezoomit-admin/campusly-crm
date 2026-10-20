@@ -721,18 +721,6 @@ export default function LeadDetailsPage() {
           .filter(Boolean)
           .join("\n");
 
-        if (canAddActivity) {
-          await createActivity({
-            type: "MEETING",
-            notes: meetingNotes,
-            outcome: "Scheduled",
-            nextAction: meeting.agenda || meeting.title || "Scheduled meeting",
-            relatedType: "lead",
-            relatedId: id,
-            relatedName: lead.name,
-          }).unwrap();
-        }
-
         if (canFollowUp && startIso) {
           await createFollowUp({
             leadId: id,
@@ -743,7 +731,20 @@ export default function LeadDetailsPage() {
             purposeOther: meeting.type || "Scheduled meeting",
             notes: meetingNotes,
             nextAction: meeting.agenda || meeting.title || "Scheduled meeting",
-            reminder: "No Reminder",
+            reminder: "30 Minutes Before",
+          }).unwrap();
+        } else if (canAddActivity && startIso) {
+          const scheduledLabel = dayjs(startIso).format("MMM D, YYYY, h:mm A");
+          await createActivity({
+            type: "MEETING",
+            notes: [`Scheduled for ${scheduledLabel}`, meetingNotes]
+              .filter(Boolean)
+              .join("\n"),
+            outcome: "Scheduled",
+            nextAction: meeting.agenda || meeting.title || "Scheduled meeting",
+            relatedType: "lead",
+            relatedId: id,
+            relatedName: lead.name,
           }).unwrap();
         }
       }
@@ -1055,18 +1056,6 @@ export default function LeadDetailsPage() {
         }).unwrap();
       }
 
-      if (canAddActivity) {
-        await createActivity({
-          type: "MEETING",
-          notes: meetingNotes,
-          outcome: isReschedule ? "Rescheduled" : "Scheduled",
-          nextAction: payload.agenda || payload.title || "Scheduled meeting",
-          relatedType: "lead",
-          relatedId: id,
-          relatedName: lead.name,
-        }).unwrap();
-      }
-
       if (canFollowUp) {
         await createFollowUp({
           leadId: id,
@@ -1078,6 +1067,20 @@ export default function LeadDetailsPage() {
           notes: meetingNotes,
           nextAction: payload.agenda || payload.title || "Scheduled meeting",
           reminder: payload.reminder || "No Reminder",
+        }).unwrap();
+      } else if (canAddActivity) {
+        // Activity-only permission: log once with scheduled time in notes.
+        const scheduledLabel = dayjs(startIso).format("MMM D, YYYY, h:mm A");
+        await createActivity({
+          type: "MEETING",
+          notes: [`Scheduled for ${scheduledLabel}`, meetingNotes]
+            .filter(Boolean)
+            .join("\n"),
+          outcome: isReschedule ? "Rescheduled" : "Scheduled",
+          nextAction: payload.agenda || payload.title || "Scheduled meeting",
+          relatedType: "lead",
+          relatedId: id,
+          relatedName: lead.name,
         }).unwrap();
       }
 
