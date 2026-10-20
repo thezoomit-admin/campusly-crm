@@ -1402,8 +1402,14 @@ export default function LeadDetailsPage() {
     );
   }
 
+  const showMobileStickyCtas = Boolean(lead) && (canFollowUp || canScheduleMeeting);
+
   return (
-    <div className="grid min-w-0 max-w-full gap-4 overflow-x-hidden">
+    <div
+      className={`grid min-w-0 max-w-full gap-3 overflow-x-hidden sm:gap-4 ${
+        showMobileStickyCtas ? "max-[960px]:pb-16" : ""
+      }`}
+    >
       <PageMeta
         title={pageTitle}
         description="Lead workspace, profile completion, and activity."
@@ -1476,8 +1482,8 @@ export default function LeadDetailsPage() {
             }
           />
 
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-0.5 scrollbar-none">
               {LEAD_PRIMARY_TABS.filter(
                 (item) =>
                   (item.key !== "followups" || canViewFollowUp) &&
@@ -1490,7 +1496,7 @@ export default function LeadDetailsPage() {
                     key={item.key}
                     type="button"
                     aria-current={active ? "page" : undefined}
-                    className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border-0 px-4 py-2 text-[0.9rem] transition-colors ${
+                    className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border-0 px-3 py-2 text-[0.84rem] transition-colors sm:px-4 sm:text-[0.9rem] ${
                       active
                         ? "bg-section-tab-active-bg font-semibold text-section-tab-active-fg"
                         : "bg-section-tab-bg text-section-tab-fg hover:bg-section-tab-hover-bg"
@@ -1516,6 +1522,7 @@ export default function LeadDetailsPage() {
                   type="button"
                   size="sm"
                   variant="primary"
+                  className="max-[960px]:flex-1"
                   icon={
                     <HugeiconsIcon icon={CheckmarkCircle02Icon} size={15} />
                   }
@@ -1526,11 +1533,13 @@ export default function LeadDetailsPage() {
                   label="Change Status"
                 />
               ) : null}
+              {/* Desktop / tablet toolbar CTAs — mobile uses sticky shelf below */}
               {canFollowUp ? (
                 <PrimaryButton
                   type="button"
                   size="sm"
                   variant="primary"
+                  className="max-[960px]:hidden"
                   icon={<HugeiconsIcon icon={Calendar03Icon} size={15} />}
                   onClick={() => setFollowUpOpen(true)}
                   label="Add Follow-up"
@@ -1541,6 +1550,7 @@ export default function LeadDetailsPage() {
                   type="button"
                   size="sm"
                   variant="primary"
+                  className="max-[960px]:hidden"
                   icon={<HugeiconsIcon icon={Video01Icon} size={15} />}
                   onClick={openScheduleMeeting}
                   label="Add Meeting"
@@ -1549,7 +1559,7 @@ export default function LeadDetailsPage() {
             </div>
           </div>
 
-          <div className="grid min-w-0 max-w-full items-start gap-4 overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="grid min-w-0 max-w-full items-start gap-3 overflow-x-hidden sm:gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="min-w-0 max-w-full overflow-hidden">
               {tab === "overview" ? (
                 <div className="grid gap-4">
@@ -1710,6 +1720,40 @@ export default function LeadDetailsPage() {
               onUpdateQualification={() => setQualifyOpen(true)}
             />
           </div>
+
+          {/* Mobile sticky CTAs — sits above app bottom nav */}
+          {showMobileStickyCtas ? (
+            <div
+              className="fixed inset-x-0 z-40 hidden border-t border-[#e7eef5] bg-surface/95 px-3 py-2.5 shadow-[0_-8px_24px_rgba(22,50,79,0.08)] backdrop-blur-md max-[960px]:flex dark:border-border"
+              style={{
+                bottom:
+                  "calc(3.75rem + env(safe-area-inset-bottom, 0px))",
+              }}
+            >
+              <div className="mx-auto flex w-full max-w-3xl gap-2 [&_.ant-btn]:min-h-11 [&_.ant-btn]:flex-1">
+                {canFollowUp ? (
+                  <PrimaryButton
+                    type="button"
+                    size="md"
+                    variant="primary"
+                    icon={<HugeiconsIcon icon={Calendar03Icon} size={16} />}
+                    onClick={() => setFollowUpOpen(true)}
+                    label="Add Follow-up"
+                  />
+                ) : null}
+                {canScheduleMeeting ? (
+                  <PrimaryButton
+                    type="button"
+                    size="md"
+                    variant="outline"
+                    icon={<HugeiconsIcon icon={Video01Icon} size={16} />}
+                    onClick={openScheduleMeeting}
+                    label="Meeting"
+                  />
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </>
       ) : null}
 

@@ -128,13 +128,13 @@ export default function LeadQualificationSummaryCard({
       : "";
 
   return (
-    <section className="grid gap-4 rounded-2xl border border-[#e7eef5] bg-surface p-5 shadow-[0_10px_28px_rgba(22,50,79,0.035)] dark:border-border">
+    <section className="grid gap-3 rounded-2xl border border-[#e7eef5] bg-surface p-3.5 shadow-[0_10px_28px_rgba(22,50,79,0.035)] sm:gap-4 sm:p-5 dark:border-border">
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="m-0 text-[0.98rem] font-semibold text-[#1b3a57] dark:text-text-strong">
+          <h3 className="m-0 text-[0.92rem] font-semibold text-[#1b3a57] sm:text-[0.98rem] dark:text-text-strong">
             Lead Qualification
           </h3>
-          <p className="m-0 mt-1 text-[0.75rem] text-[#8b97a8]">
+          <p className="m-0 mt-1 text-[0.72rem] text-[#8b97a8] sm:text-[0.75rem]">
             Counsellor ratings. Lead Score follows the student profile.
           </p>
         </div>

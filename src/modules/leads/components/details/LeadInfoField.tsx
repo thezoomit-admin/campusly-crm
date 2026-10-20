@@ -29,8 +29,8 @@ export default function LeadInfoField({
   const showAvatar = Boolean(avatarUrl) && !avatarFailed
 
   return (
-    <div className="flex min-w-0 items-start gap-3">
-      <span className="mt-0.5 grid size-9 shrink-0 place-items-center overflow-hidden rounded-[10px] bg-[#f3f7fb] text-[#8b97a8] dark:bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] dark:text-icon">
+    <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
+      <span className="mt-0.5 grid size-8 shrink-0 place-items-center overflow-hidden rounded-[10px] bg-[#f3f7fb] text-[#8b97a8] sm:size-9 dark:bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] dark:text-icon">
         {showAvatar ? (
           <img
             key={avatarUrl || ''}
@@ -40,12 +40,12 @@ export default function LeadInfoField({
             onError={() => setAvatarFailed(true)}
           />
         ) : (
-          <HugeiconsIcon icon={icon} size={16} color="currentColor" strokeWidth={1.7} />
+          <HugeiconsIcon icon={icon} size={15} color="currentColor" strokeWidth={1.7} />
         )}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <p className="m-0 text-[0.78rem] font-medium text-[#7d8b9a] dark:text-text-muted">{label}</p>
+          <p className="m-0 text-[0.72rem] font-medium text-[#7d8b9a] sm:text-[0.78rem] dark:text-text-muted">{label}</p>
           {extra}
         </div>
         {editing ? (
@@ -56,7 +56,7 @@ export default function LeadInfoField({
           <div className="mt-1">{valueNode}</div>
         ) : (
           <p
-            className={`m-0 mt-0.5 truncate text-[0.92rem] ${
+            className={`m-0 mt-0.5 wrap-break-word text-[0.88rem] sm:truncate sm:text-[0.92rem] ${
               filled ? 'font-semibold text-[#17324f] dark:text-text-strong' : 'text-[#9aa6b2] dark:text-text-faint'
             }`}
           >
