@@ -1,8 +1,8 @@
-import { useMemo, type SVGProps } from 'react'
+import { useMemo, type CSSProperties, type SVGProps } from 'react'
+import { twMerge } from 'tailwind-merge'
 import { useNavigate, useOutletContext } from 'react-router-dom'
 import { useGetDashboardQuery } from '../api/dashboardApi'
 import { PrimaryButton } from '@/components/ui'
-import { Spinner } from '@/components/common/Loading'
 import { PageHeader } from '@/components/common/Navigation'
 import { PageMeta } from '@/components/common/Meta'
 import { truncateLeadName } from '@/modules/leads/utils/leadList'
@@ -488,6 +488,189 @@ function MonthSnapshotCard({
   )
 }
 
+function Bone({ className, style }: { className?: string; style?: CSSProperties }) {
+  return (
+    <div
+      className={twMerge('animate-pulse rounded-md bg-[#d5e0ec] dark:bg-[#3a4856]', className)}
+      style={style}
+      aria-hidden="true"
+    />
+  )
+}
+
+function StatCardSkeleton() {
+  return (
+    <article
+      className={cx(
+        card,
+        'relative min-h-[118px] min-w-0 overflow-hidden px-3 py-3 max-[640px]:min-h-[108px] max-[640px]:px-2.5 max-[640px]:py-2.5 xl:px-3.5 xl:py-3.5',
+      )}
+    >
+      <Bone className="size-8 rounded-[10px] xl:size-9" />
+      <Bone className="mt-3 h-3 w-[58%] max-w-24" />
+      <Bone className="mt-2.5 h-6 w-[42%] max-w-16" />
+      <Bone className="mt-3 h-2.5 w-[70%] max-w-28" />
+    </article>
+  )
+}
+
+function LeadSourceSkeleton() {
+  return (
+    <div className="flex min-w-0 items-center gap-3" aria-hidden="true">
+      <div className="relative aspect-square w-[min(100%,150px)] shrink-0 max-sm:w-[108px] xl:w-[min(100%,170px)]">
+        <div className="absolute inset-0 animate-pulse rounded-full bg-[#d5e0ec] dark:bg-[#3a4856]" />
+        <div className="absolute inset-[18%] rounded-full bg-surface" />
+        <div className="relative z-10 grid h-full place-items-center gap-1.5">
+          <Bone className="h-5 w-10" />
+          <Bone className="h-2.5 w-14" />
+        </div>
+      </div>
+      <ul className="m-0 grid min-w-0 flex-1 list-none gap-2.5 p-0">
+        {Array.from({ length: 5 }, (_, index) => (
+          <li key={index} className="flex items-center justify-between gap-3">
+            <span className="flex min-w-0 flex-1 items-center gap-2">
+              <Bone className="size-2 shrink-0 rounded-full" />
+              <Bone className="h-3.5" style={{ width: `${58 + (index % 3) * 12}%` }} />
+            </span>
+            <Bone className="h-3.5 w-12 shrink-0" />
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function LeadTrendSkeleton() {
+  const heights = ['46%', '62%', '40%', '74%', '58%', '82%', '52%']
+
+  return (
+    <div className="flex h-[180px] items-end gap-2 px-1 sm:gap-3" aria-hidden="true">
+      {heights.map((height, index) => (
+        <div key={index} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2">
+          <div className="animate-pulse rounded-t-lg bg-[#d5e0ec] dark:bg-[#3a4856]" style={{ height }} />
+          <Bone className="mx-auto h-2 w-5" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function RecentLeadRowsSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 5 }, (_, index) => (
+        <tr key={index} aria-hidden="true">
+          <td className="border-t border-border-subtle px-1.5 py-2.5">
+            <div className="flex items-center gap-2.5">
+              <Bone className="size-[34px] shrink-0 rounded-full" />
+              <span className="grid min-w-0 flex-1 gap-1.5">
+                <Bone className="h-3.5 w-28 max-w-full" />
+                <Bone className="h-2.5 w-36 max-w-full" />
+              </span>
+            </div>
+          </td>
+          <td className="border-t border-border-subtle px-1.5 py-2.5">
+            <Bone className="h-3.5 w-20" />
+          </td>
+          <td className="border-t border-border-subtle px-1.5 py-2.5">
+            <Bone className="h-3.5 w-16" />
+          </td>
+          <td className="border-t border-border-subtle px-1.5 py-2.5">
+            <Bone className="h-6 w-[4.5rem] rounded-full" />
+          </td>
+          <td className="border-t border-border-subtle px-1.5 py-2.5">
+            <Bone className="h-3.5 w-16" />
+          </td>
+        </tr>
+      ))}
+    </>
+  )
+}
+
+function FollowUpsSkeleton() {
+  return (
+    <div aria-hidden="true">
+      <div className="mb-3 grid grid-cols-3 gap-2">
+        {Array.from({ length: 3 }, (_, index) => (
+          <div key={index} className="rounded-[14px] bg-[#f8fafc] px-3 py-3 dark:bg-hover-bg">
+            <Bone className="h-3 w-16" />
+            <Bone className="mt-2 h-7 w-10" />
+          </div>
+        ))}
+      </div>
+      <div className="mb-3 grid grid-cols-2 gap-2">
+        {Array.from({ length: 2 }, (_, index) => (
+          <div key={index} className="rounded-[14px] bg-[#f8fafc] px-3 py-2.5 dark:bg-hover-bg">
+            <Bone className="h-3 w-28" />
+            <Bone className="mt-2 h-5 w-12" />
+          </div>
+        ))}
+      </div>
+      <ul className="m-0 grid list-none gap-2.5 p-0">
+        {Array.from({ length: 2 }, (_, index) => (
+          <li key={index} className="flex items-start gap-3 rounded-[14px] bg-[#f8fafc] px-3 py-2.5 dark:bg-hover-bg">
+            <Bone className="size-[34px] shrink-0 rounded-[10px]" />
+            <span className="grid min-w-0 flex-1 gap-1.5 pt-0.5">
+              <Bone className="h-3.5 w-40 max-w-full" />
+              <Bone className="h-2.5 w-28 max-w-[70%]" />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function CalendarSkeleton() {
+  return (
+    <article className={cx(dashCard, 'flex h-full min-h-0 min-w-0 flex-col')} aria-hidden="true">
+      <div className={cardHead}>
+        <h3 className="m-0 text-base">Calendar</h3>
+        <Bone className="h-4 w-28" />
+      </div>
+      <div className="grid min-h-0 flex-1 grid-cols-7 content-start gap-1.5 text-center">
+        {WEEKDAYS.map((day) => (
+          <span key={day} className="text-[0.75rem] font-semibold text-text-faint">
+            {day}
+          </span>
+        ))}
+        {Array.from({ length: 35 }, (_, index) => (
+          <Bone key={index} className="mx-auto min-h-[34px] w-full max-w-9 rounded-[10px]" />
+        ))}
+      </div>
+      <div className="mt-auto flex flex-wrap gap-2.5 pt-3">
+        {Array.from({ length: 4 }, (_, index) => (
+          <Bone key={index} className="h-3 w-16" />
+        ))}
+      </div>
+    </article>
+  )
+}
+
+function MonthSnapshotSkeleton() {
+  return (
+    <article className={cx(dashCard, 'flex h-full min-h-0 min-w-0 flex-col')} aria-hidden="true">
+      <div className={cardHead}>
+        <h3 className="m-0 text-base">This Month</h3>
+        <Bone className="h-7 w-28 rounded-full" />
+      </div>
+      <ul className="m-0 grid min-h-0 flex-1 list-none content-start gap-2.5 p-0">
+        {Array.from({ length: 4 }, (_, index) => (
+          <li key={index}>
+            <div className="flex items-center justify-between gap-3 rounded-[14px] bg-[#f8fafc] px-3 py-3 dark:bg-hover-bg">
+              <span className="flex min-w-0 items-center gap-2.5">
+                <Bone className="size-2 shrink-0 rounded-full" />
+                <Bone className="h-4 w-24" />
+              </span>
+              <Bone className="h-5 w-6" />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </article>
+  )
+}
+
 function QuickActionsCard({ onNavigate }: { onNavigate: (path: string) => void }) {
   return (
     <article className={cx(dashCard, 'min-w-0')}>
@@ -525,6 +708,7 @@ export default function DashboardPage() {
   const year = now.getFullYear()
   const month = now.getMonth() + 1
   const { data, isFetching, isError } = useGetDashboardQuery({ year, month })
+  const loading = isFetching && !data
   const name = displayName(auth)
   const stats = data?.stats || []
   const leadSources = data?.leadSources || []
@@ -589,14 +773,15 @@ export default function DashboardPage() {
         <p className="m-0 text-danger">Could not load dashboard. Check API connection.</p>
       ) : null}
 
-      {isFetching && !data ? (
-        <div className="grid min-h-[240px] place-items-center">
-          <Spinner />
-        </div>
-      ) : null}
+      {loading ? <p className="sr-only">Loading dashboard</p> : null}
 
       <div className="grid min-w-0 grid-cols-2 gap-3 *:min-w-0 lg:grid-cols-5">
-        {stats.map((stat) => (
+        {loading
+          ? Array.from({ length: 5 }, (_, index) => <StatCardSkeleton key={index} />)
+          : null}
+        {loading
+          ? null
+          : stats.map((stat) => (
           <article
             key={stat.key}
             className={cx(card, 'relative min-h-[118px] min-w-0 overflow-hidden px-3 py-3 max-[640px]:min-h-[108px] max-[640px]:px-2.5 max-[640px]:py-2.5 xl:px-3.5 xl:py-3.5')}
@@ -642,7 +827,9 @@ export default function DashboardPage() {
             <h3 className="m-0 text-base">Lead Source Overview</h3>
             <span className={chip}>Last 30 Days</span>
           </div>
-          {leadSources.length === 0 ? (
+          {loading ? (
+            <LeadSourceSkeleton />
+          ) : leadSources.length === 0 ? (
             <p className="m-0 py-8 text-center text-[0.85rem] text-text-faint">No leads in the last 30 days.</p>
           ) : (
             <div className="flex min-w-0 items-center gap-3">
@@ -674,7 +861,7 @@ export default function DashboardPage() {
             <h3 className="m-0 text-base">Lead Trend</h3>
             <span className={chip}>Last 7 Days</span>
           </div>
-          <LineChart points={leadTrend} />
+          {loading ? <LeadTrendSkeleton /> : <LineChart points={leadTrend} />}
         </article>
       </div>
 
@@ -701,14 +888,17 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {recentLeads.length === 0 ? (
+                {loading ? <RecentLeadRowsSkeleton /> : null}
+                {!loading && recentLeads.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-8 text-center text-[0.85rem] text-text-faint">
                       No leads found.
                     </td>
                   </tr>
                 ) : null}
-                {recentLeads.map((lead) => (
+                {loading
+                  ? null
+                  : recentLeads.map((lead) => (
                   <tr key={lead.id}>
                     <td className="border-t border-border-subtle px-1.5 py-2.5 text-[0.86rem]">
                       <div className="flex items-center gap-2.5">
@@ -752,6 +942,10 @@ export default function DashboardPage() {
               label="View All"
             />
           </div>
+          {loading ? (
+            <FollowUpsSkeleton />
+          ) : (
+          <>
           <div className="mb-3 grid shrink-0 grid-cols-3 gap-2">
             <div
               role="button"
@@ -841,12 +1035,22 @@ export default function DashboardPage() {
               </li>
             ))}
           </ul>
+          </>
+          )}
         </article>
       </div>
 
       <div className="grid min-w-0 grid-cols-1 items-stretch gap-3 *:min-w-0 lg:grid-cols-2">
-        <CalendarCard year={now.getFullYear()} month={now.getMonth()} events={calendarEvents} />
-        <MonthSnapshotCard events={calendarEvents} onNavigate={navigate} />
+        {loading ? (
+          <CalendarSkeleton />
+        ) : (
+          <CalendarCard year={now.getFullYear()} month={now.getMonth()} events={calendarEvents} />
+        )}
+        {loading ? (
+          <MonthSnapshotSkeleton />
+        ) : (
+          <MonthSnapshotCard events={calendarEvents} onNavigate={navigate} />
+        )}
       </div>
 
       <footer className="flex justify-between gap-3 text-[0.78rem] text-text-faint max-sm:grid max-sm:grid-cols-1">
