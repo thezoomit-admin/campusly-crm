@@ -136,9 +136,13 @@ export default function AppLayout() {
     () =>
       APP_NAV_GROUPS.map((group) => ({
         ...group,
-        items: group.items.filter(
-          (item) => !item.permission || hasPermission(auth, item.permission),
-        ),
+        items: group.items.filter((item) => {
+          const parentAllowed = !item.permission || hasPermission(auth, item.permission)
+          const childAllowed = item.children?.some(
+            (child) => !child.permission || hasPermission(auth, child.permission),
+          )
+          return item.children?.length ? parentAllowed || Boolean(childAllowed) : parentAllowed
+        }),
       })).filter((group) => group.items.length > 0),
     [auth],
   );

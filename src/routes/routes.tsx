@@ -274,8 +274,12 @@ const routes = [
             ),
             children: [
               {
-                path: "/settings/country-assignment",
+                path: "/master-data/country-assignment",
                 element: <CountryAssignmentPage />,
+              },
+              {
+                path: "/settings/country-assignment",
+                element: <Navigate to="/master-data/country-assignment" replace />,
               },
             ],
           },
