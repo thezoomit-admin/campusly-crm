@@ -221,18 +221,20 @@ export const APP_NAV_GROUPS: NavGroup[] = [
         label: "Master Data",
         icon: "database",
         permission: "master_data:view",
-        children: MASTER_DATA_NAV_GROUPS.map((group) => ({
-          to: `/master-data/${group.slug}`,
-          label: group.name,
-          icon: "database" as const,
-          permission: "master_data:view",
-        })),
-      },
-      {
-        to: "/settings/country-assignment",
-        label: "Country Assignment",
-        icon: "globe",
-        permission: "country_assignment:view",
+        children: [
+          ...MASTER_DATA_NAV_GROUPS.map((group) => ({
+            to: `/master-data/${group.slug}`,
+            label: group.name,
+            icon: "database" as const,
+            permission: "master_data:view",
+          })),
+          {
+            to: "/master-data/country-assignment",
+            label: "Country Assignment",
+            icon: "globe" as const,
+            permission: "country_assignment:view",
+          },
+        ],
       },
       {
         to: "/settings",
@@ -301,7 +303,7 @@ const PAGE_KEYWORDS: Record<string, string[]> = {
     "lead source",
   ],
   "/settings": ["config", "preferences"],
-  "/settings/country-assignment": [
+  "/master-data/country-assignment": [
     "country",
     "team",
     "assignment",

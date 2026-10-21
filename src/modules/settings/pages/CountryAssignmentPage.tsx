@@ -243,6 +243,7 @@ export default function CountryAssignmentPage() {
         subtitle="Configure which team receives leads for each preferred country. Optional default owners override least-loaded assignment."
         breadcrumbs={[
           { title: 'Dashboard', path: '/dashboard' },
+          { title: 'Master Data', path: '/master-data' },
           { title: 'Country Assignment' },
         ]}
         extra={
