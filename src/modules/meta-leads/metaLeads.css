@@ -1,0 +1,23 @@
+.meta-leads-inbox .ant-table table {
+  width: 100% !important;
+  min-width: 1080px !important;
+}
+
+.meta-leads-inbox .ant-table-content {
+  overflow-x: auto !important;
+}
+
+.meta-leads .ant-table-wrapper .ant-table-tbody > tr.meta-row-selected > td {
+  background: #f3fbf7 !important;
+}
+
+.meta-leads .ant-table-wrapper .ant-table-tbody > tr.meta-row-selected:hover > td,
+.meta-leads .ant-table-wrapper .ant-table-tbody > tr.meta-row-selected > .ant-table-cell-row-hover {
+  background: #e7f6ee !important;
+}
+
+[data-theme='dark'] .meta-leads .ant-table-wrapper .ant-table-tbody > tr.meta-row-selected > td,
+[data-theme='dark'] .meta-leads .ant-table-wrapper .ant-table-tbody > tr.meta-row-selected:hover > td,
+[data-theme='dark'] .meta-leads .ant-table-wrapper .ant-table-tbody > tr.meta-row-selected > .ant-table-cell-row-hover {
+  background: color-mix(in srgb, #44c218 16%, var(--color-surface)) !important;
+}
