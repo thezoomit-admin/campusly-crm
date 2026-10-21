@@ -77,7 +77,7 @@ export default function LeadPoolPage() {
       />
       <PageHeader
         title="Lead Pool"
-        subtitle="Unassigned leads waiting for an owner. Oldest waiting leads appear first."
+        subtitle="Unassigned leads waiting for an owner. Newest leads appear first."
         breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: 'Lead Pool' }]}
         showDivider={false}
       />

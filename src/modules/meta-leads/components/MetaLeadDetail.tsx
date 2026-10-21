@@ -1,14 +1,28 @@
 import { Link } from 'react-router-dom'
 import { Drawer } from 'antd'
-import type { MetaLead } from '../types'
-import { formatMetaDate } from '../types'
+import type { ReactNode } from 'react'
+import { PlatformBadge, ResultText } from '../metaLeadUi'
+import { formatMetaDate, type MetaLead } from '../types'
 
-function Row({ label, value }: { label: string; value: string | null | undefined }) {
+function Field({ label, value }: { label: string; value: ReactNode }) {
+  const empty = value == null || value === ''
   return (
-    <div className="grid gap-0.5">
-      <p className="m-0 text-[0.75rem] text-text-muted">{label}</p>
-      <p className="m-0 text-[0.92rem] text-text-strong">{value || '—'}</p>
+    <div className="grid min-w-0 gap-0.5">
+      <p className="m-0 text-[0.72rem] font-medium tracking-wide text-text-muted uppercase">{label}</p>
+      <div className="m-0 text-[0.92rem] break-words text-text-strong [overflow-wrap:anywhere]">{empty ? '—' : value}</div>
     </div>
+  )
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section className="grid gap-3">
+      <h4 className="m-0 flex items-center gap-2 text-[0.82rem] font-semibold text-text-strong">
+        <span className="h-3.5 w-[3px] rounded-full bg-primary" />
+        {title}
+      </h4>
+      <div className="grid gap-3 sm:grid-cols-2">{children}</div>
+    </section>
   )
 }
 
@@ -20,37 +34,52 @@ export default function MetaLeadDetail({
   onClose: () => void
 }) {
   return (
-    <Drawer title="Meta lead" open={Boolean(lead)} onClose={onClose} width={440}>
+    <Drawer
+      title={lead?.fullName || 'Meta lead'}
+      open={Boolean(lead)}
+      onClose={onClose}
+      width={460}
+      destroyOnHidden
+    >
       {lead ? (
-        <div className="grid gap-5">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Row label="Full name" value={lead.fullName} />
-            <Row label="Phone" value={lead.phone} />
-            <Row label="Email" value={lead.email} />
-            <Row label="WhatsApp" value={lead.whatsapp} />
-            <Row label="Current education" value={lead.currentEducation} />
-            <Row label="Preferred country" value={lead.preferredCountryCode} />
-            <Row label="Preferred intake" value={lead.preferredIntake} />
-            <Row label="Form" value={lead.formLabel} />
+        <div className="grid gap-6">
+          <div className="rounded-xl border border-border-subtle bg-[#f8fafc] px-3 py-2.5 dark:bg-[#161d24]">
+            <ResultText lead={lead} />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <Row label="Platform" value={lead.platformLabel} />
-            <Row label="Date received" value={formatMetaDate(lead.receivedAt)} />
-            <Row label="Campaign" value={lead.campaignName} />
-            <Row label="Campaign ID" value={lead.metaCampaignId || lead.campaign?.code} />
-            <Row label="Ad set" value={lead.adSetName} />
-            <Row label="Advertisement" value={lead.adName} />
-          </div>
-          <div className="grid gap-3">
-            <Row label="Result" value={lead.message || lead.processingError} />
-            <Row label="Lead" value={lead.lead ? `${lead.lead.code} · ${lead.lead.name}` : null} />
-            <Row label="Source" value={lead.lead?.source} />
-            <Row label="Latest source" value={lead.lead?.latestSource} />
-            <Row label="Assigned to" value={lead.lead?.ownerName || (lead.pooled ? 'Lead Pool' : null)} />
-            <Row label="Status" value={lead.lead?.status} />
-          </div>
+
+          <Section title="Student">
+            <Field label="Full name" value={lead.fullName} />
+            <Field label="Phone" value={lead.phone} />
+            <Field label="Email" value={lead.email} />
+            <Field label="WhatsApp" value={lead.whatsapp} />
+            <Field label="Current education" value={lead.currentEducation} />
+            <Field label="Preferred country" value={lead.preferredCountryCode} />
+            <Field label="Preferred intake" value={lead.preferredIntake} />
+            <Field label="Form" value={lead.formLabel} />
+          </Section>
+
+          <Section title="Campaign">
+            <Field label="Platform" value={<PlatformBadge platform={lead.platform} label={lead.platformLabel} />} />
+            <Field label="Date received" value={formatMetaDate(lead.receivedAt)} />
+            <Field label="Campaign" value={lead.campaignName} />
+            <Field label="Campaign ID" value={lead.metaCampaignId || lead.campaign?.code} />
+            <Field label="Ad set" value={lead.adSetName} />
+            <Field label="Advertisement" value={lead.adName} />
+          </Section>
+
+          <Section title="CRM">
+            <Field label="Lead" value={lead.lead ? `${lead.lead.code} · ${lead.lead.name}` : null} />
+            <Field label="Source" value={lead.lead?.source} />
+            <Field label="Latest source" value={lead.lead?.latestSource} />
+            <Field label="Assigned to" value={lead.lead?.ownerName || (lead.pooled ? 'Lead Pool' : null)} />
+            <Field label="Status" value={lead.lead?.status} />
+          </Section>
+
           {lead.leadId ? (
-            <Link to={`/leads/${lead.leadId}`} className="text-[0.9rem] font-medium text-primary">
+            <Link
+              to={`/leads/${lead.leadId}`}
+              className="inline-flex w-fit items-center rounded-[10px] bg-primary px-3 py-2 text-[0.88rem] font-semibold text-on-primary no-underline hover:bg-primary-hover"
+            >
               Open lead
             </Link>
           ) : null}
