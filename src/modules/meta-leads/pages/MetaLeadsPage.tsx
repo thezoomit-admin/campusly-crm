@@ -309,7 +309,8 @@ export default function MetaLeadsPage() {
       title: 'Country',
       dataIndex: 'preferredCountryCode',
       key: 'country',
-      width: 68,
+      width: 120,
+      ellipsis: true,
       render: (value: string | null) => value || '—',
     },
     {
