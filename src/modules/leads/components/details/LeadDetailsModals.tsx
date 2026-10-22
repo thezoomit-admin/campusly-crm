@@ -1324,24 +1324,32 @@ export function AssignLeadModal({
 }) {
   const [ownerId, setOwnerId] = useState("");
   const [reason, setReason] = useState("");
-  // Reassign: prefer the current owner's team so teammates (e.g. Aus Call Executive)
-  // appear. Pool assign: use the lead's country-assigned team.
-  const teamId = currentOwnerId
-    ? ownerTeamId || assignedTeamId || undefined
-    : assignedTeamId || ownerTeamId || undefined;
-  const role =
-    ownerRoleKey === "counsellor" || ownerRoleKey === "call_executive"
-      ? ownerRoleKey
-      : "call_executive";
+  const ownerRole = (ownerRoleKey || "").trim().toLowerCase();
+  // After handover the owner is a counsellor, so reassignment stays among
+  // counsellors. Pool assign and call-executive reassignment stay on that role.
+  const assigningCounsellor = ownerRole === "counsellor";
+  const assigneeLabel = assigningCounsellor ? "Counsellor" : "Call Executive";
+  // Call-executive reassign stays inside the owner's country team.
+  // Counsellor reassign lists every eligible counsellor, same as handover.
+  const teamId = assigningCounsellor
+    ? undefined
+    : currentOwnerId
+      ? ownerTeamId || assignedTeamId || undefined
+      : assignedTeamId || ownerTeamId || undefined;
   const { data, isFetching } = useListLeadAssigneesQuery(
-    { teamId, role },
+    {
+      teamId,
+      role: assigningCounsellor ? "counsellor" : "call_executive",
+    },
     { skip: !open },
   );
   const options = (data?.items || [])
     .filter((user) => !currentOwnerId || user.id !== currentOwnerId)
     .map((user) => ({
       value: user.id,
-      label: user.name,
+      label: assigningCounsellor
+        ? [user.name, user.team?.name].filter(Boolean).join(" · ")
+        : user.name,
     }));
 
   useEffect(() => {
@@ -1364,8 +1372,8 @@ export function AssignLeadModal({
         {leadName ? (
           <p className="m-0 text-sm text-text-muted">
             {currentOwnerName
-              ? `Reassign ${leadName} from ${currentOwnerName} to another Call Executive.`
-              : `Assign ${leadName} to a Call Executive.`}
+              ? `Reassign ${leadName} from ${currentOwnerName} to another ${assigneeLabel}.`
+              : `Assign ${leadName} to a ${assigneeLabel}.`}
           </p>
         ) : null}
         <label className="grid gap-1.5 text-sm">
@@ -1374,7 +1382,7 @@ export function AssignLeadModal({
             showSearch
             optionFilterProp="label"
             placeholder={
-              isFetching ? "Loading users..." : "Select a Call Executive"
+              isFetching ? "Loading users..." : `Select a ${assigneeLabel}`
             }
             value={ownerId || undefined}
             options={options}
@@ -1382,8 +1390,9 @@ export function AssignLeadModal({
           />
           {!isFetching && options.length === 0 ? (
             <span className="text-xs text-text-muted">
-              No other eligible teammates are available. Assignees need an
-              active CRM account and Active/Probation employment.
+              {assigningCounsellor
+                ? "No other counsellors are available. Counsellors need an active CRM account and Active/Probation employment."
+                : "No other eligible teammates are available. Assignees need an active CRM account and Active/Probation employment."}
             </span>
           ) : null}
         </label>

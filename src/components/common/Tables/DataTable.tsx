@@ -46,6 +46,7 @@ type DataTableProps = {
   bordered?: boolean
   className?: string
   alwaysShowPagination?: boolean
+  scrollX?: number | string | true | false
 }
 
 export default function DataTable(props: DataTableProps) {
@@ -79,6 +80,7 @@ export default function DataTable(props: DataTableProps) {
     bordered = false,
     className = '',
     alwaysShowPagination = false,
+    scrollX = true,
   } = props
   const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
   const suppressRowClickRef = useRef(false)
@@ -266,7 +268,7 @@ export default function DataTable(props: DataTableProps) {
         dataSource={paginatedData}
         columns={columnsWithRowNumber as never}
         tableLayout="fixed"
-        scroll={{ x: true }}
+        scroll={scrollX === false ? undefined : { x: scrollX }}
         expandable={expandable as never}
         onRow={getRowProps as never}
         onChange={onChange as never}

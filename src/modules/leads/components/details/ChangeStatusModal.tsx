@@ -23,7 +23,7 @@ import { useListMasterDataOptionsQuery } from '@/redux/features/masterData/maste
 import type { ActivityFeedItem } from '@/types'
 import type { MasterOption } from '../../hooks/useLeadMasterOptions'
 import type { LeadStatusOption } from '../../types'
-import { activityTitle, formatDisplayDateTime } from '../../utils/leadDetails'
+import { activityTitle, formatDisplayDateTime, stageBadgeClass } from '../../utils/leadDetails'
 
 const LEAD_DOCUMENT_ACCEPT = '.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx'
 const LEAD_DOCUMENT_MAX_BYTES = 5 * 1024 * 1024
@@ -190,6 +190,7 @@ export default function ChangeStatusModal({
   emailSending = false,
   leadName,
   leadEmail,
+  currentStatus,
   activities = [],
   options,
   lostReasons,
@@ -204,6 +205,7 @@ export default function ChangeStatusModal({
   emailSending?: boolean
   leadName: string
   leadEmail?: string | null
+  currentStatus?: string | null
   activities?: ActivityFeedItem[]
   options: LeadStatusOption[]
   lostReasons: MasterOption[]
@@ -342,7 +344,6 @@ export default function ChangeStatusModal({
   function validateStatusForm() {
     const next: Record<string, string> = {}
     if (!statusCode) next.statusCode = 'Please select the next status.'
-    if (channels.length === 0) next.channels = 'Please select at least one channel.'
     if (!note.trim()) next.note = 'Please add a note.'
     if (!nextFollowUpAt) next.nextFollowUpAt = 'Please choose a next follow-up date.'
     if (lostReasonRequired && !lostReasonCode) next.lostReasonCode = 'Please select a lost reason.'
@@ -446,6 +447,19 @@ export default function ChangeStatusModal({
           <div className="min-h-0 overflow-y-auto px-5 py-3">
             {tab === 'status' ? (
               <div className="grid gap-2.5">
+                {currentStatus ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[0.84rem] font-semibold text-[#17324f] dark:text-text-strong">
+                      Current status
+                    </span>
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.75rem] font-semibold ${stageBadgeClass(currentStatus)}`}
+                    >
+                      <span className="size-1.5 rounded-full bg-current" />
+                      {currentStatus}
+                    </span>
+                  </div>
+                ) : null}
                 <label className="grid gap-1">
                   <FieldLabel required>Status</FieldLabel>
                   <FormSelect
@@ -467,7 +481,10 @@ export default function ChangeStatusModal({
                 </label>
 
                 <label className="grid gap-1">
-                  <FieldLabel required>Channel</FieldLabel>
+                  <span className="flex items-baseline justify-between gap-3">
+                    <FieldLabel>Communication Channel</FieldLabel>
+                    <span className="text-[0.75rem] text-[#8b97a8]">Optional</span>
+                  </span>
                   <FormSelect
                     mode="multiple"
                     maxTagCount="responsive"

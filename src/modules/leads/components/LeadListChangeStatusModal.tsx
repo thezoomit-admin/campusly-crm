@@ -226,6 +226,7 @@ export default function LeadListChangeStatusModal({
       emailSending={emailSending}
       leadName={lead?.name || 'Lead'}
       leadEmail={lead?.email}
+      currentStatus={lead?.statusChange?.current?.name || lead?.status}
       activities={activityData?.items || []}
       options={lead?.statusChange?.options || []}
       lostReasons={options.lostReason}

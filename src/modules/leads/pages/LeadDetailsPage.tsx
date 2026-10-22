@@ -25,7 +25,6 @@ import { useLeadMasterOptions } from "../hooks/useLeadMasterOptions";
 import {
   useAssignLeadMutation,
   useDeleteLeadDocumentMutation,
-  useGetLeadDocumentChecklistQuery,
   useHandoverLeadMutation,
   useCloseLeadMutation,
   useGetLeadQuery,
@@ -126,9 +125,12 @@ import {
   useSendEmailMessageMutation,
   useStartLeadEmailMutation,
 } from "@/modules/email/api/emailApi";
-import LogConversationWizard, {
-  type LogConversationSubmitPayload,
-} from "../components/details/LogConversationWizard";
+import AddNoteModal, {
+  AddNotePartialError,
+  type AddNoteMeetingPayload,
+  type AddNoteSavedState,
+  type AddNoteSubmitPayload,
+} from "../components/details/AddNoteModal";
 import ScheduleMeetingModal, {
   buildMeetingNotes,
   meetingStartIso,
@@ -136,6 +138,34 @@ import ScheduleMeetingModal, {
 } from "../components/details/ScheduleMeetingModal";
 import type { QualificationFormValues } from "../utils/leadQualification";
 import { adminPage } from "../../../styles/admin";
+
+function addNoteSuccessMessage(payload: AddNoteSubmitPayload) {
+  const followUp = Boolean(payload.followUp);
+  const meeting = Boolean(payload.meeting);
+  if (followUp && meeting) return "Note saved. Follow-up and meeting scheduled.";
+  if (followUp) return "Note saved. Follow-up scheduled.";
+  if (meeting) return "Note saved. Meeting scheduled.";
+  return "Note saved.";
+}
+
+function partialNoteSaveMessage(
+  saved: AddNoteSavedState,
+  payload: AddNoteSubmitPayload,
+  reason: string,
+) {
+  const done = [
+    saved.note ? "Note" : "",
+    saved.followUp ? "Follow-up" : "",
+    saved.meeting ? "Meeting" : "",
+  ].filter(Boolean);
+  const failed = !saved.note
+    ? "note"
+    : payload.followUp && !saved.followUp
+      ? "follow-up"
+      : "meeting";
+  const savedLabel = done.length > 0 ? `${done.join(", ")} saved.` : "";
+  return `${savedLabel} The ${failed} could not be created. ${reason} Save again to finish without duplicating what already succeeded.`.trim();
+}
 
 export default function LeadDetailsPage() {
   const { id = "" } = useParams();
@@ -351,9 +381,6 @@ export default function LeadDetailsPage() {
       { id: id || "", archived: showArchivedDocs },
       { skip: !id || !attachmentsOpen },
     );
-  const { data: checklistData } = useGetLeadDocumentChecklistQuery(id || "", {
-    skip: !id || !attachmentsOpen || showArchivedDocs,
-  });
   const { data: documentCategoryData } = useListMasterDataOptionsQuery(
     { category: "DOCUMENT_CATEGORY" },
     { skip: !attachmentsOpen },
@@ -1264,78 +1291,126 @@ export default function LeadDetailsPage() {
     setLogConversationOpen(true);
   }
 
-  async function onLogConversation(payload: LogConversationSubmitPayload) {
+  async function onAddNote(payload: AddNoteSubmitPayload) {
     if (!id || !lead) return;
     setLogConversationSaving(true);
+    const saved: AddNoteSavedState = { ...payload.committed };
     try {
-      const createNext =
-        payload.addon === "meeting" || payload.addon === "followup";
-      if (payload.followUpId && canEditFollowUp) {
-        await completeFollowUp({
-          id: payload.followUpId,
-          body: {
-            outcome: payload.followUpOutcome,
-            notes: payload.notes,
-            nextAction: createNext
-              ? payload.nextAction || "Follow up"
-              : payload.nextAction ||
-                payload.notes.slice(0, 200) ||
-                "Logged conversation",
-            createNextFollowUp: createNext,
-            nextDueAt: createNext ? payload.nextDueAt : undefined,
-            nextType: createNext ? payload.nextFollowUpType : undefined,
-            nextPriority: "Medium",
-          },
+      if (!saved.note) {
+        const noteBody = [
+          payload.channelLabel ? `Channel: ${payload.channelLabel}` : "",
+          payload.notes,
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+        await createActivity({
+          type: "NOTE",
+          notes: noteBody,
+          outcome: "Note added",
+          relatedType: "lead",
+          relatedId: id,
+          relatedName: lead.name,
         }).unwrap();
+        if (canEdit && payload.notes.trim()) {
+          await createLeadNote({
+            id,
+            body: payload.notes.trim(),
+            skipActivity: true,
+          }).unwrap();
+        }
+        saved.note = true;
       }
 
-      await createActivity({
-        type: payload.activityType,
-        notes: payload.notes,
-        outcome: payload.outcome,
-        nextAction:
-          createNext && !(payload.followUpId && canEditFollowUp)
-            ? payload.nextAction
-            : undefined,
-        nextDate:
-          createNext && !(payload.followUpId && canEditFollowUp)
-            ? payload.nextDueAt || null
-            : null,
-        createNextFollowUp:
-          createNext && !(payload.followUpId && canEditFollowUp),
-        nextFollowUpType:
-          createNext && !(payload.followUpId && canEditFollowUp)
-            ? payload.nextFollowUpType
-            : undefined,
-        nextFollowUpPriority:
-          createNext && !(payload.followUpId && canEditFollowUp)
-            ? "Medium"
-            : undefined,
-        relatedType: "lead",
-        relatedId: id,
-        relatedName: lead.name,
-      }).unwrap();
-
-      // Keep Note history in sync; activity is already logged above.
-      if (canEdit && payload.notes.trim()) {
-        await createLeadNote({
-          id,
-          body: payload.notes.trim(),
-          skipActivity: true,
+      if (payload.followUp && !saved.followUp) {
+        if (!canFollowUp) {
+          throw new Error("You do not have permission to schedule a follow-up.");
+        }
+        await createFollowUp({
+          leadId: id,
+          type: payload.followUp.type,
+          dueAt: payload.followUp.dueAt,
+          priority: "Medium",
+          purpose: "Information Sharing",
+          notes: payload.notes.slice(0, 1000),
+          nextAction: payload.followUp.nextAction,
+          reminder: payload.followUp.reminder,
+          ownerId: payload.followUp.assigneeId,
+          source: "Manual",
+          sourceReason: "Created from lead note",
         }).unwrap();
+        saved.followUp = true;
+      }
+
+      if (payload.meeting && !saved.meeting) {
+        await saveNoteMeeting(payload.meeting, payload.notes);
+        saved.meeting = true;
       }
 
       await refreshLeadWorkspace();
-      toast.success(
-        createNext ? "Note saved and next item scheduled." : "Note saved.",
-      );
+      toast.success(addNoteSuccessMessage(payload));
       setLogConversationOpen(false);
       setTab("notes");
     } catch (error) {
+      if (error instanceof AddNotePartialError) throw error;
+      const anythingSaved = saved.note || saved.followUp || saved.meeting;
+      if (anythingSaved && (payload.followUp || payload.meeting)) {
+        toast.error(
+          partialNoteSaveMessage(saved, payload, getApiError(error, "Unable to finish saving.")),
+        );
+        throw new AddNotePartialError(saved);
+      }
       toast.error(getApiError(error, "Unable to save note."));
+      throw error;
     } finally {
       setLogConversationSaving(false);
     }
+  }
+
+  async function saveNoteMeeting(meeting: AddNoteMeetingPayload, noteText: string) {
+    if (!id || !lead) return;
+    const startIso = dayjs(`${meeting.date}T${meeting.startTime}:00`).toISOString();
+    const meetingNotes = [
+      meeting.title,
+      `Type: ${meeting.type}`,
+      `Mode: ${meeting.mode}`,
+      meeting.location ? `Location: ${meeting.location}` : "",
+      meeting.link ? `Link: ${meeting.link}` : "",
+      meeting.endTime ? `End: ${meeting.endTime}` : "",
+      meeting.agenda ? `Agenda: ${meeting.agenda}` : "",
+      noteText ? `Note: ${noteText}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n")
+      .slice(0, 1000);
+    const nextAction = meeting.agenda || meeting.title || "Scheduled meeting";
+
+    if (canFollowUp) {
+      await createFollowUp({
+        leadId: id,
+        type: "Meeting",
+        dueAt: startIso,
+        priority: "Medium",
+        purpose: "Other",
+        purposeOther: meeting.type || "Scheduled meeting",
+        notes: meetingNotes,
+        nextAction,
+        reminder: meeting.reminder || "No Reminder",
+        source: "Manual",
+        sourceReason: "Created from lead note",
+      }).unwrap();
+      return;
+    }
+
+    const scheduledLabel = dayjs(startIso).format("MMM D, YYYY, h:mm A");
+    await createActivity({
+      type: "MEETING",
+      notes: [`Scheduled for ${scheduledLabel}`, meetingNotes].filter(Boolean).join("\n"),
+      outcome: "Scheduled",
+      nextAction,
+      relatedType: "lead",
+      relatedId: id,
+      relatedName: lead.name,
+    }).unwrap();
   }
 
   const moreVisibleKeys = useMemo(() => {
@@ -1645,7 +1720,6 @@ export default function LeadDetailsPage() {
                   {moreTab === "attachments" ? (
                     <LeadDocumentsPanel
                       documents={documents}
-                      checklist={showArchivedDocs ? null : checklistData}
                       loading={documentsLoading}
                       canUpload={canUploadDocument}
                       canDelete={canDeleteDocument}
@@ -1667,16 +1741,6 @@ export default function LeadDetailsPage() {
                       }}
                       onVerify={(document) => setVerifyTarget(document)}
                       onDelete={(document) => setDeleteTarget(document)}
-                      onCreateFollowUp={
-                        canFollowUp
-                          ? (_typeCode, name) => {
-                              setFollowUpOpen(true);
-                              toast.info(
-                                `Create a follow-up for missing: ${name}`,
-                              );
-                            }
-                          : undefined
-                      }
                     />
                   ) : null}
                   {moreTab === "file-documents" && showFileDocumentsTab ? (
@@ -1865,12 +1929,14 @@ export default function LeadDetailsPage() {
         onClose={() => setActivityOpen(false)}
         onSubmit={onAddActivity}
       />
-      <LogConversationWizard
+      <AddNoteModal
         open={logConversationOpen && canAddActivity}
         saving={logConversationSaving}
         lead={lead || null}
+        canScheduleFollowUp={canFollowUp}
+        canScheduleMeeting={canScheduleMeeting}
         onClose={() => setLogConversationOpen(false)}
-        onSubmit={onLogConversation}
+        onSubmit={onAddNote}
       />
       <AddLeadDocumentModal
         open={documentOpen && canUploadDocument}
@@ -1998,6 +2064,7 @@ export default function LeadDetailsPage() {
         emailSending={emailSending}
         leadName={lead?.name || "Lead"}
         leadEmail={lead?.email}
+        currentStatus={lead?.statusChange?.current?.name || lead?.status}
         activities={activities}
         options={lead?.statusChange?.options || []}
         lostReasons={options.lostReason}
