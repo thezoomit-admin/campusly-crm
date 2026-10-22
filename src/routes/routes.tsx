@@ -3,6 +3,7 @@ import AppLayout from "../layouts/AppLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import { AccountPage } from "../modules/account";
 import { ActivityHistoryPage } from "../modules/activity-history";
+
 import {
   ApplicationDetailsPage,
   ApplicationsPage,
@@ -66,7 +67,9 @@ const routes = [
           { path: "/dashboard", element: <DashboardPage /> },
           {
             path: "/dashboard/employee-performance",
-            element: <Navigate to="/reports?tab=employee-performance" replace />,
+            element: (
+              <Navigate to="/reports?tab=employee-performance" replace />
+            ),
           },
           {
             path: "/dashboard/employee-performance/:userId",
@@ -152,7 +155,9 @@ const routes = [
           },
           {
             element: <PermissionRoute permission="notification:view" />,
-            children: [{ path: "/notifications", element: <NotificationsPage /> }],
+            children: [
+              { path: "/notifications", element: <NotificationsPage /> },
+            ],
           },
           {
             element: (
@@ -269,9 +274,7 @@ const routes = [
             children: [{ path: "/settings", element: <SettingsPage /> }],
           },
           {
-            element: (
-              <PermissionRoute permission="country_assignment:view" />
-            ),
+            element: <PermissionRoute permission="country_assignment:view" />,
             children: [
               {
                 path: "/master-data/country-assignment",
@@ -279,7 +282,9 @@ const routes = [
               },
               {
                 path: "/settings/country-assignment",
-                element: <Navigate to="/master-data/country-assignment" replace />,
+                element: (
+                  <Navigate to="/master-data/country-assignment" replace />
+                ),
               },
             ],
           },

@@ -37,6 +37,19 @@
   color: var(--text-faint, #8b97a1);
 }
 
+.handover-lead-modal .campusly-ant-modal__title-row {
+  align-items: flex-start;
+}
+
+.handover-lead-modal .campusly-ant-modal__title {
+  flex: 1;
+  min-width: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
 [data-theme='dark'] .campusly-ant-modal .ant-modal-content {
   background: var(--surface);
 }

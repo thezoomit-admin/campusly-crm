@@ -1,8 +1,27 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
 import { Modal, Spin } from "antd";
 import dayjs from "dayjs";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CloudUploadIcon } from "@hugeicons/core-free-icons";
+import {
+  Analytics01Icon,
+  Calendar03Icon,
+  CloudUploadIcon,
+  Globe02Icon,
+  Idea01Icon,
+  Message01Icon,
+  Mortarboard01Icon,
+  Note01Icon,
+  UserIcon,
+  UserSharingIcon,
+} from "@hugeicons/core-free-icons";
+import { getApiErrorFields } from "@/lib/api";
 import { PrimaryButton } from "@/components/ui";
 import {
   FormDatePicker,
@@ -1397,6 +1416,132 @@ export function AssignLeadModal({
   );
 }
 
+const HANDOVER_NOTE_LIMIT = 500;
+
+type HandoverIconType = typeof UserIcon;
+
+function HandoverMark() {
+  return <span className="text-[#ef4444]"> *</span>;
+}
+
+function HandoverGlyph({
+  icon,
+  size = 16,
+}: {
+  icon: HandoverIconType;
+  size?: number;
+}) {
+  return (
+    <HugeiconsIcon
+      icon={icon}
+      size={size}
+      color="currentColor"
+      strokeWidth={1.7}
+    />
+  );
+}
+
+function HandoverSection({
+  step,
+  title,
+  children,
+}: {
+  step: number;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="grid gap-3">
+      <h3 className="m-0 flex items-center gap-2.5 text-[0.95rem] font-semibold text-text">
+        <span className="grid size-6 shrink-0 place-items-center rounded-full bg-primary text-[0.75rem] font-semibold text-on-primary">
+          {step}
+        </span>
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function HandoverFieldLabel({
+  children,
+  required = false,
+  optional = false,
+}: {
+  children: string;
+  required?: boolean;
+  optional?: boolean;
+}) {
+  return (
+    <span className="text-[0.84rem] font-medium text-text">
+      {children}
+      {optional ? (
+        <span className="font-normal text-text-faint"> (optional)</span>
+      ) : null}
+      {required ? <HandoverMark /> : null}
+    </span>
+  );
+}
+
+function handoverPhone(phone?: string | null, countryCode?: string | null) {
+  const value = phone?.trim();
+  if (!value) return "—";
+  if (value.startsWith("+")) return value;
+  const code = (countryCode || "").replace(/^\+/, "").trim();
+  return code ? `+${code} ${value}` : value;
+}
+
+function handoverCreatedAt(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function HandoverNoteField({
+  icon,
+  value,
+  placeholder,
+  error,
+  onChange,
+}: {
+  icon: HandoverIconType;
+  value: string;
+  placeholder: string;
+  error?: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="grid gap-1">
+      <div className="relative">
+        <span className="pointer-events-none absolute top-3 left-3 z-1 text-icon">
+          <HandoverGlyph icon={icon} />
+        </span>
+        <FormTextArea
+          rows={3}
+          maxLength={HANDOVER_NOTE_LIMIT}
+          status={error ? "error" : undefined}
+          value={value}
+          placeholder={placeholder}
+          className="resize-y! rounded-[10px]! pt-2.5! pr-3! pb-7! pl-9!"
+          onChange={(event) => onChange(event.target.value)}
+        />
+        <span className="pointer-events-none absolute right-3 bottom-2 text-[0.72rem] text-text-faint">
+          {value.length}/{HANDOVER_NOTE_LIMIT}
+        </span>
+      </div>
+      {error ? <InputError>{error}</InputError> : null}
+    </div>
+  );
+}
+
 export function HandoverLeadModal({
   open,
   lead,
@@ -1417,12 +1562,11 @@ export function HandoverLeadModal({
   onSubmit: (body: {
     counsellorId: string;
     note: {
-      studentRequirement?: string;
-      preferredCountryCode?: string;
+      studentRequirement: string;
+      preferredCountryCode: string;
       preferredIntakeCode?: string;
       academicBackground?: string;
-      conversationSummary?: string;
-      importantConcern?: string;
+      conversationSummary: string;
     };
   }) => Promise<void>;
 }) {
@@ -1432,7 +1576,7 @@ export function HandoverLeadModal({
   const [preferredIntakeCode, setPreferredIntakeCode] = useState("");
   const [academicBackground, setAcademicBackground] = useState("");
   const [conversationSummary, setConversationSummary] = useState("");
-  const [importantConcern, setImportantConcern] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { data, isFetching } = useListLeadAssigneesQuery(
     { role: "counsellor" },
     { skip: !open },
@@ -1443,11 +1587,20 @@ export function HandoverLeadModal({
       .filter(Boolean)
       .join(" · "),
   }));
+  const completion = Math.max(
+    0,
+    Math.min(100, Number(lead?.profileCompletion ?? 0) || 0),
+  );
+  const qualification =
+    optionLabel(resultOptions, lead?.qualificationResultCode) || "";
 
   useEffect(() => {
     if (!open || !lead) return;
+    setErrors({});
     setCounsellorId("");
-    setStudentRequirement(lead.preferredCourse || "");
+    setStudentRequirement(
+      (lead.preferredCourse || "").slice(0, HANDOVER_NOTE_LIMIT),
+    );
     setPreferredCountryCode(lead.preferredCountryCode || "");
     setPreferredIntakeCode(lead.preferredIntakeCode || "");
     setAcademicBackground(
@@ -1457,166 +1610,358 @@ export function HandoverLeadModal({
         lead.passingYear ? String(lead.passingYear) : "",
       ]
         .filter(Boolean)
-        .join(", "),
+        .join(", ")
+        .slice(0, HANDOVER_NOTE_LIMIT),
     );
     setConversationSummary("");
-    setImportantConcern("");
   }, [open, lead]);
 
-  async function handleSubmit() {
-    if (!counsellorId) return;
-    await onSubmit({
-      counsellorId,
-      note: {
-        studentRequirement: studentRequirement.trim() || undefined,
-        preferredCountryCode: preferredCountryCode || undefined,
-        preferredIntakeCode: preferredIntakeCode || undefined,
-        academicBackground: academicBackground.trim() || undefined,
-        conversationSummary: conversationSummary.trim() || undefined,
-        importantConcern: importantConcern.trim() || undefined,
-      },
+  function clearError(key: string) {
+    setErrors((current) => {
+      if (!current[key]) return current;
+      const next = { ...current };
+      delete next[key];
+      return next;
     });
+  }
+
+  async function handleSubmit() {
+    const nextErrors: Record<string, string> = {};
+    if (!counsellorId) nextErrors.counsellorId = "Select a counsellor.";
+    if (!studentRequirement.trim()) {
+      nextErrors.studentRequirement = "Enter what the student is looking for.";
+    }
+    if (!preferredCountryCode) {
+      nextErrors.preferredCountryCode = "Select a preferred country.";
+    }
+    if (!conversationSummary.trim()) {
+      nextErrors.conversationSummary =
+        "Enter the initial conversation summary.";
+    }
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+    try {
+      await onSubmit({
+        counsellorId,
+        note: {
+          studentRequirement: studentRequirement.trim(),
+          preferredCountryCode,
+          preferredIntakeCode: preferredIntakeCode || undefined,
+          academicBackground: academicBackground.trim() || undefined,
+          conversationSummary: conversationSummary.trim(),
+        },
+      });
+    } catch (error) {
+      const fields = getApiErrorFields(error);
+      if (Object.keys(fields).length > 0) setErrors(fields);
+    }
   }
 
   return (
     <AntModal
       open={open}
       onClose={onClose}
-      title="Hand over to Counsellor"
-      width={560}
-    >
-      <div className="grid gap-3">
-        <p className="m-0 text-sm text-text-muted">
-          {lead
-            ? `Hand ${lead.name} from the Call Center to a Counsellor. Qualification data stays as it is.`
-            : "Select a Counsellor."}
-        </p>
-        {lead ? (
-          <dl className="m-0 grid grid-cols-2 gap-2 rounded-xl bg-[#f8fafc] px-3 py-2 text-sm dark:bg-hover-bg">
-            <div>
-              <dt className="text-xs text-text-muted">Profile completion</dt>
-              <dd className="m-0 font-medium">
-                {lead.profileCompletion ?? 0}%
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-text-muted">Lead score</dt>
-              <dd className="m-0 font-medium">{lead.leadScore ?? 0}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-text-muted">Priority</dt>
-              <dd className="m-0 font-medium">{lead.priority || "None"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-text-muted">Qualification</dt>
-              <dd className="m-0 font-medium">
-                {optionLabel(resultOptions, lead.qualificationResultCode) ||
-                  "—"}
-              </dd>
-            </div>
-          </dl>
-        ) : null}
-        <label className="grid gap-1.5 text-sm">
-          <span>Counsellor</span>
-          <FormSelect
-            showSearch
-            optionFilterProp="label"
-            placeholder={
-              isFetching ? "Loading counsellors..." : "Select a Counsellor"
-            }
-            value={counsellorId || undefined}
-            options={options}
-            onChange={(value) => setCounsellorId(asSelectString(value))}
-          />
-          {!isFetching && options.length === 0 ? (
-            <span className="text-xs text-text-muted">
-              No counsellors are available for this handover.
+      className="handover-lead-modal"
+      width="min(980px, calc(100vw - 24px))"
+      styles={{
+        header: { padding: "18px 22px 4px" },
+        body: { padding: "12px 22px 18px" },
+      }}
+      title={
+        <span className="flex items-center gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--color-primary)_14%,var(--color-surface))] text-primary">
+            <HandoverGlyph icon={UserSharingIcon} size={20} />
+          </span>
+          <span className="grid min-w-0 gap-0.5">
+            <span className="text-[1.05rem] font-semibold leading-tight text-text">
+              Hand over to Counsellor
             </span>
-          ) : null}
-        </label>
-        <label className="grid gap-1.5 text-sm">
-          <span>Student requirement</span>
-          <FormTextArea
-            rows={2}
-            value={studentRequirement}
-            placeholder="What the student is looking for"
-            onChange={(event) => setStudentRequirement(event.target.value)}
-          />
-        </label>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1.5 text-sm">
-            <span>Preferred country</span>
-            <FormSelect
-              showSearch
-              optionFilterProp="label"
-              allowClear
-              placeholder="Preferred country"
-              value={preferredCountryCode || undefined}
-              options={countryOptions}
-              onChange={(value) =>
-                setPreferredCountryCode(asSelectString(value))
-              }
-            />
-          </label>
-          <label className="grid gap-1.5 text-sm">
-            <span>Preferred intake</span>
-            <FormSelect
-              showSearch
-              optionFilterProp="label"
-              allowClear
-              placeholder="Preferred intake"
-              value={preferredIntakeCode || undefined}
-              options={intakeOptions}
-              onChange={(value) =>
-                setPreferredIntakeCode(asSelectString(value))
-              }
-            />
-          </label>
+            <span className="text-[0.8rem] font-normal leading-snug text-text-muted">
+              Transfer the lead with essential student requirements and call
+              context.
+            </span>
+          </span>
+        </span>
+      }
+    >
+      <div className="grid max-h-[calc(100vh-220px)] items-start gap-4 overflow-y-auto pr-1 lg:grid-cols-[minmax(0,1fr)_292px] lg:gap-5">
+        <div className="grid gap-6">
+          <HandoverSection step={1} title="Assignment">
+            <label className="grid gap-1.5">
+              <HandoverFieldLabel required>Counsellor</HandoverFieldLabel>
+              <FormSelect
+                showSearch
+                optionFilterProp="label"
+                allowClear={false}
+                status={errors.counsellorId ? "error" : undefined}
+                prefix={
+                  <span className="text-icon">
+                    <HandoverGlyph icon={UserIcon} />
+                  </span>
+                }
+                placeholder={
+                  isFetching ? "Loading counsellors..." : "Select a counsellor"
+                }
+                value={counsellorId || undefined}
+                options={options}
+                onChange={(value) => {
+                  clearError("counsellorId");
+                  setCounsellorId(asSelectString(value));
+                }}
+              />
+              {errors.counsellorId ? (
+                <InputError>{errors.counsellorId}</InputError>
+              ) : !isFetching && options.length === 0 ? (
+                <span className="text-xs text-text-muted">
+                  No counsellors are available for this handover.
+                </span>
+              ) : null}
+            </label>
+          </HandoverSection>
+
+          <HandoverSection step={2} title="Student requirements">
+            <label className="grid gap-1.5">
+              <HandoverFieldLabel required>
+                Student requirement
+              </HandoverFieldLabel>
+              <HandoverNoteField
+                icon={Note01Icon}
+                value={studentRequirement}
+                placeholder="What the student is looking for..."
+                error={errors.studentRequirement}
+                onChange={(value) => {
+                  clearError("studentRequirement");
+                  setStudentRequirement(value.slice(0, HANDOVER_NOTE_LIMIT));
+                }}
+              />
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="grid gap-1.5">
+                <HandoverFieldLabel required>
+                  Preferred country
+                </HandoverFieldLabel>
+                <FormSelect
+                  showSearch
+                  optionFilterProp="label"
+                  allowClear={false}
+                  status={errors.preferredCountryCode ? "error" : undefined}
+                  prefix={
+                    <span className="text-icon">
+                      <HandoverGlyph icon={Globe02Icon} />
+                    </span>
+                  }
+                  placeholder="Select country"
+                  value={preferredCountryCode || undefined}
+                  options={countryOptions}
+                  onChange={(value) => {
+                    clearError("preferredCountryCode");
+                    setPreferredCountryCode(asSelectString(value));
+                  }}
+                />
+                {errors.preferredCountryCode ? (
+                  <InputError>{errors.preferredCountryCode}</InputError>
+                ) : null}
+              </label>
+              <label className="grid gap-1.5">
+                <HandoverFieldLabel>Preferred intake</HandoverFieldLabel>
+                <FormSelect
+                  showSearch
+                  optionFilterProp="label"
+                  allowClear
+                  status={errors.preferredIntakeCode ? "error" : undefined}
+                  prefix={
+                    <span className="text-icon">
+                      <HandoverGlyph icon={Calendar03Icon} />
+                    </span>
+                  }
+                  placeholder="Select intake"
+                  value={preferredIntakeCode || undefined}
+                  options={intakeOptions}
+                  onChange={(value) => {
+                    clearError("preferredIntakeCode");
+                    setPreferredIntakeCode(asSelectString(value));
+                  }}
+                />
+                {errors.preferredIntakeCode ? (
+                  <InputError>{errors.preferredIntakeCode}</InputError>
+                ) : null}
+              </label>
+            </div>
+          </HandoverSection>
+
+          <HandoverSection step={3} title="Handover notes">
+            <label className="grid gap-1.5">
+              <HandoverFieldLabel required>
+                Initial conversation summary
+              </HandoverFieldLabel>
+              <HandoverNoteField
+                icon={Message01Icon}
+                value={conversationSummary}
+                placeholder="Key discussion points, student goals, concerns, next steps..."
+                error={errors.conversationSummary}
+                onChange={(value) => {
+                  clearError("conversationSummary");
+                  setConversationSummary(value.slice(0, HANDOVER_NOTE_LIMIT));
+                }}
+              />
+            </label>
+            <label className="grid gap-1.5">
+              <HandoverFieldLabel optional>
+                Academic background
+              </HandoverFieldLabel>
+              <HandoverNoteField
+                icon={Mortarboard01Icon}
+                value={academicBackground}
+                placeholder="Degree, institution, result..."
+                error={errors.academicBackground}
+                onChange={(value) => {
+                  clearError("academicBackground");
+                  setAcademicBackground(value.slice(0, HANDOVER_NOTE_LIMIT));
+                }}
+              />
+            </label>
+          </HandoverSection>
         </div>
-        <label className="grid gap-1.5 text-sm">
-          <span>Academic background</span>
-          <FormTextArea
-            rows={2}
-            value={academicBackground}
-            placeholder="Degree, institution, result"
-            onChange={(event) => setAcademicBackground(event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1.5 text-sm">
-          <span>Initial conversation summary</span>
-          <FormTextArea
-            rows={2}
-            value={conversationSummary}
-            placeholder="What was discussed"
-            onChange={(event) => setConversationSummary(event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1.5 text-sm">
-          <span>Important concern</span>
-          <FormTextArea
-            rows={2}
-            value={importantConcern}
-            placeholder="Anything the counsellor should know first"
-            onChange={(event) => setImportantConcern(event.target.value)}
-          />
-        </label>
-        <div className="mt-2 flex justify-end gap-2">
-          <PrimaryButton
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            label="Cancel"
-          />
-          <PrimaryButton
-            type="button"
-            loading={saving}
-            disabled={!counsellorId}
-            onClick={() => void handleSubmit()}
-            label="Hand over"
-          />
-        </div>
+
+        <aside className="grid gap-3">
+          <section className="grid gap-3.5 rounded-2xl border border-[color-mix(in_srgb,var(--color-primary)_22%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-primary)_8%,var(--color-surface))] p-3.5">
+            <h3 className="m-0 flex items-center gap-2 text-[0.9rem] font-semibold text-text">
+              <span className="text-primary">
+                <HandoverGlyph icon={Analytics01Icon} />
+              </span>
+              Lead Summary
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="m-0 text-[0.72rem] text-text-muted">
+                  Profile completion
+                </p>
+                <p className="m-0 text-[1.05rem] font-semibold text-text">
+                  {completion}%
+                </p>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-chart-track">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${completion}%` }}
+                  />
+                </div>
+              </div>
+              <div>
+                <p className="m-0 text-[0.72rem] text-text-muted">Lead score</p>
+                <p className="m-0 text-[1.05rem] font-semibold text-text">
+                  {lead?.leadScore ?? 0}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="m-0 mb-1 text-[0.72rem] text-text-muted">
+                  Priority
+                </p>
+                {lead?.priority ? (
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-0.5 text-[0.75rem] font-medium ${priorityBadgeClass(lead.priority)}`}
+                  >
+                    {lead.priority}
+                  </span>
+                ) : (
+                  <span className="text-[0.86rem] font-medium text-text">
+                    —
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="m-0 mb-1 text-[0.72rem] text-text-muted">
+                  Qualification
+                </p>
+                {qualification ? (
+                  <span className="inline-flex rounded-full bg-[color-mix(in_srgb,var(--color-link)_14%,var(--color-surface))] px-2.5 py-0.5 text-[0.75rem] font-medium text-link">
+                    {qualification}
+                  </span>
+                ) : (
+                  <span className="text-[0.86rem] font-medium text-text">
+                    —
+                  </span>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section className="grid gap-3 rounded-2xl border border-border bg-surface p-3.5">
+            <h3 className="m-0 flex items-center gap-2 text-[0.9rem] font-semibold text-text">
+              <span className="text-text-muted">
+                <HandoverGlyph icon={UserIcon} />
+              </span>
+              Lead Details
+            </h3>
+            <dl className="m-0 grid gap-2.5">
+              <HandoverDetail label="Student Name" value={lead?.name} />
+              <HandoverDetail
+                label="Phone"
+                value={handoverPhone(lead?.phone, lead?.phoneCountryCode)}
+              />
+              <HandoverDetail label="Email" value={lead?.email} />
+              <HandoverDetail label="Country" value={lead?.country} />
+              <HandoverDetail
+                label="Created At"
+                value={handoverCreatedAt(lead?.createdAt)}
+              />
+            </dl>
+          </section>
+
+          <div className="rounded-2xl border border-[color-mix(in_srgb,var(--color-primary)_22%,var(--color-border))] bg-[color-mix(in_srgb,var(--color-primary)_8%,var(--color-surface))] p-3.5">
+            <p className="m-0 flex items-center gap-2 text-[0.9rem] font-semibold text-text">
+              <span className="text-primary">
+                <HandoverGlyph icon={Idea01Icon} />
+              </span>
+              After handover
+            </p>
+            <p className="m-0 mt-2 text-[0.8rem] leading-relaxed text-text-muted">
+              The counsellor will be able to view full lead details and the
+              complete conversation history in the lead profile.
+            </p>
+          </div>
+        </aside>
+      </div>
+
+      <div className="mt-5 flex justify-end gap-2">
+        <PrimaryButton
+          type="button"
+          variant="outline"
+          size="md"
+          onClick={onClose}
+          label="Cancel"
+        />
+        <PrimaryButton
+          type="button"
+          size="md"
+          loading={saving}
+          icon={<HandoverGlyph icon={UserSharingIcon} size={16} />}
+          onClick={() => void handleSubmit()}
+          label="Hand over"
+        />
       </div>
     </AntModal>
+  );
+}
+
+function HandoverDetail({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | null;
+}) {
+  const text = value?.trim();
+  return (
+    <div className="grid gap-0.5">
+      <dt className="text-[0.72rem] text-text-muted">{label}</dt>
+      <dd className="m-0 text-[0.86rem] font-medium wrap-break-word text-text">
+        {text && text !== "—" ? text : "—"}
+      </dd>
+    </div>
   );
 }
 

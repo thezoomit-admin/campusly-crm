@@ -12,7 +12,6 @@ import { toast } from "react-toastify";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Calendar03Icon,
-  CheckmarkCircle02Icon,
   MoreHorizontalIcon,
   Video01Icon,
 } from "@hugeicons/core-free-icons";
@@ -77,6 +76,7 @@ import type {
 } from "@/modules/follow-ups/types";
 import type { LeadDocumentItem } from "../types";
 import {
+  LEAD_MORE_TABS,
   LEAD_PRIMARY_TABS,
   isConvertedLeadStatus,
   parseLeadMoreTab,
@@ -182,8 +182,11 @@ export default function LeadDetailsPage() {
   }
 
   const rawTab = searchParams.get("tab");
-  const tab = parseLeadPrimaryTab(rawTab);
-  const moreTab = parseLeadMoreTab(searchParams.get("section"), rawTab);
+  const rawSection = searchParams.get("section");
+  const tab = parseLeadPrimaryTab(rawTab, rawSection);
+  const moreTab = parseLeadMoreTab(rawSection, rawTab);
+  const attachmentsOpen = tab === "more" && moreTab === "attachments";
+  const assignmentsOpen = tab === "more" && moreTab === "assignments";
 
   const syncWorkspaceTabs = useCallback(
     (nextTab: LeadPrimaryTabKey, nextMore: LeadMoreTabKey) => {
@@ -192,12 +195,8 @@ export default function LeadDetailsPage() {
           const params = new URLSearchParams(prev);
           if (nextTab === "overview") params.delete("tab");
           else params.set("tab", nextTab);
-          if (nextTab === "more") {
-            if (nextMore === "communications") params.delete("section");
-            else params.set("section", nextMore);
-          } else {
-            params.delete("section");
-          }
+          if (nextTab === "more") params.set("section", nextMore);
+          else params.delete("section");
           return params;
         },
         { replace: true },
@@ -296,7 +295,7 @@ export default function LeadDetailsPage() {
     });
   const { data: assignmentData, isFetching: assignmentsLoading } =
     useListLeadAssignmentsQuery(id, {
-      skip: !id || tab !== "assignments",
+      skip: !id || !assignmentsOpen,
     });
   const { data: followUpData, isFetching: followUpsLoading } =
     useListLeadFollowUpsQuery(id, {
@@ -350,18 +349,18 @@ export default function LeadDetailsPage() {
   const { data: documentsData, isFetching: documentsLoading } =
     useListLeadDocumentsQuery(
       { id: id || "", archived: showArchivedDocs },
-      { skip: !id || tab !== "attachments" },
+      { skip: !id || !attachmentsOpen },
     );
   const { data: checklistData } = useGetLeadDocumentChecklistQuery(id || "", {
-    skip: !id || tab !== "attachments" || showArchivedDocs,
+    skip: !id || !attachmentsOpen || showArchivedDocs,
   });
   const { data: documentCategoryData } = useListMasterDataOptionsQuery(
     { category: "DOCUMENT_CATEGORY" },
-    { skip: tab !== "attachments" },
+    { skip: !attachmentsOpen },
   );
   const { data: documentTypeData } = useListMasterDataOptionsQuery(
     { category: "DOCUMENT_TYPE" },
-    { skip: tab !== "attachments" },
+    { skip: !attachmentsOpen },
   );
   const documentCategories = useMemo(() => {
     const items = documentCategoryData?.items || [];
@@ -1227,12 +1226,11 @@ export default function LeadDetailsPage() {
   async function saveHandover(body: {
     counsellorId: string;
     note: {
-      studentRequirement?: string;
-      preferredCountryCode?: string;
+      studentRequirement: string;
+      preferredCountryCode: string;
       preferredIntakeCode?: string;
       academicBackground?: string;
-      conversationSummary?: string;
-      importantConcern?: string;
+      conversationSummary: string;
     };
   }) {
     if (!id || !canHandover) return;
@@ -1250,6 +1248,7 @@ export default function LeadDetailsPage() {
           "Unable to assign the lead to the selected Counsellor. Please try again.",
         ),
       );
+      throw error;
     }
   }
 
@@ -1340,34 +1339,64 @@ export default function LeadDetailsPage() {
   }
 
   const moreVisibleKeys = useMemo(() => {
-    const keys: LeadMoreTabKey[] = [];
-    if (canViewCommunications) keys.push("communications");
-    if (canViewWhatsApp) keys.push("whatsapp");
-    if (canViewEmail) keys.push("email");
-    if (canViewServices) keys.push("services");
-    if (canViewPayments) keys.push("payments");
-    return keys;
+    const allowed = new Set<LeadMoreTabKey>(["attachments", "assignments"]);
+    if (!lead || showFileDocumentsTab) allowed.add("file-documents");
+    if (canViewFollowUp) allowed.add("followups");
+    if (canViewCommunications) allowed.add("communications");
+    if (canViewWhatsApp) allowed.add("whatsapp");
+    if (canViewEmail) allowed.add("email");
+    if (canViewPayments) allowed.add("payments");
+    return LEAD_MORE_TABS.map((item) => item.key).filter((key) =>
+      allowed.has(key),
+    );
   }, [
+    lead,
+    showFileDocumentsTab,
+    canViewFollowUp,
     canViewCommunications,
     canViewWhatsApp,
     canViewEmail,
-    canViewServices,
     canViewPayments,
   ]);
 
   useEffect(() => {
-    if (tab === "followups" && !canViewFollowUp) {
+    if (tab === "services" && !canViewServices) {
       syncWorkspaceTabs("overview", moreTab);
       return;
     }
+    if (tab === "services" && rawTab !== "services") {
+      syncWorkspaceTabs("services", moreTab);
+      return;
+    }
+    if (tab === "more" && rawTab !== "more") {
+      syncWorkspaceTabs("more", moreTab);
+      return;
+    }
     if (tab === "more" && moreVisibleKeys.length === 0) {
-      syncWorkspaceTabs("overview", "communications");
+      syncWorkspaceTabs("overview", "attachments");
       return;
     }
     if (tab === "more" && !moreVisibleKeys.includes(moreTab)) {
-      syncWorkspaceTabs("more", moreVisibleKeys[0] || "communications");
+      syncWorkspaceTabs("more", moreVisibleKeys[0] || "attachments");
+      return;
     }
-  }, [tab, moreTab, canViewFollowUp, moreVisibleKeys, syncWorkspaceTabs]);
+    if (
+      tab === "more" &&
+      !rawSection &&
+      moreVisibleKeys[0] &&
+      moreTab !== moreVisibleKeys[0]
+    ) {
+      syncWorkspaceTabs("more", moreVisibleKeys[0]);
+    }
+  }, [
+    tab,
+    rawTab,
+    rawSection,
+    moreTab,
+    canViewServices,
+    moreVisibleKeys,
+    syncWorkspaceTabs,
+  ]);
 
   if (isError) {
     return (
@@ -1408,8 +1437,8 @@ export default function LeadDetailsPage() {
 
   return (
     <div
-      className={`grid min-w-0 max-w-full gap-3 overflow-x-hidden sm:gap-4 ${
-        showMobileStickyCtas ? "max-[960px]:pb-16" : ""
+      className={`grid min-w-0 max-w-full gap-3 overflow-x-hidden sm:gap-4 [&>*]:min-w-0 ${
+        showMobileStickyCtas ? "max-[960px]:pb-24" : ""
       }`}
     >
       <PageMeta
@@ -1459,6 +1488,14 @@ export default function LeadDetailsPage() {
             onReviewDuplicate={() => setDuplicateReviewOpen(true)}
             onOverridePriority={() => setPriorityOpen(true)}
             onAddNote={canAddActivity ? openNotes : undefined}
+            onChangeStatus={
+              canChangeStatus
+                ? () => {
+                    setStatusErrors({});
+                    setStatusOpen(true);
+                  }
+                : undefined
+            }
             onAddActivity={
               canAddActivity ? () => setActivityOpen(true) : undefined
             }
@@ -1488,9 +1525,8 @@ export default function LeadDetailsPage() {
             <div className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-0.5 scrollbar-none">
               {LEAD_PRIMARY_TABS.filter(
                 (item) =>
-                  (item.key !== "followups" || canViewFollowUp) &&
-                  (item.key !== "more" || moreVisibleKeys.length > 0) &&
-                  (item.key !== "file-documents" || showFileDocumentsTab),
+                  (item.key !== "services" || canViewServices) &&
+                  (item.key !== "more" || moreVisibleKeys.length > 0),
               ).map((item) => {
                 const active = tab === item.key;
                 return (
@@ -1503,7 +1539,14 @@ export default function LeadDetailsPage() {
                         ? "bg-section-tab-active-bg font-semibold text-section-tab-active-fg"
                         : "bg-section-tab-bg text-section-tab-fg hover:bg-section-tab-hover-bg"
                     }`}
-                    onClick={() => setTab(item.key)}
+                    onClick={() => {
+                      if (item.key === "more") {
+                        const first = moreVisibleKeys[0];
+                        if (first) syncWorkspaceTabs("more", first);
+                        return;
+                      }
+                      setTab(item.key);
+                    }}
                   >
                     {item.label}
                     {item.key === "more" ? (
@@ -1518,30 +1561,12 @@ export default function LeadDetailsPage() {
                 );
               })}
             </div>
-            <div className="flex shrink-0 flex-wrap items-center gap-2">
-              {canChangeStatus ? (
-                <PrimaryButton
-                  type="button"
-                  size="sm"
-                  variant="primary"
-                  className="max-[960px]:flex-1"
-                  icon={
-                    <HugeiconsIcon icon={CheckmarkCircle02Icon} size={15} />
-                  }
-                  onClick={() => {
-                    setStatusErrors({});
-                    setStatusOpen(true);
-                  }}
-                  label="Change Status"
-                />
-              ) : null}
-              {/* Desktop / tablet toolbar CTAs — mobile uses sticky shelf below */}
+            <div className="hidden shrink-0 flex-wrap items-center gap-2 min-[961px]:flex">
               {canFollowUp ? (
                 <PrimaryButton
                   type="button"
                   size="sm"
                   variant="primary"
-                  className="max-[960px]:hidden"
                   icon={<HugeiconsIcon icon={Calendar03Icon} size={15} />}
                   onClick={() => setFollowUpOpen(true)}
                   label="Add Follow-up"
@@ -1552,7 +1577,6 @@ export default function LeadDetailsPage() {
                   type="button"
                   size="sm"
                   variant="primary"
-                  className="max-[960px]:hidden"
                   icon={<HugeiconsIcon icon={Video01Icon} size={15} />}
                   onClick={openScheduleMeeting}
                   label="Add Meeting"
@@ -1586,48 +1610,12 @@ export default function LeadDetailsPage() {
                   onAdd={openNotes}
                 />
               ) : null}
-              {tab === "attachments" ? (
-                <LeadDocumentsPanel
-                  documents={documents}
-                  checklist={showArchivedDocs ? null : checklistData}
-                  loading={documentsLoading}
-                  canUpload={canUploadDocument}
-                  canDelete={canDeleteDocument}
-                  canVerify={canVerifyDocument}
-                  showArchived={showArchivedDocs}
-                  onToggleArchived={() =>
-                    setShowArchivedDocs((value) => !value)
-                  }
-                  onAdd={() => {
-                    setDefaultDocTypeCode(undefined);
-                    setDocumentOpen(true);
-                  }}
-                  onUploadMissing={(typeCode) => {
-                    setDefaultDocTypeCode(typeCode);
-                    setDocumentOpen(true);
-                  }}
-                  onView={(document) => {
-                    void openDocumentPreview(document);
-                  }}
-                  onVerify={(document) => setVerifyTarget(document)}
-                  onDelete={(document) => setDeleteTarget(document)}
-                  onCreateFollowUp={
-                    canFollowUp
-                      ? (_typeCode, name) => {
-                          setFollowUpOpen(true);
-                          toast.info(`Create a follow-up for missing: ${name}`);
-                        }
-                      : undefined
-                  }
-                />
-              ) : null}
-              {tab === "file-documents" ? (
-                <FileDocumentsPanel
+              {tab === "services" && canViewServices ? (
+                <LeadServicesPanel
                   leadId={lead.id}
-                  canUpload={canUploadDocument}
-                  canVerify={canVerifyDocument}
-                  canManage={canDeleteDocument}
-                  canDownload={canDownloadDocument}
+                  leadName={lead.name}
+                  leadCode={lead.code}
+                  canOffer={canOffer}
                 />
               ) : null}
               {tab === "activities" ? (
@@ -1648,32 +1636,80 @@ export default function LeadDetailsPage() {
                   }
                 />
               ) : null}
-              {tab === "assignments" ? (
-                <LeadAssignmentHistoryPanel
-                  assignmentHistory={assignmentHistory}
-                  loading={assignmentsLoading}
-                />
-              ) : null}
-              {tab === "followups" && canViewFollowUp ? (
-                <LeadFollowUpHistoryPanel
-                  items={followUps}
-                  loading={followUpsLoading}
-                  canCreate={canFollowUp}
-                  canEdit={canEditFollowUp}
-                  onCreate={() => setFollowUpOpen(true)}
-                  onComplete={(item) => openFollowUpActions(item, "complete")}
-                  onReschedule={(item) =>
-                    openFollowUpActions(item, "reschedule")
-                  }
-                  onCancel={(item) => openFollowUpActions(item, "cancel")}
-                />
-              ) : null}
               {tab === "more" && moreVisibleKeys.length > 0 ? (
                 <LeadMoreTabShell
                   active={moreTab}
                   onChange={setMoreTab}
                   visibleKeys={moreVisibleKeys}
                 >
+                  {moreTab === "attachments" ? (
+                    <LeadDocumentsPanel
+                      documents={documents}
+                      checklist={showArchivedDocs ? null : checklistData}
+                      loading={documentsLoading}
+                      canUpload={canUploadDocument}
+                      canDelete={canDeleteDocument}
+                      canVerify={canVerifyDocument}
+                      showArchived={showArchivedDocs}
+                      onToggleArchived={() =>
+                        setShowArchivedDocs((value) => !value)
+                      }
+                      onAdd={() => {
+                        setDefaultDocTypeCode(undefined);
+                        setDocumentOpen(true);
+                      }}
+                      onUploadMissing={(typeCode) => {
+                        setDefaultDocTypeCode(typeCode);
+                        setDocumentOpen(true);
+                      }}
+                      onView={(document) => {
+                        void openDocumentPreview(document);
+                      }}
+                      onVerify={(document) => setVerifyTarget(document)}
+                      onDelete={(document) => setDeleteTarget(document)}
+                      onCreateFollowUp={
+                        canFollowUp
+                          ? (_typeCode, name) => {
+                              setFollowUpOpen(true);
+                              toast.info(
+                                `Create a follow-up for missing: ${name}`,
+                              );
+                            }
+                          : undefined
+                      }
+                    />
+                  ) : null}
+                  {moreTab === "file-documents" && showFileDocumentsTab ? (
+                    <FileDocumentsPanel
+                      leadId={lead.id}
+                      canUpload={canUploadDocument}
+                      canVerify={canVerifyDocument}
+                      canManage={canDeleteDocument}
+                      canDownload={canDownloadDocument}
+                    />
+                  ) : null}
+                  {moreTab === "assignments" ? (
+                    <LeadAssignmentHistoryPanel
+                      assignmentHistory={assignmentHistory}
+                      loading={assignmentsLoading}
+                    />
+                  ) : null}
+                  {moreTab === "followups" && canViewFollowUp ? (
+                    <LeadFollowUpHistoryPanel
+                      items={followUps}
+                      loading={followUpsLoading}
+                      canCreate={canFollowUp}
+                      canEdit={canEditFollowUp}
+                      onCreate={() => setFollowUpOpen(true)}
+                      onComplete={(item) =>
+                        openFollowUpActions(item, "complete")
+                      }
+                      onReschedule={(item) =>
+                        openFollowUpActions(item, "reschedule")
+                      }
+                      onCancel={(item) => openFollowUpActions(item, "cancel")}
+                    />
+                  ) : null}
                   {moreTab === "communications" && canViewCommunications ? (
                     <LeadCommunicationsPanel
                       items={communications}
@@ -1690,14 +1726,6 @@ export default function LeadDetailsPage() {
                     <LeadEmailPanel
                       leadId={lead.id}
                       hasEmail={Boolean(lead.email)}
-                    />
-                  ) : null}
-                  {moreTab === "services" && canViewServices ? (
-                    <LeadServicesPanel
-                      leadId={lead.id}
-                      leadName={lead.name}
-                      leadCode={lead.code}
-                      canOffer={canOffer}
                     />
                   ) : null}
                   {moreTab === "payments" && canViewPayments ? (
@@ -1728,7 +1756,8 @@ export default function LeadDetailsPage() {
             <div
               className="fixed inset-x-0 z-40 hidden border-t border-[#e7eef5] bg-surface/95 px-3 py-2.5 shadow-[0_-8px_24px_rgba(22,50,79,0.08)] backdrop-blur-md max-[960px]:flex dark:border-border"
               style={{
-                bottom: "calc(3.75rem + env(safe-area-inset-bottom, 0px))",
+                bottom:
+                  "calc(3.75rem + 0.75rem + env(safe-area-inset-bottom, 0px))",
               }}
             >
               <div className="mx-auto flex w-full max-w-3xl gap-2 [&_.ant-btn]:min-h-11 [&_.ant-btn]:flex-1">

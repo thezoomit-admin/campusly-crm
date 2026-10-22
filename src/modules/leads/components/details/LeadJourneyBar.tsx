@@ -1,66 +1,78 @@
-import { useEffect, useState } from 'react'
-import { HugeiconsIcon } from '@hugeicons/react'
-import { Calendar03Icon, CheckmarkCircle02Icon, Clock01Icon } from '@hugeicons/core-free-icons'
-import type { LeadRecord } from '../../types'
+import { useEffect, useState } from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Calendar03Icon,
+  CheckmarkCircle02Icon,
+  Clock01Icon,
+} from "@hugeicons/core-free-icons";
+import type { LeadRecord } from "../../types";
 import {
   LEAD_JOURNEY_STAGES,
   followUpCountdownParts,
   journeyStageIndex,
   type FollowUpCountdownUrgency,
-} from '../../utils/leadDetails'
+} from "../../utils/leadDetails";
 import LeadUpcomingMeetingCard, {
   type UpcomingMeetingInfo,
-} from './LeadUpcomingMeetingCard'
+} from "./LeadUpcomingMeetingCard";
 
 function pad2(value: number) {
-  return String(value).padStart(2, '0')
+  return String(value).padStart(2, "0");
 }
 
 function formatFollowUpStamp(value?: string | null) {
-  if (!value) return ''
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return ''
-  const day = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-  const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-  return `${day} • ${time}`
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const day = date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const time = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${day} • ${time}`;
 }
 
 const COUNTDOWN_TONES: Record<
   FollowUpCountdownUrgency,
   {
-    card: string
-    iconWrap: string
-    iconColor: string
-    unitLabel: string
-    calendarColor: string
-    status: string
+    card: string;
+    iconWrap: string;
+    iconColor: string;
+    unitLabel: string;
+    calendarColor: string;
+    status: string;
   }
 > = {
   safe: {
-    card: 'border-[#d8f0e3] bg-[#f3fbf7] dark:border-[color-mix(in_srgb,var(--color-primary)_28%,transparent)] dark:bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]',
-    iconWrap: 'bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-primary',
-    iconColor: 'currentColor',
-    unitLabel: 'text-primary',
-    calendarColor: 'var(--color-primary)',
-    status: '',
+    card: "border-[#d8f0e3] bg-[#f3fbf7] dark:border-[color-mix(in_srgb,var(--color-primary)_28%,transparent)] dark:bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]",
+    iconWrap:
+      "bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-primary",
+    iconColor: "currentColor",
+    unitLabel: "text-primary",
+    calendarColor: "var(--color-primary)",
+    status: "",
   },
   soon: {
-    card: 'border-[#fed7aa] bg-[#fff7ed] dark:border-[color-mix(in_srgb,#f97316_35%,transparent)] dark:bg-[color-mix(in_srgb,#f97316_12%,transparent)]',
-    iconWrap: 'bg-[color-mix(in_srgb,#f97316_16%,transparent)] text-[#ea580c]',
-    iconColor: 'currentColor',
-    unitLabel: 'text-[#ea580c]',
-    calendarColor: '#ea580c',
-    status: 'text-[#c2410c]',
+    card: "border-[#fed7aa] bg-[#fff7ed] dark:border-[color-mix(in_srgb,#f97316_35%,transparent)] dark:bg-[color-mix(in_srgb,#f97316_12%,transparent)]",
+    iconWrap: "bg-[color-mix(in_srgb,#f97316_16%,transparent)] text-[#ea580c]",
+    iconColor: "currentColor",
+    unitLabel: "text-[#ea580c]",
+    calendarColor: "#ea580c",
+    status: "text-[#c2410c]",
   },
   overdue: {
-    card: 'border-[#fecdd3] bg-[#fff1f2] dark:border-[color-mix(in_srgb,#e11d48_35%,transparent)] dark:bg-[color-mix(in_srgb,#e11d48_12%,transparent)]',
-    iconWrap: 'bg-[color-mix(in_srgb,#e11d48_14%,transparent)] text-[#e11d48]',
-    iconColor: 'currentColor',
-    unitLabel: 'text-[#e11d48]',
-    calendarColor: '#e11d48',
-    status: 'text-[#e11d48]',
+    card: "border-[#fecdd3] bg-[#fff1f2] dark:border-[color-mix(in_srgb,#e11d48_35%,transparent)] dark:bg-[color-mix(in_srgb,#e11d48_12%,transparent)]",
+    iconWrap: "bg-[color-mix(in_srgb,#e11d48_14%,transparent)] text-[#e11d48]",
+    iconColor: "currentColor",
+    unitLabel: "text-[#e11d48]",
+    calendarColor: "#e11d48",
+    status: "text-[#e11d48]",
   },
-}
+};
 
 export default function LeadJourneyBar({
   lead,
@@ -69,23 +81,23 @@ export default function LeadJourneyBar({
   onRescheduleMeeting,
   onCancelMeeting,
 }: {
-  lead: LeadRecord
-  meeting?: UpcomingMeetingInfo | null
-  canEditMeeting?: boolean
-  onRescheduleMeeting?: () => void
-  onCancelMeeting?: () => void
+  lead: LeadRecord;
+  meeting?: UpcomingMeetingInfo | null;
+  canEditMeeting?: boolean;
+  onRescheduleMeeting?: () => void;
+  onCancelMeeting?: () => void;
 }) {
-  const currentIndex = journeyStageIndex(lead.statusCode, lead.status)
-  const [, setTick] = useState(0)
+  const currentIndex = journeyStageIndex(lead.statusCode, lead.status);
+  const [, setTick] = useState(0);
 
   useEffect(() => {
-    if (!lead.nextFollowUp?.dueAt) return
-    const id = window.setInterval(() => setTick((n) => n + 1), 1000)
-    return () => window.clearInterval(id)
-  }, [lead.nextFollowUp?.dueAt])
+    if (!lead.nextFollowUp?.dueAt) return;
+    const id = window.setInterval(() => setTick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [lead.nextFollowUp?.dueAt]);
 
-  const countdown = followUpCountdownParts(lead.nextFollowUp?.dueAt)
-  const tone = COUNTDOWN_TONES[countdown?.urgency ?? 'safe']
+  const countdown = followUpCountdownParts(lead.nextFollowUp?.dueAt);
+  const tone = COUNTDOWN_TONES[countdown?.urgency ?? "safe"];
 
   return (
     <section className="grid gap-3 rounded-2xl border border-[#e7eef5] bg-surface p-3 shadow-[0_10px_28px_rgba(22,50,79,0.035)] sm:p-4 xl:grid-cols-[minmax(0,1fr)_minmax(240px,300px)_minmax(240px,300px)] dark:border-border">
@@ -93,21 +105,24 @@ export default function LeadJourneyBar({
         <h3 className="mt-0 mb-2 text-[0.92rem] font-semibold text-[#1b3a57] dark:text-text-strong">
           Lead Journey
         </h3>
-        <div className="-mx-1 overflow-x-auto px-1 scrollbar-none">
-          <ol className="m-0 flex min-w-max list-none items-start gap-0 pt-3 pb-1 pl-0 sm:min-w-0 sm:pt-4">
+        <div className="sm:-mx-1 sm:overflow-x-auto sm:px-1 sm:scrollbar-none">
+          <ol className="m-0 flex list-none flex-wrap items-start justify-center gap-y-3.5 pt-3 pb-1 pl-0 sm:flex-nowrap sm:justify-between sm:gap-y-0 sm:pt-4">
             {LEAD_JOURNEY_STAGES.map((stage, index) => {
-              const done = currentIndex > index
-              const current = currentIndex === index
+              const done = currentIndex > index;
+              const current = currentIndex === index;
+              const breaksToNextRow = index === 3;
               return (
                 <li
                   key={stage.code}
-                  className="relative flex w-[4.5rem] flex-col items-center gap-1.5 px-0.5 sm:min-w-[72px] sm:w-auto sm:flex-1 sm:px-1"
+                  className="relative flex w-1/4 min-w-0 flex-col items-center gap-1.5 px-0.5 sm:w-auto sm:min-w-[72px] sm:flex-1 sm:px-1"
                 >
                   {index < LEAD_JOURNEY_STAGES.length - 1 ? (
                     <span
                       className={`absolute top-[13px] left-[calc(50%+14px)] right-[calc(-50%+14px)] h-0.5 ${
-                        done ? 'bg-primary' : 'bg-[#e6eef6] dark:bg-border-subtle'
-                      }`}
+                        done
+                          ? "bg-primary"
+                          : "bg-[#e6eef6] dark:bg-border-subtle"
+                      } ${breaksToNextRow ? "hidden sm:block" : ""}`}
                     />
                   ) : null}
                   <span className="relative z-[1] grid size-7 place-items-center">
@@ -120,14 +135,19 @@ export default function LeadJourneyBar({
                     <span
                       className={`relative grid size-7 place-items-center rounded-full text-[0.72rem] font-bold ${
                         done
-                          ? 'bg-primary text-on-primary'
+                          ? "bg-primary text-on-primary"
                           : current
-                            ? 'bg-primary text-on-primary'
-                            : 'border-2 border-[#d5dee8] bg-surface text-[#9aa6b2] dark:border-border'
+                            ? "bg-primary text-on-primary"
+                            : "border-2 border-[#d5dee8] bg-surface text-[#9aa6b2] dark:border-border"
                       }`}
                     >
                       {done ? (
-                        <HugeiconsIcon icon={CheckmarkCircle02Icon} size={16} color="currentColor" strokeWidth={2} />
+                        <HugeiconsIcon
+                          icon={CheckmarkCircle02Icon}
+                          size={16}
+                          color="currentColor"
+                          strokeWidth={2}
+                        />
                       ) : (
                         index + 1
                       )}
@@ -136,10 +156,10 @@ export default function LeadJourneyBar({
                   <span
                     className={`max-w-[72px] text-center text-[0.65rem] leading-tight sm:max-w-[88px] sm:text-[0.68rem] ${
                       current
-                        ? 'font-semibold text-primary'
+                        ? "font-semibold text-primary"
                         : done
-                          ? 'font-medium text-[#3d5166] dark:text-text'
-                          : 'text-[#9aa6b2]'
+                          ? "font-medium text-[#3d5166] dark:text-text"
+                          : "text-[#9aa6b2]"
                     }`}
                   >
                     {stage.label}
@@ -150,25 +170,38 @@ export default function LeadJourneyBar({
                     ) : null}
                   </span>
                 </li>
-              )
+              );
             })}
           </ol>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:contents">
-        <div className={`flex min-w-0 flex-col justify-center rounded-xl border px-2 py-2 transition-colors duration-300 sm:px-2.5 sm:py-1.5 ${tone.card}`}>
+        <div
+          className={`flex min-w-0 flex-col justify-center rounded-xl border px-2 py-2 transition-colors duration-300 sm:px-2.5 sm:py-1.5 ${tone.card}`}
+        >
           <p className="m-0 flex items-center gap-1 text-[0.7rem] font-semibold text-[#1b3a57] sm:text-[0.75rem] dark:text-text-strong">
-            <span className={`grid size-5 shrink-0 place-items-center rounded-full ${tone.iconWrap}`}>
-              <HugeiconsIcon icon={Clock01Icon} size={11} color={tone.iconColor} strokeWidth={1.8} />
+            <span
+              className={`grid size-5 shrink-0 place-items-center rounded-full ${tone.iconWrap}`}
+            >
+              <HugeiconsIcon
+                icon={Clock01Icon}
+                size={11}
+                color={tone.iconColor}
+                strokeWidth={1.8}
+              />
             </span>
             <span className="min-w-0 truncate">Next Follow Up</span>
-            {countdown?.urgency === 'overdue' ? (
-              <span className={`ml-auto shrink-0 text-[0.58rem] font-medium sm:text-[0.62rem] ${tone.status}`}>
+            {countdown?.urgency === "overdue" ? (
+              <span
+                className={`ml-auto shrink-0 text-[0.58rem] font-medium sm:text-[0.62rem] ${tone.status}`}
+              >
                 Overdue
               </span>
-            ) : countdown?.urgency === 'soon' ? (
-              <span className={`ml-auto shrink-0 text-[0.58rem] font-medium sm:text-[0.62rem] ${tone.status}`}>
+            ) : countdown?.urgency === "soon" ? (
+              <span
+                className={`ml-auto shrink-0 text-[0.58rem] font-medium sm:text-[0.62rem] ${tone.status}`}
+              >
                 Due soon
               </span>
             ) : null}
@@ -177,17 +210,40 @@ export default function LeadJourneyBar({
           {countdown ? (
             <>
               <div className="mt-1.5 flex items-start justify-center gap-0.5 text-center sm:mt-1 sm:gap-1">
-                <CountdownUnit value={pad2(countdown.days)} label="Days" labelClass={tone.unitLabel} />
+                <CountdownUnit
+                  value={pad2(countdown.days)}
+                  label="Days"
+                  labelClass={tone.unitLabel}
+                />
                 <CountdownSep />
-                <CountdownUnit value={pad2(countdown.hours)} label="Hours" labelClass={tone.unitLabel} />
+                <CountdownUnit
+                  value={pad2(countdown.hours)}
+                  label="Hours"
+                  labelClass={tone.unitLabel}
+                />
                 <CountdownSep />
-                <CountdownUnit value={pad2(countdown.mins)} label="Mins" labelClass={tone.unitLabel} />
+                <CountdownUnit
+                  value={pad2(countdown.mins)}
+                  label="Mins"
+                  labelClass={tone.unitLabel}
+                />
                 <CountdownSep />
-                <CountdownUnit value={pad2(countdown.secs)} label="Secs" labelClass={tone.unitLabel} />
+                <CountdownUnit
+                  value={pad2(countdown.secs)}
+                  label="Secs"
+                  labelClass={tone.unitLabel}
+                />
               </div>
               <p className="mt-1 mb-0 flex w-full items-center justify-center gap-1 text-[0.68rem] font-semibold text-[#3d5166] sm:text-[0.75rem] dark:text-text">
-                <HugeiconsIcon icon={Calendar03Icon} size={12} color={tone.calendarColor} strokeWidth={1.7} />
-                <span className="min-w-0 truncate">{formatFollowUpStamp(lead.nextFollowUp?.dueAt)}</span>
+                <HugeiconsIcon
+                  icon={Calendar03Icon}
+                  size={12}
+                  color={tone.calendarColor}
+                  strokeWidth={1.7}
+                />
+                <span className="min-w-0 truncate">
+                  {formatFollowUpStamp(lead.nextFollowUp?.dueAt)}
+                </span>
               </p>
             </>
           ) : (
@@ -206,32 +262,39 @@ export default function LeadJourneyBar({
         />
       </div>
     </section>
-  )
+  );
 }
 
 function CountdownSep() {
   return (
-    <span className="pt-0.5 text-[0.8rem] font-bold leading-none text-[#1b3a57] sm:text-[0.9rem] dark:text-text-strong" aria-hidden>
+    <span
+      className="pt-0.5 text-[0.8rem] font-bold leading-none text-[#1b3a57] sm:text-[0.9rem] dark:text-text-strong"
+      aria-hidden
+    >
       :
     </span>
-  )
+  );
 }
 
 function CountdownUnit({
   value,
   label,
-  labelClass = 'text-primary',
+  labelClass = "text-primary",
 }: {
-  value: string
-  label: string
-  labelClass?: string
+  value: string;
+  label: string;
+  labelClass?: string;
 }) {
   return (
-    <div className="min-w-[26px] sm:min-w-[30px]">
+    <div className="min-w-[24px] sm:min-w-[30px]">
       <p className="m-0 text-[0.88rem] font-bold tabular-nums leading-none tracking-tight text-[#1b3a57] sm:text-[1rem] dark:text-text-strong">
         {value}
       </p>
-      <p className={`m-0 mt-px text-[0.52rem] font-medium sm:text-[0.58rem] ${labelClass}`}>{label}</p>
+      <p
+        className={`m-0 mt-px text-[0.52rem] font-medium sm:text-[0.58rem] ${labelClass}`}
+      >
+        {label}
+      </p>
     </div>
-  )
+  );
 }
