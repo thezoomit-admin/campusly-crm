@@ -4,18 +4,18 @@ import type { MasterOption } from "../hooks/useLeadMasterOptions";
 export type LeadPrimaryTabKey =
   | "overview"
   | "notes"
-  | "attachments"
-  | "file-documents"
+  | "services"
   | "activities"
-  | "assignments"
-  | "followups"
   | "more";
 
 export type LeadMoreTabKey =
+  | "attachments"
+  | "file-documents"
+  | "assignments"
+  | "followups"
   | "communications"
   | "whatsapp"
   | "email"
-  | "services"
   | "payments";
 
 /** @deprecated Prefer LeadPrimaryTabKey / LeadMoreTabKey — kept for gradual migration */
@@ -26,20 +26,20 @@ export const LEAD_PRIMARY_TABS: Array<{
   label: string;
 }> = [
   { key: "overview", label: "Overview" },
-  { key: "activities", label: "Activities" },
   { key: "notes", label: "Notes" },
-  { key: "attachments", label: "Attachments" },
-  { key: "file-documents", label: "File Documents" },
-  { key: "assignments", label: "Assignment History" },
-  { key: "followups", label: "Follow-up History" },
+  { key: "services", label: "Service & Package" },
+  { key: "activities", label: "Activities" },
   { key: "more", label: "More" },
 ];
 
 export const LEAD_MORE_TABS: Array<{ key: LeadMoreTabKey; label: string }> = [
+  { key: "attachments", label: "Attachments" },
+  { key: "file-documents", label: "File Documents" },
+  { key: "assignments", label: "Assignment History" },
+  { key: "followups", label: "Follow-up History" },
   { key: "communications", label: "Communication" },
   { key: "whatsapp", label: "WhatsApp" },
   { key: "email", label: "Email" },
-  { key: "services", label: "Service & Package" },
   { key: "payments", label: "Payments" },
 ];
 
@@ -54,17 +54,33 @@ const LEGACY_PRIMARY_TAB_MAP: Record<string, LeadPrimaryTabKey> = {
   academic: "overview",
   counselling: "overview",
   study: "overview",
-  documents: "attachments",
-  history: "assignments",
+  documents: "more",
+  attachments: "more",
+  "file-documents": "more",
+  history: "more",
+  assignments: "more",
   timeline: "activities",
-  "follow-ups": "followups",
-  services: "more",
+  "follow-ups": "more",
+  followups: "more",
   payments: "more",
+};
+
+const LEGACY_MORE_TAB_MAP: Record<string, LeadMoreTabKey> = {
+  documents: "attachments",
+  attachments: "attachments",
+  "file-documents": "file-documents",
+  history: "assignments",
+  assignments: "assignments",
+  "follow-ups": "followups",
+  followups: "followups",
+  payments: "payments",
 };
 
 export function parseLeadPrimaryTab(
   value: string | null | undefined,
+  section?: string | null,
 ): LeadPrimaryTabKey {
+  if (value === "more" && section === "services") return "services";
   if (!value) return "overview";
   if (LEAD_PRIMARY_TAB_KEYS.has(value)) return value as LeadPrimaryTabKey;
   if (value in LEGACY_PRIMARY_TAB_MAP) return LEGACY_PRIMARY_TAB_MAP[value];
@@ -75,10 +91,11 @@ export function parseLeadMoreTab(
   value: string | null | undefined,
   rawPrimaryTab?: string | null,
 ): LeadMoreTabKey {
-  if (rawPrimaryTab === "services" || value === "services") return "services";
-  if (rawPrimaryTab === "payments" || value === "payments") return "payments";
+  if (rawPrimaryTab && rawPrimaryTab in LEGACY_MORE_TAB_MAP) {
+    return LEGACY_MORE_TAB_MAP[rawPrimaryTab];
+  }
   if (value && LEAD_MORE_TAB_KEYS.has(value)) return value as LeadMoreTabKey;
-  return "communications";
+  return "attachments";
 }
 
 /** @deprecated Use LEAD_PRIMARY_TABS + LEAD_MORE_TABS */

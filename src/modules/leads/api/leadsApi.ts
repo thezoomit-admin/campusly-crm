@@ -538,13 +538,12 @@ const leadsApi = baseApi.injectEndpoints({
         id: string;
         body: {
           counsellorId: string;
-          note?: {
-            studentRequirement?: string;
-            preferredCountryCode?: string;
+          note: {
+            studentRequirement: string;
+            preferredCountryCode: string;
             preferredIntakeCode?: string;
             academicBackground?: string;
-            conversationSummary?: string;
-            importantConcern?: string;
+            conversationSummary: string;
           };
         };
       }
