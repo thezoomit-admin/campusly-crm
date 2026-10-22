@@ -108,6 +108,9 @@ export type FollowUpFormValues = {
   notes?: string
   nextAction: string
   reminder: string
+  ownerId?: string
+  source?: string
+  sourceReason?: string
 }
 
 export type CompleteFollowUpValues = {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Input, Modal, Tag } from "antd";
+import { Input, Modal, Spin, Tag, Tooltip } from "antd";
 import { toast } from "react-toastify";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -10,6 +10,7 @@ import {
   Cancel01Icon,
   CheckmarkCircle02Icon,
   Clock01Icon,
+  CloudUploadIcon,
   Delete02Icon,
   File01Icon,
   Mail01Icon,
@@ -17,6 +18,7 @@ import {
   UserIcon,
   ViewIcon,
 } from "@hugeicons/core-free-icons";
+import { DataTable } from "@/components/common/Tables";
 import { PrimaryButton } from "@/components/ui";
 import { getApiError } from "@/lib/api";
 import { statusClass } from "@/lib/statusClass";
@@ -41,7 +43,6 @@ import type { PaymentRecord } from "@/modules/payments/types";
 import { formatMoney } from "@/modules/packages/utils/offerCalculator";
 import type {
   LeadAssignmentHistoryItem,
-  LeadDocumentChecklist,
   LeadDocumentItem,
   LeadHandoverNote,
   LeadNoteItem,
@@ -204,9 +205,37 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function DocumentActionButton({
+  label,
+  danger,
+  icon,
+  onClick,
+}: {
+  label: string;
+  danger?: boolean;
+  icon: typeof ViewIcon;
+  onClick: () => void;
+}) {
+  return (
+    <Tooltip title={label}>
+      <button
+        type="button"
+        aria-label={label}
+        onClick={onClick}
+        className={`inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg border transition-colors ${
+          danger
+            ? "border-transparent bg-[#ff4d4f] text-white hover:bg-[#ff7875]"
+            : "border-[#C7CACF] bg-surface text-[#4b5563] hover:border-primary hover:text-primary"
+        }`}
+      >
+        <HugeiconsIcon icon={icon} size={15} color="currentColor" strokeWidth={1.8} />
+      </button>
+    </Tooltip>
+  );
+}
+
 export function LeadDocumentsPanel({
   documents,
-  checklist,
   loading,
   canUpload,
   canDelete,
@@ -218,10 +247,8 @@ export function LeadDocumentsPanel({
   onView,
   onVerify,
   onDelete,
-  onCreateFollowUp,
 }: {
   documents: LeadDocumentItem[];
-  checklist?: LeadDocumentChecklist | null;
   loading?: boolean;
   canUpload: boolean;
   canDelete: boolean;
@@ -233,62 +260,131 @@ export function LeadDocumentsPanel({
   onView: (document: LeadDocumentItem) => void;
   onVerify: (document: LeadDocumentItem) => void;
   onDelete: (document: LeadDocumentItem) => void;
-  onCreateFollowUp?: (typeCode: string, name: string) => void;
 }) {
   const { page, pageSize, setPage, setPageSize, pageItems, total } =
     useLeadListPagination(documents);
 
+  const columns = useMemo(
+    () => [
+      {
+        title: "Category",
+        key: "category",
+        width: 180,
+        render: (_: unknown, doc: LeadDocumentItem) => (
+          <div className="min-w-0">
+            <p className="m-0 truncate font-semibold text-[#17324f] dark:text-text-strong">
+              {doc.typeCode || doc.categoryCode || "Document"}
+            </p>
+            <p className="m-0 mt-0.5 truncate text-[0.75rem] text-[#8b97a8]">
+              {doc.categoryCode}
+              {doc.versionNumber ? ` · v${doc.versionNumber}` : ""}
+              {doc.isSensitive ? " · Sensitive" : ""}
+            </p>
+          </div>
+        ),
+      },
+      {
+        title: "Document",
+        key: "document",
+        width: 220,
+        ellipsis: true,
+        onCell: () => ({
+          style: { maxWidth: 220 },
+        }),
+        render: (_: unknown, doc: LeadDocumentItem) => {
+          const title = doc.name || doc.fileName;
+          const details = [
+            doc.fileName,
+            formatFileSize(doc.fileSize),
+            doc.uploadedBy?.name,
+            formatDisplayDateTime(doc.createdAt),
+          ]
+            .filter(Boolean)
+            .join(" · ");
+          return (
+            <div className="min-w-0 overflow-hidden">
+              <p
+                className="m-0 truncate font-medium text-[#17324f] dark:text-text-strong"
+                title={title}
+              >
+                {title}
+              </p>
+              <p
+                className="m-0 mt-0.5 truncate text-[0.75rem] text-[#8b97a8]"
+                title={details}
+              >
+                {details}
+              </p>
+            </div>
+          );
+        },
+      },
+      {
+        title: "Status",
+        key: "status",
+        width: 120,
+        render: (_: unknown, doc: LeadDocumentItem) => (
+          <Tag className={`m-0 ${statusClass(doc.statusLabel || doc.status || "Pending")}`}>
+            {doc.statusLabel || doc.status || "Pending"}
+          </Tag>
+        ),
+      },
+      {
+        title: "Actions",
+        key: "actions",
+        width: 156,
+        align: "right" as const,
+        render: (_: unknown, doc: LeadDocumentItem) => (
+          <div className="flex items-center justify-end gap-1.5">
+            {doc.canPreview !== false ? (
+              <DocumentActionButton
+                label="View"
+                icon={ViewIcon}
+                onClick={() => onView(doc)}
+              />
+            ) : null}
+            {canVerify && doc.status === "PENDING" && !showArchived ? (
+              <DocumentActionButton
+                label="Review"
+                icon={CheckmarkCircle02Icon}
+                onClick={() => onVerify(doc)}
+              />
+            ) : null}
+            {canUpload &&
+            (doc.status === "REJECTED" || doc.status === "EXPIRED") &&
+            !showArchived ? (
+              <DocumentActionButton
+                label="Upload New Version"
+                icon={CloudUploadIcon}
+                onClick={() => onUploadMissing?.(doc.typeCode)}
+              />
+            ) : null}
+            {canDelete && !showArchived ? (
+              <DocumentActionButton
+                label="Archive"
+                danger
+                icon={Delete02Icon}
+                onClick={() => onDelete(doc)}
+              />
+            ) : null}
+          </div>
+        ),
+      },
+    ],
+    [
+      canDelete,
+      canUpload,
+      canVerify,
+      onDelete,
+      onUploadMissing,
+      onVerify,
+      onView,
+      showArchived,
+    ],
+  );
+
   return (
     <div className="grid gap-4">
-      {checklist ? (
-        <LeadSectionCard title="Document Checklist">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <p className="m-0 text-[0.84rem] text-[#8b97a8]">
-              Completion: {checklist.completionPercent}% ({checklist.completedRequired}/
-              {checklist.totalRequired})
-            </p>
-            <div className="h-2 w-40 overflow-hidden rounded-full bg-[#e8eef5]">
-              <div
-                className="h-full rounded-full bg-primary"
-                style={{ width: `${checklist.completionPercent}%` }}
-              />
-            </div>
-          </div>
-          <ul className="m-0 grid list-none gap-2 p-0">
-            {checklist.items.map((item) => (
-              <li
-                key={item.typeCode}
-                className="flex flex-wrap items-center gap-2 rounded-xl border border-[#e7eef5] px-3 py-2.5 dark:border-border"
-              >
-                <span className="text-[0.95rem]">{item.completed ? "☑" : "☐"}</span>
-                <span className="min-w-0 flex-1 text-[0.9rem] font-medium text-[#17324f] dark:text-text-strong">
-                  {item.name}
-                </span>
-                <Tag className="m-0">{item.checklistStatus}</Tag>
-                {item.checklistStatus === "Missing" && canUpload ? (
-                  <PrimaryButton
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    label="Upload"
-                    onClick={() => onUploadMissing?.(item.typeCode)}
-                  />
-                ) : null}
-                {item.checklistStatus === "Missing" && onCreateFollowUp ? (
-                  <PrimaryButton
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    label="Create Follow-up"
-                    onClick={() => onCreateFollowUp(item.typeCode, item.name)}
-                  />
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </LeadSectionCard>
-      ) : null}
-
       <LeadSectionCard
         title="Documents"
         extra={
@@ -322,7 +418,9 @@ export function LeadDocumentsPanel({
         }
       >
         {loading ? (
-          <p className="m-0 text-[0.88rem] text-[#8b97a8]">Loading documents…</p>
+          <div className="grid min-h-[160px] place-items-center py-8">
+            <Spin />
+          </div>
         ) : documents.length === 0 ? (
           <div className="grid justify-items-center gap-2 rounded-xl border border-dashed border-[#dbe4ee] bg-[#f8fafc] px-4 py-10 text-center dark:border-border dark:bg-transparent">
             <span className="grid size-12 place-items-center rounded-full bg-[#eef3f8] text-[#8b97a8]">
@@ -343,107 +441,13 @@ export function LeadDocumentsPanel({
           </div>
         ) : (
           <>
-            <div className="mb-2 hidden grid-cols-[1.1fr_1.4fr_0.8fr_auto] gap-3 px-1 text-[0.75rem] font-semibold uppercase tracking-wide text-[#8b97a8] md:grid">
-              <span>Category</span>
-              <span>Document</span>
-              <span>Status</span>
-              <span />
-            </div>
-            <ul className="m-0 grid list-none gap-2 p-0">
-              {pageItems.map((doc) => (
-                <li
-                  key={doc.id}
-                  className="grid items-center gap-3 rounded-xl border border-[#e7eef5] bg-[#f8fafc] px-3.5 py-3 dark:border-border dark:bg-transparent md:grid-cols-[1.1fr_1.4fr_0.8fr_auto]"
-                >
-                  <div className="min-w-0">
-                    <p className="m-0 truncate text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
-                      {doc.typeCode || doc.categoryCode || "Document"}
-                    </p>
-                    <p className="m-0 mt-0.5 text-[0.75rem] text-[#8b97a8]">
-                      {doc.categoryCode}
-                      {doc.versionNumber ? ` · v${doc.versionNumber}` : ""}
-                      {doc.isSensitive ? " · Sensitive" : ""}
-                    </p>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="m-0 truncate text-[0.9rem] font-medium text-[#17324f] dark:text-text-strong">
-                      {doc.name || doc.fileName}
-                    </p>
-                    <p className="m-0 mt-0.5 truncate text-[0.75rem] text-[#8b97a8]">
-                      {doc.fileName}
-                      {` · ${formatFileSize(doc.fileSize)}`}
-                      {doc.uploadedBy?.name
-                        ? ` · ${doc.uploadedBy.name}`
-                        : ""}
-                      {` · ${formatDisplayDateTime(doc.createdAt)}`}
-                    </p>
-                  </div>
-                  <div>
-                    <Tag className={`m-0 ${statusClass(doc.statusLabel || doc.status || "Pending")}`}>
-                      {doc.statusLabel || doc.status || "Pending"}
-                    </Tag>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-1.5 justify-self-end">
-                    {doc.canPreview !== false ? (
-                      <PrimaryButton
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="!inline-flex !h-8 !w-8 !min-w-8 !items-center !justify-center !rounded-lg !border-border !bg-surface !p-0 !text-primary hover:!border-primary hover:!text-primary"
-                        aria-label={`View ${doc.fileName}`}
-                        onClick={() => onView(doc)}
-                        icon={
-                          <HugeiconsIcon
-                            icon={ViewIcon}
-                            size={15}
-                            color="currentColor"
-                            strokeWidth={1.8}
-                          />
-                        }
-                      />
-                    ) : null}
-                    {canVerify && doc.status === "PENDING" && !showArchived ? (
-                      <PrimaryButton
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        label="Review"
-                        onClick={() => onVerify(doc)}
-                      />
-                    ) : null}
-                    {canUpload &&
-                    (doc.status === "REJECTED" || doc.status === "EXPIRED") &&
-                    !showArchived ? (
-                      <PrimaryButton
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        label="Upload New Version"
-                        onClick={() => onUploadMissing?.(doc.typeCode)}
-                      />
-                    ) : null}
-                    {canDelete && !showArchived ? (
-                      <PrimaryButton
-                        type="button"
-                        variant="danger"
-                        size="sm"
-                        className="!inline-flex !h-8 !w-8 !min-w-8 !items-center !justify-center !rounded-lg !p-0"
-                        aria-label={`Archive ${doc.fileName}`}
-                        onClick={() => onDelete(doc)}
-                        icon={
-                          <HugeiconsIcon
-                            icon={Delete02Icon}
-                            size={15}
-                            color="currentColor"
-                            strokeWidth={1.8}
-                          />
-                        }
-                      />
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <DataTable
+              data={pageItems}
+              columns={columns}
+              rowKey="id"
+              showRowNumber={false}
+              scrollX={false}
+            />
             <LeadListPagination
               page={page}
               pageSize={pageSize}
