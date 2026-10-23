@@ -1,14 +1,12 @@
 import { Button } from 'antd'
 import { useSearchParams } from 'react-router-dom'
 import { EmployeePerformanceDetailPage, EmployeePerformancePage } from '@/modules/performance'
-import type { MetricRow, ReportTabId } from '../types'
+import type { MetricRow, ReportOverviewData, ReportTabId } from '../types'
 import {
   CONVERSION_TREND,
-  EMPLOYEE_PERFORMANCE,
   FUNNEL_STAGES,
   LEAD_SOURCES,
   REPORT_METRICS,
-  TOP_COUNSELLORS,
 } from '../data/mockAnalytics'
 import ReportOverview from './ReportOverview'
 import { ConversionTrendChart, LeadFunnelChart, LeadsBySourceChart } from './ReportCharts'
@@ -17,6 +15,10 @@ const card = 'rounded-2xl border border-border bg-surface p-4'
 
 type ReportTabPanelProps = {
   tabId: ReportTabId
+  overview?: ReportOverviewData
+  overviewLoading: boolean
+  overviewError?: string
+  onRetryOverview: () => void
   onDrillDown: (metric: string) => void
 }
 
@@ -70,12 +72,21 @@ function MetricsGrid({
   )
 }
 
-export default function ReportTabPanel({ tabId, onDrillDown }: ReportTabPanelProps) {
+export default function ReportTabPanel({
+  tabId,
+  overview,
+  overviewLoading,
+  overviewError,
+  onRetryOverview,
+  onDrillDown,
+}: ReportTabPanelProps) {
   if (tabId === 'overview') {
     return (
       <ReportOverview
-        topCounsellors={TOP_COUNSELLORS}
-        employeePerformance={EMPLOYEE_PERFORMANCE}
+        data={overview}
+        isLoading={overviewLoading}
+        errorMessage={overviewError}
+        onRetry={onRetryOverview}
         onDrillDown={onDrillDown}
       />
     )

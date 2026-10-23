@@ -115,6 +115,7 @@ export const RECENT_REPORTS: RecentReport[] = [
     generatedOn: 'Apr 30, 2025 6:12 PM',
     createdBy: 'Admin',
     format: 'PDF',
+    tabId: 'lead-conversion',
   },
   {
     id: 'r2',
@@ -123,6 +124,7 @@ export const RECENT_REPORTS: RecentReport[] = [
     generatedOn: 'Apr 28, 2025 9:05 AM',
     createdBy: 'Finance Manager',
     format: 'Excel',
+    tabId: 'payment',
   },
   {
     id: 'r3',
@@ -131,6 +133,7 @@ export const RECENT_REPORTS: RecentReport[] = [
     generatedOn: 'Apr 27, 2025 4:40 PM',
     createdBy: 'HR Manager',
     format: 'CSV',
+    tabId: 'employee-performance',
   },
   {
     id: 'r4',
@@ -139,6 +142,7 @@ export const RECENT_REPORTS: RecentReport[] = [
     generatedOn: 'Apr 26, 2025 11:20 AM',
     createdBy: 'Ops Lead',
     format: 'PDF',
+    tabId: 'document',
   },
 ]
 

@@ -6,14 +6,16 @@ import { useOutletContext, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { PageHeader } from "@/components/common/Navigation";
 import { PageMeta } from "@/components/common/Meta";
+import { getApiError } from "@/lib/api";
 import { hasPermission } from "@/lib/access";
 import { adminPage, mdTab, mdTabActive } from "@/styles/admin";
 import type { AuthSession } from "@/types";
 import ReportFilterDrawer from "../components/ReportFilterDrawer";
 import ReportTabPanel from "../components/ReportTabPanel";
 import RecentReportsTable from "../components/RecentReportsTable";
+import { useGetReportOverviewQuery } from "../api/reportsApi";
 import {
-  RECENT_REPORTS,
+  FILTER_OPTIONS,
   REPORT_TABS,
   SAVED_REPORTS,
 } from "../data/mockAnalytics";
@@ -40,7 +42,7 @@ function countActiveReportFilters(filters: ReportFiltersState) {
   let count = 0;
   if (filters.datePreset !== "this_month") count += 1;
   if (filters.employeeId !== "all") count += 1;
-  if (filters.employeeScope !== "employee") count += 1;
+  if (filters.employeeScope !== "employee" && filters.employeeId !== "all") count += 1;
   if (filters.country !== "all") count += 1;
   if (filters.leadSource !== "all") count += 1;
   if (filters.service !== "all") count += 1;
@@ -79,6 +81,46 @@ export default function ReportsPage() {
     () => countActiveReportFilters(filters),
     [filters],
   );
+
+  const overviewParams = useMemo(
+    () => ({
+      datePreset: filters.datePreset,
+      customFrom:
+        filters.datePreset === "custom" ? filters.customFrom || undefined : undefined,
+      customTo:
+        filters.datePreset === "custom" ? filters.customTo || undefined : undefined,
+      employeeId: filters.employeeId !== "all" ? filters.employeeId : undefined,
+      employeeScope: filters.employeeScope,
+      country: filters.country !== "all" ? filters.country : undefined,
+      leadSource: filters.leadSource !== "all" ? filters.leadSource : undefined,
+      service: filters.service !== "all" ? filters.service : undefined,
+      fileStatus: filters.fileStatus !== "all" ? filters.fileStatus : undefined,
+      paymentStatus:
+        filters.paymentStatus !== "all" ? filters.paymentStatus : undefined,
+    }),
+    [filters],
+  );
+
+  const overviewQuery = useGetReportOverviewQuery(overviewParams, {
+    skip: !canViewReports,
+  });
+
+  const filterOptions = useMemo(() => {
+    const live = overviewQuery.data?.options;
+    if (!live) return FILTER_OPTIONS;
+    const withAll = (
+      label: string,
+      items: Array<{ value: string; label: string }>,
+    ) => [{ value: "all", label }, ...items.filter((item) => item.value !== "all")];
+    return {
+      employees: withAll("All Employees", live.employees),
+      countries: withAll("All Countries", live.countries),
+      leadSources: withAll("All Sources", live.leadSources),
+      services: withAll("All Services", live.services),
+      fileStatuses: withAll("All File Statuses", live.fileStatuses),
+      paymentStatuses: withAll("All Payment Statuses", live.paymentStatuses),
+    };
+  }, [overviewQuery.data?.options]);
 
   const changeTab = (tabId: ReportTabId) => {
     setActiveTab(tabId);
@@ -183,6 +225,7 @@ export default function ReportsPage() {
               open={filterOpen}
               filters={filters}
               savedReports={SAVED_REPORTS}
+              options={filterOptions}
               activeCount={activeFilterCount}
               onOpen={() => setFilterOpen(true)}
               onClose={() => setFilterOpen(false)}
@@ -213,11 +256,25 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid min-w-0 gap-3">
-        <ReportTabPanel tabId={activeTab} onDrillDown={handleDrillDown} />
+        <ReportTabPanel
+          tabId={activeTab}
+          overview={overviewQuery.data}
+          overviewLoading={overviewQuery.isLoading}
+          overviewError={
+            overviewQuery.isError
+              ? getApiError(overviewQuery.error, "Unable to load the overview. Please try again.")
+              : undefined
+          }
+          onRetryOverview={() => {
+            void overviewQuery.refetch();
+          }}
+          onDrillDown={handleDrillDown}
+        />
         {activeTab === "overview" ? (
           <RecentReportsTable
-            rows={RECENT_REPORTS}
-            onView={(report) => toast.info(`Opening ${report.name}`)}
+            rows={overviewQuery.data?.recentReports ?? []}
+            isLoading={overviewQuery.isLoading && !overviewQuery.data}
+            onView={(report) => changeTab(report.tabId)}
             onExport={(report, format) => {
               if (!canExport) {
                 toast.error("You are not authorized to view this report.");

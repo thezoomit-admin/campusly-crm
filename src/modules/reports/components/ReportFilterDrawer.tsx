@@ -7,6 +7,8 @@ import { PrimaryButton } from '@/components/ui'
 import type { DatePreset, EmployeeScope, ReportFiltersState, ReportTabId, SavedReport } from '../types'
 import { FILTER_OPTIONS } from '../data/mockAnalytics'
 
+type FilterChoices = typeof FILTER_OPTIONS
+
 const { RangePicker } = DatePicker
 
 const DATE_PRESETS: Array<{ id: DatePreset; label: string }> = [
@@ -25,6 +27,7 @@ type ReportFilterDrawerProps = {
   open: boolean
   filters: ReportFiltersState
   savedReports: SavedReport[]
+  options?: FilterChoices
   activeCount?: number
   onOpen: () => void
   onClose: () => void
@@ -43,6 +46,7 @@ export default function ReportFilterDrawer({
   open,
   filters,
   savedReports,
+  options,
   activeCount = 0,
   onOpen,
   onClose,
@@ -72,6 +76,7 @@ export default function ReportFilterDrawer({
     filters.customFrom && filters.customTo
       ? [dayjs(filters.customFrom), dayjs(filters.customTo)]
       : null
+  const choices = options ?? FILTER_OPTIONS
 
   return (
     <>
@@ -174,8 +179,10 @@ export default function ReportFilterDrawer({
                   <span className="text-[0.78rem] font-semibold text-text-muted">Employee</span>
                   <Select
                     className="w-full"
+                    showSearch
+                    optionFilterProp="label"
                     value={filters.employeeId}
-                    options={FILTER_OPTIONS.employees}
+                    options={choices.employees}
                     onChange={(value) => onChange({ employeeId: value })}
                   />
                   <div className="flex gap-1.5">
@@ -199,17 +206,19 @@ export default function ReportFilterDrawer({
 
                 {(
                   [
-                    ['country', 'Country', FILTER_OPTIONS.countries],
-                    ['leadSource', 'Lead Source', FILTER_OPTIONS.leadSources],
-                    ['service', 'Service', FILTER_OPTIONS.services],
-                    ['fileStatus', 'File Status', FILTER_OPTIONS.fileStatuses],
-                    ['paymentStatus', 'Payment Status', FILTER_OPTIONS.paymentStatuses],
+                    ['country', 'Country', choices.countries],
+                    ['leadSource', 'Lead Source', choices.leadSources],
+                    ['service', 'Service', choices.services],
+                    ['fileStatus', 'File Status', choices.fileStatuses],
+                    ['paymentStatus', 'Payment Status', choices.paymentStatuses],
                   ] as const
                 ).map(([key, label, options]) => (
                   <div key={key} className="grid gap-1.5">
                     <span className="text-[0.78rem] font-semibold text-text-muted">{label}</span>
                     <Select
                       className="w-full"
+                      showSearch
+                      optionFilterProp="label"
                       value={filters[key]}
                       options={options}
                       onChange={(value) => onChange({ [key]: value })}
