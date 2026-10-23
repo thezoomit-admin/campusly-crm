@@ -145,7 +145,8 @@ export function formToPayload(form: LeadFormState, extra?: Record<string, unknow
     resultCgpa: emptyToNull(form.resultCgpa),
     studyGapYears: emptyToNull(form.studyGapYears),
     englishTestCode: emptyToNull(form.englishTestCode),
-    testStatusCode: emptyToNull(form.testStatusCode),
+    testStatusCode:
+      form.englishTestCode === 'NONE' ? null : emptyToNull(form.testStatusCode),
     overallScore: emptyToNull(form.overallScore),
     testDate: emptyToNull(form.testDate),
     listening: emptyToNull(form.listening),

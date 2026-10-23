@@ -46,7 +46,9 @@ export default function LeadOverviewPanels({
     (lead.previousVisaRefusal ? "Previous refusal" : "");
   const languageSummary = [
     optionLabel(options.englishTest, lead.englishTestCode),
-    optionLabel(options.testStatus, lead.testStatusCode),
+    lead.englishTestCode === "NONE"
+      ? ""
+      : optionLabel(options.testStatus, lead.testStatusCode),
   ]
     .filter(Boolean)
     .join(" · ");
@@ -240,11 +242,13 @@ export function LeadAcademicPanel({
             label="English Test"
             value={optionLabel(options.englishTest, lead.englishTestCode)}
           />
-          <LeadInfoField
-            icon={CheckmarkCircle02Icon}
-            label="Test Status"
-            value={optionLabel(options.testStatus, lead.testStatusCode)}
-          />
+          {lead.englishTestCode === "NONE" ? null : (
+            <LeadInfoField
+              icon={CheckmarkCircle02Icon}
+              label="Test Status"
+              value={optionLabel(options.testStatus, lead.testStatusCode)}
+            />
+          )}
           <LeadInfoField
             icon={StarIcon}
             label="Overall Score"
