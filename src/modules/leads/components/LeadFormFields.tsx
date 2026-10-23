@@ -153,7 +153,8 @@ export default function LeadFormFields({
     value: item.value,
     label: item.name || item.label,
   }))
-  const showEnglishDetail = form.testStatusCode === 'TAKEN'
+  const showTestStatus = form.englishTestCode !== 'NONE'
+  const showEnglishDetail = showTestStatus && form.testStatusCode === 'TAKEN'
   const showPurposeOther = form.studyPurposeCode === 'OTHER'
   const showVisaApp = form.previousVisaApplication === 'true'
   const showRefusal = form.previousVisaRefusal === 'true'
@@ -425,18 +426,24 @@ export default function LeadFormFields({
             placeholder="Select test"
             value={form.englishTestCode || undefined}
             options={options.englishTest}
-            onChange={(value) => onChange('englishTestCode', asSelectString(value))}
+            onChange={(value) => {
+              const next = asSelectString(value)
+              onChange('englishTestCode', next)
+              if (next === 'NONE' && form.testStatusCode) onChange('testStatusCode', '')
+            }}
           />
         </Field>
-        <Field id="testStatusCode" label="Test Status">
-          <FormSelect
-            id="testStatusCode"
-            placeholder="Select status"
-            value={form.testStatusCode || undefined}
-            options={options.testStatus}
-            onChange={(value) => onChange('testStatusCode', asSelectString(value))}
-          />
-        </Field>
+        {showTestStatus ? (
+          <Field id="testStatusCode" label="Test Status">
+            <FormSelect
+              id="testStatusCode"
+              placeholder="Select status"
+              value={form.testStatusCode || undefined}
+              options={options.testStatus}
+              onChange={(value) => onChange('testStatusCode', asSelectString(value))}
+            />
+          </Field>
+        ) : null}
         {showEnglishDetail ? (
           <>
             <Field id="overallScore" label="Overall Score" error={errors.overallScore}>

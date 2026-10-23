@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Modal } from "antd";
-import dayjs from "dayjs";
+import { Modal, TimePicker } from "antd";
+import dayjs, { type Dayjs } from "dayjs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
 import { Calendar03Icon, Video01Icon } from "@hugeicons/core-free-icons";
@@ -153,7 +153,7 @@ function ScheduleSection({
   return (
     <section
       id={id}
-      className={`overflow-hidden rounded-2xl border transition-colors duration-500 ease-in-out ${
+      className={`shrink-0 overflow-hidden rounded-2xl border transition-colors duration-500 ease-in-out ${
         open
           ? "border-primary bg-[color-mix(in_srgb,var(--color-primary)_4%,transparent)]"
           : "border-[#e6eef6] bg-surface dark:border-border"
@@ -191,7 +191,7 @@ function ScheduleSection({
           open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
         }`}
       >
-        <div className="overflow-hidden" inert={!open}>
+        <div className="min-h-0 overflow-hidden" inert={!open}>
           <div
             className={`grid gap-3 border-t px-3.5 transition-[padding,border-color,opacity] duration-500 ease-in-out dark:border-border ${
               open
@@ -234,7 +234,8 @@ export default function AddNoteModal({
   const [meetingTitle, setMeetingTitle] = useState("");
   const [meetingType, setMeetingType] = useState("");
   const [meetingMode, setMeetingMode] = useState("Offline");
-  const [meetingWhen, setMeetingWhen] = useState("");
+  const [meetingDate, setMeetingDate] = useState("");
+  const [meetingStart, setMeetingStart] = useState<Dayjs | null>(null);
   const [meetingLocation, setMeetingLocation] = useState("");
   const [meetingLink, setMeetingLink] = useState("");
   const [agenda, setAgenda] = useState("");
@@ -309,7 +310,8 @@ export default function AddNoteModal({
     setMeetingTitle("");
     setMeetingType("");
     setMeetingMode("Offline");
-    setMeetingWhen("");
+    setMeetingDate("");
+    setMeetingStart(null);
     setMeetingLocation("");
     setMeetingLink("");
     setAgenda("");
@@ -322,11 +324,21 @@ export default function AddNoteModal({
   }
 
   function revealSection(id: string) {
-    requestAnimationFrame(() => {
-      document
-        .getElementById(id)
-        ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    });
+    window.setTimeout(() => {
+      const node = document.getElementById(id);
+      const scroller = node?.closest("[data-add-note-scroll]");
+      if (!node || !(scroller instanceof HTMLElement)) return;
+      const overflow =
+        node.getBoundingClientRect().bottom -
+        scroller.getBoundingClientRect().bottom +
+        8;
+      if (overflow > 1) {
+        scroller.scrollTo({
+          top: scroller.scrollTop + overflow,
+          behavior: "smooth",
+        });
+      }
+    }, 520);
   }
 
   function openFollowUpSection(next: boolean) {
@@ -351,7 +363,8 @@ export default function AddNoteModal({
         meetingTitle: "",
         meetingType: "",
         meetingMode: "",
-        meetingWhen: "",
+        meetingDate: "",
+        meetingStart: "",
         meetingLocation: "",
         meetingLink: "",
       }));
@@ -380,9 +393,15 @@ export default function AddNoteModal({
       if (!meetingTitle.trim())
         next.meetingTitle = "Meeting title is required.";
       if (!meetingMode) next.meetingMode = "Meeting mode is required.";
-      if (!meetingWhen) next.meetingWhen = "Meeting time is required.";
-      else if (dayjs(meetingWhen).isBefore(dayjs())) {
-        next.meetingWhen = "Meeting time must be now or later.";
+      if (!meetingDate) next.meetingDate = "Meeting date is required.";
+      if (!meetingStart) next.meetingStart = "Start time is required.";
+      else if (meetingDate) {
+        const when = dayjs(
+          `${meetingDate}T${meetingStart.format("HH:mm")}:00`,
+        );
+        if (when.isBefore(dayjs())) {
+          next.meetingStart = "Start time must be now or later.";
+        }
       }
       if (needsLocation && !meetingLocation.trim()) {
         next.meetingLocation = "Location is required.";
@@ -427,8 +446,8 @@ export default function AddNoteModal({
               title: meetingTitle.trim(),
               type: meetingType,
               mode: meetingMode,
-              date: meetingWhen ? dayjs(meetingWhen).format("YYYY-MM-DD") : "",
-              startTime: meetingWhen ? dayjs(meetingWhen).format("HH:mm") : "",
+              date: meetingDate,
+              startTime: meetingStart ? meetingStart.format("HH:mm") : "",
               endTime: "",
               location: needsLocation ? meetingLocation.trim() : "",
               link: needsLink ? meetingLink.trim() : "",
@@ -512,9 +531,10 @@ export default function AddNoteModal({
         ) : null}
 
         <div
-          className={`grid gap-4 pr-1 ${
+          data-add-note-scroll=""
+          className={`flex flex-col gap-4 pr-1 ${
             followUpOpen || meetingOpen
-              ? "max-h-[min(78vh,860px)] overflow-y-auto"
+              ? "max-h-[min(78vh,calc(100dvh-16rem))] overflow-y-auto overscroll-contain"
               : ""
           }`}
         >
@@ -773,27 +793,47 @@ export default function AddNoteModal({
                   ) : null}
                 </label>
               ) : null}
-              <label id="add-note-meetingWhen" className="grid gap-1">
-                <FieldLabel required>Time</FieldLabel>
-                <FormDatePicker
-                  showTime
-                  className="w-full"
-                  format="DD MMM YYYY hh:mm A"
-                  placeholder="Select date and time"
-                  disabled={committed.meeting}
-                  value={meetingWhen ? dayjs(meetingWhen) : null}
-                  disabledDate={(current) =>
-                    Boolean(current && current < dayjs().startOf("day"))
-                  }
-                  onChange={(value) => {
-                    setMeetingWhen(value ? value.toISOString() : "");
-                    clearError("meetingWhen");
-                  }}
-                />
-                {errors.meetingWhen ? (
-                  <InputError>{errors.meetingWhen}</InputError>
-                ) : null}
-              </label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label id="add-note-meetingDate" className="grid gap-1">
+                  <FieldLabel required>Date</FieldLabel>
+                  <FormDatePicker
+                    className="w-full"
+                    format="DD MMM YYYY"
+                    placeholder="Select date"
+                    disabled={committed.meeting}
+                    value={meetingDate ? dayjs(meetingDate) : null}
+                    disabledDate={(current) =>
+                      Boolean(current && current < dayjs().startOf("day"))
+                    }
+                    onChange={(value) => {
+                      setMeetingDate(value ? value.format("YYYY-MM-DD") : "");
+                      clearError("meetingDate");
+                      clearError("meetingStart");
+                    }}
+                  />
+                  {errors.meetingDate ? (
+                    <InputError>{errors.meetingDate}</InputError>
+                  ) : null}
+                </label>
+                <label id="add-note-meetingStart" className="grid gap-1">
+                  <FieldLabel required>Start Time</FieldLabel>
+                  <TimePicker
+                    className="w-full"
+                    size="large"
+                    format="hh:mm A"
+                    placeholder="Select time"
+                    disabled={committed.meeting}
+                    value={meetingStart}
+                    onChange={(value) => {
+                      setMeetingStart(value);
+                      clearError("meetingStart");
+                    }}
+                  />
+                  {errors.meetingStart ? (
+                    <InputError>{errors.meetingStart}</InputError>
+                  ) : null}
+                </label>
+              </div>
               <label className="grid gap-1">
                 <FieldLabel>Agenda</FieldLabel>
                 <FormTextArea
