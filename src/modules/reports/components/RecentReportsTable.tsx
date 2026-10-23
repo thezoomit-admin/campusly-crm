@@ -10,16 +10,57 @@ const formatTone: Record<RecentReport['format'], string> = {
 
 type RecentReportsTableProps = {
   rows: RecentReport[]
+  isLoading?: boolean
   onView: (report: RecentReport) => void
   onExport: (report: RecentReport, format: RecentReport['format']) => void
 }
 
-export default function RecentReportsTable({ rows, onView, onExport }: RecentReportsTableProps) {
+function Bone({ className }: { className: string }) {
+  return <div className={`animate-pulse rounded-md bg-[#d5e0ec] dark:bg-[#3a4856] ${className}`} aria-hidden="true" />
+}
+
+function RecentReportRowsSkeleton() {
+  return (
+    <>
+      {Array.from({ length: 4 }, (_, index) => (
+        <tr key={index} aria-hidden="true">
+          <td className="border-t border-border-subtle px-2 py-3">
+            <Bone className="h-4 w-44 max-w-full" />
+          </td>
+          <td className="border-t border-border-subtle px-2 py-3">
+            <Bone className="h-4 w-36" />
+          </td>
+          <td className="border-t border-border-subtle px-2 py-3">
+            <Bone className="h-4 w-32" />
+          </td>
+          <td className="border-t border-border-subtle px-2 py-3">
+            <Bone className="h-4 w-24" />
+          </td>
+          <td className="border-t border-border-subtle px-2 py-3">
+            <Bone className="h-6 w-14 rounded-full" />
+          </td>
+          <td className="border-t border-border-subtle px-2 py-3">
+            <div className="flex items-center gap-1.5">
+              <Bone className="h-6 w-14 rounded-md" />
+              <Bone className="size-6 rounded-md" />
+            </div>
+          </td>
+        </tr>
+      ))}
+    </>
+  )
+}
+
+export default function RecentReportsTable({ rows, isLoading = false, onView, onExport }: RecentReportsTableProps) {
   return (
     <article className="rounded-2xl border border-border bg-surface p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h3 className="m-0 text-base font-semibold">Recent Reports</h3>
-        <span className="text-[0.75rem] text-text-muted">{rows.length} generated</span>
+        {isLoading ? (
+          <Bone className="h-3.5 w-16" />
+        ) : (
+          <span className="text-[0.75rem] text-text-muted">{rows.length} generated</span>
+        )}
       </div>
       <div className="overflow-auto">
         <table className="w-full min-w-[760px] border-collapse">
@@ -34,10 +75,12 @@ export default function RecentReportsTable({ rows, onView, onExport }: RecentRep
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 ? (
+            {isLoading ? (
+              <RecentReportRowsSkeleton />
+            ) : rows.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-2 py-10 text-center text-[0.85rem] text-text-faint">
-                  No report data available for the selected filters.
+                  No recent reports for the current filters.
                 </td>
               </tr>
             ) : (

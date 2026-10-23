@@ -88,12 +88,40 @@ export type RecentReport = {
   generatedOn: string
   createdBy: string
   format: 'PDF' | 'Excel' | 'CSV'
+  tabId: ReportTabId
 }
 
 export type MetricRow = {
   label: string
   value: string | number
   hint?: string
+}
+
+export type ReportFilterChoice = {
+  value: string
+  label: string
+}
+
+export type ReportOverviewData = {
+  comparisonLabel: string
+  periodLabel: string
+  notice: string | null
+  kpis: KpiCard[]
+  funnel: FunnelStage[]
+  trend: TrendSeriesPoint[]
+  sources: SourceSegment[]
+  topCounsellors: CounsellorRow[]
+  employeePerformance: CounsellorRow[]
+  insights: InsightItem[]
+  recentReports: RecentReport[]
+  options: {
+    employees: ReportFilterChoice[]
+    countries: ReportFilterChoice[]
+    leadSources: ReportFilterChoice[]
+    services: ReportFilterChoice[]
+    fileStatuses: ReportFilterChoice[]
+    paymentStatuses: ReportFilterChoice[]
+  }
 }
 
 /** Legacy pipeline metric row (existing API). */
