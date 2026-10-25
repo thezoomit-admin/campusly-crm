@@ -12,7 +12,7 @@ import {
 } from '../api/notificationsApi'
 
 const ICON_BTN =
-  'relative grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-icon hover:bg-hover-bg'
+  'relative grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-[color-mix(in_srgb,var(--color-primary)_16%,white)] text-primary-active transition-colors duration-200 hover:bg-[color-mix(in_srgb,var(--color-primary)_24%,white)] dark:bg-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] dark:text-nav-active dark:hover:bg-[color-mix(in_srgb,var(--color-primary)_32%,transparent)]'
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime()
@@ -52,7 +52,13 @@ function payloadLines(payload: AppNotification['payload']) {
     .map(([key, label]) => ({ label, value: String(payload[key]) }))
 }
 
-export default function NotificationBell({ auth }: { auth: AuthSession | null | undefined }) {
+export default function NotificationBell({
+  auth,
+  className = ICON_BTN,
+}: {
+  auth: AuthSession | null | undefined
+  className?: string
+}) {
   const canView = hasPermission(auth, 'notification:view')
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -104,7 +110,7 @@ export default function NotificationBell({ auth }: { auth: AuthSession | null | 
     <div className="relative" ref={panelRef}>
       <button
         type="button"
-        className={ICON_BTN}
+        className={className}
         aria-label={unreadCount > 0 ? `Notifications (${unreadCount})` : 'Notifications'}
         aria-expanded={open}
         onClick={() => {

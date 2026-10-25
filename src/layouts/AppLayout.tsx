@@ -1,7 +1,7 @@
 import { UserDropdown } from "@/components/common/Dropdowns";
 import { PageLoader } from "@/components/common/Loading";
 import { GlobalSearch } from "@/components/common/Search";
-import { NavIcon, ThemeToggle } from "@/components/ui";
+import { FullscreenToggle, NavIcon, ThemeToggle } from "@/components/ui";
 import {
   ArrowRight01Icon,
   Cancel01Icon,
@@ -26,7 +26,7 @@ import NotificationBell from "../modules/notifications/components/NotificationBe
 import MobileBottomNav from "./MobileBottomNav";
 
 const ICON_BTN =
-  "relative grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-icon hover:bg-hover-bg";
+  "relative grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-[color-mix(in_srgb,var(--color-primary)_16%,white)] text-primary-active transition-colors duration-200 hover:bg-[color-mix(in_srgb,var(--color-primary)_24%,white)] dark:bg-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] dark:text-nav-active dark:hover:bg-[color-mix(in_srgb,var(--color-primary)_32%,transparent)]";
 
 function displayName(auth: AuthSession | null | undefined) {
   if (auth?.user?.fullName) {
@@ -389,9 +389,10 @@ export default function AppLayout() {
             </NavLink>
           </div>
 
-          <div className="relative z-60 hidden shrink-0 items-center gap-0.5 overflow-visible max-[960px]:flex">
+          <div className="relative z-60 hidden shrink-0 items-center gap-1.5 overflow-visible max-[960px]:flex">
             <ThemeToggle className={ICON_BTN} />
-            <NotificationBell auth={auth} />
+            <FullscreenToggle className={ICON_BTN} />
+            <NotificationBell auth={auth} className={ICON_BTN} />
             <UserDropdown auth={auth} displayName={name} showChevron />
           </div>
         </div>
@@ -410,7 +411,8 @@ export default function AppLayout() {
 
           <div className="flex shrink-0 items-center gap-2.5 max-[960px]:hidden">
             <ThemeToggle className={ICON_BTN} />
-            <NotificationBell auth={auth} />
+            <FullscreenToggle className={ICON_BTN} />
+            <NotificationBell auth={auth} className={ICON_BTN} />
             <UserDropdown auth={auth} displayName={name} />
           </div>
         </div>

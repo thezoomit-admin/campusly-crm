@@ -5,7 +5,6 @@ import {
   Location01Icon,
   Video01Icon,
 } from "@hugeicons/core-free-icons";
-import { PrimaryButton } from "@/components/ui";
 import { parseMeetingNotes } from "./ScheduleMeetingModal";
 
 export type UpcomingMeetingInfo = {
@@ -26,17 +25,14 @@ function formatStamp(value?: string | null) {
 
 export default function LeadUpcomingMeetingCard({
   meeting,
-  canEdit,
   compact = false,
-  onReschedule,
-  onCancel,
+  onClick,
 }: {
   meeting: UpcomingMeetingInfo | null;
-  canEdit?: boolean;
   compact?: boolean;
-  onReschedule?: () => void;
-  onCancel?: () => void;
+  onClick?: () => void;
 }) {
+  const clickable = Boolean(meeting && onClick);
   if (!meeting) {
     return (
       <div className="flex min-w-0 flex-col justify-center rounded-xl border border-[#dbe8f4] bg-[#f7fbff] px-2 py-2 sm:px-2.5 sm:py-1.5 dark:border-border dark:bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]">
@@ -64,8 +60,10 @@ export default function LeadUpcomingMeetingCard({
   const meta = [parsed.type, parsed.mode].filter(Boolean).join(" · ");
 
   if (compact) {
-    return (
-      <div className="flex min-w-0 flex-col justify-center rounded-xl border border-[#dbe8f4] bg-[#f7fbff] px-2 py-2 transition-colors duration-300 sm:px-2.5 sm:py-1.5 dark:border-border dark:bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]">
+    const compactClass =
+      "flex min-w-0 flex-col justify-center rounded-xl border border-[#dbe8f4] bg-[#f7fbff] px-2 py-2 transition-colors duration-300 sm:px-2.5 sm:py-1.5 dark:border-border dark:bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)]";
+    const body = (
+      <>
         <p className="m-0 flex items-center gap-1 text-[0.7rem] font-semibold text-[#1b3a57] sm:text-[0.75rem] dark:text-text-strong">
           <span className="grid size-5 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--color-primary)_14%,transparent)] text-primary">
             <HugeiconsIcon
@@ -116,31 +114,29 @@ export default function LeadUpcomingMeetingCard({
             ) : null}
           </p>
         ) : null}
-
-        {canEdit && onCancel && onReschedule ? (
-          <div className="mt-1.5 flex items-center justify-center gap-1.5">
-            <PrimaryButton
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={onCancel}
-              label="Cancel"
-            />
-            <PrimaryButton
-              type="button"
-              size="sm"
-              variant="primary"
-              onClick={onReschedule}
-              label="Reschedule"
-            />
-          </div>
-        ) : null}
-      </div>
+      </>
     );
+
+    if (clickable) {
+      return (
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label="View meeting details"
+          className={`${compactClass} w-full cursor-pointer text-left font-[inherit] hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}
+        >
+          {body}
+        </button>
+      );
+    }
+
+    return <div className={compactClass}>{body}</div>;
   }
 
-  return (
-    <section className="rounded-2xl border border-[#dbe8f4] bg-[linear-gradient(180deg,#f7fbff_0%,#ffffff_72%)] p-4 shadow-[0_10px_28px_rgba(22,50,79,0.035)] dark:border-border dark:bg-surface">
+  const wideClass =
+    "w-full rounded-2xl border border-[#dbe8f4] bg-[linear-gradient(180deg,#f7fbff_0%,#ffffff_72%)] p-4 text-left font-[inherit] shadow-[0_10px_28px_rgba(22,50,79,0.035)] dark:border-border dark:bg-surface";
+  const wideBody = (
+    <>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] text-primary">
@@ -163,25 +159,6 @@ export default function LeadUpcomingMeetingCard({
             ) : null}
           </div>
         </div>
-
-        {canEdit && onCancel && onReschedule ? (
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <PrimaryButton
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={onCancel}
-              label="Cancel"
-            />
-            <PrimaryButton
-              type="button"
-              size="sm"
-              variant="primary"
-              onClick={onReschedule}
-              label="Reschedule"
-            />
-          </div>
-        ) : null}
       </div>
 
       {when ? (
@@ -195,6 +172,21 @@ export default function LeadUpcomingMeetingCard({
           <span className="min-w-0">{when}</span>
         </p>
       ) : null}
-    </section>
+    </>
   );
+
+  if (clickable) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label="View meeting details"
+        className={`${wideClass} cursor-pointer hover:border-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}
+      >
+        {wideBody}
+      </button>
+    );
+  }
+
+  return <section className={wideClass}>{wideBody}</section>;
 }

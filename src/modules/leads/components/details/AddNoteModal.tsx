@@ -3,7 +3,7 @@ import { Modal, TimePicker } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
-import { Calendar03Icon, Video01Icon } from "@hugeicons/core-free-icons";
+import { Calendar03Icon, UserIcon, Video01Icon } from "@hugeicons/core-free-icons";
 import { PrimaryButton } from "@/components/ui";
 import {
   FormDatePicker,
@@ -17,6 +17,7 @@ import { AntModal } from "@/components/common/Modals";
 import { useListMasterDataOptionsQuery } from "@/redux/features/masterData/masterDataApi";
 import { FOLLOW_UP_TYPES } from "@/modules/follow-ups/types";
 import type { LeadRecord } from "../../types";
+import { stageBadgeClass } from "../../utils/leadDetails";
 import { MEETING_TYPE_OPTIONS } from "./ScheduleMeetingModal";
 
 export type AddNoteSavedState = {
@@ -110,6 +111,13 @@ function extraText(
 
 function asSelectString(value: unknown) {
   return typeof value === "string" ? value : "";
+}
+
+function statusBadgeClass(status: string) {
+  if (status.trim().toLowerCase() === "interested") {
+    return "bg-[#d9f5e5] text-[#128a56] dark:bg-emerald-600/20 dark:text-[#86efac]";
+  }
+  return stageBadgeClass(status);
 }
 
 function RequiredMark() {
@@ -516,12 +524,41 @@ export default function AddNoteModal({
           }
         }}
       >
-        <p className="m-0 rounded-lg bg-[#f7fafc] px-3 py-2 text-sm text-[#3d5166] dark:bg-hover-bg dark:text-text">
-          Lead: <span className="font-semibold">{leadName}</span>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-[#eef8f3] px-3.5 py-2.5 text-[0.84rem] dark:bg-emerald-950/35">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#17324f] dark:text-text-strong">
+            <HugeiconsIcon
+              icon={UserIcon}
+              size={16}
+              color="#129a62"
+              strokeWidth={1.8}
+            />
+            Lead: {leadName}
+          </span>
           {lead?.code ? (
-            <span className="text-[#8b97a8]"> · {lead.code}</span>
+            <>
+              <span className="text-[#c5d5c9]">|</span>
+              <span className="text-[#5b6b7c] dark:text-text">
+                Lead ID:{" "}
+                <span className="font-semibold text-[#17324f] dark:text-text-strong">
+                  {lead.code}
+                </span>
+              </span>
+            </>
           ) : null}
-        </p>
+          {lead?.status ? (
+            <>
+              <span className="text-[#c5d5c9]">|</span>
+              <span className="inline-flex items-center gap-2 text-[#5b6b7c] dark:text-text">
+                Current Status:
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold ${statusBadgeClass(lead.status)}`}
+                >
+                  {lead.status}
+                </span>
+              </span>
+            </>
+          ) : null}
+        </div>
 
         {committed.note || committed.followUp || committed.meeting ? (
           <p className="m-0 rounded-lg border border-[#dcefe3] bg-[color-mix(in_srgb,var(--color-primary)_8%,transparent)] px-3 py-2 text-[0.82rem] text-[#17324f] dark:text-text-strong">
@@ -821,6 +858,7 @@ export default function AddNoteModal({
                     className="w-full"
                     size="large"
                     format="hh:mm A"
+                    needConfirm={false}
                     placeholder="Select time"
                     disabled={committed.meeting}
                     value={meetingStart}

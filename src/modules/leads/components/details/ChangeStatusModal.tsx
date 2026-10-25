@@ -749,6 +749,7 @@ export default function ChangeStatusModal({
                             className="w-full"
                             size="large"
                             format="hh:mm A"
+                            needConfirm={false}
                             placeholder="Select time"
                             value={meetingStart}
                             onChange={(value) => {
@@ -776,6 +777,7 @@ export default function ChangeStatusModal({
                           className="w-full"
                           size="large"
                           format="hh:mm A"
+                          needConfirm={false}
                           placeholder="Select time"
                           value={meetingEnd}
                           onChange={(value) => setMeetingEnd(value)}

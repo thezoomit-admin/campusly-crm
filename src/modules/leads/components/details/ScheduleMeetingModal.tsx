@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { TimePicker } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { UserIcon } from "@hugeicons/core-free-icons";
 import { PrimaryButton } from "@/components/ui";
 import {
   FormDatePicker,
@@ -11,6 +13,7 @@ import {
 } from "@/components/common/Forms";
 import { AntModal } from "@/components/common/Modals";
 import { FOLLOW_UP_REMINDERS } from "@/modules/follow-ups/types";
+import { stageBadgeClass } from "../../utils/leadDetails";
 
 export const MEETING_TYPE_OPTIONS = [
   { value: "Counselling", label: "Counselling" },
@@ -48,6 +51,13 @@ export type ScheduleMeetingInitialValues = Partial<ScheduleMeetingPayload> & {
 
 function asSelectString(value: unknown) {
   return typeof value === "string" ? value : "";
+}
+
+function statusBadgeClass(status: string) {
+  if (status.trim().toLowerCase() === "interested") {
+    return "bg-[#d9f5e5] text-[#128a56] dark:bg-emerald-600/20 dark:text-[#86efac]";
+  }
+  return stageBadgeClass(status);
 }
 
 function RequiredMark() {
@@ -136,6 +146,8 @@ export default function ScheduleMeetingModal({
   saving,
   mode = "schedule",
   leadName,
+  leadCode,
+  leadStatus,
   currentDueAt,
   initialValues,
   onClose,
@@ -145,6 +157,8 @@ export default function ScheduleMeetingModal({
   saving: boolean;
   mode?: "schedule" | "reschedule";
   leadName?: string;
+  leadCode?: string | null;
+  leadStatus?: string | null;
   currentDueAt?: string | null;
   initialValues?: ScheduleMeetingInitialValues | null;
   onClose: () => void;
@@ -263,18 +277,52 @@ export default function ScheduleMeetingModal({
     >
       <div className="grid gap-3">
         {leadName ? (
-          <p className="m-0 rounded-lg bg-[#f7fafc] px-3 py-2 text-sm text-[#3d5166] dark:bg-hover-bg dark:text-text">
-            Lead: <span className="font-semibold">{leadName}</span>
-            {isReschedule && currentDueAt ? (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-[#eef8f3] px-3.5 py-2.5 text-[0.84rem] dark:bg-emerald-950/35">
+            <span className="inline-flex items-center gap-1.5 font-semibold text-[#17324f] dark:text-text-strong">
+              <HugeiconsIcon
+                icon={UserIcon}
+                size={16}
+                color="#129a62"
+                strokeWidth={1.8}
+              />
+              Lead: {leadName}
+            </span>
+            {leadCode ? (
               <>
-                {" "}
-                · Current:{" "}
-                <span className="font-semibold">
-                  {dayjs(currentDueAt).format("DD MMM YYYY, hh:mm A")}
+                <span className="text-[#c5d5c9]">|</span>
+                <span className="text-[#5b6b7c] dark:text-text">
+                  Lead ID:{" "}
+                  <span className="font-semibold text-[#17324f] dark:text-text-strong">
+                    {leadCode}
+                  </span>
                 </span>
               </>
             ) : null}
-          </p>
+            {leadStatus ? (
+              <>
+                <span className="text-[#c5d5c9]">|</span>
+                <span className="inline-flex items-center gap-2 text-[#5b6b7c] dark:text-text">
+                  Current Status:
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[0.75rem] font-semibold ${statusBadgeClass(leadStatus)}`}
+                  >
+                    {leadStatus}
+                  </span>
+                </span>
+              </>
+            ) : null}
+            {isReschedule && currentDueAt ? (
+              <>
+                <span className="text-[#c5d5c9]">|</span>
+                <span className="text-[#5b6b7c] dark:text-text">
+                  Current:{" "}
+                  <span className="font-semibold text-[#17324f] dark:text-text-strong">
+                    {dayjs(currentDueAt).format("DD MMM YYYY, hh:mm A")}
+                  </span>
+                </span>
+              </>
+            ) : null}
+          </div>
         ) : null}
 
         <label className="grid gap-1">
@@ -353,6 +401,7 @@ export default function ScheduleMeetingModal({
               className="w-full"
               size="large"
               format="hh:mm A"
+              needConfirm={false}
               placeholder="Select time"
               value={meetingStart}
               onChange={(value) => {
@@ -374,6 +423,7 @@ export default function ScheduleMeetingModal({
               className="w-full"
               size="large"
               format="hh:mm A"
+              needConfirm={false}
               placeholder="Select time"
               value={meetingEnd}
               onChange={(value) => {
