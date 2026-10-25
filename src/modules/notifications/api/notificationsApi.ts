@@ -35,6 +35,8 @@ export type AppNotification = {
 export type NotificationListResponse = {
   items: AppNotification[]
   unreadCount: number
+  unreadSystem?: number
+  unreadReminder?: number
   scope?: string
 }
 
@@ -49,6 +51,9 @@ export type NotificationListParams = {
   search?: string
   from?: string
   to?: string
+  kind?: 'system' | 'reminder'
+  category?: string
+  channel?: string
 }
 
 export type NotificationPreferenceItem = {
@@ -95,6 +100,9 @@ export const notificationsApi = baseApi.injectEndpoints({
           search: params?.search,
           from: params?.from,
           to: params?.to,
+          kind: params?.kind,
+          category: params?.category,
+          channel: params?.channel,
         })}`,
       providesTags: [LIST],
     }),
