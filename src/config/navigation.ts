@@ -16,7 +16,10 @@ export type NavIconName =
   | "settings"
   | "activity"
   | "message"
-  | "globe";
+  | "globe"
+  | "assignments"
+  | "meta"
+  | "unlock";
 
 export type NavItem = {
   to: string;
@@ -84,7 +87,7 @@ export const APP_NAV_GROUPS: NavGroup[] = [
       {
         to: "/applications",
         label: "Applications",
-        icon: "file",
+        icon: "assignments",
         permission: "lead:convert",
       },
       {
@@ -158,7 +161,7 @@ export const APP_NAV_GROUPS: NavGroup[] = [
       {
         to: "/meta-leads",
         label: "Meta Lead Ads",
-        icon: "chart",
+        icon: "meta",
         permission: "communication:view",
       },
     ],
@@ -207,7 +210,7 @@ export const APP_NAV_GROUPS: NavGroup[] = [
       {
         to: "/roles",
         label: "Roles & Permissions",
-        icon: "shield",
+        icon: "unlock",
         permission: "role:view",
       },
       {
