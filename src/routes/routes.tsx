@@ -36,7 +36,7 @@ import {
   MyLeadsPage,
 } from "../modules/leads";
 import { MasterDataPage, MasterDataItemsPage } from "../modules/master-data";
-import { NotificationsPage } from "../modules/notifications";
+import { NotificationSettingsPage, NotificationsPage } from "../modules/notifications";
 import { PaymentsPage } from "../modules/payments";
 import { ProfilePage } from "../modules/profile";
 import { ReportsPage } from "../modules/reports";
@@ -157,6 +157,7 @@ const routes = [
             element: <PermissionRoute permission="notification:view" />,
             children: [
               { path: "/notifications", element: <NotificationsPage /> },
+              { path: "/notifications/settings", element: <NotificationSettingsPage /> },
             ],
           },
           {
