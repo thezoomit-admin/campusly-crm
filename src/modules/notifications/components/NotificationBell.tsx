@@ -123,7 +123,7 @@ export default function NotificationBell({
           <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </svg>
         {unreadCount > 0 ? (
-          <i className="absolute top-[7px] right-1.5 grid min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[0.58rem] font-bold leading-4 text-white">
+          <i className="absolute -top-1 right-0 grid min-w-4 place-items-center rounded-full bg-red-500 px-1 text-[0.58rem] font-bold leading-4 text-white">
             {unreadCount > 99 ? '99+' : unreadCount}
           </i>
         ) : null}

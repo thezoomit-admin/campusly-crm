@@ -1,11 +1,11 @@
-import { baseApi } from '@/redux/api/baseApi'
-import { toQuery } from '@/lib/api'
-import type { DashboardOverview } from '../types'
+import { baseApi } from "@/redux/api/baseApi";
+import { toQuery } from "@/lib/api";
+import type { DashboardOverview } from "../types";
 
 export type DashboardParams = {
-  year?: number
-  month?: number
-}
+  year?: number;
+  month?: number;
+};
 
 const dashboardApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -16,15 +16,15 @@ const dashboardApi = baseApi.injectEndpoints({
           month: params?.month != null ? String(params.month) : undefined,
         })}`,
       providesTags: [
-        { type: 'Dashboard', id: 'OVERVIEW' },
-        { type: 'Leads', id: 'LIST' },
-        { type: 'Applications', id: 'LIST' },
-        { type: 'Students', id: 'LIST' },
-        { type: 'Payments', id: 'LIST' },
-        { type: 'FollowUps', id: 'LIST' },
+        { type: "Dashboard", id: "OVERVIEW" },
+        { type: "Leads", id: "LIST" },
+        { type: "Applications", id: "LIST" },
+        { type: "Students", id: "LIST" },
+        { type: "Payments", id: "LIST" },
+        { type: "FollowUps", id: "LIST" },
       ],
     }),
   }),
-})
+});
 
-export const { useGetDashboardQuery } = dashboardApi
+export const { useGetDashboardQuery } = dashboardApi;

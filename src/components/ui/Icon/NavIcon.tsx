@@ -2,6 +2,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Activity01Icon,
   Analytics01Icon,
+  AssignmentsIcon,
   CreditCardIcon,
   DashboardSquare01Icon,
   Database01Icon,
@@ -11,11 +12,13 @@ import {
   GraduationCapIcon,
   IdCardIcon,
   Message01Icon,
+  MetaIcon,
   Notification03Icon,
   Settings01Icon,
   Shield01Icon,
   UserIcon,
   UserMultiple02Icon,
+  UserUnlock01Icon,
 } from '@hugeicons/core-free-icons'
 import type { NavIconName } from '@/config/navigation'
 
@@ -36,6 +39,9 @@ const ICONS: Record<NavIconName, typeof DashboardSquare01Icon> = {
   activity: Activity01Icon,
   message: Message01Icon,
   globe: Globe02Icon,
+  assignments: AssignmentsIcon,
+  meta: MetaIcon,
+  unlock: UserUnlock01Icon,
 }
 
 type NavIconProps = {
