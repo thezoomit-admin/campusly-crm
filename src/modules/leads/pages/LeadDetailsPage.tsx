@@ -56,13 +56,11 @@ import {
   useCompleteFollowUpMutation,
   useCreateFollowUpMutation,
   useListLeadFollowUpsQuery,
-  useRescheduleFollowUpMutation,
 } from "@/modules/follow-ups/api/followUpsApi";
 import FollowUpFormModal from "@/modules/follow-ups/components/FollowUpFormModal";
 import {
   CancelFollowUpModal,
   CompleteFollowUpModal,
-  RescheduleFollowUpModal,
 } from "@/modules/follow-ups/components/FollowUpLifecycleModals";
 import LeadFollowUpHistoryPanel from "@/modules/follow-ups/components/LeadFollowUpHistoryPanel";
 import { LeadWhatsAppPanel } from "@/modules/whatsapp";
@@ -71,7 +69,6 @@ import type {
   CompleteFollowUpValues,
   FollowUpFormValues,
   FollowUpRecord,
-  RescheduleFollowUpValues,
 } from "@/modules/follow-ups/types";
 import type { LeadDocumentItem } from "../types";
 import {
@@ -199,8 +196,6 @@ export default function LeadDetailsPage() {
     useHandoverLeadMutation();
   const [completeFollowUp, { isLoading: completing }] =
     useCompleteFollowUpMutation();
-  const [rescheduleFollowUp, { isLoading: rescheduling }] =
-    useRescheduleFollowUpMutation();
   const [cancelFollowUp, { isLoading: cancelling }] =
     useCancelFollowUpMutation();
   const [startLeadEmail] = useStartLeadEmailMutation();
@@ -353,6 +348,8 @@ export default function LeadDetailsPage() {
   const [followUpOpen, setFollowUpOpen] = useState(
     searchParams.get("followUp") === "1",
   );
+  const [followUpInitial, setFollowUpInitial] =
+    useState<Partial<FollowUpFormValues> | null>(null);
   const [activityOpen, setActivityOpen] = useState(false);
   const [logConversationOpen, setLogConversationOpen] = useState(false);
   const [logConversationSaving, setLogConversationSaving] = useState(false);
@@ -459,7 +456,6 @@ export default function LeadDetailsPage() {
   const [selectedFollowUp, setSelectedFollowUp] =
     useState<FollowUpRecord | null>(null);
   const [completeOpen, setCompleteOpen] = useState(false);
-  const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [meetingOpen, setMeetingOpen] = useState(false);
   const [meetingMode, setMeetingMode] = useState<"schedule" | "reschedule">(
@@ -903,8 +899,13 @@ export default function LeadDetailsPage() {
       // Next Follow Up countdown picks up this new dueAt immediately.
       await createFollowUp({ ...values, leadId: id }).unwrap();
       await refreshLeadWorkspace();
-      toast.success("Follow-up scheduled.");
+      toast.success(
+        followUpInitial
+          ? "Follow-up rescheduled."
+          : "Follow-up scheduled.",
+      );
       setFollowUpOpen(false);
+      setFollowUpInitial(null);
       setSearchParams(
         (prev) => {
           const params = new URLSearchParams(prev);
@@ -941,22 +942,6 @@ export default function LeadDetailsPage() {
     }
   }
 
-  async function onRescheduleFollowUp(values: RescheduleFollowUpValues) {
-    if (!selectedFollowUp) return;
-    try {
-      await rescheduleFollowUp({
-        id: selectedFollowUp.id,
-        body: values,
-      }).unwrap();
-      await refreshLeadWorkspace();
-      toast.success("Follow-up rescheduled.");
-      setRescheduleOpen(false);
-      setSelectedFollowUp(null);
-    } catch (error) {
-      toast.error(getApiError(error, "Unable to reschedule follow-up."));
-    }
-  }
-
   const openMeetingFollowUp = useMemo(() => {
     const openStatuses = new Set(["Pending", "Due Soon", "Overdue"]);
     const fromList = followUpData?.items?.find(
@@ -986,6 +971,8 @@ export default function LeadDetailsPage() {
   }, [lead?.nextFollowUp, followUpData?.items]);
 
   const canScheduleMeeting = canFollowUp || canAddActivity;
+  const followUpIsReschedule = Boolean(lead?.nextFollowUp) && canEditFollowUp;
+  const meetingIsReschedule = Boolean(openMeetingFollowUp) && canEditFollowUp;
 
   function openScheduleMeeting() {
     setMeetingMode("schedule");
@@ -1008,57 +995,6 @@ export default function LeadDetailsPage() {
     setMeetingMode("reschedule");
     setMeetingTarget(meeting);
     setMeetingOpen(true);
-  }
-
-  function openCancelMeeting(
-    target?: {
-      id: string;
-      dueAt: string | null;
-      notes: string | null;
-      nextAction: string | null;
-    } | null,
-  ) {
-    const meeting = target || openMeetingFollowUp;
-    if (!meeting || !canEditFollowUp || !lead) return;
-    const fromList = followUpData?.items?.find(
-      (item) => item.id === meeting.id,
-    );
-    setSelectedFollowUp(
-      fromList || {
-        id: meeting.id,
-        contact: lead.name,
-        contactName: lead.name,
-        leadId: lead.id,
-        lead: { id: lead.id, code: lead.code, name: lead.name },
-        type: "Meeting",
-        owner: lead.owner?.name || "",
-        ownerName: lead.owner?.name || null,
-        ownerId: lead.owner?.id || null,
-        due: meeting.dueAt
-          ? dayjs(meeting.dueAt).format("DD MMM YYYY, hh:mm A")
-          : "",
-        dueAt: meeting.dueAt,
-        priority: "Medium",
-        status: "Pending",
-        purpose: null,
-        purposeOther: null,
-        notes: meeting.notes,
-        nextAction: meeting.nextAction,
-        reminder: "No Reminder",
-        outcome: null,
-        completedAt: null,
-        completedByName: null,
-        cancelledAt: null,
-        cancelledByName: null,
-        cancelReason: null,
-        source: "Manual",
-        sourceReason: null,
-        scheduleHistory: [],
-        createdAt: "",
-        updatedAt: "",
-      },
-    );
-    setCancelOpen(true);
   }
 
   async function onScheduleMeeting(payload: ScheduleMeetingPayload) {
@@ -1155,6 +1091,36 @@ export default function LeadDetailsPage() {
     }
   }
 
+  function followUpDraft(item: {
+    type?: string | null;
+    dueAt?: string | null;
+    priority?: string | null;
+    purpose?: string | null;
+    purposeOther?: string | null;
+    notes?: string | null;
+    nextAction?: string | null;
+    reminder?: string | null;
+    ownerId?: string | null;
+  }): Partial<FollowUpFormValues> {
+    return {
+      leadId: id || "",
+      type: item.type || "Call",
+      dueAt: item.dueAt || "",
+      priority: item.priority || "Medium",
+      purpose: item.purpose || "Initial Contact",
+      purposeOther: item.purposeOther || undefined,
+      notes: item.notes || undefined,
+      nextAction: item.nextAction || "",
+      reminder: item.reminder || "30 Minutes Before",
+      ownerId: item.ownerId || lead?.owner?.id || undefined,
+    };
+  }
+
+  function openScheduleFollowUp(initial?: Partial<FollowUpFormValues> | null) {
+    setFollowUpInitial(initial || null);
+    setFollowUpOpen(true);
+  }
+
   function openFollowUpActions(
     item: FollowUpRecord,
     action: "complete" | "reschedule" | "cancel",
@@ -1169,10 +1135,33 @@ export default function LeadDetailsPage() {
       });
       return;
     }
+    if (action === "reschedule") {
+      openScheduleFollowUp(followUpDraft(item));
+      return;
+    }
     setSelectedFollowUp(item);
     setCompleteOpen(action === "complete");
-    setRescheduleOpen(action === "reschedule");
     setCancelOpen(action === "cancel");
+  }
+
+  function openRescheduleExistingFollowUp() {
+    const next = lead?.nextFollowUp;
+    if (!next || !canEditFollowUp || !lead) return;
+    const fromList = followUps.find((item) => item.id === next.id);
+    openScheduleFollowUp(
+      followUpDraft(
+        fromList || {
+          type: next.type,
+          dueAt: next.dueAt,
+          priority: next.priority,
+          purpose: next.purpose,
+          notes: next.notes,
+          nextAction: next.nextAction,
+          reminder: next.reminder,
+          ownerId: lead.owner?.id,
+        },
+      ),
+    );
   }
 
   async function onAddActivity(body: {
@@ -1508,7 +1497,11 @@ export default function LeadDetailsPage() {
   }
 
   const showMobileStickyCtas =
-    Boolean(lead) && (canFollowUp || canScheduleMeeting);
+    Boolean(lead) &&
+    (canFollowUp ||
+      canScheduleMeeting ||
+      followUpIsReschedule ||
+      meetingIsReschedule);
 
   return (
     <div
@@ -1583,17 +1576,7 @@ export default function LeadDetailsPage() {
           <LeadJourneyBar
             lead={lead}
             meeting={openMeetingFollowUp}
-            canEditMeeting={canEditFollowUp}
-            onRescheduleMeeting={
-              openMeetingFollowUp
-                ? () => openRescheduleMeeting(openMeetingFollowUp)
-                : undefined
-            }
-            onCancelMeeting={
-              openMeetingFollowUp
-                ? () => openCancelMeeting(openMeetingFollowUp)
-                : undefined
-            }
+            followUps={followUps}
           />
 
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -1637,24 +1620,38 @@ export default function LeadDetailsPage() {
               })}
             </div>
             <div className="hidden shrink-0 flex-wrap items-center gap-2 min-[961px]:flex">
-              {canFollowUp ? (
+              {canFollowUp || followUpIsReschedule ? (
                 <PrimaryButton
                   type="button"
                   size="sm"
                   variant="primary"
                   icon={<HugeiconsIcon icon={Calendar03Icon} size={15} />}
-                  onClick={() => setFollowUpOpen(true)}
-                  label="Add Follow-up"
+                  onClick={() =>
+                    followUpIsReschedule
+                      ? openRescheduleExistingFollowUp()
+                      : openScheduleFollowUp()
+                  }
+                  label={
+                    followUpIsReschedule
+                      ? "Reschedule Follow-up"
+                      : "Add Follow-up"
+                  }
                 />
               ) : null}
-              {canScheduleMeeting ? (
+              {canScheduleMeeting || meetingIsReschedule ? (
                 <PrimaryButton
                   type="button"
                   size="sm"
                   variant="primary"
                   icon={<HugeiconsIcon icon={Video01Icon} size={15} />}
-                  onClick={openScheduleMeeting}
-                  label="Add Meeting"
+                  onClick={() =>
+                    meetingIsReschedule
+                      ? openRescheduleMeeting(openMeetingFollowUp)
+                      : openScheduleMeeting()
+                  }
+                  label={
+                    meetingIsReschedule ? "Reschedule Meeting" : "Add Meeting"
+                  }
                 />
               ) : null}
             </div>
@@ -1764,7 +1761,7 @@ export default function LeadDetailsPage() {
                       loading={followUpsLoading}
                       canCreate={canFollowUp}
                       canEdit={canEditFollowUp}
-                      onCreate={() => setFollowUpOpen(true)}
+                      onCreate={() => openScheduleFollowUp()}
                       onComplete={(item) =>
                         openFollowUpActions(item, "complete")
                       }
@@ -1825,24 +1822,36 @@ export default function LeadDetailsPage() {
               }}
             >
               <div className="mx-auto flex w-full max-w-3xl gap-2 [&_.ant-btn]:min-h-11 [&_.ant-btn]:flex-1">
-                {canFollowUp ? (
+                {canFollowUp || followUpIsReschedule ? (
                   <PrimaryButton
                     type="button"
                     size="md"
                     variant="primary"
                     icon={<HugeiconsIcon icon={Calendar03Icon} size={16} />}
-                    onClick={() => setFollowUpOpen(true)}
-                    label="Add Follow-up"
+                    onClick={() =>
+                      followUpIsReschedule
+                        ? openRescheduleExistingFollowUp()
+                        : openScheduleFollowUp()
+                    }
+                    label={
+                      followUpIsReschedule
+                        ? "Reschedule Follow-up"
+                        : "Add Follow-up"
+                    }
                   />
                 ) : null}
-                {canScheduleMeeting ? (
+                {canScheduleMeeting || meetingIsReschedule ? (
                   <PrimaryButton
                     type="button"
                     size="md"
                     variant="outline"
                     icon={<HugeiconsIcon icon={Video01Icon} size={16} />}
-                    onClick={openScheduleMeeting}
-                    label="Meeting"
+                    onClick={() =>
+                      meetingIsReschedule
+                        ? openRescheduleMeeting(openMeetingFollowUp)
+                        : openScheduleMeeting()
+                    }
+                    label={meetingIsReschedule ? "Reschedule" : "Meeting"}
                   />
                 ) : null}
               </div>
@@ -1868,6 +1877,8 @@ export default function LeadDetailsPage() {
         saving={meetingSaving}
         mode={meetingMode}
         leadName={lead?.name}
+        leadCode={lead?.code}
+        leadStatus={lead?.status}
         currentDueAt={meetingTarget?.dueAt}
         initialValues={
           meetingMode === "reschedule" && meetingTarget
@@ -1886,11 +1897,26 @@ export default function LeadDetailsPage() {
         onSubmit={onScheduleMeeting}
       />
       <FollowUpFormModal
-        open={followUpOpen && canFollowUp}
+        open={followUpOpen && (canFollowUp || canEditFollowUp)}
         saving={followUpSaving}
         fixedLeadId={id}
-        fixedLeadLabel={lead ? `${lead.code} — ${lead.name}` : undefined}
-        onClose={() => setFollowUpOpen(false)}
+        title={followUpInitial ? "Reschedule Follow-up" : "Schedule Follow-up"}
+        initialValues={followUpInitial}
+        lead={
+          lead
+            ? {
+                name: lead.name,
+                code: lead.code,
+                status: lead.status,
+                ownerId: lead.owner?.id,
+                ownerName: lead.owner?.name,
+              }
+            : null
+        }
+        onClose={() => {
+          setFollowUpOpen(false);
+          setFollowUpInitial(null);
+        }}
         onSubmit={onFollowUp}
       />
       <CompleteFollowUpModal
@@ -1902,16 +1928,6 @@ export default function LeadDetailsPage() {
           setSelectedFollowUp(null);
         }}
         onSubmit={onCompleteFollowUp}
-      />
-      <RescheduleFollowUpModal
-        open={rescheduleOpen && canEditFollowUp}
-        saving={rescheduling}
-        followUp={selectedFollowUp}
-        onClose={() => {
-          setRescheduleOpen(false);
-          setSelectedFollowUp(null);
-        }}
-        onSubmit={onRescheduleFollowUp}
       />
       <CancelFollowUpModal
         open={cancelOpen && canEditFollowUp}
@@ -2056,7 +2072,6 @@ export default function LeadDetailsPage() {
         saving={
           statusSaving ||
           followUpSaving ||
-          rescheduling ||
           cancelling ||
           activitySaving ||
           documentUploading

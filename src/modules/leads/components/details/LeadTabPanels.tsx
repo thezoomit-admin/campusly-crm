@@ -58,6 +58,11 @@ import {
 } from "../../utils/leadDetails";
 import LeadPackageOfferPanel from "@/modules/packages/components/LeadPackageOfferPanel";
 import LeadSectionCard from "./LeadSectionCard";
+import ActivityDetailsModal, {
+  activityDetailFromFeed,
+  activityDetailFromFollowUp,
+  type ActivityDetails,
+} from "./ActivityDetailsModal";
 import {
   LeadListPagination,
   useLeadListPagination,
@@ -65,10 +70,7 @@ import {
 
 const OPEN_FOLLOW_UP = new Set<string>(FOLLOW_UP_OPEN_STATUSES);
 
-const ACTIVITY_ICON_MAP: Record<
-  LeadActivityIconKind,
-  (typeof Note01Icon)
-> = {
+const ACTIVITY_ICON_MAP: Record<LeadActivityIconKind, typeof Note01Icon> = {
   note: Note01Icon,
   meeting: Calendar03Icon,
   "follow-up": Clock01Icon,
@@ -100,18 +102,19 @@ type ActivityTimelineEntry =
       item: ActivityFeedItem;
     };
 
-function ActivityTypeIcon({
-  kind,
-}: {
-  kind: LeadActivityIconKind;
-}) {
+function ActivityTypeIcon({ kind }: { kind: LeadActivityIconKind }) {
   const icon = ACTIVITY_ICON_MAP[kind] || Clock01Icon;
   return (
     <span
       className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-[#eef7f2] text-primary dark:bg-[color-mix(in_srgb,var(--color-primary)_16%,transparent)]"
       aria-hidden
     >
-      <HugeiconsIcon icon={icon} size={15} color="currentColor" strokeWidth={1.8} />
+      <HugeiconsIcon
+        icon={icon}
+        size={15}
+        color="currentColor"
+        strokeWidth={1.8}
+      />
     </span>
   );
 }
@@ -167,12 +170,23 @@ function activityBadgeClass(status: string) {
   return `${statusClass(status).replace("rounded-full", "rounded-md")} px-2 py-0.5 text-[0.72rem] font-semibold`;
 }
 
+function isMeetingOrFollowUpTitle(title: string) {
+  const label = title.toLowerCase();
+  return (
+    label.includes("meeting") ||
+    label.includes("follow-up") ||
+    label.includes("follow up")
+  );
+}
+
 function StatusChangeBadges({ item }: { item: ActivityFeedItem }) {
   const { previous, next } = readStatusLabels(item);
   if (!previous && !next) return null;
   return (
     <div className="flex max-w-full flex-wrap items-center justify-end gap-1.5">
-      <span className={activityBadgeClass(previous || "—")}>{previous || "—"}</span>
+      <span className={activityBadgeClass(previous || "—")}>
+        {previous || "—"}
+      </span>
       <span className="text-[0.75rem] font-semibold text-[#8b97a8]" aria-hidden>
         →
       </span>
@@ -228,7 +242,12 @@ function DocumentActionButton({
             : "border-[#C7CACF] bg-surface text-[#4b5563] hover:border-primary hover:text-primary"
         }`}
       >
-        <HugeiconsIcon icon={icon} size={15} color="currentColor" strokeWidth={1.8} />
+        <HugeiconsIcon
+          icon={icon}
+          size={15}
+          color="currentColor"
+          strokeWidth={1.8}
+        />
       </button>
     </Tooltip>
   );
@@ -324,7 +343,9 @@ export function LeadDocumentsPanel({
         key: "status",
         width: 120,
         render: (_: unknown, doc: LeadDocumentItem) => (
-          <Tag className={`m-0 ${statusClass(doc.statusLabel || doc.status || "Pending")}`}>
+          <Tag
+            className={`m-0 ${statusClass(doc.statusLabel || doc.status || "Pending")}`}
+          >
             {doc.statusLabel || doc.status || "Pending"}
           </Tag>
         ),
@@ -394,7 +415,9 @@ export function LeadDocumentsPanel({
                 type="button"
                 size="sm"
                 variant="outline"
-                label={showArchived ? "Hide Archived" : "View Archived Documents"}
+                label={
+                  showArchived ? "Hide Archived" : "View Archived Documents"
+                }
                 onClick={onToggleArchived}
               />
             ) : null}
@@ -487,81 +510,81 @@ export function LeadCommunicationsPanel({
         <>
           <ol className="m-0 grid min-w-0 list-none gap-0 p-0">
             {pageItems.map((item, index) => {
-            const isEmail = item.channel === "EMAIL";
-            const outgoing = item.direction === "outgoing";
-            const emailLabel = isEmail
-              ? outgoing
-                ? item.formName?.includes("failed")
-                  ? "Email · Failed"
-                  : "Email · Sent"
-                : "Email · Received"
-              : null;
-            return (
-              <li
-                key={item.id}
-                className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
-              >
-                <span
-                  className={`mt-1 size-3.5 shrink-0 rounded-full border-[3px] ${
-                    isEmail
-                      ? "border-[#dbeafe] bg-[#3b82f6]"
-                      : "border-[#e7f8ef] bg-primary"
-                  }`}
-                />
-                {index < pageItems.length - 1 ? (
-                  <span className="absolute top-7 bottom-[-6px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
-                ) : null}
-                <div className="min-w-0 flex-1 overflow-hidden">
-                  <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-                    <p className="m-0 min-w-0 break-all text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
-                      {emailLabel ||
-                        CHANNEL_LABELS[item.channel] ||
-                        item.channel}
-                      {!isEmail && item.formName ? ` · ${item.formName}` : ""}
-                    </p>
-                    <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
-                      {formatDisplayDateTime(item.eventAt)}
-                    </time>
-                  </div>
-                  {item.subject ? (
-                    <p className="mt-1 mb-0 max-w-full break-words text-[0.82rem] font-medium text-[#5b6b7c] [overflow-wrap:anywhere]">
-                      {item.subject}
-                    </p>
+              const isEmail = item.channel === "EMAIL";
+              const outgoing = item.direction === "outgoing";
+              const emailLabel = isEmail
+                ? outgoing
+                  ? item.formName?.includes("failed")
+                    ? "Email · Failed"
+                    : "Email · Sent"
+                  : "Email · Received"
+                : null;
+              return (
+                <li
+                  key={item.id}
+                  className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
+                >
+                  <span
+                    className={`mt-1 size-3.5 shrink-0 rounded-full border-[3px] ${
+                      isEmail
+                        ? "border-[#dbeafe] bg-[#3b82f6]"
+                        : "border-[#e7f8ef] bg-primary"
+                    }`}
+                  />
+                  {index < pageItems.length - 1 ? (
+                    <span className="absolute top-7 bottom-[-6px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
                   ) : null}
-                  {item.message ? (
-                    <p className="mt-1 mb-0 max-w-full line-clamp-3 whitespace-pre-wrap break-all text-[0.82rem] text-[#5b6b7c]">
-                      {item.message}
-                    </p>
-                  ) : null}
-                  <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
-                    <span
-                      className={statusClass(
-                        STATUS_LABELS[item.processingStatus],
-                      )}
-                    >
-                      {STATUS_LABELS[item.processingStatus]}
-                    </span>
-                    {item.campaignName || item.campaign?.name ? (
-                      <span className="min-w-0 max-w-full break-words text-[0.75rem] text-[#8b97a8] [overflow-wrap:anywhere]">
-                        Campaign: {item.campaign?.name || item.campaignName}
-                      </span>
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+                      <p className="m-0 min-w-0 break-all text-[0.9rem] font-semibold text-[#17324f] dark:text-text-strong">
+                        {emailLabel ||
+                          CHANNEL_LABELS[item.channel] ||
+                          item.channel}
+                        {!isEmail && item.formName ? ` · ${item.formName}` : ""}
+                      </p>
+                      <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
+                        {formatDisplayDateTime(item.eventAt)}
+                      </time>
+                    </div>
+                    {item.subject ? (
+                      <p className="mt-1 mb-0 max-w-full break-words text-[0.82rem] font-medium text-[#5b6b7c] [overflow-wrap:anywhere]">
+                        {item.subject}
+                      </p>
                     ) : null}
-                    <span className="text-[0.75rem] text-[#8b97a8] capitalize">
-                      {item.direction}
-                    </span>
-                    {isEmail && item.threadId ? (
-                      <Link
-                        to={`/email?c=${item.threadId}`}
-                        className="text-[0.75rem] font-medium text-primary"
+                    {item.message ? (
+                      <p className="mt-1 mb-0 max-w-full line-clamp-3 whitespace-pre-wrap break-all text-[0.82rem] text-[#5b6b7c]">
+                        {item.message}
+                      </p>
+                    ) : null}
+                    <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2">
+                      <span
+                        className={statusClass(
+                          STATUS_LABELS[item.processingStatus],
+                        )}
                       >
-                        Open thread
-                      </Link>
-                    ) : null}
+                        {STATUS_LABELS[item.processingStatus]}
+                      </span>
+                      {item.campaignName || item.campaign?.name ? (
+                        <span className="min-w-0 max-w-full break-words text-[0.75rem] text-[#8b97a8] [overflow-wrap:anywhere]">
+                          Campaign: {item.campaign?.name || item.campaignName}
+                        </span>
+                      ) : null}
+                      <span className="text-[0.75rem] text-[#8b97a8] capitalize">
+                        {item.direction}
+                      </span>
+                      {isEmail && item.threadId ? (
+                        <Link
+                          to={`/email?c=${item.threadId}`}
+                          className="text-[0.75rem] font-medium text-primary"
+                        >
+                          Open thread
+                        </Link>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              </li>
-            );
-          })}
+                </li>
+              );
+            })}
           </ol>
           <LeadListPagination
             page={page}
@@ -624,7 +647,8 @@ export function LeadTimelinePanel({
                       {item.category === "status" ||
                       (item.actionKey || "").toUpperCase().includes("STATUS") ||
                       (item.actionKey || "").toUpperCase() === "LEAD_CLOSED" ||
-                      (item.actionKey || "").toUpperCase() === "LEAD_REOPENED" ? (
+                      (item.actionKey || "").toUpperCase() ===
+                        "LEAD_REOPENED" ? (
                         <StatusChangeRemark item={item} />
                       ) : item.details ? (
                         <p className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
@@ -633,8 +657,11 @@ export function LeadTimelinePanel({
                       ) : null}
                       <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
                         {item.category === "status" ||
-                        (item.actionKey || "").toUpperCase().includes("STATUS") ||
-                        (item.actionKey || "").toUpperCase() === "LEAD_CLOSED" ||
+                        (item.actionKey || "")
+                          .toUpperCase()
+                          .includes("STATUS") ||
+                        (item.actionKey || "").toUpperCase() ===
+                          "LEAD_CLOSED" ||
                         (item.actionKey || "").toUpperCase() === "LEAD_REOPENED"
                           ? item.user?.fullName
                             ? `Changed by ${item.user.fullName}`
@@ -651,7 +678,8 @@ export function LeadTimelinePanel({
                       {item.category === "status" ||
                       (item.actionKey || "").toUpperCase().includes("STATUS") ||
                       (item.actionKey || "").toUpperCase() === "LEAD_CLOSED" ||
-                      (item.actionKey || "").toUpperCase() === "LEAD_REOPENED" ? (
+                      (item.actionKey || "").toUpperCase() ===
+                        "LEAD_REOPENED" ? (
                         <StatusChangeBadges item={item} />
                       ) : null}
                     </div>
@@ -711,9 +739,7 @@ export function LeadActivitiesPanel({
         const addTime = followUp.createdAt
           ? new Date(followUp.createdAt).getTime()
           : 0;
-        const dueTime = followUp.dueAt
-          ? new Date(followUp.dueAt).getTime()
-          : 0;
+        const dueTime = followUp.dueAt ? new Date(followUp.dueAt).getTime() : 0;
         return {
           kind: "open-follow-up" as const,
           id: `follow-up:${followUp.id}`,
@@ -777,12 +803,57 @@ export function LeadActivitiesPanel({
 
   const { page, pageSize, setPage, setPageSize, pageItems, total } =
     useLeadListPagination(timeline);
+  const [viewing, setViewing] = useState<{
+    detail: ActivityDetails;
+    followUp: FollowUpRecord | null;
+  } | null>(null);
+
+  function openFollowUpDetails(item: FollowUpRecord) {
+    setViewing({
+      detail: activityDetailFromFollowUp(item),
+      followUp: item,
+    });
+  }
+
+  function openFeedDetails(item: ActivityFeedItem, title: string) {
+    const followUpId = item.metadata?.followUpId;
+    const matched =
+      typeof followUpId === "string"
+        ? followUps.find((followUp) => followUp.id === followUpId)
+        : undefined;
+    if (matched) {
+      openFollowUpDetails(matched);
+      return;
+    }
+    setViewing({
+      detail: activityDetailFromFeed(item, title),
+      followUp: null,
+    });
+  }
+
+  function runViewAction(action: "complete" | "reschedule" | "cancel") {
+    const item = viewing?.followUp;
+    setViewing(null);
+    if (!item) return;
+    if (action === "complete") onCompleteFollowUp?.(item);
+    if (action === "reschedule") onRescheduleFollowUp?.(item);
+    if (action === "cancel") onCancelFollowUp?.(item);
+  }
 
   const isLoading =
     Boolean(loading && activities.length === 0) ||
-    Boolean(followUpsLoading && followUps.length === 0 && activities.length === 0);
+    Boolean(
+      followUpsLoading && followUps.length === 0 && activities.length === 0,
+    );
+
+  const viewingCanAct = Boolean(
+    canEditFollowUp &&
+      viewing?.followUp &&
+      OPEN_FOLLOW_UP.has(viewing.followUp.status),
+  );
 
   return (
+    <>
     <LeadSectionCard title="Activities">
       {isLoading ? (
         <p className="m-0 text-[0.88rem] text-[#8b97a8]">Loading activities…</p>
@@ -799,10 +870,7 @@ export function LeadActivitiesPanel({
                 const isMeeting = item.type === "Meeting";
                 const title = isMeeting ? "Meeting added" : "Follow-up added";
                 const iconKind = isMeeting ? "meeting" : "follow-up";
-                const addedAt =
-                  formatDisplayDateTime(item.createdAt) ||
-                  formatDisplayDateTime(item.dueAt) ||
-                  item.due;
+                const addedAt = formatDisplayDateTime(item.createdAt);
                 const scheduledAt =
                   formatDisplayDateTime(item.dueAt) || item.due;
                 return (
@@ -814,69 +882,79 @@ export function LeadActivitiesPanel({
                     {index < pageItems.length - 1 ? (
                       <span className="absolute top-10 bottom-[-6px] left-[15px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
                     ) : null}
-                    <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="min-w-0 flex-1">
                       <div className="flex min-w-0 items-start justify-between gap-3">
-                        <div className="min-w-0 max-w-2xl flex-1">
+                        <div className="min-w-0 flex-1">
                           <p className="m-0 break-words text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
                             {title}
                           </p>
-                          <p className="mt-1 mb-0 text-[0.78rem] text-[#8b97a8]">
-                            {item.type}
-                            {item.purpose ? ` · ${item.purpose}` : ""}
-                            {item.nextAction ? ` · ${item.nextAction}` : ""}
+                          {scheduledAt ? (
+                            <span className="mt-1.5 inline-flex w-fit rounded-md bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] px-2 py-0.5 text-[0.80rem] font-bold text-primary">
+                              {scheduledAt}
+                            </span>
+                          ) : (
+                            <p className="mt-1 mb-0 text-[0.8rem] text-[#8b97a8]">
+                              No date set
+                            </p>
+                          )}
+                          <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
+                            {item.ownerName
+                              ? `Assigned to ${item.ownerName}`
+                              : "Unassigned"}
                           </p>
-                          {isMeeting && scheduledAt ? (
-                            <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
-                              Scheduled for {scheduledAt}
-                            </p>
-                          ) : null}
-                          {item.notes ? (
-                            <p className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
-                              {item.notes}
-                            </p>
-                          ) : null}
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1.5 text-right">
-                          <time className="text-[0.75rem] text-[#8b97a8]">
-                            {isMeeting
-                              ? addedAt
-                              : formatDisplayDateTime(item.dueAt) || item.due}
-                          </time>
+                          {addedAt ? (
+                            <time className="text-[0.75rem] text-[#8b97a8]">
+                              {addedAt}
+                            </time>
+                          ) : null}
                           <span className={activityBadgeClass(item.status)}>
                             {item.status}
                           </span>
                         </div>
                       </div>
-                      <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
-                        {item.ownerName
-                          ? `Assigned to ${item.ownerName}`
-                          : "Unassigned"}
-                        {item.priority ? ` · ${item.priority} priority` : ""}
-                      </p>
-                      {canEditFollowUp ? (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <PrimaryButton
-                            type="button"
-                            size="sm"
-                            onClick={() => onCompleteFollowUp?.(item)}
-                            label="Complete"
-                          />
-                          <PrimaryButton
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onRescheduleFollowUp?.(item)}
-                            label="Reschedule"
-                          />
-                          <PrimaryButton
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => onCancelFollowUp?.(item)}
-                            label="Cancel"
-                          />
-                        </div>
-                      ) : null}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {canEditFollowUp ? (
+                          <>
+                            <PrimaryButton
+                              type="button"
+                              size="sm"
+                              onClick={() => onCompleteFollowUp?.(item)}
+                              label="Complete"
+                            />
+                            <PrimaryButton
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onRescheduleFollowUp?.(item)}
+                              label="Reschedule"
+                            />
+                            <PrimaryButton
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => onCancelFollowUp?.(item)}
+                              label="Cancel"
+                            />
+                          </>
+                        ) : null}
+                        <PrimaryButton
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          icon={
+                            <HugeiconsIcon
+                              icon={ViewIcon}
+                              size={14}
+                              color="currentColor"
+                              strokeWidth={1.8}
+                            />
+                          }
+                          onClick={() => openFollowUpDetails(item)}
+                          label="View"
+                        />
+                      </div>
                     </div>
                   </li>
                 );
@@ -901,6 +979,70 @@ export function LeadActivitiesPanel({
                 (item.actionKey || "").toUpperCase() === "LEAD_CLOSED" ||
                 (item.actionKey || "").toUpperCase() === "LEAD_REOPENED" ||
                 title.toLowerCase().includes("status");
+              const occurredAt = formatDisplayDateTime(item.occurredAt);
+              const actor = isStatusChange
+                ? item.user?.fullName
+                  ? `Changed by ${item.user.fullName}`
+                  : "Changed by System"
+                : item.user?.fullName
+                  ? `Performed by ${item.user.fullName}`
+                  : "Performed by System";
+
+              if (isMeetingOrFollowUpTitle(title)) {
+                const followUpId = item.metadata?.followUpId;
+                const matched =
+                  typeof followUpId === "string"
+                    ? followUps.find((followUp) => followUp.id === followUpId)
+                    : undefined;
+                const assignedTo = matched?.ownerName
+                  ? `Assigned to ${matched.ownerName}`
+                  : actor;
+
+                return (
+                  <li
+                    key={entry.id}
+                    className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
+                  >
+                    <ActivityTypeIcon kind={iconKind} />
+                    {index < pageItems.length - 1 ? (
+                      <span className="absolute top-10 bottom-[-6px] left-[15px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
+                    ) : null}
+                    <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="m-0 break-words text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
+                          {title}
+                        </p>
+                        <p className="mt-1 mb-0 text-[0.8rem] font-medium text-[#17324f] dark:text-text-strong">
+                          {matched
+                            ? formatDisplayDateTime(matched.dueAt) ||
+                              matched.due ||
+                              occurredAt
+                            : occurredAt}
+                        </p>
+                        <p className="mt-0.5 mb-0 text-[0.75rem] text-[#8b97a8]">
+                          {assignedTo}
+                        </p>
+                      </div>
+                      <PrimaryButton
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        icon={
+                          <HugeiconsIcon
+                            icon={ViewIcon}
+                            size={14}
+                            color="currentColor"
+                            strokeWidth={1.8}
+                          />
+                        }
+                        onClick={() => openFeedDetails(item, title)}
+                        label="View"
+                      />
+                    </div>
+                  </li>
+                );
+              }
 
               return (
                 <li
@@ -918,7 +1060,9 @@ export function LeadActivitiesPanel({
                           {title}
                         </p>
                         {item.outcome &&
-                        !title.toLowerCase().includes(item.outcome.toLowerCase()) &&
+                        !title
+                          .toLowerCase()
+                          .includes(item.outcome.toLowerCase()) &&
                         !isStatusChange ? (
                           <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
                             {item.outcome}
@@ -932,20 +1076,16 @@ export function LeadActivitiesPanel({
                           </p>
                         ) : null}
                         <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
-                          {isStatusChange
-                            ? item.user?.fullName
-                              ? `Changed by ${item.user.fullName}`
-                              : "Changed by System"
-                            : item.user?.fullName
-                              ? `Performed by ${item.user.fullName}`
-                              : "Performed by System"}
+                          {actor}
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1.5 text-right">
                         <time className="text-[0.75rem] text-[#8b97a8]">
-                          {formatDisplayDateTime(item.occurredAt)}
+                          {occurredAt}
                         </time>
-                        {isStatusChange ? <StatusChangeBadges item={item} /> : null}
+                        {isStatusChange ? (
+                          <StatusChangeBadges item={item} />
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -963,6 +1103,18 @@ export function LeadActivitiesPanel({
         </>
       )}
     </LeadSectionCard>
+    <ActivityDetailsModal
+      open={Boolean(viewing)}
+      detail={viewing?.detail ?? null}
+      canAct={viewingCanAct}
+      onClose={() => setViewing(null)}
+      onComplete={() => runViewAction("complete")}
+      onCancel={() => runViewAction("cancel")}
+      onReschedule={
+        viewingCanAct ? () => runViewAction("reschedule") : undefined
+      }
+    />
+    </>
   );
 }
 
@@ -1084,7 +1236,8 @@ export function LeadPaymentsPanel({
   const dispatch = useAppDispatch();
   const { data, isFetching, isError } = useListLeadPaymentHistoryQuery(leadId);
   const [cancelPayment, { isLoading: cancelling }] = useCancelPaymentMutation();
-  const [reversePayment, { isLoading: reversing }] = useReversePaymentMutation();
+  const [reversePayment, { isLoading: reversing }] =
+    useReversePaymentMutation();
   const [generateReceipt, { isLoading: generating }] =
     useGeneratePaymentReceiptMutation();
 
@@ -1374,7 +1527,9 @@ export function LeadPaymentsPanel({
           setReason("");
         }}
         onOk={() => void confirmReason()}
-        okText={reasonPrompt?.action === "cancel" ? "Cancel payment" : "Reverse"}
+        okText={
+          reasonPrompt?.action === "cancel" ? "Cancel payment" : "Reverse"
+        }
         confirmLoading={cancelling || reversing}
         destroyOnHidden
       >

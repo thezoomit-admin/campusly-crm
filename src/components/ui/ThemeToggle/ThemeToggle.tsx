@@ -1,7 +1,7 @@
 import { useTheme } from '@/theme/ThemeProvider'
 
 const DEFAULT_ICON_BTN =
-  'relative grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-transparent text-icon hover:bg-hover-bg'
+  'relative grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-[color-mix(in_srgb,var(--color-primary)_16%,white)] text-primary-active transition-colors duration-200 hover:bg-[color-mix(in_srgb,var(--color-primary)_24%,white)] dark:bg-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] dark:text-nav-active dark:hover:bg-[color-mix(in_srgb,var(--color-primary)_32%,transparent)]'
 
 type ThemeToggleProps = {
   className?: string

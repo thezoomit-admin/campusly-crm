@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Calendar03Icon,
   CheckmarkCircle02Icon,
   Clock01Icon,
 } from "@hugeicons/core-free-icons";
+import type { FollowUpRecord } from "@/modules/follow-ups/types";
 import type { LeadRecord } from "../../types";
 import {
   LEAD_JOURNEY_STAGES,
@@ -12,6 +13,10 @@ import {
   journeyStageIndex,
   type FollowUpCountdownUrgency,
 } from "../../utils/leadDetails";
+import ActivityDetailsModal, {
+  activityDetailFromFollowUp,
+  type ActivityDetails,
+} from "./ActivityDetailsModal";
 import LeadUpcomingMeetingCard, {
   type UpcomingMeetingInfo,
 } from "./LeadUpcomingMeetingCard";
@@ -77,15 +82,11 @@ const COUNTDOWN_TONES: Record<
 export default function LeadJourneyBar({
   lead,
   meeting = null,
-  canEditMeeting = false,
-  onRescheduleMeeting,
-  onCancelMeeting,
+  followUps = [],
 }: {
   lead: LeadRecord;
   meeting?: UpcomingMeetingInfo | null;
-  canEditMeeting?: boolean;
-  onRescheduleMeeting?: () => void;
-  onCancelMeeting?: () => void;
+  followUps?: FollowUpRecord[];
 }) {
   const currentIndex = journeyStageIndex(lead.statusCode, lead.status);
   const [, setTick] = useState(0);
@@ -98,8 +99,51 @@ export default function LeadJourneyBar({
 
   const countdown = followUpCountdownParts(lead.nextFollowUp?.dueAt);
   const tone = COUNTDOWN_TONES[countdown?.urgency ?? "safe"];
+  const followUpClickable = Boolean(lead.nextFollowUp?.dueAt);
+  const [detail, setDetail] = useState<ActivityDetails | null>(null);
+
+  function openFollowUpDetails() {
+    const next = lead.nextFollowUp;
+    if (!next?.dueAt) return;
+    const full = followUps.find((item) => item.id === next.id);
+    setDetail(
+      activityDetailFromFollowUp(
+        full ?? {
+          type: next.type,
+          dueAt: next.dueAt,
+          status: next.status,
+          notes: next.notes,
+          priority: next.priority,
+          purpose: next.purpose,
+          nextAction: next.nextAction,
+          reminder: next.reminder,
+          outcome: next.outcome,
+          ownerName: lead.owner?.name || null,
+        },
+      ),
+    );
+  }
+
+  function openMeetingDetails() {
+    if (!meeting) return;
+    const full = followUps.find((item) => item.id === meeting.id);
+    setDetail(
+      activityDetailFromFollowUp(
+        full ?? {
+          type: "Meeting",
+          dueAt: meeting.dueAt,
+          status: meeting.status,
+          notes: meeting.notes,
+          nextAction: meeting.nextAction,
+          reminder: meeting.reminder,
+          ownerName: lead.owner?.name || null,
+        },
+      ),
+    );
+  }
 
   return (
+    <>
     <section className="grid gap-3 rounded-2xl border border-[#e7eef5] bg-surface p-3 shadow-[0_10px_28px_rgba(22,50,79,0.035)] sm:p-4 xl:grid-cols-[minmax(0,1fr)_minmax(240px,300px)_minmax(240px,300px)] dark:border-border">
       <div className="min-w-0">
         <h3 className="mt-0 mb-2 text-[0.92rem] font-semibold text-[#1b3a57] dark:text-text-strong">
@@ -177,8 +221,14 @@ export default function LeadJourneyBar({
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:gap-3 xl:contents">
-        <div
-          className={`flex min-w-0 flex-col justify-center rounded-xl border px-2 py-2 transition-colors duration-300 sm:px-2.5 sm:py-1.5 ${tone.card}`}
+        <FollowUpCardShell
+          clickable={followUpClickable}
+          onClick={openFollowUpDetails}
+          className={`flex min-w-0 flex-col justify-center rounded-xl border px-2 py-2 transition-colors duration-300 sm:px-2.5 sm:py-1.5 ${tone.card}${
+            followUpClickable
+              ? " w-full cursor-pointer text-left font-[inherit] hover:brightness-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              : ""
+          }`}
         >
           <p className="m-0 flex items-center gap-1 text-[0.7rem] font-semibold text-[#1b3a57] sm:text-[0.75rem] dark:text-text-strong">
             <span
@@ -251,18 +301,48 @@ export default function LeadJourneyBar({
               No follow-up scheduled
             </p>
           )}
-        </div>
+        </FollowUpCardShell>
 
         <LeadUpcomingMeetingCard
           meeting={meeting}
-          canEdit={canEditMeeting}
           compact
-          onReschedule={onRescheduleMeeting}
-          onCancel={onCancelMeeting}
+          onClick={meeting ? openMeetingDetails : undefined}
         />
       </div>
     </section>
+    <ActivityDetailsModal
+      open={Boolean(detail)}
+      detail={detail}
+      onClose={() => setDetail(null)}
+    />
+    </>
   );
+}
+
+function FollowUpCardShell({
+  clickable,
+  onClick,
+  className,
+  children,
+}: {
+  clickable: boolean;
+  onClick: () => void;
+  className: string;
+  children: ReactNode;
+}) {
+  if (clickable) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label="View follow-up details"
+        className={className}
+      >
+        {children}
+      </button>
+    );
+  }
+  return <div className={className}>{children}</div>;
 }
 
 function CountdownSep() {
