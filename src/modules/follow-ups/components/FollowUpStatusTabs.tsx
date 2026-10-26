@@ -26,7 +26,7 @@ export default function FollowUpStatusTabs({
             key={tab.key}
             type="button"
             onClick={() => onChange(tab.key)}
-            className={`inline-flex h-9 cursor-pointer items-center rounded-full border px-3.5 text-[13px] font-semibold transition-colors ${
+            className={`inline-flex h-9 cursor-pointer items-center rounded-[10px] border px-3.5 text-[13px] font-semibold transition-colors ${
               active
                 ? 'border-primary bg-primary text-white'
                 : 'border-border bg-surface text-text-muted hover:border-primary/40 hover:text-text'

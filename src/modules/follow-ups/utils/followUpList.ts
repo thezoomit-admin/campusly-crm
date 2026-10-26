@@ -197,7 +197,7 @@ export type FollowUpFilterState = {
   status?: string
 }
 
-/** Open follow-ups first (lead pipeline dates), then by due date. */
+/** Open follow-ups first, then earliest due date so overdue items lead. */
 export function sortFollowUpsForTable(items: FollowUpRecord[]) {
   return [...items].sort((a, b) => {
     const aOpen = isOpenFollowUp(a.status) ? 0 : 1

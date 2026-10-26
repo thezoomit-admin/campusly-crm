@@ -1,5 +1,4 @@
 import type { ColumnsType } from 'antd/es/table'
-import { Tooltip } from 'antd'
 import { Link } from 'react-router-dom'
 import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
@@ -11,6 +10,7 @@ import {
   MeetingRoomIcon,
   Message01Icon,
 } from '@hugeicons/core-free-icons'
+import UserAvatar from '@/components/ui/Avatar/UserAvatar'
 import type { FollowUpRecord } from '../types'
 import {
   displayFollowUpStatus,
@@ -18,7 +18,6 @@ import {
   followUpDisplayStatusClass,
   followUpInitials,
   followUpPriorityClass,
-  isOpenFollowUp,
 } from './followUpList'
 
 function typeIcon(type: string): IconSvgElement {
@@ -28,14 +27,6 @@ function typeIcon(type: string): IconSvgElement {
   if (key.includes('meeting') || key.includes('counselling')) return MeetingRoomIcon
   if (key.includes('document')) return DocumentAttachmentIcon
   return Call02Icon
-}
-
-const NEXT_ACTION_WORD_LIMIT = 3
-
-function truncateWords(text: string, limit = NEXT_ACTION_WORD_LIMIT): string {
-  const words = text.trim().split(/\s+/).filter(Boolean)
-  if (words.length <= limit) return text.trim()
-  return `${words.slice(0, limit).join(' ')}…`
 }
 
 function formatDueParts(dueAt?: string | null, fallback?: string) {
@@ -79,21 +70,21 @@ export const followUpColumns: ColumnsType<FollowUpRecord> = [
             {row.leadId ? (
               <Link
                 to={`/leads/${row.leadId}`}
-                className="m-0 block truncate text-[13px] font-semibold text-primary hover:underline"
+                className="m-0 block truncate text-[13px] font-semibold !text-black hover:underline dark:!text-text-strong"
                 onClick={(event) => event.stopPropagation()}
               >
                 {name}
               </Link>
             ) : (
-              <p className="m-0 truncate text-[13px] font-semibold text-text-strong">{name}</p>
+              <p className="m-0 truncate text-[13px] font-semibold text-black dark:text-text-strong">{name}</p>
             )}
             {row.leadId || code ? (
-              <p className="m-0 truncate text-[11px] text-text-faint">
-                <span className="font-semibold text-[#2563eb]">Lead</span>
+              <p className="m-0 truncate text-[11px] text-black dark:text-text-strong">
+                <span className="font-semibold">Lead</span>
                 {code ? ` • ${code}` : ''}
               </p>
             ) : (
-              <p className="m-0 truncate text-[11px] text-text-faint">Contact</p>
+              <p className="m-0 truncate text-[11px] text-black dark:text-text-strong">Contact</p>
             )}
           </div>
         </div>
@@ -135,29 +126,21 @@ export const followUpColumns: ColumnsType<FollowUpRecord> = [
     width: 170,
     render: (_v, row) => {
       const parts = formatDueParts(row.dueAt, row.due)
-      const showOverdueBadge = row.status === 'Overdue' && isOpenFollowUp(row.status)
       return (
-        <div className="min-w-0">
-          <span className="inline-flex items-center gap-1.5 text-[13px] text-text-strong">
-            <HugeiconsIcon
-              icon={Clock01Icon}
-              size={14}
-              color="currentColor"
-              strokeWidth={1.7}
-            />
-            <span>
-              {parts.primary}
-              {parts.secondary ? (
-                <span className="text-text-muted">, {parts.secondary}</span>
-              ) : null}
-            </span>
+        <span className="inline-flex items-center gap-1.5 text-[13px] text-text-strong">
+          <HugeiconsIcon
+            icon={Clock01Icon}
+            size={14}
+            color="currentColor"
+            strokeWidth={1.7}
+          />
+          <span>
+            {parts.primary}
+            {parts.secondary ? (
+              <span className="text-text-muted">, {parts.secondary}</span>
+            ) : null}
           </span>
-          {showOverdueBadge ? (
-            <span className="mt-1 inline-flex rounded-full bg-[#ffe8ee] px-2 py-0.5 text-[10px] font-bold text-[#e11d48]">
-              Overdue
-            </span>
-          ) : null}
-        </div>
+        </span>
       )
     },
   },
@@ -170,11 +153,11 @@ export const followUpColumns: ColumnsType<FollowUpRecord> = [
       const name = row.owner || row.ownerName || '—'
       return (
         <div className="flex min-w-0 items-center gap-2">
-          <span
-            className={`grid size-7 shrink-0 place-items-center rounded-full text-[10px] font-bold ${followUpAvatarTone(name)}`}
-          >
-            {followUpInitials(name)}
-          </span>
+          <UserAvatar
+            name={name}
+            photoUrl={row.ownerPhotoUrl}
+            className={`grid size-7 shrink-0 place-items-center overflow-hidden rounded-full text-[10px] font-bold [&_img]:size-full [&_img]:object-cover ${followUpAvatarTone(name)}`}
+          />
           <span className="truncate text-[13px] text-text-strong">{name}</span>
         </div>
       )
@@ -192,25 +175,6 @@ export const followUpColumns: ColumnsType<FollowUpRecord> = [
         {value || 'Medium'}
       </span>
     ),
-  },
-  {
-    title: 'Next Action',
-    dataIndex: 'nextAction',
-    key: 'nextAction',
-    width: 120,
-    onHeaderCell: () => ({ style: { width: 120, maxWidth: 120 } }),
-    onCell: () => ({ style: { width: 120, maxWidth: 120 } }),
-    render: (value: string | null) => {
-      if (!value?.trim()) return '—'
-      const full = value.trim()
-      return (
-        <Tooltip title={full}>
-          <span className="block max-w-[104px] truncate cursor-default">
-            {truncateWords(full)}
-          </span>
-        </Tooltip>
-      )
-    },
   },
   {
     title: 'Status',

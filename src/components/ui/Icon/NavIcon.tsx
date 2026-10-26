@@ -2,6 +2,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Activity01Icon,
   Analytics01Icon,
+  CalendarClockIcon,
   AssignmentsIcon,
   CreditCardIcon,
   DashboardSquare01Icon,
@@ -42,6 +43,7 @@ const ICONS: Record<NavIconName, typeof DashboardSquare01Icon> = {
   assignments: AssignmentsIcon,
   meta: MetaIcon,
   unlock: UserUnlock01Icon,
+  calendarClock: CalendarClockIcon,
 }
 
 type NavIconProps = {

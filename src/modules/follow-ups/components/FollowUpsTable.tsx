@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   Calendar03Icon,
@@ -42,6 +43,8 @@ export default function FollowUpsTable({
   onViewDetails,
   onEditReminder,
 }: FollowUpsTableProps) {
+  const navigate = useNavigate()
+
   const resolveActions = (record: Record<string, unknown>): DataTableActionItem[] => {
     const row = record as unknown as FollowUpRecord
     const open = isOpenFollowUp(row.status)
@@ -138,6 +141,25 @@ export default function FollowUpsTable({
       actions={resolveActions}
       actionsMode="dropdown"
       actionsAlign="center"
+      onRow={(record) => {
+        const row = record as unknown as FollowUpRecord
+        if (!row.leadId) return {}
+        return {
+          onClick: (event) => {
+            const target = event.target
+            if (
+              target instanceof Element &&
+              target.closest(
+                'a, button, input, label, .ant-checkbox, .ant-dropdown, .ant-table-selection-column',
+              )
+            ) {
+              return
+            }
+            navigate(`/leads/${row.leadId}`)
+          },
+          style: { cursor: 'pointer' },
+        }
+      }}
       pagination={{
         showTotal: (count: number, range: [number, number]) =>
           `Showing ${range[0]}-${range[1]} of ${count} follow-ups`,
