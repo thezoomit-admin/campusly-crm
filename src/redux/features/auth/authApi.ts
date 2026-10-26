@@ -1,5 +1,19 @@
 import { baseApi } from '../../api/baseApi'
-import type { AuthSession } from '@/types'
+import { toQuery } from '@/lib/api'
+import type { ActivityFeedResponse, AuthRole, AuthSession, PermissionRecord, ScopeMap } from '@/types'
+
+export type MyPermissionsResponse = {
+  role: AuthRole
+  dataScopes: ScopeMap
+  permissions: PermissionRecord[]
+}
+
+export type MyActivityParams = {
+  from?: string
+  to?: string
+  search?: string
+  category?: string
+}
 
 export type LoginBody = {
   identifier: string
@@ -66,6 +80,20 @@ const authApi = baseApi.injectEndpoints({
         body,
       }),
     }),
+    updateMyProfile: builder.mutation<AuthSession, FormData | Record<string, string>>({
+      query: (body) => ({
+        url: '/me',
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Auth', 'Users', 'User'],
+    }),
+    getMyPermissions: builder.query<MyPermissionsResponse, void>({
+      query: () => '/me/permissions',
+    }),
+    listMyActivity: builder.query<ActivityFeedResponse, MyActivityParams | void>({
+      query: (params) => `/me/activity${toQuery({ ...(params || {}) })}`,
+    }),
   }),
 })
 
@@ -77,4 +105,7 @@ export const {
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useChangePasswordMutation,
+  useUpdateMyProfileMutation,
+  useGetMyPermissionsQuery,
+  useListMyActivityQuery,
 } = authApi

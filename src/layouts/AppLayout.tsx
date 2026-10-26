@@ -477,7 +477,7 @@ export default function AppLayout() {
           <button
             type="button"
             className={[
-              "flex w-full cursor-pointer items-center gap-2.5 rounded-xl border-0 bg-primary px-3 py-2.5 font-[inherit] text-[0.92rem] font-semibold text-on-primary hover:enabled:bg-primary-hover disabled:cursor-wait disabled:opacity-70",
+              "flex w-full cursor-pointer items-center gap-2.5 rounded-xl border-0 bg-red-600 px-3 py-2.5 font-[inherit] text-[0.92rem] font-semibold text-white hover:enabled:bg-red-700 disabled:cursor-wait disabled:opacity-70",
               collapsed
                 ? "justify-center px-0 py-2.5 max-[960px]:justify-start max-[960px]:px-3 max-[960px]:py-[9px]"
                 : "justify-center",
