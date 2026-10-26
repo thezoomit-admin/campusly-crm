@@ -9,6 +9,7 @@ import { toQuery } from "@/lib/api";
 import type { AuthSession } from "../../../types";
 import { adminPage } from "../../../styles/admin";
 import { useListLeadsQuery } from "../api/leadsApi";
+import { useEnableAfterListQuery } from "../hooks/useEnableAfterListQuery";
 import LeadFilters, {
   EMPTY_LEAD_FILTERS,
   type LeadFilterValues,
@@ -42,6 +43,7 @@ export default function ClosedLeadsPage() {
     country: filters.country,
     duplicatesOnly: duplicatesOnly || undefined,
   });
+  const loadOptions = useEnableAfterListQuery();
 
   const rows = (data?.items || []) as LeadRow[];
 
@@ -90,6 +92,7 @@ export default function ClosedLeadsPage() {
             search={search}
             filters={filters}
             duplicatesOnly={duplicatesOnly}
+            loadOptions={loadOptions}
             onSearchChange={(value) => {
               setSearch(value);
               resetPage();

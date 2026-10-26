@@ -26,6 +26,8 @@ type LeadListChangeStatusModalProps = {
   open: boolean
   auth: AuthSession
   onClose: () => void
+  /** Keep false until the page list query has been dispatched. */
+  loadOptions?: boolean
 }
 
 export default function LeadListChangeStatusModal({
@@ -33,8 +35,9 @@ export default function LeadListChangeStatusModal({
   open,
   auth,
   onClose,
+  loadOptions = true,
 }: LeadListChangeStatusModalProps) {
-  const options = useLeadMasterOptions()
+  const options = useLeadMasterOptions({ skip: !loadOptions })
   const canUpdateStatus = hasPermission(auth, 'lead:update_status')
   const canFollowUp = hasPermission(auth, 'follow_up:create')
   const canAddActivity = hasPermission(auth, 'activity:create')

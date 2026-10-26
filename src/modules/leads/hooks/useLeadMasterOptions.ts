@@ -39,8 +39,14 @@ function isFutureIntake(extras?: Record<string, unknown> | null) {
   return !dayjs(start).isBefore(dayjs(), 'day')
 }
 
-function useCategory(category: string, options?: { futureIntakeOnly?: boolean }) {
-  const { data, isFetching } = useListMasterDataOptionsQuery({ category })
+function useCategory(
+  category: string,
+  options?: { futureIntakeOnly?: boolean; skip?: boolean },
+) {
+  const { data, isFetching } = useListMasterDataOptionsQuery(
+    { category },
+    { skip: options?.skip },
+  )
   const items = data?.items || []
   const filtered =
     category === 'INTAKE' && options?.futureIntakeOnly
@@ -57,31 +63,32 @@ function useCategory(category: string, options?: { futureIntakeOnly?: boolean })
 
 export { INTEGRATION_SOURCES }
 
-export function useLeadMasterOptions() {
-  const country = useCategory('COUNTRY')
-  const degree = useCategory('STUDY_LEVEL')
-  const intake = useCategory('INTAKE', { futureIntakeOnly: true })
-  const purpose = useCategory('STUDY_PURPOSE')
-  const education = useCategory('EDUCATION_LEVEL')
-  const englishTest = useCategory('ENGLISH_TEST_TYPE')
-  const testStatus = useCategory('TEST_STATUS')
-  const budget = useCategory('BUDGET_RANGE')
-  const funding = useCategory('FUNDING_SOURCE')
-  const financial = useCategory('FINANCIAL_READINESS')
-  const timeline = useCategory('DECISION_TIMELINE')
-  const decisionMaker = useCategory('DECISION_MAKER')
-  const appReady = useCategory('APPLICATION_READINESS')
-  const studyIntent = useCategory('STUDY_INTENT')
-  const contactMethod = useCategory('CONTACT_METHOD')
-  const contactTime = useCategory('CONTACT_TIME')
-  const source = useCategory('LEAD_SOURCE')
-  const channel = useCategory('LEAD_CHANNEL')
-  const fit = useCategory('QUALIFICATION_FIT')
-  const result = useCategory('QUALIFICATION_RESULT')
-  const unqualified = useCategory('UNQUALIFIED_REASON')
-  const priority = useCategory('LEAD_PRIORITY')
-  const lostReason = useCategory('LEAD_LOST_REASON')
-  const closeReason = useCategory('LEAD_CLOSE_REASON')
+export function useLeadMasterOptions(options?: { skip?: boolean }) {
+  const skip = Boolean(options?.skip)
+  const country = useCategory('COUNTRY', { skip })
+  const degree = useCategory('STUDY_LEVEL', { skip })
+  const intake = useCategory('INTAKE', { futureIntakeOnly: true, skip })
+  const purpose = useCategory('STUDY_PURPOSE', { skip })
+  const education = useCategory('EDUCATION_LEVEL', { skip })
+  const englishTest = useCategory('ENGLISH_TEST_TYPE', { skip })
+  const testStatus = useCategory('TEST_STATUS', { skip })
+  const budget = useCategory('BUDGET_RANGE', { skip })
+  const funding = useCategory('FUNDING_SOURCE', { skip })
+  const financial = useCategory('FINANCIAL_READINESS', { skip })
+  const timeline = useCategory('DECISION_TIMELINE', { skip })
+  const decisionMaker = useCategory('DECISION_MAKER', { skip })
+  const appReady = useCategory('APPLICATION_READINESS', { skip })
+  const studyIntent = useCategory('STUDY_INTENT', { skip })
+  const contactMethod = useCategory('CONTACT_METHOD', { skip })
+  const contactTime = useCategory('CONTACT_TIME', { skip })
+  const source = useCategory('LEAD_SOURCE', { skip })
+  const channel = useCategory('LEAD_CHANNEL', { skip })
+  const fit = useCategory('QUALIFICATION_FIT', { skip })
+  const result = useCategory('QUALIFICATION_RESULT', { skip })
+  const unqualified = useCategory('UNQUALIFIED_REASON', { skip })
+  const priority = useCategory('LEAD_PRIORITY', { skip })
+  const lostReason = useCategory('LEAD_LOST_REASON', { skip })
+  const closeReason = useCategory('LEAD_CLOSE_REASON', { skip })
 
   return {
     country: country.options,
