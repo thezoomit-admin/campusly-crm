@@ -8,23 +8,15 @@ import {
   adminPage,
   adminTable,
   formActions,
-  matrix,
-  matrixActions,
-  matrixGroup,
-  matrixModal,
   modalBackdrop,
-  modalBody,
   modalClose,
-  modalFooter,
   modalHeader,
   modalPanel,
-  modalPanelFlex,
-  modalPanelWide,
   muted,
   rowActions,
   tableWrap,
 } from "../../../styles/admin";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import { useOutletContext, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -50,13 +42,13 @@ import {
 import { Spin } from "antd";
 import { PrimaryButton } from "@/components/ui";
 import {
-  FormCheckbox,
   FormInput,
   FormInputNumber,
   FormSelect,
   FormSwitch,
   FormTextArea,
 } from "@/components/common/Forms";
+import RolePermissionsModal from "../components/RolePermissionsModal";
 import { DeleteModal } from "@/components/common/Modals";
 import { PageHeader } from "@/components/common/Navigation";
 import { PageMeta } from "@/components/common/Meta";
@@ -99,37 +91,6 @@ type RoleForm = {
 };
 
 const EMPTY_FORM: RoleForm = { name: "", description: "", status: "ACTIVE" };
-
-const LEAD_PAGE_LABELS: Record<string, string> = {
-  "lead:view": "All Leads",
-  "lead:create": "Create Lead",
-  "lead:assign": "Lead Pool",
-  "lead:view_closed": "Close Lost Lead",
-  "role:edit": "Edit role",
-  "role:delete": "Delete role",
-};
-
-const LEAD_PAGE_ORDER = [
-  "lead:view",
-  "lead:create",
-  "lead:assign",
-  "lead:view_closed",
-];
-
-const ROLE_ACTION_ORDER = ["role:view", "role:edit", "role:delete", "role:create"];
-
-function permissionChoiceLabel(permission: PermissionRecord) {
-  return LEAD_PAGE_LABELS[permission.key] || permission.action;
-}
-
-function comparePermissionOrder(aKey: string, bKey: string, order: string[]) {
-  const aIndex = order.indexOf(aKey);
-  const bIndex = order.indexOf(bKey);
-  if (aIndex === -1 && bIndex === -1) return 0;
-  if (aIndex === -1) return 1;
-  if (bIndex === -1) return -1;
-  return aIndex - bIndex;
-}
 
 function formFromRole(role: RoleRecord): RoleForm {
   return {
@@ -178,7 +139,6 @@ export default function RolesPage() {
   const [search, setSearch] = useState(() =>
     readUrlSearchQuery(location.search),
   );
-  const [permissionSearch, setPermissionSearch] = useState("");
   const [status, setStatus] = useState("");
   const [userCount, setUserCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -203,33 +163,6 @@ export default function RolesPage() {
   const [updateRoleStatus] = useUpdateRoleStatusMutation();
   const [deleteRole] = useDeleteRoleMutation();
   const [setRolePermissions] = useSetRolePermissionsMutation();
-
-  const grouped = useMemo(() => {
-    const query = permissionSearch.trim().toLowerCase();
-    const map = new Map<string, PermissionRecord[]>();
-    for (const permission of permissions) {
-      if (
-        query &&
-        !`${permission.module} ${permission.key} ${permission.description} ${permissionChoiceLabel(permission)}`
-          .toLowerCase()
-          .includes(query)
-      ) {
-        continue;
-      }
-      const list = map.get(permission.module) || [];
-      list.push(permission);
-      map.set(permission.module, list);
-    }
-    for (const [moduleName, items] of map) {
-      if (moduleName === "Lead Management") {
-        items.sort((a, b) => comparePermissionOrder(a.key, b.key, LEAD_PAGE_ORDER));
-      }
-      if (moduleName === "Role & Permission") {
-        items.sort((a, b) => comparePermissionOrder(a.key, b.key, ROLE_ACTION_ORDER));
-      }
-    }
-    return [...map.entries()];
-  }, [permissions, permissionSearch]);
 
   async function load(options?: { silent?: boolean; search?: string }) {
     if (!options?.silent) {
@@ -287,7 +220,6 @@ export default function RolesPage() {
   function openPermissions(role: RoleRecord) {
     setSelected(role);
     setChecked(role.permissionIds || []);
-    setPermissionSearch("");
     setPermissionOpen(true);
   }
 
@@ -649,91 +581,18 @@ export default function RolesPage() {
           )
         : null}
 
-      {permissionOpen && selected
-        ? createPortal(
-            <div className={`${modalBackdrop}`} onClick={closePermissions}>
-              <div
-                className={`${modalPanelFlex} ${modalPanelWide}`}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="permission-modal-title"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className={`${modalHeader}`}>
-                  <h3 id="permission-modal-title">
-                    Permissions · {selected.name}
-                  </h3>
-                  <PrimaryButton
-                    type="button"
-                    className={`${modalClose}`}
-                    aria-label="Close"
-                    onClick={closePermissions}
-                    disabled={permissionSaving}
-                    icon={
-                      <HugeiconsIcon
-                        icon={Cancel01Icon}
-                        size={18}
-                        color="currentColor"
-                        strokeWidth={1.5}
-                      />
-                    }
-                  />
-                </div>
-                <div className={`${modalBody} ${matrix} ${matrixModal}`}>
-                  <FormInput.Search
-                    allowClear
-                    placeholder="Search permissions, e.g. Lead"
-                    value={permissionSearch}
-                    onChange={(event) =>
-                      setPermissionSearch(event.target.value)
-                    }
-                  />
-                  {grouped.map(([moduleName, items]) => (
-                    <div key={moduleName} className={`${matrixGroup}`}>
-                      <strong>{moduleName}</strong>
-                      <div className={`${matrixActions}`}>
-                        {items.map((item) => (
-                          <label key={item.id}>
-                            <FormCheckbox
-                              checked={checked.includes(item.id)}
-                              disabled={permissionSaving}
-                              onChange={(event) => {
-                                setChecked((current) =>
-                                  event.target.checked
-                                    ? [...current, item.id]
-                                    : current.filter((id) => id !== item.id),
-                                );
-                              }}
-                            >
-                              {permissionChoiceLabel(item)}
-                            </FormCheckbox>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className={`${modalFooter} ${formActions}`}>
-                  <PrimaryButton
-                    type="button"
-                    variant="outline"
-                    onClick={closePermissions}
-                    disabled={permissionSaving}
-                    label="Cancel"
-                  />
-                  {canAssignPermissions ? (
-                    <PrimaryButton
-                      onClick={() => void savePermissions()}
-                      loading={permissionSaving}
-                      label="Save permissions"
-                    />
-                  ) : null}
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      {permissionOpen && selected ? (
+        <RolePermissionsModal
+          roleName={selected.name}
+          permissions={permissions}
+          checked={checked}
+          saving={permissionSaving}
+          canSave={canAssignPermissions}
+          onCheckedChange={setChecked}
+          onClose={closePermissions}
+          onSave={() => void savePermissions()}
+        />
+      ) : null}
 
       <DeleteModal
         open={Boolean(deleteTarget)}
