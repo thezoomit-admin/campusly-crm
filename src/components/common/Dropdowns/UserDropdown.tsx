@@ -66,7 +66,6 @@ const QUICK_MENUS: QuickMenuItem[] = [
     label: "My Leads",
     to: "/leads/mine",
     icon: "users",
-    permission: "lead:view",
   },
   {
     key: "applications",

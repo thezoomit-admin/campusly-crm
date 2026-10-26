@@ -41,7 +41,14 @@ import { PaymentsPage } from "../modules/payments";
 import { ProfilePage } from "../modules/profile";
 import { ReportsPage } from "../modules/reports";
 import { RolesPage } from "../modules/roles/index";
-import { CountryAssignmentPage, SettingsPage } from "../modules/settings";
+import {
+  CountryAssignmentPage,
+  IntegrationsSettingsPanel,
+  LeadSettingsPanel,
+  PreferencesSettingsPanel,
+  SettingsLayout,
+  WorkspaceSettingsPanel,
+} from "../modules/settings";
 import { ServiceCatalogPage } from "../modules/service-items";
 import { StudentDetailsPage, StudentsPage } from "../modules/students";
 import { UsersPage, UserDetailsPage } from "../modules/users/index";
@@ -88,35 +95,39 @@ const routes = [
             ),
             children: [{ path: "/leads/pool", element: <LeadPoolPage /> }],
           },
+          { path: "/leads/mine", element: <MyLeadsPage /> },
           {
             element: (
               <PermissionRoute
-                permission="lead:view"
-                deniedTitle="My Leads"
-                deniedMessage="You do not have permission to access this page."
-              />
-            ),
-            children: [{ path: "/leads/mine", element: <MyLeadsPage /> }],
-          },
-          {
-            element: (
-              <PermissionRoute
-                permission="lead:view"
+                permission="lead:view_closed"
                 deniedTitle="Lost/Close Leads"
-                deniedMessage="You do not have permission to access this page."
+                deniedMessage="You do not have permission to access Lost/Close Leads."
               />
             ),
             children: [{ path: "/leads/closed", element: <ClosedLeadsPage /> }],
           },
           {
-            element: <PermissionRoute permission="lead:view" />,
-            children: [
-              { path: "/leads", element: <LeadsPage /> },
-              { path: "/leads/new", element: <LeadCreatePage /> },
-              { path: "/leads/:id/edit", element: <LeadCreatePage /> },
-              { path: "/leads/:id", element: <LeadDetailsPage /> },
-            ],
+            element: (
+              <PermissionRoute
+                permission="lead:view"
+                deniedTitle="All Leads"
+                deniedMessage="You do not have permission to access All Leads."
+              />
+            ),
+            children: [{ path: "/leads", element: <LeadsPage /> }],
           },
+          {
+            element: (
+              <PermissionRoute
+                permission="lead:create"
+                deniedTitle="Create Lead"
+                deniedMessage="You do not have permission to create leads."
+              />
+            ),
+            children: [{ path: "/leads/new", element: <LeadCreatePage /> }],
+          },
+          { path: "/leads/:id/edit", element: <LeadCreatePage /> },
+          { path: "/leads/:id", element: <LeadDetailsPage /> },
           {
             element: <PermissionRoute permission="lead:convert" />,
             children: [
@@ -272,7 +283,19 @@ const routes = [
           },
           {
             element: <PermissionRoute permission="settings:view" />,
-            children: [{ path: "/settings", element: <SettingsPage /> }],
+            children: [
+              {
+                path: "/settings",
+                element: <SettingsLayout />,
+                children: [
+                  { index: true, element: <Navigate to="/settings/workspace" replace /> },
+                  { path: "workspace", element: <WorkspaceSettingsPanel /> },
+                  { path: "leads", element: <LeadSettingsPanel /> },
+                  { path: "integrations", element: <IntegrationsSettingsPanel /> },
+                  { path: "preferences", element: <PreferencesSettingsPanel /> },
+                ],
+              },
+            ],
           },
           {
             element: <PermissionRoute permission="country_assignment:view" />,

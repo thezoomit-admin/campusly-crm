@@ -49,13 +49,11 @@ export const APP_NAV_GROUPS: NavGroup[] = [
         to: "/leads",
         label: "Leads",
         icon: "users",
-        permission: "lead:view",
         children: [
           {
-            to: "/leads/new",
-            label: "Create Lead",
+            to: "/leads/mine",
+            label: "My Leads",
             icon: "users",
-            permission: "lead:create",
           },
           {
             to: "/leads",
@@ -63,12 +61,11 @@ export const APP_NAV_GROUPS: NavGroup[] = [
             icon: "users",
             permission: "lead:view",
           },
-
           {
-            to: "/leads/mine",
-            label: "My Leads",
+            to: "/leads/new",
+            label: "Create Lead",
             icon: "users",
-            permission: "lead:view",
+            permission: "lead:create",
           },
           {
             to: "/leads/pool",
@@ -80,7 +77,7 @@ export const APP_NAV_GROUPS: NavGroup[] = [
             to: "/leads/closed",
             label: "Lost/Close Leads",
             icon: "users",
-            permission: "lead:view",
+            permission: "lead:view_closed",
           },
         ],
       },

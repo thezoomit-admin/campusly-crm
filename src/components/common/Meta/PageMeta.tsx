@@ -1,12 +1,13 @@
 import { Helmet } from 'react-helmet-async'
+import { useWorkspaceBrand } from '@/modules/settings/hooks/useWorkspaceBrand'
 
 export const PAGE_TITLE_SUFFIX = ' | EduConsult CRM'
 const MAX_DESCRIPTION_LENGTH = 160
 
-function truncateDescription(text: string) {
+function truncateDescription(text: string, appName: string) {
   const trimmed = text.trim()
   if (!trimmed) {
-    return 'EduConsult CRM — education consultancy management platform.'
+    return `${appName} — education consultancy management platform.`
   }
   if (trimmed.length <= MAX_DESCRIPTION_LENGTH) {
     return trimmed
@@ -14,15 +15,16 @@ function truncateDescription(text: string) {
   return `${trimmed.slice(0, MAX_DESCRIPTION_LENGTH - 1).trimEnd()}…`
 }
 
-function buildDocumentTitle(title: string) {
+function buildDocumentTitle(title: string, appName: string) {
   const trimmed = title.trim()
-  if (!trimmed) {
-    return 'EduConsult CRM'
+  const suffix = ` | ${appName}`
+  if (!trimmed || trimmed === appName) {
+    return appName
   }
-  if (trimmed.endsWith(PAGE_TITLE_SUFFIX) || trimmed === 'EduConsult CRM') {
+  if (trimmed.endsWith(suffix) || trimmed.endsWith(PAGE_TITLE_SUFFIX)) {
     return trimmed
   }
-  return `${trimmed}${PAGE_TITLE_SUFFIX}`
+  return `${trimmed}${suffix}`
 }
 
 const PageMeta = ({
@@ -32,8 +34,9 @@ const PageMeta = ({
   title: string
   description: string
 }) => {
-  const documentTitle = buildDocumentTitle(title)
-  const metaDescription = truncateDescription(description)
+  const { name } = useWorkspaceBrand()
+  const documentTitle = buildDocumentTitle(title, name)
+  const metaDescription = truncateDescription(description, name)
 
   return (
     <Helmet>
