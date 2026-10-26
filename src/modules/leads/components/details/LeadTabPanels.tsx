@@ -45,7 +45,6 @@ import type {
   LeadAssignmentHistoryItem,
   LeadDocumentItem,
   LeadHandoverNote,
-  LeadNoteItem,
   LeadStatusHistoryItem,
 } from "../../types";
 import {
@@ -1118,82 +1117,7 @@ export function LeadActivitiesPanel({
   );
 }
 
-export function LeadNotesPanel({
-  notes,
-  loading,
-  canAdd,
-  onAdd,
-}: {
-  notes: LeadNoteItem[];
-  loading?: boolean;
-  canAdd: boolean;
-  onAdd: () => void;
-}) {
-  const { page, pageSize, setPage, setPageSize, pageItems, total } =
-    useLeadListPagination(notes);
-
-  return (
-    <LeadSectionCard
-      title="Note history"
-      extra={
-        canAdd ? (
-          <PrimaryButton
-            type="button"
-            className="inline-flex cursor-pointer items-center gap-1 rounded-lg border-0 bg-transparent px-1.5 py-1 text-[0.82rem] font-medium text-primary hover:bg-hover-bg"
-            onClick={onAdd}
-            label="Add note"
-          />
-        ) : null
-      }
-    >
-      {loading ? (
-        <p className="m-0 text-[0.84rem] text-[#8b97a8]">Loading notes…</p>
-      ) : notes.length === 0 ? (
-        <p className="m-0 text-[0.84rem] text-[#8b97a8]">
-          No notes recorded for this lead yet.
-        </p>
-      ) : (
-        <>
-          <ol className="m-0 grid list-none gap-0 p-0">
-            {pageItems.map((item, index) => (
-              <li
-                key={item.id}
-                className="relative flex gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
-              >
-                <span className="mt-1 size-3.5 shrink-0 rounded-full border-[3px] border-[#e7f8ef] bg-primary" />
-                {index < pageItems.length - 1 ? (
-                  <span className="absolute top-7 bottom-[-6px] left-[6px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
-                ) : null}
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <p className="m-0 min-w-0 whitespace-pre-wrap break-words text-[0.88rem] text-[#17324f] [overflow-wrap:anywhere] dark:text-text-strong">
-                      {item.body}
-                    </p>
-                    <time className="shrink-0 text-[0.75rem] text-[#8b97a8]">
-                      {formatDisplayDateTime(item.createdAt)}
-                    </time>
-                  </div>
-                  <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
-                    {item.createdBy?.name
-                      ? `by ${item.createdBy.name}`
-                      : "System"}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
-          <LeadListPagination
-            page={page}
-            pageSize={pageSize}
-            total={total}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-          />
-        </>
-      )}
-    </LeadSectionCard>
-  );
-}
+export { LeadNotesPanel } from "./LeadNotesPanel";
 
 export function LeadServicesPanel({
   leadId,

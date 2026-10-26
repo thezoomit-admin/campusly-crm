@@ -51,6 +51,12 @@ export const APP_NAV_GROUPS: NavGroup[] = [
         icon: "users",
         children: [
           {
+            to: "/leads/new",
+            label: "Create Lead",
+            icon: "users",
+            permission: "lead:create",
+          },
+          {
             to: "/leads/mine",
             label: "My Leads",
             icon: "users",
@@ -60,12 +66,6 @@ export const APP_NAV_GROUPS: NavGroup[] = [
             label: "All Leads",
             icon: "users",
             permission: "lead:view",
-          },
-          {
-            to: "/leads/new",
-            label: "Create Lead",
-            icon: "users",
-            permission: "lead:create",
           },
           {
             to: "/leads/pool",

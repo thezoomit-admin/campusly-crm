@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Input, Modal, Popconfirm, Tag } from "antd";
+import { Input, Modal, Popconfirm, Spin, Tag } from "antd";
 import { toast } from "react-toastify";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -401,7 +401,9 @@ export default function LeadPackageOfferPanel({
   leadCode: string;
   canOffer: boolean;
 }) {
-  const { data, isFetching, isError } = useListLeadServiceOffersQuery(leadId);
+  const { data, isFetching, isUninitialized, isError } =
+    useListLeadServiceOffersQuery(leadId);
+  const offersLoading = !isError && (isUninitialized || (isFetching && !data));
   const { data: context, isFetching: contextLoading } = useGetServiceOfferContextQuery(leadId, { skip: !canOffer });
   const [generateOffer, { isLoading: generating }] = useGenerateLeadServiceOfferMutation();
   const [deleteOffer, { isLoading: deleting }] = useDeleteLeadServiceOfferMutation();
@@ -606,9 +608,13 @@ export default function LeadPackageOfferPanel({
         ) : null
       }
     >
-      {isFetching && !data ? <p className="m-0 text-sm text-text-muted">Loading service offers…</p> : null}
+      {offersLoading ? (
+        <div className="grid min-h-40 place-items-center py-8">
+          <Spin />
+        </div>
+      ) : null}
       {isError ? <p className="m-0 text-sm text-danger">Unable to load service offers.</p> : null}
-      {!isFetching && !isError && offers.length === 0 ? (
+      {!offersLoading && !isError && offers.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-input-bg px-4 py-10 text-center dark:bg-transparent">
           <span className="mb-2 flex size-10 items-center justify-center rounded-full bg-nav-active-bg text-primary">
             <HugeiconsIcon icon={Invoice01Icon} size={18} color="currentColor" strokeWidth={1.7} />

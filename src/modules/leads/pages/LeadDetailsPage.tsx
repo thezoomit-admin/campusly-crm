@@ -339,12 +339,18 @@ export default function LeadDetailsPage() {
   const pendingUploadRef = useRef<UploadLeadDocumentForm | null>(null);
 
   const [createLeadNote] = useCreateLeadNoteMutation();
-  const { data: notesData, isFetching: notesLoading } = useListLeadNotesQuery(
-    id,
-    {
-      skip: !id || tab !== "notes",
-    },
-  );
+  const {
+    data: notesData,
+    isFetching: notesFetching,
+    isUninitialized: notesUninitialized,
+    isError: notesError,
+  } = useListLeadNotesQuery(id, {
+    skip: !id || tab !== "notes",
+  });
+  const notesLoading =
+    tab === "notes" &&
+    !notesError &&
+    (notesUninitialized || (notesFetching && !notesData));
   const [followUpOpen, setFollowUpOpen] = useState(
     searchParams.get("followUp") === "1",
   );
@@ -1676,6 +1682,7 @@ export default function LeadDetailsPage() {
               ) : null}
               {tab === "notes" ? (
                 <LeadNotesPanel
+                  leadId={lead.id}
                   notes={noteHistory}
                   loading={notesLoading}
                   canAdd={canAddActivity}
