@@ -505,6 +505,8 @@ export function activityTitle(
   if (key === "LEAD_REOPENED" || metaEvent === "LEAD_REOPENED")
     return "Lead reopened";
   if (looksLikeStatusChange) return "Status changed";
+  if (key === "LEAD_NOTE_PINNED") return "Note Pinned";
+  if (key === "LEAD_NOTE_UNPINNED") return "Note unpinned";
   if (key === "NOTE") return "Note added";
   if (key === "MEETING") return "Meeting added";
 
@@ -601,6 +603,8 @@ export function activityTitle(
   }
   if (text.includes("updated") || text.includes("profile"))
     return "Profile updated";
+  if (text.includes("note pinned")) return "Note Pinned";
+  if (text.includes("note unpinned")) return "Note unpinned";
   if (text.includes("note")) return "Note added";
   if (text.includes("call")) return "Call logged";
   if (text.includes("whatsapp")) return "WhatsApp logged";
