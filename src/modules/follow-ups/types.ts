@@ -74,6 +74,7 @@ export type FollowUpRecord = {
   owner: string
   ownerName: string | null
   ownerId: string | null
+  ownerPhotoUrl?: string | null
   due: string
   dueAt: string | null
   priority: string

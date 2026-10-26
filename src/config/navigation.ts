@@ -19,7 +19,8 @@ export type NavIconName =
   | "globe"
   | "assignments"
   | "meta"
-  | "unlock";
+  | "unlock"
+  | "calendarClock";
 
 export type NavItem = {
   to: string;
@@ -108,7 +109,7 @@ export const APP_NAV_GROUPS: NavGroup[] = [
       {
         to: "/follow-ups",
         label: "Follow-ups",
-        icon: "bell",
+        icon: "calendarClock",
         permission: "follow_up:view",
       },
       {
