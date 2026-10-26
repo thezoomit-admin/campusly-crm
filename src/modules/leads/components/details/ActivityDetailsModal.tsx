@@ -1,8 +1,14 @@
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Calendar03Icon } from "@hugeicons/core-free-icons";
 import { AntModal } from "@/components/common/Modals";
 import { PrimaryButton } from "@/components/ui";
 import type { ActivityFeedItem } from "@/types";
 import { parseMeetingNotes } from "./ScheduleMeetingModal";
-import { formatDisplayDateTime } from "../../utils/leadDetails";
+import {
+  followUpCountdownParts,
+  formatDisplayDateTime,
+  type FollowUpCountdownUrgency,
+} from "../../utils/leadDetails";
 import { statusClass } from "@/lib/statusClass";
 
 export type ActivityDetails = {
@@ -10,6 +16,7 @@ export type ActivityDetails = {
   title: string;
   status?: string | null;
   scheduledAt?: string | null;
+  dueAt?: string | null;
   addedAt?: string | null;
   assignedTo?: string | null;
   priority?: string | null;
@@ -80,6 +87,7 @@ export function activityDetailFromFollowUp(
     title: isMeeting ? "Meeting" : item.type || "Follow-up",
     status: item.status,
     scheduledAt: formatDisplayDateTime(item.dueAt) || item.due || null,
+    dueAt: item.dueAt || null,
     addedAt: formatDisplayDateTime(item.createdAt) || null,
     assignedTo: item.ownerName,
     priority: item.priority,
@@ -134,6 +142,20 @@ export function activityDetailFromFeed(
     endTime: meeting?.endTime || null,
     agenda: meeting?.agenda || null,
   };
+}
+
+const OPEN_FOLLOW_UP = new Set(["Pending", "Due Soon", "Overdue"]);
+
+const SCHEDULE_BADGE: Record<FollowUpCountdownUrgency, string> = {
+  safe: "bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] text-primary",
+  soon: "bg-[color-mix(in_srgb,#f97316_14%,transparent)] text-[#ea580c]",
+  overdue: "bg-[color-mix(in_srgb,#e11d48_12%,transparent)] text-[#e11d48]",
+};
+
+function scheduleBadgeClass(detail: ActivityDetails) {
+  const open = !detail.status || OPEN_FOLLOW_UP.has(detail.status);
+  if (!open || !detail.dueAt) return SCHEDULE_BADGE.safe;
+  return SCHEDULE_BADGE[followUpCountdownParts(detail.dueAt)?.urgency ?? "safe"];
 }
 
 function DetailField({
@@ -195,11 +217,25 @@ export default function ActivityDetailsModal({
     >
       {detail ? (
         <div className="grid min-w-0 gap-4 overflow-hidden">
-          <p className="m-0 min-w-0 text-[1rem] font-semibold text-[#17324f] [overflow-wrap:anywhere] dark:text-text-strong">
-            {detail.title}
-          </p>
+          <div className="grid min-w-0 gap-2">
+            <p className="m-0 min-w-0 text-[1rem] font-semibold text-[#17324f] [overflow-wrap:anywhere] dark:text-text-strong">
+              {detail.title}
+            </p>
+            {detail.scheduledAt ? (
+              <span
+                className={`inline-flex w-fit items-center gap-1.5 rounded-md px-2.5 py-1 text-[0.82rem] font-bold ${scheduleBadgeClass(detail)}`}
+              >
+                <HugeiconsIcon
+                  icon={Calendar03Icon}
+                  size={14}
+                  color="currentColor"
+                  strokeWidth={1.8}
+                />
+                {detail.scheduledAt}
+              </span>
+            ) : null}
+          </div>
           <dl className="m-0 grid min-w-0 grid-cols-2 gap-x-4 gap-y-3">
-            <DetailField label="Scheduled" value={detail.scheduledAt} />
             <DetailField
               label="Assigned to"
               value={detail.assignedTo || "Unassigned"}

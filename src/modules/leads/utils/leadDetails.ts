@@ -36,8 +36,8 @@ export const LEAD_MORE_TABS: Array<{ key: LeadMoreTabKey; label: string }> = [
   { key: "attachments", label: "Attachments" },
   { key: "file-documents", label: "File Documents" },
   { key: "assignments", label: "Assignment History" },
-  { key: "followups", label: "Follow-up History" },
-  { key: "communications", label: "Communication" },
+  // { key: "followups", label: "Follow-up History" },
+  // { key: "communications", label: "Communication" },
   { key: "whatsapp", label: "WhatsApp" },
   { key: "email", label: "Email" },
   { key: "payments", label: "Payments" },
@@ -170,12 +170,12 @@ export const FOLLOW_UP_SOON_MS = 24 * 60 * 60 * 1000;
 
 export type FollowUpCountdownUrgency = "safe" | "soon" | "overdue";
 
-export function followUpCountdownParts(dueAt?: string | null) {
+export function followUpCountdownParts(dueAt?: string | null, now = Date.now()) {
   if (!dueAt) return null;
   const due = new Date(dueAt).getTime();
   if (Number.isNaN(due)) return null;
 
-  const remainingMs = due - Date.now();
+  const remainingMs = due - now;
   const overdue = remainingMs < 0;
   const urgency: FollowUpCountdownUrgency = overdue
     ? "overdue"
@@ -508,7 +508,18 @@ export function activityTitle(
   if (key === "LEAD_NOTE_PINNED") return "Note Pinned";
   if (key === "LEAD_NOTE_UNPINNED") return "Note unpinned";
   if (key === "NOTE") return "Note added";
-  if (key === "MEETING") return "Meeting added";
+  if (key === "MEETING") {
+    if (outcomeText.includes("reschedul") || text.includes("reschedul")) {
+      return "Meeting rescheduled";
+    }
+    if (outcomeText.includes("cancel") || text.includes("cancel")) {
+      return "Meeting cancelled";
+    }
+    if (outcomeText === "completed" || text.includes("complet")) {
+      return "Meeting completed";
+    }
+    return "Meeting added";
+  }
 
   const isFollowUpActivity =
     key.startsWith("FOLLOW_UP") || metaEvent.startsWith("FOLLOW_UP");

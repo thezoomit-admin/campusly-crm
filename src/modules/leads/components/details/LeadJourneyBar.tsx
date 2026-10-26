@@ -5,7 +5,10 @@ import {
   CheckmarkCircle02Icon,
   Clock01Icon,
 } from "@hugeicons/core-free-icons";
-import type { FollowUpRecord } from "@/modules/follow-ups/types";
+import {
+  FOLLOW_UP_OPEN_STATUSES,
+  type FollowUpRecord,
+} from "@/modules/follow-ups/types";
 import type { LeadRecord } from "../../types";
 import {
   LEAD_JOURNEY_STAGES,
@@ -40,6 +43,8 @@ function formatFollowUpStamp(value?: string | null) {
   });
   return `${day} • ${time}`;
 }
+
+const OPEN_FOLLOW_UP = new Set<string>(FOLLOW_UP_OPEN_STATUSES);
 
 const COUNTDOWN_TONES: Record<
   FollowUpCountdownUrgency,
@@ -83,10 +88,18 @@ export default function LeadJourneyBar({
   lead,
   meeting = null,
   followUps = [],
+  canEditFollowUp = false,
+  onCompleteFollowUp,
+  onRescheduleFollowUp,
+  onCancelFollowUp,
 }: {
   lead: LeadRecord;
   meeting?: UpcomingMeetingInfo | null;
   followUps?: FollowUpRecord[];
+  canEditFollowUp?: boolean;
+  onCompleteFollowUp?: (item: FollowUpRecord) => void;
+  onRescheduleFollowUp?: (item: FollowUpRecord) => void;
+  onCancelFollowUp?: (item: FollowUpRecord) => void;
 }) {
   const currentIndex = journeyStageIndex(lead.statusCode, lead.status);
   const [, setTick] = useState(0);
@@ -100,47 +113,116 @@ export default function LeadJourneyBar({
   const countdown = followUpCountdownParts(lead.nextFollowUp?.dueAt);
   const tone = COUNTDOWN_TONES[countdown?.urgency ?? "safe"];
   const followUpClickable = Boolean(lead.nextFollowUp?.dueAt);
-  const [detail, setDetail] = useState<ActivityDetails | null>(null);
+  const [viewing, setViewing] = useState<{
+    detail: ActivityDetails;
+    followUp: FollowUpRecord | null;
+  } | null>(null);
+
+  function actionRecord(
+    id: string,
+    fallback: {
+      type: string;
+      dueAt: string | null;
+      status?: string | null;
+      notes?: string | null;
+      priority?: string | null;
+      purpose?: string | null;
+      nextAction?: string | null;
+      reminder?: string | null;
+      outcome?: string | null;
+    },
+  ): FollowUpRecord {
+    const full = followUps.find((item) => item.id === id);
+    if (full) return full;
+    return {
+      id,
+      contact: lead.name,
+      contactName: lead.name,
+      leadId: lead.id,
+      lead: { id: lead.id, code: lead.code, name: lead.name },
+      type: fallback.type,
+      owner: lead.owner?.name || "",
+      ownerName: lead.owner?.name || null,
+      ownerId: lead.owner?.id || null,
+      due: "",
+      dueAt: fallback.dueAt,
+      priority: fallback.priority || "Medium",
+      status: fallback.status || "Pending",
+      purpose: fallback.purpose || null,
+      purposeOther: null,
+      notes: fallback.notes || null,
+      nextAction: fallback.nextAction || null,
+      reminder: fallback.reminder || "30 Minutes Before",
+      outcome: fallback.outcome || null,
+      completedAt: null,
+      completedByName: null,
+      cancelledAt: null,
+      cancelledByName: null,
+      cancelReason: null,
+      source: "Manual",
+      sourceReason: null,
+      scheduleHistory: [],
+      createdAt: "",
+      updatedAt: "",
+    };
+  }
 
   function openFollowUpDetails() {
     const next = lead.nextFollowUp;
     if (!next?.dueAt) return;
-    const full = followUps.find((item) => item.id === next.id);
-    setDetail(
-      activityDetailFromFollowUp(
-        full ?? {
-          type: next.type,
-          dueAt: next.dueAt,
-          status: next.status,
-          notes: next.notes,
-          priority: next.priority,
-          purpose: next.purpose,
-          nextAction: next.nextAction,
-          reminder: next.reminder,
-          outcome: next.outcome,
-          ownerName: lead.owner?.name || null,
-        },
-      ),
-    );
+    const followUp = actionRecord(next.id, {
+      type: next.type,
+      dueAt: next.dueAt,
+      status: next.status,
+      notes: next.notes,
+      priority: next.priority,
+      purpose: next.purpose,
+      nextAction: next.nextAction,
+      reminder: next.reminder,
+      outcome: next.outcome,
+    });
+    setViewing({
+      detail: activityDetailFromFollowUp({
+        ...followUp,
+        ownerName: followUp.ownerName || lead.owner?.name || null,
+      }),
+      followUp,
+    });
   }
 
   function openMeetingDetails() {
     if (!meeting) return;
-    const full = followUps.find((item) => item.id === meeting.id);
-    setDetail(
-      activityDetailFromFollowUp(
-        full ?? {
-          type: "Meeting",
-          dueAt: meeting.dueAt,
-          status: meeting.status,
-          notes: meeting.notes,
-          nextAction: meeting.nextAction,
-          reminder: meeting.reminder,
-          ownerName: lead.owner?.name || null,
-        },
-      ),
-    );
+    const followUp = actionRecord(meeting.id, {
+      type: "Meeting",
+      dueAt: meeting.dueAt,
+      status: meeting.status,
+      notes: meeting.notes,
+      nextAction: meeting.nextAction,
+      reminder: meeting.reminder,
+    });
+    setViewing({
+      detail: activityDetailFromFollowUp({
+        ...followUp,
+        ownerName: followUp.ownerName || lead.owner?.name || null,
+      }),
+      followUp,
+    });
   }
+
+  function runViewAction(action: "complete" | "reschedule" | "cancel") {
+    const item = viewing?.followUp;
+    setViewing(null);
+    if (!item) return;
+    if (action === "complete") onCompleteFollowUp?.(item);
+    if (action === "reschedule") onRescheduleFollowUp?.(item);
+    if (action === "cancel") onCancelFollowUp?.(item);
+  }
+
+  const viewingCanAct = Boolean(
+    canEditFollowUp &&
+      viewing?.followUp &&
+      OPEN_FOLLOW_UP.has(viewing.followUp.status),
+  );
 
   return (
     <>
@@ -311,9 +393,15 @@ export default function LeadJourneyBar({
       </div>
     </section>
     <ActivityDetailsModal
-      open={Boolean(detail)}
-      detail={detail}
-      onClose={() => setDetail(null)}
+      open={Boolean(viewing)}
+      detail={viewing?.detail ?? null}
+      canAct={viewingCanAct}
+      onClose={() => setViewing(null)}
+      onComplete={() => runViewAction("complete")}
+      onReschedule={
+        viewingCanAct ? () => runViewAction("reschedule") : undefined
+      }
+      onCancel={() => runViewAction("cancel")}
     />
     </>
   );

@@ -50,8 +50,10 @@ import type {
 import {
   activityIconKind,
   activityTitle,
+  followUpCountdownParts,
   formatDisplayDateTime,
   LEAD_MORE_TABS,
+  type FollowUpCountdownUrgency,
   type LeadActivityIconKind,
   type LeadMoreTabKey,
 } from "../../utils/leadDetails";
@@ -101,11 +103,43 @@ type ActivityTimelineEntry =
       item: ActivityFeedItem;
     };
 
-function ActivityTypeIcon({ kind }: { kind: LeadActivityIconKind }) {
+const ACTIVITY_URGENCY_ICON: Record<FollowUpCountdownUrgency, string> = {
+  safe: "bg-[#eef7f2] text-primary dark:bg-[color-mix(in_srgb,var(--color-primary)_16%,transparent)]",
+  soon: "bg-[#ffedd5] text-[#ea580c] dark:bg-[color-mix(in_srgb,#f97316_18%,transparent)] dark:text-[#fdba74]",
+  overdue:
+    "bg-[#ffe4e6] text-[#e11d48] dark:bg-[color-mix(in_srgb,#e11d48_16%,transparent)] dark:text-[#fda4af]",
+};
+
+const ACTIVITY_URGENCY_DATE: Record<FollowUpCountdownUrgency, string> = {
+  safe: "bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] text-primary",
+  soon: "bg-[color-mix(in_srgb,#f97316_14%,transparent)] text-[#ea580c]",
+  overdue: "bg-[color-mix(in_srgb,#e11d48_12%,transparent)] text-[#e11d48]",
+};
+
+const ACTIVITY_URGENCY_TEXT: Record<FollowUpCountdownUrgency, string> = {
+  safe: "text-[#17324f] dark:text-text-strong",
+  soon: "text-[#ea580c]",
+  overdue: "text-[#e11d48]",
+};
+
+function scheduleUrgency(
+  dueAt: string | null | undefined,
+  now: number,
+): FollowUpCountdownUrgency {
+  return followUpCountdownParts(dueAt, now)?.urgency ?? "safe";
+}
+
+function ActivityTypeIcon({
+  kind,
+  urgency = "safe",
+}: {
+  kind: LeadActivityIconKind;
+  urgency?: FollowUpCountdownUrgency;
+}) {
   const icon = ACTIVITY_ICON_MAP[kind] || Clock01Icon;
   return (
     <span
-      className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-[#eef7f2] text-primary dark:bg-[color-mix(in_srgb,var(--color-primary)_16%,transparent)]"
+      className={`mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-full ${ACTIVITY_URGENCY_ICON[urgency]}`}
       aria-hidden
     >
       <HugeiconsIcon
@@ -176,6 +210,160 @@ function isMeetingOrFollowUpTitle(title: string) {
     label.includes("follow-up") ||
     label.includes("follow up")
   );
+}
+
+const ACTIVITY_FILTER_OPTIONS = [
+  { key: "all", label: "All" },
+  { key: "meeting", label: "Meeting" },
+  { key: "follow-up", label: "Follow-up" },
+  { key: "note", label: "Note" },
+  { key: "status", label: "Status change" },
+  { key: "call", label: "Call" },
+  { key: "email", label: "Email" },
+  { key: "whatsapp", label: "WhatsApp" },
+  { key: "sms", label: "SMS" },
+  { key: "counselling", label: "Counselling" },
+  { key: "document", label: "Document" },
+  { key: "payment", label: "Payment" },
+  { key: "assignment", label: "Assignment" },
+  { key: "service", label: "Service" },
+  { key: "other", label: "Other" },
+] as const;
+
+type ActivityFilterKey = (typeof ACTIVITY_FILTER_OPTIONS)[number]["key"];
+
+function isMeetingFollowUpType(type: string) {
+  return type.trim().toLowerCase() === "meeting";
+}
+
+function feedActivityFilterKey(
+  item: ActivityFeedItem,
+): Exclude<ActivityFilterKey, "all"> {
+  const key = (item.actionKey || "").toUpperCase();
+  const metaEvent = String(item.metadata?.event || "").toUpperCase();
+  const title = activityTitle(
+    item.action,
+    item.details,
+    item.outcome,
+    item.actionKey,
+    item.metadata,
+  ).toLowerCase();
+  const category = item.category;
+
+  if (
+    key.startsWith("SERVICE_OFFER_PAYMENT") ||
+    metaEvent.startsWith("SERVICE_OFFER_PAYMENT")
+  ) {
+    return "payment";
+  }
+  if (
+    key === "SERVICE_OFFER_STATUS_CHANGED" ||
+    metaEvent === "SERVICE_OFFER_STATUS_CHANGED"
+  ) {
+    return "status";
+  }
+  if (
+    key.startsWith("SERVICE_OFFER_") ||
+    metaEvent.startsWith("SERVICE_OFFER_") ||
+    key === "SERVICE_DISCUSSION" ||
+    title.includes("service")
+  ) {
+    return "service";
+  }
+
+  if (
+    key === "LEAD_STATUS_CHANGED" ||
+    key === "LEAD_CLOSED" ||
+    key === "LEAD_REOPENED" ||
+    metaEvent === "LEAD_STATUS_CHANGED" ||
+    metaEvent === "LEAD_CLOSED" ||
+    metaEvent === "LEAD_REOPENED" ||
+    category === "status" ||
+    title === "status changed" ||
+    title === "status updated" ||
+    title === "lead closed" ||
+    title === "lead reopened"
+  ) {
+    return "status";
+  }
+
+  if (
+    key === "NOTE" ||
+    key.startsWith("LEAD_NOTE") ||
+    title.includes("note")
+  ) {
+    return "note";
+  }
+
+  if (key === "MEETING" || category === "meeting" || title.includes("meeting")) {
+    return "meeting";
+  }
+
+  if (
+    key === "FOLLOW_UP" ||
+    key.startsWith("FOLLOW_UP_") ||
+    metaEvent.startsWith("FOLLOW_UP") ||
+    title.includes("follow-up") ||
+    title.includes("follow up")
+  ) {
+    return "follow-up";
+  }
+
+  if (key === "CALL" || category === "call" || title.includes("call")) {
+    return "call";
+  }
+  if (key === "SMS" || title.includes("sms")) return "sms";
+  if (
+    key === "WHATSAPP" ||
+    key === "MESSAGE" ||
+    title.includes("whatsapp") ||
+    category === "message"
+  ) {
+    return "whatsapp";
+  }
+  if (key === "EMAIL" || category === "email" || title.includes("email")) {
+    return "email";
+  }
+  if (
+    key === "COUNSELLING" ||
+    category === "counselling" ||
+    title.includes("counselling")
+  ) {
+    return "counselling";
+  }
+  if (
+    key.includes("DOCUMENT") ||
+    category === "document" ||
+    category === "file" ||
+    title.includes("document") ||
+    title.includes("attachment")
+  ) {
+    return "document";
+  }
+  if (key.includes("PAYMENT") || category === "payment" || title.includes("payment")) {
+    return "payment";
+  }
+  if (
+    key.includes("ASSIGN") ||
+    key.includes("HANDOVER") ||
+    category === "assignment" ||
+    title.includes("reassigned") ||
+    title.includes("assigned") ||
+    title.includes("handed over")
+  ) {
+    return "assignment";
+  }
+
+  return "other";
+}
+
+function timelineEntryFilterKey(
+  entry: ActivityTimelineEntry,
+): Exclude<ActivityFilterKey, "all"> {
+  if (entry.kind === "open-follow-up") {
+    return isMeetingFollowUpType(entry.followUp.type) ? "meeting" : "follow-up";
+  }
+  return feedActivityFilterKey(entry.item);
 }
 
 function StatusChangeBadges({ item }: { item: ActivityFeedItem }) {
@@ -719,6 +907,12 @@ export function LeadActivitiesPanel({
   onRescheduleFollowUp?: (item: FollowUpRecord) => void;
   onCancelFollowUp?: (item: FollowUpRecord) => void;
 }) {
+  const [clock, setClock] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setClock(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
   const timeline = useMemo(() => {
     const openFollowUps = followUps.filter((item) =>
       OPEN_FOLLOW_UP.has(item.status),
@@ -734,7 +928,6 @@ export function LeadActivitiesPanel({
 
     const openEntries: ActivityTimelineEntry[] = openFollowUps.map(
       (followUp) => {
-        const isMeeting = followUp.type === "Meeting";
         const addTime = followUp.createdAt
           ? new Date(followUp.createdAt).getTime()
           : 0;
@@ -742,8 +935,8 @@ export function LeadActivitiesPanel({
         return {
           kind: "open-follow-up" as const,
           id: `follow-up:${followUp.id}`,
-          // Meetings sit at add-time; scheduled time is shown in the card body.
-          sortAt: isMeeting ? addTime || dueTime : dueTime || addTime,
+          // Newest addition stays on top. Scheduled time stays in the card body.
+          sortAt: addTime || dueTime,
           followUp,
         };
       },
@@ -800,8 +993,54 @@ export function LeadActivitiesPanel({
     return [...openEntries, ...feedEntries].sort((a, b) => b.sortAt - a.sortAt);
   }, [activities, followUps]);
 
+  const [activityFilter, setActivityFilter] = useState<ActivityFilterKey>("all");
+  const filterCounts = useMemo(() => {
+    const counts: Record<ActivityFilterKey, number> = {
+      all: timeline.length,
+      meeting: 0,
+      "follow-up": 0,
+      note: 0,
+      status: 0,
+      call: 0,
+      email: 0,
+      whatsapp: 0,
+      sms: 0,
+      counselling: 0,
+      document: 0,
+      payment: 0,
+      assignment: 0,
+      service: 0,
+      other: 0,
+    };
+    for (const entry of timeline) {
+      counts[timelineEntryFilterKey(entry)] += 1;
+    }
+    return counts;
+  }, [timeline]);
+  const visibleFilters = ACTIVITY_FILTER_OPTIONS.filter(
+    (option) => option.key === "all" || filterCounts[option.key] > 0,
+  );
+  const filteredTimeline = useMemo(
+    () =>
+      activityFilter === "all"
+        ? timeline
+        : timeline.filter(
+            (entry) => timelineEntryFilterKey(entry) === activityFilter,
+          ),
+    [activityFilter, timeline],
+  );
+  const activeFilterLabel =
+    ACTIVITY_FILTER_OPTIONS.find((option) => option.key === activityFilter)
+      ?.label || "All";
+
+  useEffect(() => {
+    if (activityFilter !== "all" && filterCounts[activityFilter] === 0) {
+      setActivityFilter("all");
+    }
+  }, [activityFilter, filterCounts]);
+
   const { page, pageSize, setPage, setPageSize, pageItems, total } =
-    useLeadListPagination(timeline);
+    useLeadListPagination(filteredTimeline);
   const [viewing, setViewing] = useState<{
     detail: ActivityDetails;
     followUp: FollowUpRecord | null;
@@ -853,7 +1092,43 @@ export function LeadActivitiesPanel({
 
   return (
     <>
-    <LeadSectionCard title="Activities">
+    <LeadSectionCard
+      title="Activities"
+      extra={
+        !isLoading && timeline.length > 0 ? (
+          <div
+            className="ml-auto flex min-w-0 flex-1 justify-end gap-1 overflow-x-auto"
+            role="group"
+            aria-label="Filter activities"
+          >
+            {visibleFilters.map((option) => {
+              const active = activityFilter === option.key;
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => {
+                    setActivityFilter(option.key);
+                    setPage(1);
+                  }}
+                  className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-[0.75rem] font-semibold transition-colors ${
+                    active
+                      ? "border-primary bg-primary text-white"
+                      : "border-[#d7e2ec] bg-surface text-[#5b6b7c] hover:border-primary hover:text-primary dark:border-border"
+                  }`}
+                >
+                  {option.label}
+                  <span className={active ? "opacity-80" : "text-[#8b97a8]"}>
+                    {filterCounts[option.key]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ) : null
+      }
+    >
       {isLoading ? (
         <p className="m-0 text-[0.88rem] text-[#8b97a8]">Loading activities…</p>
       ) : timeline.length === 0 ? (
@@ -862,22 +1137,37 @@ export function LeadActivitiesPanel({
         </p>
       ) : (
         <>
+          {filteredTimeline.length === 0 ? (
+            <p className="m-0 text-[0.88rem] text-[#8b97a8]">
+              No {activeFilterLabel.toLowerCase()} activities for this lead.
+            </p>
+          ) : (
           <ol className="m-0 grid min-w-0 list-none gap-0 p-0">
             {pageItems.map((entry, index) => {
               if (entry.kind === "open-follow-up") {
                 const item = entry.followUp;
-                const isMeeting = item.type === "Meeting";
-                const title = isMeeting ? "Meeting added" : "Follow-up added";
+                const isMeeting = item.type.trim().toLowerCase() === "meeting";
+                const rescheduled =
+                  (item.scheduleHistory?.length ?? 0) > 0 ||
+                  (item.sourceReason || "").toLowerCase().includes("reschedul");
+                const title = isMeeting
+                  ? rescheduled
+                    ? "Meeting rescheduled"
+                    : "Meeting added"
+                  : rescheduled
+                    ? "Follow-up rescheduled"
+                    : "Follow-up added";
                 const iconKind = isMeeting ? "meeting" : "follow-up";
                 const addedAt = formatDisplayDateTime(item.createdAt);
                 const scheduledAt =
                   formatDisplayDateTime(item.dueAt) || item.due;
+                const urgency = scheduleUrgency(item.dueAt, clock);
                 return (
                   <li
                     key={entry.id}
                     className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
                   >
-                    <ActivityTypeIcon kind={iconKind} />
+                    <ActivityTypeIcon kind={iconKind} urgency={urgency} />
                     {index < pageItems.length - 1 ? (
                       <span className="absolute top-10 bottom-[-6px] left-[15px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
                     ) : null}
@@ -888,7 +1178,9 @@ export function LeadActivitiesPanel({
                             {title}
                           </p>
                           {scheduledAt ? (
-                            <span className="mt-1.5 inline-flex w-fit rounded-md bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] px-2 py-0.5 text-[0.80rem] font-bold text-primary">
+                            <span
+                              className={`mt-1.5 inline-flex w-fit rounded-md px-2 py-0.5 text-[0.80rem] font-bold ${ACTIVITY_URGENCY_DATE[urgency]}`}
+                            >
                               {scheduledAt}
                             </span>
                           ) : (
@@ -996,13 +1288,22 @@ export function LeadActivitiesPanel({
                 const assignedTo = matched?.ownerName
                   ? `Assigned to ${matched.ownerName}`
                   : actor;
+                const urgency =
+                  matched && OPEN_FOLLOW_UP.has(matched.status)
+                    ? scheduleUrgency(matched.dueAt, clock)
+                    : "safe";
+                const scheduledLabel = matched
+                  ? formatDisplayDateTime(matched.dueAt) ||
+                    matched.due ||
+                    occurredAt
+                  : occurredAt;
 
                 return (
                   <li
                     key={entry.id}
                     className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
                   >
-                    <ActivityTypeIcon kind={iconKind} />
+                    <ActivityTypeIcon kind={iconKind} urgency={urgency} />
                     {index < pageItems.length - 1 ? (
                       <span className="absolute top-10 bottom-[-6px] left-[15px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
                     ) : null}
@@ -1011,12 +1312,10 @@ export function LeadActivitiesPanel({
                         <p className="m-0 break-words text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
                           {title}
                         </p>
-                        <p className="mt-1 mb-0 text-[0.8rem] font-medium text-[#17324f] dark:text-text-strong">
-                          {matched
-                            ? formatDisplayDateTime(matched.dueAt) ||
-                              matched.due ||
-                              occurredAt
-                            : occurredAt}
+                        <p
+                          className={`mt-1 mb-0 text-[0.8rem] font-medium ${ACTIVITY_URGENCY_TEXT[urgency]}`}
+                        >
+                          {scheduledLabel}
                         </p>
                         <p className="mt-0.5 mb-0 text-[0.75rem] text-[#8b97a8]">
                           {assignedTo}
@@ -1092,6 +1391,7 @@ export function LeadActivitiesPanel({
               );
             })}
           </ol>
+          )}
           <LeadListPagination
             page={page}
             pageSize={pageSize}

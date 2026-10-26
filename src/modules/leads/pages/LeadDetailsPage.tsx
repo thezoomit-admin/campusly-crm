@@ -1015,16 +1015,6 @@ export default function LeadDetailsPage() {
 
     setMeetingSaving(true);
     try {
-      if (isReschedule && canEditFollowUp) {
-        await cancelFollowUp({
-          id: meetingTarget.id,
-          body: {
-            reason:
-              payload.rescheduleReason || "Superseded by meeting reschedule",
-          },
-        }).unwrap();
-      }
-
       if (canFollowUp) {
         await createFollowUp({
           leadId: id,
@@ -1036,6 +1026,9 @@ export default function LeadDetailsPage() {
           notes: meetingNotes,
           nextAction: payload.agenda || payload.title || "Scheduled meeting",
           reminder: payload.reminder || "No Reminder",
+          sourceReason: isReschedule
+            ? payload.rescheduleReason || "Meeting rescheduled"
+            : undefined,
         }).unwrap();
       } else if (canAddActivity) {
         // Activity-only permission: log once with scheduled time in notes.
@@ -1411,8 +1404,8 @@ export default function LeadDetailsPage() {
   const moreVisibleKeys = useMemo(() => {
     const allowed = new Set<LeadMoreTabKey>(["attachments", "assignments"]);
     if (!lead || showFileDocumentsTab) allowed.add("file-documents");
-    if (canViewFollowUp) allowed.add("followups");
-    if (canViewCommunications) allowed.add("communications");
+    // if (canViewFollowUp) allowed.add("followups");
+    // if (canViewCommunications) allowed.add("communications");
     if (canViewWhatsApp) allowed.add("whatsapp");
     if (canViewEmail) allowed.add("email");
     if (canViewPayments) allowed.add("payments");
@@ -1422,8 +1415,6 @@ export default function LeadDetailsPage() {
   }, [
     lead,
     showFileDocumentsTab,
-    canViewFollowUp,
-    canViewCommunications,
     canViewWhatsApp,
     canViewEmail,
     canViewPayments,
@@ -1583,6 +1574,14 @@ export default function LeadDetailsPage() {
             lead={lead}
             meeting={openMeetingFollowUp}
             followUps={followUps}
+            canEditFollowUp={canEditFollowUp}
+            onCompleteFollowUp={(item) =>
+              openFollowUpActions(item, "complete")
+            }
+            onRescheduleFollowUp={(item) =>
+              openFollowUpActions(item, "reschedule")
+            }
+            onCancelFollowUp={(item) => openFollowUpActions(item, "cancel")}
           />
 
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
