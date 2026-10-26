@@ -67,6 +67,17 @@ export function channelOf(item: AppNotification): Exclude<NotificationChannelKey
   return 'system'
 }
 
+const STATIC_LEAD_PATHS = new Set(['pool', 'mine', 'closed', 'new'])
+
+export function leadDetailsHref(item: AppNotification) {
+  const leadId = item.lead?.id || item.leadId
+  if (leadId) return `/leads/${leadId}`
+  const link = item.link || item.actions?.find((action) => action.href)?.href || ''
+  const match = link.match(/^\/leads\/([^/?#]+)/)
+  if (match && !STATIC_LEAD_PATHS.has(match[1])) return `/leads/${match[1]}`
+  return null
+}
+
 export function recordHref(item: AppNotification) {
   return item.actions?.find((action) => action.href)?.href || item.link || (item.lead ? `/leads/${item.lead.id}` : null)
 }

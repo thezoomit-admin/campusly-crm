@@ -100,9 +100,8 @@ function matchesPath(pathname: string, to: string): boolean {
   if (to === "/leads") {
     return !NESTED_LEAD_PAGES.some((path) => matchesPath(pathname, path));
   }
-  // Settings is a leaf page; nested admin tools under /settings/* have their own nav items.
   if (to === "/settings") {
-    return pathname === "/settings";
+    return pathname === "/settings" || pathname.startsWith("/settings/");
   }
   return true;
 }

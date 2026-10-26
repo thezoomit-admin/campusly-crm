@@ -6,6 +6,7 @@ import { PrimaryButton } from "@/components/ui";
 import { PageHeader } from "@/components/common/Navigation";
 import { PageMeta } from "@/components/common/Meta";
 import { truncateLeadName } from "@/modules/leads/utils/leadList";
+import { useWorkspaceBrand } from "@/modules/settings/hooks/useWorkspaceBrand";
 import type { AuthSession } from "../../../types";
 import type { DashIconName, DashboardQuickAction } from "../types";
 
@@ -873,6 +874,7 @@ export default function DashboardPage() {
   const { data, isFetching, isError } = useGetDashboardQuery({ year, month });
   const loading = isFetching && !data;
   const name = displayName(auth);
+  const brand = useWorkspaceBrand();
   const stats = data?.stats || [];
   const leadSources = data?.leadSources || [];
   const leadTrend = data?.leadTrend || [];
@@ -1310,10 +1312,11 @@ export default function DashboardPage() {
       </div>
 
       <footer className="flex justify-between gap-3 text-[0.78rem] text-text-faint max-sm:grid max-sm:grid-cols-1">
-        <span>EduConsult CRM &nbsp; v1.0.0</span>
         <span>
-          © {now.getFullYear()} Education Consultancy CRM. All rights reserved.
+          {brand.name} &nbsp; v1.0.0
+          {brand.supportEmail ? ` · ${brand.supportEmail}` : ''}
         </span>
+        <span>© {now.getFullYear()} {brand.name}. All rights reserved.</span>
       </footer>
     </section>
   );

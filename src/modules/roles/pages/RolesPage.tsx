@@ -100,6 +100,37 @@ type RoleForm = {
 
 const EMPTY_FORM: RoleForm = { name: "", description: "", status: "ACTIVE" };
 
+const LEAD_PAGE_LABELS: Record<string, string> = {
+  "lead:view": "All Leads",
+  "lead:create": "Create Lead",
+  "lead:assign": "Lead Pool",
+  "lead:view_closed": "Close Lost Lead",
+  "role:edit": "Edit role",
+  "role:delete": "Delete role",
+};
+
+const LEAD_PAGE_ORDER = [
+  "lead:view",
+  "lead:create",
+  "lead:assign",
+  "lead:view_closed",
+];
+
+const ROLE_ACTION_ORDER = ["role:view", "role:edit", "role:delete", "role:create"];
+
+function permissionChoiceLabel(permission: PermissionRecord) {
+  return LEAD_PAGE_LABELS[permission.key] || permission.action;
+}
+
+function comparePermissionOrder(aKey: string, bKey: string, order: string[]) {
+  const aIndex = order.indexOf(aKey);
+  const bIndex = order.indexOf(bKey);
+  if (aIndex === -1 && bIndex === -1) return 0;
+  if (aIndex === -1) return 1;
+  if (bIndex === -1) return -1;
+  return aIndex - bIndex;
+}
+
 function formFromRole(role: RoleRecord): RoleForm {
   return {
     name: role.name || "",
@@ -135,7 +166,12 @@ export default function RolesPage() {
   const canCreate = hasPermission(auth, "role:create");
   const canEdit = hasPermission(auth, "role:edit");
   const canDelete = hasPermission(auth, "role:delete");
-  const canConfigure = hasPermission(auth, "permission:configure");
+  const canAssignPermissions =
+    hasPermission(auth, "permission:configure") &&
+    (auth.role?.key === "admin" ||
+      auth.role?.key === "ceo" ||
+      auth.roles?.includes("admin") ||
+      auth.roles?.includes("ceo"));
 
   const [roles, setRoles] = useState<RoleRecord[]>([]);
   const [permissions, setPermissions] = useState<PermissionRecord[]>([]);
@@ -174,7 +210,7 @@ export default function RolesPage() {
     for (const permission of permissions) {
       if (
         query &&
-        !`${permission.module} ${permission.key} ${permission.description}`
+        !`${permission.module} ${permission.key} ${permission.description} ${permissionChoiceLabel(permission)}`
           .toLowerCase()
           .includes(query)
       ) {
@@ -183,6 +219,14 @@ export default function RolesPage() {
       const list = map.get(permission.module) || [];
       list.push(permission);
       map.set(permission.module, list);
+    }
+    for (const [moduleName, items] of map) {
+      if (moduleName === "Lead Management") {
+        items.sort((a, b) => comparePermissionOrder(a.key, b.key, LEAD_PAGE_ORDER));
+      }
+      if (moduleName === "Role & Permission") {
+        items.sort((a, b) => comparePermissionOrder(a.key, b.key, ROLE_ACTION_ORDER));
+      }
     }
     return [...map.entries()];
   }, [permissions, permissionSearch]);
@@ -459,10 +503,10 @@ export default function RolesPage() {
                                   onSelect: () => openRole(role, "edit"),
                                 }
                               : null,
-                            canConfigure
+                            canAssignPermissions
                               ? {
                                   key: "permission",
-                                  label: "Permission",
+                                  label: "Assign permissions",
                                   icon: <ActionIcon icon={Key01Icon} />,
                                   onSelect: () => openPermissions(role),
                                 }
@@ -661,7 +705,7 @@ export default function RolesPage() {
                                 );
                               }}
                             >
-                              {item.action}
+                              {permissionChoiceLabel(item)}
                             </FormCheckbox>
                           </label>
                         ))}
@@ -677,7 +721,7 @@ export default function RolesPage() {
                     disabled={permissionSaving}
                     label="Cancel"
                   />
-                  {canConfigure ? (
+                  {canAssignPermissions ? (
                     <PrimaryButton
                       onClick={() => void savePermissions()}
                       loading={permissionSaving}

@@ -1,2 +1,6 @@
-export { default as SettingsPage } from './pages/SettingsPage'
+export { default as SettingsLayout } from './pages/SettingsLayout'
+export { default as WorkspaceSettingsPanel } from './pages/WorkspaceSettingsPanel'
+export { default as LeadSettingsPanel } from './pages/LeadSettingsPanel'
+export { default as IntegrationsSettingsPanel } from './pages/IntegrationsSettingsPanel'
+export { default as PreferencesSettingsPanel } from './pages/PreferencesSettingsPanel'
 export { default as CountryAssignmentPage } from './pages/CountryAssignmentPage'

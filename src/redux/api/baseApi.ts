@@ -140,6 +140,9 @@ export const baseApi = createApi({
     "Email",
     "CountryAssignmentRules",
     "CountryAssignmentFormOptions",
+    "WorkspaceSettings",
+    "WorkspaceBrand",
+    "UserPreferences",
   ],
   endpoints: () => ({}),
 });

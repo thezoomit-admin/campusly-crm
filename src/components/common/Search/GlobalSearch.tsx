@@ -90,9 +90,12 @@ export default function GlobalSearch({ auth }: Props) {
         if (page.to === '/profile' || page.to === '/account') {
           return true
         }
-        const exact = permissionIndex.find((item) => item.to === page.to)
-        const parent = permissionIndex.find((item) => item.to !== '/' && (page.to === item.to || page.to.startsWith(`${item.to}/`)))
-        const required = exact?.permission || parent?.permission
+        const exactMatches = permissionIndex.filter((item) => item.to === page.to)
+        const gated = exactMatches.filter((item) => item.permission)
+        const parent = permissionIndex.find((item) => item.to !== '/' && item.to !== page.to && page.to.startsWith(`${item.to}/`))
+        const required = exactMatches.length
+          ? gated[gated.length - 1]?.permission
+          : parent?.permission
         return !required || hasPermission(auth, required)
       }),
     [auth, permissionIndex],

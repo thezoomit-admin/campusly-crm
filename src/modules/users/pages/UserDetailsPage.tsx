@@ -61,7 +61,12 @@ export default function UserDetailsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const canEdit = hasPermission(auth, 'user:edit')
   const canConfigure = hasPermission(auth, 'user:configure')
-  const canOverride = hasPermission(auth, 'permission:configure')
+  const canOverride =
+    hasPermission(auth, 'permission:configure') &&
+    (auth.role?.key === 'admin' ||
+      auth.role?.key === 'ceo' ||
+      auth.roles?.includes('admin') ||
+      auth.roles?.includes('ceo'))
 
   const viewTab = useMemo(() => parseViewTab(searchParams.get('tab')), [searchParams])
   const [form, setForm] = useState<UserForm | null>(null)

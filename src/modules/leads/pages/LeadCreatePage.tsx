@@ -32,8 +32,10 @@ export default function LeadCreatePage() {
   const allowed = isEdit ? canEdit : canCreate
 
   useEffect(() => {
-    if (!allowed) navigate('/leads', { replace: true })
-  }, [allowed, navigate])
+    if (!allowed) {
+      navigate(isEdit && id ? `/leads/${id}` : '/leads/mine', { replace: true })
+    }
+  }, [allowed, id, isEdit, navigate])
 
   const master = useLeadMasterOptions()
   const [form, setForm] = useState<LeadFormState>(EMPTY_LEAD_FORM)

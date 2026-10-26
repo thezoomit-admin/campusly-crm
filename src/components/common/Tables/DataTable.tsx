@@ -3,6 +3,8 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { MoreVerticalIcon } from '@hugeicons/core-free-icons'
 import { useEffect, useRef, useState, type CSSProperties, type Key, type MouseEvent, type ReactNode } from 'react'
 import { useAppSelector } from '@/redux/features/hooks'
+import { selectAuthSession } from '@/redux/features/auth/authSlice'
+import { useGetMyPreferencesQuery } from '@/modules/settings/api/settingsApi'
 import './DataTable.css'
 
 export type DataTableActionItem = {
@@ -51,6 +53,9 @@ type DataTableProps = {
 
 export default function DataTable(props: DataTableProps) {
   const collapsed = useAppSelector((state) => state.sidebar.collapsed)
+  const session = useAppSelector(selectAuthSession)
+  const { data: preferences } = useGetMyPreferencesQuery(undefined, { skip: !session })
+  const compact = Boolean(preferences?.compactTables)
   const isExpanded = !collapsed
   const {
     data,
@@ -262,7 +267,8 @@ export default function DataTable(props: DataTableProps) {
       <Table
         bordered={bordered}
         loading={loading}
-        className={`rounded-lg ${isExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}
+        size={compact ? 'small' : 'middle'}
+        className={`rounded-lg ${isExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}${compact ? ' crm-table-compact' : ''}`}
         rowKey={rowKey || 'id'}
         rowSelection={selectRow ? rowSelection : undefined}
         dataSource={paginatedData}

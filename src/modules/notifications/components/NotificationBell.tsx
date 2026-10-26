@@ -10,6 +10,7 @@ import {
   type AppNotification,
   type NotificationAction,
 } from '../api/notificationsApi'
+import { leadDetailsHref } from './notificationMeta'
 
 const ICON_BTN =
   'relative grid size-9 cursor-pointer place-items-center rounded-full border-0 bg-[color-mix(in_srgb,var(--color-primary)_16%,white)] text-primary-active transition-colors duration-200 hover:bg-[color-mix(in_srgb,var(--color-primary)_24%,white)] dark:bg-[color-mix(in_srgb,var(--color-primary)_22%,transparent)] dark:text-nav-active dark:hover:bg-[color-mix(in_srgb,var(--color-primary)_32%,transparent)]'
@@ -97,7 +98,14 @@ export default function NotificationBell({
 
   function openItem(item: AppNotification) {
     if (item.status === 'Unread') void markRead(item.id)
-    setSelected(item)
+    const href = leadDetailsHref(item)
+    if (!href) {
+      setSelected(item)
+      return
+    }
+    setOpen(false)
+    setSelected(null)
+    navigate(href)
   }
 
   function runAction(action: NotificationAction) {
