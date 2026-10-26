@@ -340,6 +340,47 @@ const leadsApi = baseApi.injectEndpoints({
         "Activities",
       ],
     }),
+    updateLeadNote: builder.mutation<
+      { note: LeadNoteItem },
+      { id: string; noteId: string; body: string }
+    >({
+      query: ({ id, noteId, body }) => ({
+        url: `/leads/${id}/notes/${noteId}`,
+        method: "PATCH",
+        body: { body },
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: "Leads", id: `${id}-notes` },
+        { type: "Leads", id },
+      ],
+    }),
+    setLeadNotePin: builder.mutation<
+      { note: LeadNoteItem },
+      { id: string; noteId: string; pinned: boolean }
+    >({
+      query: ({ id, noteId, pinned }) => ({
+        url: `/leads/${id}/notes/${noteId}/pin`,
+        method: "POST",
+        body: { pinned },
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: "Leads", id: `${id}-notes` },
+      ],
+    }),
+    deleteLeadNote: builder.mutation<
+      { message: string },
+      { id: string; noteId: string }
+    >({
+      query: ({ id, noteId }) => ({
+        url: `/leads/${id}/notes/${noteId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: "Leads", id: `${id}-notes` },
+        { type: "Leads", id },
+        "Activities",
+      ],
+    }),
     listLeadDocuments: builder.query<
       { items: LeadDocumentItem[] },
       string | { id: string; archived?: boolean; includeHistory?: boolean }
@@ -622,6 +663,9 @@ export const {
   useListLeadAssignmentsQuery,
   useListLeadNotesQuery,
   useCreateLeadNoteMutation,
+  useUpdateLeadNoteMutation,
+  useSetLeadNotePinMutation,
+  useDeleteLeadNoteMutation,
   useListLeadDocumentsQuery,
   useGetLeadDocumentChecklistQuery,
   useUploadLeadDocumentMutation,

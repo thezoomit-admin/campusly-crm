@@ -172,7 +172,15 @@ export type LeadNoteItem = {
   id: string;
   body: string;
   createdAt: string;
+  updatedAt: string;
+  pinnedAt: string | null;
+  edited: boolean;
   createdBy: { id: string; name: string } | null;
+  permissions: {
+    edit: boolean;
+    pin: boolean;
+    delete: boolean;
+  };
 };
 
 export type LeadListSummaryStat = {

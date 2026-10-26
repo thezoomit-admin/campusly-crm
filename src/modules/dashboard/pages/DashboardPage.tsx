@@ -1,4 +1,13 @@
-import { useMemo, type CSSProperties, type SVGProps } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type SVGProps,
+} from "react";
 import { twMerge } from "tailwind-merge";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { useGetDashboardQuery } from "../api/dashboardApi";
@@ -9,6 +18,9 @@ import { truncateLeadName } from "@/modules/leads/utils/leadList";
 import { useWorkspaceBrand } from "@/modules/settings/hooks/useWorkspaceBrand";
 import type { AuthSession } from "../../../types";
 import type { DashIconName, DashboardQuickAction } from "../types";
+
+const QUICK_ACTION_SLIDER_QUERY = "(max-width: 767px)";
+const QUICK_ACTION_AUTOPLAY_MS = 4500;
 
 const QUICK_ACTIONS: DashboardQuickAction[] = [
   {
@@ -40,6 +52,86 @@ const QUICK_ACTIONS: DashboardQuickAction[] = [
     to: "/payments",
   },
 ];
+
+const QUICK_ACTION_COUNT = QUICK_ACTIONS.length;
+
+const QUICK_ACTION_SLIDES = [
+  ...QUICK_ACTIONS.map((action) => ({
+    action,
+    key: `prev-${action.to}`,
+    clone: true,
+  })),
+  ...QUICK_ACTIONS.map((action) => ({
+    action,
+    key: action.to,
+    clone: false,
+  })),
+  ...QUICK_ACTIONS.map((action) => ({
+    action,
+    key: `next-${action.to}`,
+    clone: true,
+  })),
+];
+
+function mediaMatches(query: string) {
+  return (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia(query).matches
+  );
+}
+
+function nearestSlideIndex(scroller: HTMLElement) {
+  const left = scroller.scrollLeft;
+  let nearest = 0;
+  let best = Number.POSITIVE_INFINITY;
+
+  for (let index = 0; index < scroller.children.length; index += 1) {
+    const slide = scroller.children[index] as HTMLElement;
+    const distance = Math.abs(slide.offsetLeft - left);
+    if (distance < best) {
+      best = distance;
+      nearest = index;
+    }
+  }
+
+  return nearest;
+}
+
+function PauseGlyph() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M9 6v12M15 6v12" />
+    </svg>
+  );
+}
+
+function PlayGlyph() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M8 6.5v11l10-5.5-10-5.5Z" />
+    </svg>
+  );
+}
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
@@ -827,40 +919,345 @@ function QuickActionsCard({
 }: {
   onNavigate: (path: string) => void;
 }) {
+  const scrollerRef = useRef<HTMLUListElement>(null);
+  const holdRef = useRef({ pointer: false, hover: false });
+  const visibleRef = useRef(false);
+  const normalizingRef = useRef(false);
+  const resumeTimerRef = useRef(0);
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [slider, setSlider] = useState(() =>
+    mediaMatches(QUICK_ACTION_SLIDER_QUERY),
+  );
+  const [reduceMotion, setReduceMotion] = useState(() =>
+    mediaMatches("(prefers-reduced-motion: reduce)"),
+  );
+
+  const scrollBehavior: ScrollBehavior = reduceMotion ? "auto" : "smooth";
+
+  const releasePointer = () => {
+    window.clearTimeout(resumeTimerRef.current);
+    resumeTimerRef.current = window.setTimeout(() => {
+      holdRef.current.pointer = false;
+    }, 1400);
+  };
+
+  const scrollToIndex = (index: number, behavior: ScrollBehavior) => {
+    const scroller = scrollerRef.current;
+    const slide = scroller?.children[index] as HTMLElement | undefined;
+    if (!scroller || !slide) {
+      return;
+    }
+    scroller.scrollTo({ left: slide.offsetLeft, behavior });
+  };
+
+  const holdPointer = () => {
+    holdRef.current.pointer = true;
+    window.clearTimeout(resumeTimerRef.current);
+  };
+
+  const showAction = (actionIndex: number) => {
+    holdPointer();
+    setActive(actionIndex);
+    scrollToIndex(QUICK_ACTION_COUNT + actionIndex, scrollBehavior);
+    releasePointer();
+  };
+
+  const moveSlide = (direction: -1 | 1) => {
+    const scroller = scrollerRef.current;
+    if (!scroller) {
+      return;
+    }
+    holdPointer();
+    const index = nearestSlideIndex(scroller);
+    let nextIndex = index + direction;
+    if (nextIndex < 0) {
+      nextIndex = QUICK_ACTION_COUNT * 2 - 1;
+    }
+    if (nextIndex >= scroller.children.length) {
+      nextIndex = QUICK_ACTION_COUNT;
+    }
+    scrollToIndex(nextIndex, scrollBehavior);
+    releasePointer();
+  };
+
+  const onPointerEnter = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.pointerType === "mouse") {
+      holdRef.current.hover = true;
+    }
+  };
+
+  const onPointerLeave = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.pointerType === "mouse") {
+      holdRef.current.hover = false;
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const sliderQuery = window.matchMedia(QUICK_ACTION_SLIDER_QUERY);
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => {
+      setSlider(sliderQuery.matches);
+      setReduceMotion(motionQuery.matches);
+    };
+
+    sync();
+    sliderQuery.addEventListener("change", sync);
+    motionQuery.addEventListener("change", sync);
+    return () => {
+      sliderQuery.removeEventListener("change", sync);
+      motionQuery.removeEventListener("change", sync);
+      window.clearTimeout(resumeTimerRef.current);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) {
+      return;
+    }
+    if (!slider) {
+      scroller.scrollLeft = 0;
+      return;
+    }
+    const slide = scroller.children[QUICK_ACTION_COUNT] as
+      | HTMLElement
+      | undefined;
+    if (slide) {
+      scroller.scrollTo({ left: slide.offsetLeft, behavior: "auto" });
+    }
+  }, [slider]);
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller || !slider) {
+      return;
+    }
+
+    let settleTimer = 0;
+
+    const publishActive = () => {
+      const index = nearestSlideIndex(scroller) % QUICK_ACTION_COUNT;
+      setActive((current) => (current === index ? current : index));
+    };
+
+    const normalize = () => {
+      if (normalizingRef.current) {
+        return;
+      }
+      const index = nearestSlideIndex(scroller);
+      publishActive();
+      if (index >= QUICK_ACTION_COUNT && index < QUICK_ACTION_COUNT * 2) {
+        return;
+      }
+      const normalized =
+        QUICK_ACTION_COUNT +
+        (((index % QUICK_ACTION_COUNT) + QUICK_ACTION_COUNT) %
+          QUICK_ACTION_COUNT);
+      const slide = scroller.children[normalized] as HTMLElement | undefined;
+      if (!slide) {
+        return;
+      }
+      normalizingRef.current = true;
+      scroller.scrollTo({ left: slide.offsetLeft, behavior: "auto" });
+      window.setTimeout(() => {
+        normalizingRef.current = false;
+      }, 60);
+    };
+
+    const onScroll = () => {
+      if (normalizingRef.current) {
+        return;
+      }
+      publishActive();
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(normalize, 140);
+    };
+
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    scroller.addEventListener("scrollend", normalize);
+    return () => {
+      window.clearTimeout(settleTimer);
+      scroller.removeEventListener("scroll", onScroll);
+      scroller.removeEventListener("scrollend", normalize);
+    };
+  }, [slider]);
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller || !slider) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visibleRef.current = Boolean(
+          entry?.isIntersecting && entry.intersectionRatio >= 0.35,
+        );
+      },
+      { threshold: [0, 0.35] },
+    );
+    observer.observe(scroller);
+    return () => observer.disconnect();
+  }, [slider]);
+
+  useEffect(() => {
+    if (!slider || paused || reduceMotion) {
+      return;
+    }
+
+    const id = window.setInterval(() => {
+      const scroller = scrollerRef.current;
+      const held = holdRef.current.pointer || holdRef.current.hover;
+      if (
+        !scroller ||
+        document.hidden ||
+        !visibleRef.current ||
+        held ||
+        scroller.scrollWidth <= scroller.clientWidth + 8
+      ) {
+        return;
+      }
+
+      const index = nearestSlideIndex(scroller);
+      const next = scroller.children[index + 1] as HTMLElement | undefined;
+      if (!next) {
+        const first = scroller.children[QUICK_ACTION_COUNT] as
+          | HTMLElement
+          | undefined;
+        if (first) {
+          scroller.scrollTo({ left: first.offsetLeft, behavior: "auto" });
+        }
+        return;
+      }
+      scroller.scrollTo({ left: next.offsetLeft, behavior: "smooth" });
+    }, QUICK_ACTION_AUTOPLAY_MS);
+
+    return () => window.clearInterval(id);
+  }, [paused, reduceMotion, slider]);
+
   return (
-    <article className={cx(dashCard, "min-w-0")}>
+    <article
+      className={cx(dashCard, "min-w-0")}
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
+      onPointerDown={holdPointer}
+      onPointerUp={releasePointer}
+      onPointerCancel={releasePointer}
+      onKeyDown={(event) => {
+        if (!slider) {
+          return;
+        }
+        if (event.key === "ArrowRight") {
+          event.preventDefault();
+          moveSlide(1);
+        }
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          moveSlide(-1);
+        }
+      }}
+    >
       <div className={cardHead}>
         <h3 className="m-0 text-base">Quick Actions</h3>
         <span className={chip}>Shortcuts</span>
       </div>
-      <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0 lg:grid-cols-4">
-        {QUICK_ACTIONS.map((action) => (
-          <li key={action.to} className="min-w-0">
+      <div
+        role="region"
+        aria-roledescription="carousel"
+        aria-label="Quick actions"
+      >
+        <ul
+          ref={scrollerRef}
+          className="relative m-0 flex list-none snap-x snap-mandatory gap-2.5 overflow-x-auto overscroll-x-contain p-0 scrollbar-none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden max-md:select-none max-md:mask-[linear-gradient(to_right,#000_0,#000_calc(100%-2.25rem),transparent)] md:grid md:snap-none md:grid-cols-2 md:overflow-visible md:mask-none lg:grid-cols-4"
+        >
+          {QUICK_ACTION_SLIDES.map((slide, index) => {
+            const actionIndex = index % QUICK_ACTION_COUNT;
+            const current = slider && actionIndex === active;
+            return (
+              <li
+                key={slide.key}
+                aria-hidden={slide.clone ? true : undefined}
+                className={cx(
+                  "flex w-[min(82%,19rem)] shrink-0 snap-start snap-always",
+                  slide.clone
+                    ? "md:hidden"
+                    : "md:w-auto md:min-w-0 md:shrink",
+                )}
+              >
+                <button
+                  type="button"
+                  tabIndex={slide.clone ? -1 : 0}
+                  aria-current={current ? "true" : undefined}
+                  className={cx(
+                    "flex h-full w-full cursor-pointer items-center gap-3 rounded-[14px] border bg-[#f8fafc] px-3 py-3 text-left transition-colors hover:border-primary/40 focus-visible:border-primary focus-visible:outline-none dark:bg-hover-bg",
+                    current ? "border-primary/45" : "border-border",
+                  )}
+                  onClick={() => onNavigate(slide.action.to)}
+                >
+                  <span
+                    className={cx(
+                      "grid size-[34px] shrink-0 place-items-center rounded-[10px]",
+                      toneIcon[slide.action.tone],
+                    )}
+                  >
+                    <Icon name={slide.action.icon} />
+                  </span>
+                  <span className="min-w-0">
+                    <strong className="block truncate text-[0.86rem] text-text">
+                      {slide.action.label}
+                    </strong>
+                    <small className="mt-0.5 block truncate text-[0.75rem] text-text-muted">
+                      {slide.action.hint}
+                    </small>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="mt-3 flex items-center justify-center gap-0.5 md:hidden">
+          {QUICK_ACTIONS.map((action, index) => (
             <button
+              key={action.to}
               type="button"
-              className="flex h-full w-full cursor-pointer items-center gap-2.5 rounded-[14px] border border-border bg-[#f8fafc] px-2.5 py-3 text-left transition-colors hover:border-primary/40 max-[640px]:flex-col max-[640px]:items-start max-[640px]:gap-2 sm:gap-3 sm:px-3 dark:bg-hover-bg"
-              onClick={() => onNavigate(action.to)}
+              className={cx(
+                "grid h-8 place-items-center rounded-full",
+                index === active ? "w-8" : "w-6",
+              )}
+              aria-label={`${action.label}, ${index + 1} of ${QUICK_ACTION_COUNT}`}
+              aria-current={index === active ? "true" : undefined}
+              onClick={() => showAction(index)}
             >
               <span
                 className={cx(
-                  "grid size-[34px] shrink-0 place-items-center rounded-[10px]",
-                  toneIcon[action.tone],
+                  "h-1.5 rounded-full transition-all duration-300",
+                  index === active
+                    ? "w-5 bg-primary"
+                    : "w-1.5 bg-[#d5dee8] dark:bg-white/25",
                 )}
-              >
-                <Icon name={action.icon} />
-              </span>
-              <span className="min-w-0">
-                <strong className="block truncate text-[0.86rem] text-text max-[640px]:text-[0.78rem]">
-                  {action.label}
-                </strong>
-                <small className="mt-0.5 block truncate text-[0.75rem] text-text-muted max-[640px]:text-[0.68rem]">
-                  {action.hint}
-                </small>
-              </span>
+              />
             </button>
-          </li>
-        ))}
-      </ul>
+          ))}
+          {reduceMotion ? null : (
+            <button
+              type="button"
+              className="ml-1 grid size-8 place-items-center rounded-full text-text-muted transition-colors hover:bg-hover-bg hover:text-text"
+              aria-pressed={paused}
+              aria-label={
+                paused ? "Play quick actions" : "Pause quick actions"
+              }
+              onClick={() => setPaused((value) => !value)}
+            >
+              {paused ? <PlayGlyph /> : <PauseGlyph />}
+            </button>
+          )}
+        </div>
+      </div>
     </article>
   );
 }
