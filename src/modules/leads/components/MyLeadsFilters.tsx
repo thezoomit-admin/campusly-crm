@@ -33,10 +33,12 @@ type MyLeadsFiltersProps = {
   onFiltersChange: (value: MyLeadFilterValues) => void
   onRefresh: () => void
   refreshing?: boolean
+  /** Keep false until the page list query has been dispatched. */
+  loadOptions?: boolean
 }
 
-function useNamedOptions(category: string) {
-  const { data } = useListMasterDataOptionsQuery({ category })
+function useNamedOptions(category: string, enabled: boolean) {
+  const { data } = useListMasterDataOptionsQuery({ category }, { skip: !enabled })
   return (data?.items || [])
     .filter((item) => item.name)
     .map((item) => ({ label: item.name, value: item.name }))
@@ -49,10 +51,11 @@ export default function MyLeadsFilters({
   onFiltersChange,
   onRefresh,
   refreshing = false,
+  loadOptions = true,
 }: MyLeadsFiltersProps) {
-  const statusOptions = useNamedOptions('LEAD_STATUS')
-  const countryOptions = useNamedOptions('COUNTRY')
-  const sourceOptions = useNamedOptions('LEAD_SOURCE')
+  const statusOptions = useNamedOptions('LEAD_STATUS', loadOptions)
+  const countryOptions = useNamedOptions('COUNTRY', loadOptions)
+  const sourceOptions = useNamedOptions('LEAD_SOURCE', loadOptions)
 
   return (
     <div className="flex flex-wrap items-center gap-2 px-4 py-4">

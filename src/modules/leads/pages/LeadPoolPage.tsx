@@ -8,6 +8,7 @@ import { getApiError } from '@/lib/api'
 import type { AuthSession } from '../../../types'
 import { adminPage } from '../../../styles/admin'
 import { useAssignLeadMutation, useListLeadPoolQuery } from '../api/leadsApi'
+import { useEnableAfterListQuery } from '../hooks/useEnableAfterListQuery'
 import LeadPoolFilters, { EMPTY_LEAD_POOL_FILTERS, type LeadPoolFilterValues } from '../components/LeadPoolFilters'
 import LeadPoolTable from '../components/LeadPoolTable'
 import { AssignLeadModal } from '../components/details/LeadDetailsModals'
@@ -43,6 +44,7 @@ export default function LeadPoolPage() {
     country: filters.country,
     ...rangeDates(filters),
   })
+  const loadOptions = useEnableAfterListQuery()
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 30000)
@@ -86,6 +88,7 @@ export default function LeadPoolPage() {
         <LeadPoolFilters
           search={search}
           filters={filters}
+          loadOptions={loadOptions}
           onSearchChange={(value) => {
             setSearch(value)
             resetPage()

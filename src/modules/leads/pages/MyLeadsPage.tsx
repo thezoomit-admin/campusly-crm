@@ -7,6 +7,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import type { AuthSession } from "../../../types";
 import { adminPage } from "../../../styles/admin";
 import { useListMyLeadsQuery } from "../api/leadsApi";
+import { useEnableAfterListQuery } from "../hooks/useEnableAfterListQuery";
 import MyLeadsFilters, {
   EMPTY_MY_LEAD_FILTERS,
   type MyLeadFilterValues,
@@ -43,6 +44,7 @@ export default function MyLeadsPage() {
     },
     { pollingInterval: 20000, refetchOnFocus: true },
   );
+  const loadOptions = useEnableAfterListQuery();
 
   const rows = useMemo(() => data?.items || [], [data?.items]);
   const hasActiveFilters = Boolean(
@@ -88,6 +90,7 @@ export default function MyLeadsPage() {
         <MyLeadsFilters
           search={search}
           filters={filters}
+          loadOptions={loadOptions}
           onSearchChange={(value) => {
             setSearch(value);
             resetPage();

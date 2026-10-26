@@ -24,10 +24,12 @@ type LeadPoolFiltersProps = {
   onFiltersChange: (value: LeadPoolFilterValues) => void
   onRefresh: () => void
   refreshing?: boolean
+  /** Keep false until the page list query has been dispatched. */
+  loadOptions?: boolean
 }
 
-function useNamedOptions(category: string) {
-  const { data } = useListMasterDataOptionsQuery({ category })
+function useNamedOptions(category: string, enabled: boolean) {
+  const { data } = useListMasterDataOptionsQuery({ category }, { skip: !enabled })
   return (data?.items || [])
     .filter((item) => item.name)
     .map((item) => ({ label: item.name, value: item.name }))
@@ -40,9 +42,10 @@ export default function LeadPoolFilters({
   onFiltersChange,
   onRefresh,
   refreshing = false,
+  loadOptions = true,
 }: LeadPoolFiltersProps) {
-  const sourceOptions = useNamedOptions('LEAD_SOURCE')
-  const countryOptions = useNamedOptions('COUNTRY')
+  const sourceOptions = useNamedOptions('LEAD_SOURCE', loadOptions)
+  const countryOptions = useNamedOptions('COUNTRY', loadOptions)
 
   return (
     <div className="flex flex-wrap items-center gap-2 px-4 py-4">
