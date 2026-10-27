@@ -335,15 +335,12 @@ export function CancelFollowUpModal({
       onClose={onClose}
       title={followUp?.type === 'Meeting' ? 'Cancel Meeting' : 'Cancel Follow-up'}
       width={480}
+      styles={{ body: { paddingTop: 8 } }}
     >
       <div className="grid gap-3">
-        {followUp ? (
-          <p className="m-0 rounded-lg bg-[#f7fafc] px-3 py-2 text-sm text-[#3d5166] dark:bg-hover-bg dark:text-text">
-            {followUp.type} · {followUp.due || formatDisplayDateTime(followUp.dueAt)} · {followUp.contact}
-          </p>
-        ) : null}
+        {followUp ? <ContextBanner followUp={followUp} /> : null}
         <label className="grid gap-1.5 text-sm">
-          <span>Reason</span>
+          <FieldLabel required>Reason</FieldLabel>
           <FormTextArea
             autoSize={{ minRows: 2, maxRows: 5 }}
             maxLength={1000}
