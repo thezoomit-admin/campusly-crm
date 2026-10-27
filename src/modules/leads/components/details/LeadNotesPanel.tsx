@@ -290,7 +290,12 @@ export function LeadNotesPanel({
                         </p>
                         <p className="mt-0.5 mb-0 text-[0.75rem] text-[#8b97a8]">
                           {formatDisplayDateTime(item.createdAt)}
-                          {item.edited ? <span> · Edited</span> : null}
+                          {item.edited ? (
+                            <span>
+                              {" "}
+                              · Edited {formatDisplayDateTime(item.updatedAt)}
+                            </span>
+                          ) : null}
                         </p>
                       </div>
                       {hasMenu ? (

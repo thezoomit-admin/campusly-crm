@@ -352,6 +352,7 @@ const leadsApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, { id }) => [
         { type: "Leads", id: `${id}-notes` },
         { type: "Leads", id },
+        "Activities",
       ],
     }),
     setLeadNotePin: builder.mutation<

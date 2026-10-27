@@ -24,6 +24,7 @@ export default function LeadWhatsAppPanel({
   const { data: settings } = useGetWhatsAppSettingsQuery();
   const { data, isLoading, isError } = useListLeadWhatsAppQuery(leadId, {
     pollingInterval: 15000,
+    refetchOnMountOrArgChange: true,
   });
   const [start, { isLoading: starting }] = useStartLeadWhatsAppMutation();
   const conversations = data?.items || [];

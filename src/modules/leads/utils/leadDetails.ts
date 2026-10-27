@@ -668,6 +668,64 @@ function followUpLifecycleTitle(
   return null;
 }
 
+function noteActivityTitle(outcomeOrText = "", actionKey = "") {
+  const text = `${outcomeOrText} ${actionKey}`.toLowerCase();
+  if (
+    text.includes("edit") ||
+    text.includes("updat") ||
+    actionKey === "LEAD_NOTE_UPDATED"
+  ) {
+    return "Note edited";
+  }
+  if (
+    text.includes("remov") ||
+    text.includes("delet") ||
+    actionKey === "LEAD_NOTE_DELETED"
+  ) {
+    return "Note removed";
+  }
+  return "Note added";
+}
+
+/** First N words of text with an ellipsis when truncated. */
+export function truncateWords(text: string, maxWords = 5) {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "";
+  if (words.length <= maxWords) return words.join(" ");
+  return `${words.slice(0, maxWords).join(" ")}...`;
+}
+
+/** Split optional `Channel: …` prefix from a note activity body. */
+export function parseNoteActivityContent(details?: string | null) {
+  const raw = (details || "").trim();
+  if (!raw) return { channel: "", body: "" };
+  const match = raw.match(/^Channel:\s*(.+?)(?:\n\n|\n|$)([\s\S]*)$/i);
+  if (!match) return { channel: "", body: raw };
+  return {
+    channel: match[1].trim(),
+    body: match[2].trim(),
+  };
+}
+
+export function noteActivityPreview(details?: string | null, maxWords = 5) {
+  const { body } = parseNoteActivityContent(details);
+  const source = body || (details || "").trim();
+  return truncateWords(source, maxWords);
+}
+
+export function isNoteActivity(
+  item: { actionKey?: string | null },
+  title = "",
+) {
+  const key = (item.actionKey || "").toUpperCase();
+  const label = title.toLowerCase();
+  return (
+    key === "NOTE" ||
+    key.startsWith("LEAD_NOTE") ||
+    label.startsWith("note ")
+  );
+}
+
 export function activityTitle(
   action: string,
   details?: string | null,
@@ -695,7 +753,14 @@ export function activityTitle(
   if (looksLikeStatusChange) return "Status changed";
   if (key === "LEAD_NOTE_PINNED") return "Note Pinned";
   if (key === "LEAD_NOTE_UNPINNED") return "Note unpinned";
-  if (key === "NOTE") return "Note added";
+  if (
+    key === "NOTE" ||
+    key === "LEAD_NOTE_UPDATED" ||
+    key === "LEAD_NOTE_DELETED" ||
+    key === "LEAD_NOTE_ADDED"
+  ) {
+    return noteActivityTitle(outcomeText, key);
+  }
   if (key === "MEETING") {
     if (outcomeText.includes("reschedul") || text.includes("reschedul")) {
       return "Meeting rescheduled";
@@ -804,7 +869,7 @@ export function activityTitle(
     return "Profile updated";
   if (text.includes("note pinned")) return "Note Pinned";
   if (text.includes("note unpinned")) return "Note unpinned";
-  if (text.includes("note")) return "Note added";
+  if (text.includes("note")) return noteActivityTitle(outcomeText || text);
   if (text.includes("call")) return "Call logged";
   if (text.includes("whatsapp")) return "WhatsApp logged";
   if (text.includes("email received") || text.includes("received —"))

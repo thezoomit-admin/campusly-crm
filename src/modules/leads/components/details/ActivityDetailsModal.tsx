@@ -7,6 +7,8 @@ import { parseMeetingNotes } from "./ScheduleMeetingModal";
 import {
   followUpCountdownParts,
   formatDisplayDateTime,
+  isNoteActivity,
+  parseNoteActivityContent,
   type FollowUpCountdownUrgency,
 } from "../../utils/leadDetails";
 import { statusClass } from "@/lib/statusClass";
@@ -242,6 +244,19 @@ export function activityDetailFromFeed(
       location: meeting?.location || null,
       endTime: meeting?.endTime || null,
       agenda: meeting?.agenda || null,
+    };
+  }
+
+  if (isNoteActivity(item, title)) {
+    const parsed = parseNoteActivityContent(item.details);
+    return {
+      kind: "activity",
+      title,
+      addedAt: occurredAt,
+      assignedTo: item.user?.fullName || "System",
+      outcome: item.outcome,
+      channels: parsed.channel || null,
+      notes: parsed.body || item.details || null,
     };
   }
 

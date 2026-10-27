@@ -280,11 +280,14 @@ export default function LeadDetailsPage() {
     rawTab === "file-documents" || rawSection === "file-documents";
   const showFileDocuments =
     !lead && fileTabRequested ? true : showFileDocumentsTab;
-  const { data: activityData, isFetching: activityLoading } =
-    useListActivityFeedQuery(
-      { relatedId: id },
-      { skip: !id || !canViewActivity },
-    );
+  const {
+    data: activityData,
+    isFetching: activityLoading,
+    refetch: refetchActivities,
+  } = useListActivityFeedQuery(
+    { relatedId: id },
+    { skip: !id || !canViewActivity },
+  );
 
   const badgeCounts = useMemo<LeadTabBadgeCounts>(
     () => ({
@@ -357,11 +360,15 @@ export default function LeadDetailsPage() {
   const { data: assignmentData, isFetching: assignmentsLoading } =
     useListLeadAssignmentsQuery(id, {
       skip: !id || tab !== "assignments",
+      refetchOnMountOrArgChange: true,
     });
-  const { data: followUpData, isFetching: followUpsLoading } =
-    useListLeadFollowUpsQuery(id, {
-      skip: !id || !canViewFollowUp,
-    });
+  const {
+    data: followUpData,
+    isFetching: followUpsLoading,
+    refetch: refetchFollowUps,
+  } = useListLeadFollowUpsQuery(id, {
+    skip: !id || !canViewFollowUp,
+  });
   const [uploadLeadDocument, { isLoading: documentUploading }] =
     useUploadLeadDocumentMutation();
   const [verifyLeadDocument, { isLoading: documentVerifying }] =
@@ -382,6 +389,7 @@ export default function LeadDetailsPage() {
     isError: notesError,
   } = useListLeadNotesQuery(id, {
     skip: !id || tab !== "notes",
+    refetchOnMountOrArgChange: true,
   });
   const notesLoading =
     tab === "notes" &&
@@ -418,8 +426,32 @@ export default function LeadDetailsPage() {
   const { data: documentsData, isFetching: documentsLoading } =
     useListLeadDocumentsQuery(
       { id: id || "", archived: showArchivedDocs },
-      { skip: !id || tab !== "documents" },
+      { skip: !id || tab !== "documents", refetchOnMountOrArgChange: true },
     );
+
+  // Refetch tab feeds on every visit so data stays fresh without a full reload.
+  // Activities stay subscribed for the sidebar, so they need an explicit refetch.
+  useEffect(() => {
+    if (!id) return;
+    if (tab === "activities" && canViewActivity) {
+      void refetchActivities();
+    }
+    if (tab === "activities" && canViewFollowUp) {
+      void refetchFollowUps();
+    }
+    if (tab === "overview") {
+      void refetchLead();
+    }
+  }, [
+    tab,
+    id,
+    canViewActivity,
+    canViewFollowUp,
+    refetchActivities,
+    refetchFollowUps,
+    refetchLead,
+  ]);
+
   const { data: documentCategoryData } = useListMasterDataOptionsQuery(
     { category: "DOCUMENT_CATEGORY" },
     { skip: tab !== "documents" },
