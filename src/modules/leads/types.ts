@@ -384,6 +384,11 @@ export type LeadRecord = {
   student?: LeadStudentSummary | null;
   hasCrmFile?: boolean;
   crmFile?: { id: string; code: string; status: string } | null;
+  tabCounts?: {
+    documents: number;
+    notes: number;
+    activities: number;
+  };
 };
 
 export type LeadApplicationSummary = {

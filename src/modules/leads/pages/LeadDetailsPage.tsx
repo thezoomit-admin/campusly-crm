@@ -10,11 +10,7 @@ import { Breadcrumb, Modal, Skeleton } from "antd";
 import dayjs from "dayjs";
 import { toast } from "react-toastify";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Calendar03Icon,
-  MoreHorizontalIcon,
-  Video01Icon,
-} from "@hugeicons/core-free-icons";
+import { Calendar03Icon, Video01Icon } from "@hugeicons/core-free-icons";
 import { PrimaryButton } from "@/components/ui";
 import { DeleteModal } from "@/components/common/Modals";
 import { PageMeta } from "@/components/common/Meta";
@@ -50,7 +46,6 @@ import {
   useCreateActivityMutation,
   useListActivityFeedQuery,
 } from "@/redux/features/activities/activitiesApi";
-import { useListLeadCommunicationsQuery } from "@/modules/communications/api/communicationsApi";
 import {
   useCancelFollowUpMutation,
   useCompleteFollowUpMutation,
@@ -62,7 +57,6 @@ import {
   CancelFollowUpModal,
   CompleteFollowUpModal,
 } from "@/modules/follow-ups/components/FollowUpLifecycleModals";
-import LeadFollowUpHistoryPanel from "@/modules/follow-ups/components/LeadFollowUpHistoryPanel";
 import { LeadWhatsAppPanel } from "@/modules/whatsapp";
 import { LeadEmailPanel } from "@/modules/email";
 import type {
@@ -72,14 +66,15 @@ import type {
 } from "@/modules/follow-ups/types";
 import type { LeadDocumentItem } from "../types";
 import {
-  LEAD_MORE_TABS,
-  LEAD_PRIMARY_TABS,
   isConvertedLeadStatus,
-  parseLeadMoreTab,
-  parseLeadPrimaryTab,
-  type LeadMoreTabKey,
-  type LeadPrimaryTabKey,
+  readLastLeadDetailsTab,
+  resolveActiveLeadTab,
+  resolveLeadDetailsTabs,
+  writeLastLeadDetailsTab,
+  type LeadTabBadgeCounts,
+  type LeadWorkspaceTabKey,
 } from "../utils/leadDetails";
+import LeadDetailsTabBar from "../components/details/LeadDetailsTabBar";
 import LeadWorkspaceHeader from "../components/details/LeadWorkspaceHeader";
 import LeadJourneyBar from "../components/details/LeadJourneyBar";
 import LeadDetailsSidebar from "../components/details/LeadDetailsSidebar";
@@ -91,9 +86,7 @@ import LeadOverviewPanels, {
 import {
   LeadActivitiesPanel,
   LeadAssignmentHistoryPanel,
-  LeadCommunicationsPanel,
   LeadDocumentsPanel,
-  LeadMoreTabShell,
   LeadNotesPanel,
   LeadPaymentsPanel,
   LeadServicesPanel,
@@ -208,40 +201,21 @@ export default function LeadDetailsPage() {
 
   const rawTab = searchParams.get("tab");
   const rawSection = searchParams.get("section");
-  const tab = parseLeadPrimaryTab(rawTab, rawSection);
-  const moreTab = parseLeadMoreTab(rawSection, rawTab);
-  const attachmentsOpen = tab === "more" && moreTab === "attachments";
-  const assignmentsOpen = tab === "more" && moreTab === "assignments";
 
-  const syncWorkspaceTabs = useCallback(
-    (nextTab: LeadPrimaryTabKey, nextMore: LeadMoreTabKey) => {
+  const setTab = useCallback(
+    (nextTab: LeadWorkspaceTabKey) => {
+      writeLastLeadDetailsTab(nextTab);
       setSearchParams(
         (prev) => {
           const params = new URLSearchParams(prev);
-          if (nextTab === "overview") params.delete("tab");
-          else params.set("tab", nextTab);
-          if (nextTab === "more") params.set("section", nextMore);
-          else params.delete("section");
+          params.set("tab", nextTab);
+          params.delete("section");
           return params;
         },
         { replace: true },
       );
     },
     [setSearchParams],
-  );
-
-  const setTab = useCallback(
-    (nextTab: LeadPrimaryTabKey) => {
-      syncWorkspaceTabs(nextTab, moreTab);
-    },
-    [moreTab, syncWorkspaceTabs],
-  );
-
-  const setMoreTab = useCallback(
-    (nextMore: LeadMoreTabKey) => {
-      syncWorkspaceTabs("more", nextMore);
-    },
-    [syncWorkspaceTabs],
   );
 
   const lead = data?.lead;
@@ -263,9 +237,6 @@ export default function LeadDetailsPage() {
   const canViewFollowUp = hasPermission(auth, "follow_up:view");
   const canViewActivity = hasPermission(auth, "activity:view");
   const canAddActivity = hasPermission(auth, "activity:create");
-  const canViewCommunications =
-    hasPermission(auth, "communication:view") ||
-    hasPermission(auth, "lead:view");
   const canViewWhatsApp = hasPermission(auth, "communication:view");
   const canViewEmail = hasPermission(auth, "communication:view");
   const canAssign = hasPermission(auth, "lead:assign");
@@ -305,22 +276,87 @@ export default function LeadDetailsPage() {
     lead?.statusChange?.current?.behaviorKey === "file_opened" ||
     lead?.status?.trim().toLowerCase() === "file opened",
   );
-
+  const fileTabRequested =
+    rawTab === "file-documents" || rawSection === "file-documents";
+  const showFileDocuments =
+    !lead && fileTabRequested ? true : showFileDocumentsTab;
   const { data: activityData, isFetching: activityLoading } =
     useListActivityFeedQuery(
       { relatedId: id },
       { skip: !id || !canViewActivity },
     );
-  const { data: communicationsData, isFetching: communicationsLoading } =
-    useListLeadCommunicationsQuery(id, {
-      skip:
-        !id ||
-        !canViewCommunications ||
-        !(tab === "more" && moreTab === "communications"),
-    });
+
+  const badgeCounts = useMemo<LeadTabBadgeCounts>(
+    () => ({
+      documents: lead?.tabCounts?.documents ?? 0,
+      notes: lead?.tabCounts?.notes ?? 0,
+      activities: canViewActivity
+        ? (activityData?.counts.all ?? lead?.tabCounts?.activities ?? 0)
+        : 0,
+    }),
+    [activityData?.counts.all, canViewActivity, lead?.tabCounts],
+  );
+
+  const { primary: primaryTabs, more: moreTabs } = useMemo(
+    () =>
+      resolveLeadDetailsTabs(
+        auth.role?.key,
+        {
+          canViewServices,
+          canViewWhatsApp,
+          canViewEmail,
+          canViewPayments,
+          showFileDocuments,
+        },
+        badgeCounts,
+      ),
+    [
+      auth.role?.key,
+      badgeCounts,
+      canViewEmail,
+      canViewPayments,
+      canViewServices,
+      canViewWhatsApp,
+      showFileDocuments,
+    ],
+  );
+
+  const visibleTabKeys = useMemo(
+    () => [...primaryTabs, ...moreTabs].map((item) => item.key),
+    [moreTabs, primaryTabs],
+  );
+
+  const tab = useMemo(
+    () =>
+      resolveActiveLeadTab({
+        tabParam: rawTab,
+        sectionParam: rawSection,
+        visibleKeys: visibleTabKeys,
+        storedKey: readLastLeadDetailsTab(),
+      }),
+    [rawSection, rawTab, visibleTabKeys],
+  );
+
+  useEffect(() => {
+    // File Documents visibility depends on the lead. Wait for it before
+    // applying a remembered tab, so a file tab is not cleared early.
+    if (!lead && !rawTab && !rawSection) return;
+    writeLastLeadDetailsTab(tab);
+    if (rawTab === tab && !rawSection) return;
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        params.set("tab", tab);
+        params.delete("section");
+        return params;
+      },
+      { replace: true },
+    );
+  }, [lead, rawSection, rawTab, setSearchParams, tab]);
+
   const { data: assignmentData, isFetching: assignmentsLoading } =
     useListLeadAssignmentsQuery(id, {
-      skip: !id || !assignmentsOpen,
+      skip: !id || tab !== "assignments",
     });
   const { data: followUpData, isFetching: followUpsLoading } =
     useListLeadFollowUpsQuery(id, {
@@ -382,15 +418,15 @@ export default function LeadDetailsPage() {
   const { data: documentsData, isFetching: documentsLoading } =
     useListLeadDocumentsQuery(
       { id: id || "", archived: showArchivedDocs },
-      { skip: !id || !attachmentsOpen },
+      { skip: !id || tab !== "documents" },
     );
   const { data: documentCategoryData } = useListMasterDataOptionsQuery(
     { category: "DOCUMENT_CATEGORY" },
-    { skip: !attachmentsOpen },
+    { skip: tab !== "documents" },
   );
   const { data: documentTypeData } = useListMasterDataOptionsQuery(
     { category: "DOCUMENT_TYPE" },
-    { skip: !attachmentsOpen },
+    { skip: tab !== "documents" },
   );
   const documentCategories = useMemo(() => {
     const items = documentCategoryData?.items || [];
@@ -442,7 +478,6 @@ export default function LeadDetailsPage() {
     ];
   }, [documentTypeData]);
   const activities = activityData?.items || [];
-  const communications = communicationsData?.items || [];
   const assignmentHistory = assignmentData?.items || [];
   const noteHistory = notesData?.items || [];
   const documents = documentsData?.items || [];
@@ -820,7 +855,7 @@ export default function LeadDetailsPage() {
       }).unwrap();
       toast.success("Email sent.");
       setStatusOpen(false);
-      if (canViewEmail) openMoreTab("email");
+      if (canViewEmail) setTab("email");
     } catch (error) {
       toast.error(
         getApiError(error, "Unable to send email. Please try again."),
@@ -1267,10 +1302,6 @@ export default function LeadDetailsPage() {
     }
   }
 
-  function openMoreTab(key: LeadMoreTabKey) {
-    syncWorkspaceTabs("more", key);
-  }
-
   function openNotes() {
     if (!canAddActivity) {
       setTab("notes");
@@ -1401,64 +1432,6 @@ export default function LeadDetailsPage() {
     }).unwrap();
   }
 
-  const moreVisibleKeys = useMemo(() => {
-    const allowed = new Set<LeadMoreTabKey>(["attachments", "assignments"]);
-    if (!lead || showFileDocumentsTab) allowed.add("file-documents");
-    // if (canViewFollowUp) allowed.add("followups");
-    // if (canViewCommunications) allowed.add("communications");
-    if (canViewWhatsApp) allowed.add("whatsapp");
-    if (canViewEmail) allowed.add("email");
-    if (canViewPayments) allowed.add("payments");
-    return LEAD_MORE_TABS.map((item) => item.key).filter((key) =>
-      allowed.has(key),
-    );
-  }, [
-    lead,
-    showFileDocumentsTab,
-    canViewWhatsApp,
-    canViewEmail,
-    canViewPayments,
-  ]);
-
-  useEffect(() => {
-    if (tab === "services" && !canViewServices) {
-      syncWorkspaceTabs("overview", moreTab);
-      return;
-    }
-    if (tab === "services" && rawTab !== "services") {
-      syncWorkspaceTabs("services", moreTab);
-      return;
-    }
-    if (tab === "more" && rawTab !== "more") {
-      syncWorkspaceTabs("more", moreTab);
-      return;
-    }
-    if (tab === "more" && moreVisibleKeys.length === 0) {
-      syncWorkspaceTabs("overview", "attachments");
-      return;
-    }
-    if (tab === "more" && !moreVisibleKeys.includes(moreTab)) {
-      syncWorkspaceTabs("more", moreVisibleKeys[0] || "attachments");
-      return;
-    }
-    if (
-      tab === "more" &&
-      !rawSection &&
-      moreVisibleKeys[0] &&
-      moreTab !== moreVisibleKeys[0]
-    ) {
-      syncWorkspaceTabs("more", moreVisibleKeys[0]);
-    }
-  }, [
-    tab,
-    rawTab,
-    rawSection,
-    moreTab,
-    canViewServices,
-    moreVisibleKeys,
-    syncWorkspaceTabs,
-  ]);
-
   if (isError) {
     return (
       <div className={adminPage}>
@@ -1584,46 +1557,13 @@ export default function LeadDetailsPage() {
             onCancelFollowUp={(item) => openFollowUpActions(item, "cancel")}
           />
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-            <div className="-mx-1 flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-1 pb-0.5 scrollbar-none">
-              {LEAD_PRIMARY_TABS.filter(
-                (item) =>
-                  (item.key !== "services" || canViewServices) &&
-                  (item.key !== "more" || moreVisibleKeys.length > 0),
-              ).map((item) => {
-                const active = tab === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    aria-current={active ? "page" : undefined}
-                    className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border-0 px-3 py-2 text-[0.84rem] transition-colors sm:px-4 sm:text-[0.9rem] ${
-                      active
-                        ? "bg-section-tab-active-bg font-semibold text-section-tab-active-fg"
-                        : "bg-section-tab-bg text-section-tab-fg hover:bg-section-tab-hover-bg"
-                    }`}
-                    onClick={() => {
-                      if (item.key === "more") {
-                        const first = moreVisibleKeys[0];
-                        if (first) syncWorkspaceTabs("more", first);
-                        return;
-                      }
-                      setTab(item.key);
-                    }}
-                  >
-                    {item.label}
-                    {item.key === "more" ? (
-                      <HugeiconsIcon
-                        icon={MoreHorizontalIcon}
-                        size={16}
-                        color="currentColor"
-                        strokeWidth={1.8}
-                      />
-                    ) : null}
-                  </button>
-                );
-              })}
-            </div>
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <LeadDetailsTabBar
+              primaryTabs={primaryTabs}
+              moreTabs={moreTabs}
+              activeKey={tab}
+              onSelect={setTab}
+            />
             <div className="hidden shrink-0 flex-wrap items-center gap-2 min-[961px]:flex">
               {canFollowUp || followUpIsReschedule ? (
                 <PrimaryButton
@@ -1714,95 +1654,65 @@ export default function LeadDetailsPage() {
                   }
                 />
               ) : null}
-              {tab === "more" && moreVisibleKeys.length > 0 ? (
-                <LeadMoreTabShell
-                  active={moreTab}
-                  onChange={setMoreTab}
-                  visibleKeys={moreVisibleKeys}
-                >
-                  {moreTab === "attachments" ? (
-                    <LeadDocumentsPanel
-                      documents={documents}
-                      loading={documentsLoading}
-                      canUpload={canUploadDocument}
-                      canDelete={canDeleteDocument}
-                      canVerify={canVerifyDocument}
-                      showArchived={showArchivedDocs}
-                      onToggleArchived={() =>
-                        setShowArchivedDocs((value) => !value)
-                      }
-                      onAdd={() => {
-                        setDefaultDocTypeCode(undefined);
-                        setDocumentOpen(true);
-                      }}
-                      onUploadMissing={(typeCode) => {
-                        setDefaultDocTypeCode(typeCode);
-                        setDocumentOpen(true);
-                      }}
-                      onView={(document) => {
-                        void openDocumentPreview(document);
-                      }}
-                      onVerify={(document) => setVerifyTarget(document)}
-                      onDelete={(document) => setDeleteTarget(document)}
-                    />
-                  ) : null}
-                  {moreTab === "file-documents" && showFileDocumentsTab ? (
-                    <FileDocumentsPanel
-                      leadId={lead.id}
-                      canUpload={canUploadDocument}
-                      canVerify={canVerifyDocument}
-                      canManage={canDeleteDocument}
-                      canDownload={canDownloadDocument}
-                    />
-                  ) : null}
-                  {moreTab === "assignments" ? (
-                    <LeadAssignmentHistoryPanel
-                      assignmentHistory={assignmentHistory}
-                      loading={assignmentsLoading}
-                    />
-                  ) : null}
-                  {moreTab === "followups" && canViewFollowUp ? (
-                    <LeadFollowUpHistoryPanel
-                      items={followUps}
-                      loading={followUpsLoading}
-                      canCreate={canFollowUp}
-                      canEdit={canEditFollowUp}
-                      onCreate={() => openScheduleFollowUp()}
-                      onComplete={(item) =>
-                        openFollowUpActions(item, "complete")
-                      }
-                      onReschedule={(item) =>
-                        openFollowUpActions(item, "reschedule")
-                      }
-                      onCancel={(item) => openFollowUpActions(item, "cancel")}
-                    />
-                  ) : null}
-                  {moreTab === "communications" && canViewCommunications ? (
-                    <LeadCommunicationsPanel
-                      items={communications}
-                      loading={communicationsLoading}
-                    />
-                  ) : null}
-                  {moreTab === "whatsapp" && canViewWhatsApp ? (
-                    <LeadWhatsAppPanel
-                      leadId={lead.id}
-                      hasWhatsAppNumber={Boolean(lead.whatsapp || lead.phone)}
-                    />
-                  ) : null}
-                  {moreTab === "email" && canViewEmail ? (
-                    <LeadEmailPanel
-                      leadId={lead.id}
-                      hasEmail={Boolean(lead.email)}
-                    />
-                  ) : null}
-                  {moreTab === "payments" && canViewPayments ? (
-                    <LeadPaymentsPanel
-                      leadId={lead.id}
-                      leadName={lead.name}
-                      leadCode={lead.code}
-                    />
-                  ) : null}
-                </LeadMoreTabShell>
+              {tab === "documents" ? (
+                <LeadDocumentsPanel
+                  documents={documents}
+                  loading={documentsLoading}
+                  canUpload={canUploadDocument}
+                  canDelete={canDeleteDocument}
+                  canVerify={canVerifyDocument}
+                  showArchived={showArchivedDocs}
+                  onToggleArchived={() =>
+                    setShowArchivedDocs((value) => !value)
+                  }
+                  onAdd={() => {
+                    setDefaultDocTypeCode(undefined);
+                    setDocumentOpen(true);
+                  }}
+                  onUploadMissing={(typeCode) => {
+                    setDefaultDocTypeCode(typeCode);
+                    setDocumentOpen(true);
+                  }}
+                  onView={(document) => {
+                    void openDocumentPreview(document);
+                  }}
+                  onVerify={(document) => setVerifyTarget(document)}
+                  onDelete={(document) => setDeleteTarget(document)}
+                />
+              ) : null}
+              {tab === "file-documents" && showFileDocumentsTab ? (
+                <FileDocumentsPanel
+                  leadId={lead.id}
+                  canUpload={canUploadDocument}
+                  canVerify={canVerifyDocument}
+                  canManage={canDeleteDocument}
+                  canDownload={canDownloadDocument}
+                />
+              ) : null}
+              {tab === "assignments" ? (
+                <LeadAssignmentHistoryPanel
+                  assignmentHistory={assignmentHistory}
+                  loading={assignmentsLoading}
+                />
+              ) : null}
+              {tab === "whatsapp" && canViewWhatsApp ? (
+                <LeadWhatsAppPanel
+                  leadId={lead.id}
+                  hasWhatsAppNumber={Boolean(lead.whatsapp || lead.phone)}
+                />
+              ) : null}
+              {tab === "email" && canViewEmail ? (
+                <LeadEmailPanel
+                  leadId={lead.id}
+                  hasEmail={Boolean(lead.email)}
+                />
+              ) : null}
+              {tab === "payments" && canViewPayments ? (
+                <LeadPaymentsPanel
+                  leadId={lead.id}
+                  leadName={lead.name}
+                  leadCode={lead.code}
+                />
               ) : null}
             </div>
 

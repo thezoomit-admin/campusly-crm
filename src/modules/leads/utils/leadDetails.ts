@@ -1,12 +1,158 @@
 import type { LeadRecord } from "../types";
 import type { MasterOption } from "../hooks/useLeadMasterOptions";
 
-export type LeadPrimaryTabKey =
+export type LeadWorkspaceTabKey =
   | "overview"
-  | "notes"
-  | "services"
   | "activities"
-  | "more";
+  | "notes"
+  | "documents"
+  | "whatsapp"
+  | "email"
+  | "services"
+  | "payments"
+  | "assignments"
+  | "file-documents";
+
+export type LeadTabGroup = "primary" | "more";
+
+/** Counsellor is stored as `counsellor` and accepted as `counselor`. */
+export type LeadDetailsTabRole = "counselor" | "admin" | "accountant";
+
+export type LeadTabBadgeKey = "documents" | "notes" | "activities";
+
+export type LeadDetailsTabConfig = {
+  key: LeadWorkspaceTabKey;
+  label: string;
+  icon?: string;
+  group: LeadTabGroup;
+  order: number;
+  allowedRoles: LeadDetailsTabRole[];
+  /** Which lead-details counter to show beside the label. Hidden when the count is 0. */
+  badge?: LeadTabBadgeKey;
+  badgeCount?: number;
+};
+
+export type LeadTabAccess = {
+  canViewServices: boolean;
+  canViewWhatsApp: boolean;
+  canViewEmail: boolean;
+  canViewPayments: boolean;
+  showFileDocuments: boolean;
+};
+
+export type LeadTabBadgeCounts = Record<LeadTabBadgeKey, number>;
+
+/** Remembered across leads. Invalid for the current role falls back to Overview. */
+export const LEAD_DETAILS_LAST_TAB_KEY = "leadDetails.lastTab";
+
+/**
+ * Single source for Lead Details navigation.
+ * `documents` is the public key; older links still use `attachments`.
+ */
+export const LEAD_DETAILS_TABS: LeadDetailsTabConfig[] = [
+  {
+    key: "overview",
+    label: "Overview",
+    group: "primary",
+    order: 1,
+    allowedRoles: ["counselor", "admin", "accountant"],
+  },
+  {
+    key: "activities",
+    label: "Activities",
+    group: "primary",
+    order: 2,
+    allowedRoles: ["counselor", "admin", "accountant"],
+    badge: "activities",
+  },
+  {
+    key: "notes",
+    label: "Notes",
+    group: "primary",
+    order: 3,
+    allowedRoles: ["counselor", "admin", "accountant"],
+    badge: "notes",
+  },
+  {
+    key: "documents",
+    label: "Documents",
+    group: "primary",
+    order: 4,
+    allowedRoles: ["counselor", "admin", "accountant"],
+    badge: "documents",
+  },
+  {
+    key: "whatsapp",
+    label: "WhatsApp",
+    group: "primary",
+    order: 5,
+    allowedRoles: ["counselor", "admin", "accountant"],
+  },
+  {
+    key: "email",
+    label: "Email",
+    group: "more",
+    order: 1,
+    allowedRoles: ["counselor", "admin", "accountant"],
+  },
+  {
+    key: "services",
+    label: "Service & Package",
+    group: "more",
+    order: 2,
+    allowedRoles: ["counselor", "admin", "accountant"],
+  },
+  {
+    key: "payments",
+    label: "Payments",
+    group: "more",
+    order: 3,
+    allowedRoles: ["admin", "accountant"],
+  },
+  {
+    key: "assignments",
+    label: "Assignment History",
+    group: "more",
+    order: 4,
+    allowedRoles: ["counselor", "admin", "accountant"],
+  },
+  {
+    key: "file-documents",
+    label: "File Documents",
+    group: "more",
+    order: 5,
+    allowedRoles: ["counselor", "admin", "accountant"],
+  },
+];
+
+/** Accountant: Payments moves up front, WhatsApp drops into More. */
+const ACCOUNTANT_TAB_OVERRIDES: Partial<
+  Record<LeadWorkspaceTabKey, { group: LeadTabGroup; order: number }>
+> = {
+  payments: { group: "primary", order: 1.5 },
+  whatsapp: { group: "more", order: 6 },
+};
+
+const LEAD_TAB_ALIASES: Record<string, LeadWorkspaceTabKey> = {
+  overview: "overview",
+  activities: "activities",
+  timeline: "activities",
+  notes: "notes",
+  documents: "documents",
+  attachments: "documents",
+  whatsapp: "whatsapp",
+  email: "email",
+  services: "services",
+  payments: "payments",
+  assignments: "assignments",
+  history: "assignments",
+  "file-documents": "file-documents",
+  academic: "overview",
+  counselling: "overview",
+  study: "overview",
+  "follow-ups": "activities",
+  followups: "activities",
+};
 
 export type LeadMoreTabKey =
   | "attachments"
@@ -18,91 +164,133 @@ export type LeadMoreTabKey =
   | "email"
   | "payments";
 
-/** @deprecated Prefer LeadPrimaryTabKey / LeadMoreTabKey — kept for gradual migration */
-export type LeadTabKey = LeadPrimaryTabKey | LeadMoreTabKey | "study" | "timeline";
-
-export const LEAD_PRIMARY_TABS: Array<{
-  key: LeadPrimaryTabKey;
-  label: string;
-}> = [
-  { key: "overview", label: "Overview" },
-  { key: "notes", label: "Notes" },
-  { key: "services", label: "Service & Package" },
-  { key: "activities", label: "Activities" },
-  { key: "more", label: "More" },
-];
-
+/** @deprecated Sidebar shell lookup. Navigation uses LEAD_DETAILS_TABS. */
 export const LEAD_MORE_TABS: Array<{ key: LeadMoreTabKey; label: string }> = [
-  { key: "attachments", label: "Attachments" },
+  { key: "attachments", label: "Documents" },
   { key: "file-documents", label: "File Documents" },
   { key: "assignments", label: "Assignment History" },
-  // { key: "followups", label: "Follow-up History" },
-  // { key: "communications", label: "Communication" },
   { key: "whatsapp", label: "WhatsApp" },
   { key: "email", label: "Email" },
   { key: "payments", label: "Payments" },
 ];
 
-const LEAD_PRIMARY_TAB_KEYS = new Set<string>(
-  LEAD_PRIMARY_TABS.map((item) => item.key),
-);
-const LEAD_MORE_TAB_KEYS = new Set<string>(
-  LEAD_MORE_TABS.map((item) => item.key),
-);
+/** @deprecated Use LeadWorkspaceTabKey */
+export type LeadTabKey = LeadWorkspaceTabKey | LeadMoreTabKey | "study" | "timeline";
 
-const LEGACY_PRIMARY_TAB_MAP: Record<string, LeadPrimaryTabKey> = {
-  academic: "overview",
-  counselling: "overview",
-  study: "overview",
-  documents: "more",
-  attachments: "more",
-  "file-documents": "more",
-  history: "more",
-  assignments: "more",
-  timeline: "activities",
-  "follow-ups": "more",
-  followups: "more",
-  payments: "more",
-};
+/** @deprecated Use LEAD_DETAILS_TABS */
+export const LEAD_TABS = LEAD_DETAILS_TABS.map(({ key, label }) => ({
+  key,
+  label,
+}));
 
-const LEGACY_MORE_TAB_MAP: Record<string, LeadMoreTabKey> = {
-  documents: "attachments",
-  attachments: "attachments",
-  "file-documents": "file-documents",
-  history: "assignments",
-  assignments: "assignments",
-  "follow-ups": "followups",
-  followups: "followups",
-  payments: "payments",
-};
+export function resolveLeadDetailsTabRole(
+  roleKey?: string | null,
+): LeadDetailsTabRole | "default" {
+  const key = (roleKey || "").trim().toLowerCase();
+  if (key === "accountant") return "accountant";
+  if (key === "counselor" || key === "counsellor") return "counselor";
+  if (key === "admin") return "admin";
+  return "default";
+}
 
-export function parseLeadPrimaryTab(
-  value: string | null | undefined,
+function roleAllowsTab(
+  tab: LeadDetailsTabConfig,
+  role: LeadDetailsTabRole | "default",
+) {
+  if (role === "default") return true;
+  return tab.allowedRoles.includes(role);
+}
+
+function permissionAllowsTab(key: LeadWorkspaceTabKey, access: LeadTabAccess) {
+  if (key === "services") return access.canViewServices;
+  if (key === "whatsapp") return access.canViewWhatsApp;
+  if (key === "email") return access.canViewEmail;
+  if (key === "payments") return access.canViewPayments;
+  if (key === "file-documents") return access.showFileDocuments;
+  return true;
+}
+
+function withBadgeCount(
+  tab: LeadDetailsTabConfig,
+  counts?: LeadTabBadgeCounts,
+): LeadDetailsTabConfig {
+  if (!tab.badge || !counts) return { ...tab, badgeCount: undefined };
+  const count = counts[tab.badge] ?? 0;
+  return { ...tab, badgeCount: count > 0 ? count : undefined };
+}
+
+export function resolveLeadDetailsTabs(
+  roleKey: string | null | undefined,
+  access: LeadTabAccess,
+  counts?: LeadTabBadgeCounts,
+) {
+  const role = resolveLeadDetailsTabRole(roleKey);
+  const visible = LEAD_DETAILS_TABS.filter(
+    (tab) => roleAllowsTab(tab, role) && permissionAllowsTab(tab.key, access),
+  ).map((tab) => {
+    const override = role === "accountant" ? ACCOUNTANT_TAB_OVERRIDES[tab.key] : undefined;
+    const placed = override ? { ...tab, ...override } : tab;
+    return withBadgeCount(placed, counts);
+  });
+  const byOrder = (group: LeadTabGroup) =>
+    visible
+      .filter((tab) => tab.group === group)
+      .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label));
+  return { primary: byOrder("primary"), more: byOrder("more") };
+}
+
+/** `null` when the URL does not name a tab. Unknown values stay null so the caller can fall back. */
+export function parseLeadDetailsTab(
+  tab: string | null | undefined,
   section?: string | null,
-): LeadPrimaryTabKey {
-  if (value === "more" && section === "services") return "services";
-  if (!value) return "overview";
-  if (LEAD_PRIMARY_TAB_KEYS.has(value)) return value as LeadPrimaryTabKey;
-  if (value in LEGACY_PRIMARY_TAB_MAP) return LEGACY_PRIMARY_TAB_MAP[value];
+): LeadWorkspaceTabKey | null {
+  if (tab === "more") {
+    return section ? LEAD_TAB_ALIASES[section] ?? null : null;
+  }
+  if (tab && LEAD_TAB_ALIASES[tab]) return LEAD_TAB_ALIASES[tab];
+  if (!tab && section && LEAD_TAB_ALIASES[section]) return LEAD_TAB_ALIASES[section];
+  return null;
+}
+
+export function resolveActiveLeadTab(input: {
+  tabParam: string | null;
+  sectionParam: string | null;
+  visibleKeys: readonly LeadWorkspaceTabKey[];
+  storedKey: string | null;
+}): LeadWorkspaceTabKey {
+  const visible = new Set(input.visibleKeys);
+  const hasUrlTab = Boolean(input.tabParam || input.sectionParam);
+  if (hasUrlTab) {
+    const parsed = parseLeadDetailsTab(input.tabParam, input.sectionParam);
+    if (parsed && visible.has(parsed)) return parsed;
+    return "overview";
+  }
+  if (
+    input.storedKey &&
+    visible.has(input.storedKey as LeadWorkspaceTabKey)
+  ) {
+    return input.storedKey as LeadWorkspaceTabKey;
+  }
   return "overview";
 }
 
-export function parseLeadMoreTab(
-  value: string | null | undefined,
-  rawPrimaryTab?: string | null,
-): LeadMoreTabKey {
-  if (rawPrimaryTab && rawPrimaryTab in LEGACY_MORE_TAB_MAP) {
-    return LEGACY_MORE_TAB_MAP[rawPrimaryTab];
+export function readLastLeadDetailsTab() {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(LEAD_DETAILS_LAST_TAB_KEY);
+  } catch {
+    return null;
   }
-  if (value && LEAD_MORE_TAB_KEYS.has(value)) return value as LeadMoreTabKey;
-  return "attachments";
 }
 
-/** @deprecated Use LEAD_PRIMARY_TABS + LEAD_MORE_TABS */
-export const LEAD_TABS = [
-  ...LEAD_PRIMARY_TABS.filter((t) => t.key !== "more"),
-  ...LEAD_MORE_TABS,
-] as Array<{ key: LeadTabKey; label: string }>;
+export function writeLastLeadDetailsTab(key: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LEAD_DETAILS_LAST_TAB_KEY, key);
+  } catch {
+    /* Ignore private-mode storage failures. */
+  }
+}
 
 /** Sales pipeline only — admission continues in Applications / Students. */
 export const LEAD_JOURNEY_STAGES = [
