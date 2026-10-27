@@ -52,7 +52,6 @@ import {
   UserIcon,
   UserGroupIcon,
   ViewIcon,
-  ZapIcon,
 } from "@hugeicons/core-free-icons";
 import {
   useLazyFetchEmployeeDocumentBlobQuery,
@@ -1782,87 +1781,6 @@ export default function EmployeeProfilePage() {
                 </div>
 
                 <aside className="grid gap-4">
-                  <SectionCard title="Quick Actions" icon={ZapIcon}>
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <button
-                        type="button"
-                        className="flex flex-col items-start gap-2 rounded-xl border border-border-subtle bg-[color-mix(in_srgb,var(--color-page-bg)_60%,var(--color-surface))] px-3 py-3 text-left transition-colors hover:border-primary/40"
-                        onClick={() => {
-                          window.location.href = `mailto:${employee.officialEmail}`;
-                        }}
-                      >
-                        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] text-primary">
-                          <HugeiconsIcon
-                            icon={Message01Icon}
-                            size={15}
-                            color="currentColor"
-                            strokeWidth={1.7}
-                          />
-                        </span>
-                        <span className="text-[0.8rem] font-semibold text-text">
-                          Send Message
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        className="flex flex-col items-start gap-2 rounded-xl border border-border-subtle bg-[color-mix(in_srgb,var(--color-page-bg)_60%,var(--color-surface))] px-3 py-3 text-left transition-colors hover:border-primary/40"
-                        onClick={() => {
-                          window.location.href = `mailto:${employee.officialEmail}?subject=Meeting%20request`;
-                        }}
-                      >
-                        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] text-primary">
-                          <HugeiconsIcon
-                            icon={Calendar03Icon}
-                            size={15}
-                            color="currentColor"
-                            strokeWidth={1.7}
-                          />
-                        </span>
-                        <span className="text-[0.8rem] font-semibold text-text">
-                          Schedule Meeting
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        className="flex flex-col items-start gap-2 rounded-xl border border-border-subtle bg-[color-mix(in_srgb,var(--color-page-bg)_60%,var(--color-surface))] px-3 py-3 text-left transition-colors hover:border-primary/40"
-                        onClick={() => selectTab("documents")}
-                      >
-                        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] text-primary">
-                          <HugeiconsIcon
-                            icon={File01Icon}
-                            size={15}
-                            color="currentColor"
-                            strokeWidth={1.7}
-                          />
-                        </span>
-                        <span className="text-[0.8rem] font-semibold text-text">
-                          View Documents
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        className="flex flex-col items-start gap-2 rounded-xl border border-border-subtle bg-[color-mix(in_srgb,var(--color-page-bg)_60%,var(--color-surface))] px-3 py-3 text-left transition-colors hover:border-primary/40"
-                        onClick={() =>
-                          canViewAudit
-                            ? selectTab("history")
-                            : toast.info("Activity history is not available.")
-                        }
-                      >
-                        <span className="grid h-8 w-8 place-items-center rounded-lg bg-[color-mix(in_srgb,var(--color-primary)_12%,transparent)] text-primary">
-                          <HugeiconsIcon
-                            icon={Clock01Icon}
-                            size={15}
-                            color="currentColor"
-                            strokeWidth={1.7}
-                          />
-                        </span>
-                        <span className="text-[0.8rem] font-semibold text-text">
-                          View Activity History
-                        </span>
-                      </button>
-                    </div>
-                  </SectionCard>
-
                   <SectionCard title="Profile Summary" icon={UserGroupIcon}>
                     <dl className="m-0 grid gap-3">
                       <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-2.5">
