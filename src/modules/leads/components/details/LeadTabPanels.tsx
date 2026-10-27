@@ -205,7 +205,8 @@ function isAssignmentActivity(
     item.category === "assignment" ||
     label.includes("reassigned") ||
     label.includes("assigned") ||
-    label.includes("handed over")
+    label.includes("handed over") ||
+    label.includes("handover")
   );
 }
 

@@ -720,11 +720,27 @@ export function noteActivityPreview(details?: string | null, maxWords = 5) {
 }
 
 export function isNoteActivity(
-  item: { actionKey?: string | null },
+  item: {
+    actionKey?: string | null;
+    outcome?: string | null;
+    metadata?: Record<string, unknown> | null;
+  },
   title = "",
 ) {
   const key = (item.actionKey || "").toUpperCase();
   const label = title.toLowerCase();
+  const metaEvent = String(item.metadata?.event || "").toUpperCase();
+  const metaAction = String(item.metadata?.action || "").toLowerCase();
+  if (
+    key === "LEAD_HANDED_OVER" ||
+    key.includes("HANDOVER") ||
+    metaEvent === "LEAD_HANDED_OVER" ||
+    metaAction === "handover" ||
+    (item.outcome || "").toLowerCase() === "handed over" ||
+    label.includes("handover")
+  ) {
+    return false;
+  }
   return (
     key === "NOTE" ||
     key.startsWith("LEAD_NOTE") ||
@@ -757,6 +773,17 @@ export function activityTitle(
   if (key === "LEAD_REOPENED" || metaEvent === "LEAD_REOPENED")
     return "Lead reopened";
   if (looksLikeStatusChange) return "Status changed";
+  // Handover is stored as type NOTE with metadata — check before note titles.
+  const metaAction = String(metadata?.action || "").toLowerCase();
+  if (
+    key === "LEAD_HANDED_OVER" ||
+    key.includes("HANDOVER") ||
+    metaEvent === "LEAD_HANDED_OVER" ||
+    metaAction === "handover" ||
+    outcomeText === "handed over"
+  ) {
+    return "Lead Handover to counselor";
+  }
   if (key === "LEAD_NOTE_PINNED") return "Note Pinned";
   if (key === "LEAD_NOTE_UNPINNED") return "Note unpinned";
   if (
@@ -809,8 +836,6 @@ export function activityTitle(
   }
   if (key === "LEAD_CLOSED") return "Lead closed";
   if (key === "LEAD_REOPENED") return "Lead reopened";
-  if (key === "LEAD_HANDED_OVER" || key.includes("HANDOVER"))
-    return "Handed over";
   if (key === "CALL") return "Call logged";
   if (key === "WHATSAPP") return "WhatsApp logged";
   if (key === "EMAIL") return "Email logged";
@@ -846,7 +871,7 @@ export function activityTitle(
   if (text.includes("reassigned") || text.includes("assigned to"))
     return "Reassigned";
   if (text.includes("handed over") || text.includes("handover"))
-    return "Handed over";
+    return "Lead Handover to counselor";
   if (text.includes("qualif")) return "Qualification updated";
   if (text.includes("status")) return "Status updated";
   if (text.includes("created") || action.toLowerCase() === "lead created")
@@ -905,6 +930,16 @@ export function activityIconKind(
   ) {
     return "status";
   }
+  if (
+    key.includes("ASSIGN") ||
+    key.includes("HANDOVER") ||
+    category === "assignment" ||
+    label.includes("reassigned") ||
+    label.includes("handed over") ||
+    label.includes("handover")
+  ) {
+    return "assignment";
+  }
   if (key === "NOTE" || label.includes("note")) return "note";
   if (key === "MEETING" || label.includes("meeting")) return "meeting";
   if (
@@ -930,13 +965,6 @@ export function activityIconKind(
     return "document";
   }
   if (key.includes("PAYMENT") || label.includes("payment")) return "payment";
-  if (
-    key.includes("ASSIGN") ||
-    label.includes("reassigned") ||
-    label.includes("handed over")
-  ) {
-    return "assignment";
-  }
   if (key.includes("STATUS") || label.includes("status")) return "status";
   if (label.includes("completed") || label.includes("closed")) return "check";
   if (label.includes("cancelled")) return "cancel";
