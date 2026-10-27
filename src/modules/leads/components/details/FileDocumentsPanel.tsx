@@ -67,7 +67,10 @@ export default function FileDocumentsPanel({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [previewType, setPreviewType] = useState('')
 
-  const { data, isFetching } = useGetFileWorkspaceQuery({ leadId, archived: showArchived })
+  const { data, isFetching } = useGetFileWorkspaceQuery(
+    { leadId, archived: showArchived },
+    { refetchOnMountOrArgChange: true },
+  )
   const [uploadDocument, { isLoading: uploading }] = useUploadFileDocumentMutation()
   const [requestDocument, { isLoading: requesting }] = useRequestFileDocumentMutation()
   const [reviewDocument] = useReviewFileDocumentMutation()

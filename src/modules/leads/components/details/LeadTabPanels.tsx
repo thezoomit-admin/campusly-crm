@@ -52,7 +52,9 @@ import {
   activityTitle,
   followUpCountdownParts,
   formatDisplayDateTime,
+  isNoteActivity,
   LEAD_MORE_TABS,
+  noteActivityPreview,
   type FollowUpCountdownUrgency,
   type LeadActivityIconKind,
   type LeadMoreTabKey,
@@ -1257,6 +1259,10 @@ export function LeadActivitiesPanel({
               }
 
               const hideRowTime = isAssignmentActivity(item, title);
+              const noteActivity = isNoteActivity(item, title);
+              const notePreview = noteActivity
+                ? noteActivityPreview(item.details, 5)
+                : "";
 
               return (
                 <li
@@ -1273,19 +1279,29 @@ export function LeadActivitiesPanel({
                         <p className="m-0 break-words text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
                           {title}
                         </p>
-                        {item.outcome &&
-                        !title
-                          .toLowerCase()
-                          .includes(item.outcome.toLowerCase()) ? (
-                          <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
-                            {item.outcome}
-                          </p>
-                        ) : null}
-                        {item.details ? (
-                          <p className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
-                            {item.details}
-                          </p>
-                        ) : null}
+                        {noteActivity ? (
+                          notePreview ? (
+                            <p className="mt-1 mb-0 break-words text-[0.82rem] text-[#5b6b7c]">
+                              {notePreview}
+                            </p>
+                          ) : null
+                        ) : (
+                          <>
+                            {item.outcome &&
+                            !title
+                              .toLowerCase()
+                              .includes(item.outcome.toLowerCase()) ? (
+                              <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
+                                {item.outcome}
+                              </p>
+                            ) : null}
+                            {item.details ? (
+                              <p className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
+                                {item.details}
+                              </p>
+                            ) : null}
+                          </>
+                        )}
                         <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
                           {actor}
                         </p>
@@ -1386,7 +1402,9 @@ export function LeadPaymentsPanel({
   leadCode: string;
 }) {
   const dispatch = useAppDispatch();
-  const { data, isFetching, isError } = useListLeadPaymentHistoryQuery(leadId);
+  const { data, isFetching, isError } = useListLeadPaymentHistoryQuery(leadId, {
+    refetchOnMountOrArgChange: true,
+  });
   const [cancelPayment, { isLoading: cancelling }] = useCancelPaymentMutation();
   const [reversePayment, { isLoading: reversing }] =
     useReversePaymentMutation();

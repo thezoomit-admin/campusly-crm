@@ -402,9 +402,12 @@ export default function LeadPackageOfferPanel({
   canOffer: boolean;
 }) {
   const { data, isFetching, isUninitialized, isError } =
-    useListLeadServiceOffersQuery(leadId);
+    useListLeadServiceOffersQuery(leadId, { refetchOnMountOrArgChange: true });
   const offersLoading = !isError && (isUninitialized || (isFetching && !data));
-  const { data: context, isFetching: contextLoading } = useGetServiceOfferContextQuery(leadId, { skip: !canOffer });
+  const { data: context, isFetching: contextLoading } = useGetServiceOfferContextQuery(
+    leadId,
+    { skip: !canOffer, refetchOnMountOrArgChange: true },
+  );
   const [generateOffer, { isLoading: generating }] = useGenerateLeadServiceOfferMutation();
   const [deleteOffer, { isLoading: deleting }] = useDeleteLeadServiceOfferMutation();
   const [changeStatus, { isLoading: changing }] = useChangeLeadServiceOfferStatusMutation();
