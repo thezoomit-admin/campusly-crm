@@ -52,6 +52,11 @@ import {
   useCreateFollowUpMutation,
   useListLeadFollowUpsQuery,
 } from "@/modules/follow-ups/api/followUpsApi";
+import {
+  useCancelMeetingMutation,
+  useCompleteMeetingMutation,
+  useCreateMeetingMutation,
+} from "@/modules/meetings/api/meetingsApi";
 import FollowUpFormModal from "@/modules/follow-ups/components/FollowUpFormModal";
 import {
   CancelFollowUpModal,
@@ -182,6 +187,9 @@ export default function LeadDetailsPage() {
     useReviewDuplicateLeadMutation();
   const [createFollowUp, { isLoading: followUpSaving }] =
     useCreateFollowUpMutation();
+  const [createMeeting] = useCreateMeetingMutation();
+  const [completeMeeting] = useCompleteMeetingMutation();
+  const [cancelMeeting] = useCancelMeetingMutation();
   const [createActivity, { isLoading: activitySaving }] =
     useCreateActivityMutation();
   const [assignLead, { isLoading: ownerSaving }] = useAssignLeadMutation();
@@ -834,9 +842,8 @@ export default function LeadDetailsPage() {
           .join("\n");
 
         if (canFollowUp && startIso) {
-          await createFollowUp({
+          await createMeeting({
             leadId: id,
-            type: "Meeting",
             dueAt: startIso,
             priority: "Medium",
             purpose: "Other",
@@ -982,14 +989,14 @@ export default function LeadDetailsPage() {
       // Backend supersedes prior open follow-ups in the same lane so the
       // Next Follow Up countdown picks up this new dueAt immediately.
       await createFollowUp({ ...values, leadId: id }).unwrap();
-      await refreshLeadWorkspace();
+      // Close immediately — don't wait for activities/lead refetch.
+      setFollowUpOpen(false);
+      setFollowUpInitial(null);
       toast.success(
         followUpInitial
           ? "Follow-up rescheduled."
           : "Follow-up scheduled.",
       );
-      setFollowUpOpen(false);
-      setFollowUpInitial(null);
       setSearchParams(
         (prev) => {
           const params = new URLSearchParams(prev);
@@ -1000,6 +1007,7 @@ export default function LeadDetailsPage() {
         },
         { replace: true },
       );
+      void refreshLeadWorkspace();
     } catch (error) {
       toast.error(getApiError(error, "Unable to create follow-up."));
       throw error;
@@ -1008,21 +1016,42 @@ export default function LeadDetailsPage() {
 
   async function onCompleteFollowUp(values: CompleteFollowUpValues) {
     if (!selectedFollowUp) return;
+    const isMeeting = selectedFollowUp.type === "Meeting";
     try {
+      if (isMeeting) {
+        await completeMeeting({
+          id: selectedFollowUp.id,
+          body: values,
+        }).unwrap();
+        setCompleteOpen(false);
+        setSelectedFollowUp(null);
+        toast.success(
+          values.createNextFollowUp
+            ? "Meeting completed and next scheduled."
+            : "Meeting completed.",
+        );
+        void refreshLeadWorkspace();
+        return;
+      }
       await completeFollowUp({
         id: selectedFollowUp.id,
         body: values,
       }).unwrap();
-      await refreshLeadWorkspace();
+      setCompleteOpen(false);
+      setSelectedFollowUp(null);
       toast.success(
         values.createNextFollowUp
           ? "Follow-up completed and next scheduled."
           : "Follow-up completed.",
       );
-      setCompleteOpen(false);
-      setSelectedFollowUp(null);
+      void refreshLeadWorkspace();
     } catch (error) {
-      toast.error(getApiError(error, "Unable to complete follow-up."));
+      toast.error(
+        getApiError(
+          error,
+          isMeeting ? "Unable to complete meeting." : "Unable to complete follow-up.",
+        ),
+      );
     }
   }
 
@@ -1094,9 +1123,10 @@ export default function LeadDetailsPage() {
     setMeetingSaving(true);
     try {
       if (canFollowUp) {
-        await createFollowUp({
+        // Add and reschedule both go through /meetings (not /follow-ups).
+        // Reschedule supersedes the open meeting so updated notes/title are kept.
+        await createMeeting({
           leadId: id,
-          type: "Meeting",
           dueAt: startIso,
           priority: "Medium",
           purpose: "Other",
@@ -1124,12 +1154,13 @@ export default function LeadDetailsPage() {
         }).unwrap();
       }
 
-      await refreshLeadWorkspace();
+      // Close immediately on success — don't wait for activities/lead refetch.
+      setMeetingOpen(false);
+      setMeetingTarget(null);
       toast.success(
         isReschedule ? "Meeting rescheduled." : "Meeting scheduled.",
       );
-      setMeetingOpen(false);
-      setMeetingTarget(null);
+      void refreshLeadWorkspace();
     } catch (error) {
       toast.error(
         getApiError(
@@ -1148,14 +1179,25 @@ export default function LeadDetailsPage() {
     if (!selectedFollowUp) return;
     const isMeeting = selectedFollowUp.type === "Meeting";
     try {
+      if (isMeeting) {
+        await cancelMeeting({
+          id: selectedFollowUp.id,
+          body: { reason },
+        }).unwrap();
+        setCancelOpen(false);
+        setSelectedFollowUp(null);
+        toast.success("Meeting cancelled.");
+        void refreshLeadWorkspace();
+        return;
+      }
       await cancelFollowUp({
         id: selectedFollowUp.id,
         body: { reason },
       }).unwrap();
-      await refreshLeadWorkspace();
-      toast.success(isMeeting ? "Meeting cancelled." : "Follow-up cancelled.");
       setCancelOpen(false);
       setSelectedFollowUp(null);
+      toast.success("Follow-up cancelled.");
+      void refreshLeadWorkspace();
     } catch (error) {
       toast.error(
         getApiError(
@@ -1447,9 +1489,8 @@ export default function LeadDetailsPage() {
     const nextAction = meeting.agenda || meeting.title || "Scheduled meeting";
 
     if (canFollowUp) {
-      await createFollowUp({
+      await createMeeting({
         leadId: id,
-        type: "Meeting",
         dueAt: startIso,
         priority: "Medium",
         purpose: "Other",

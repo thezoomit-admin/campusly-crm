@@ -27,6 +27,12 @@ import {
   useRescheduleFollowUpMutation,
   useUpdateFollowUpReminderMutation,
 } from "../api/followUpsApi";
+import {
+  useCancelMeetingMutation,
+  useCompleteMeetingMutation,
+  useCreateMeetingMutation,
+  useRescheduleMeetingMutation,
+} from "@/modules/meetings/api/meetingsApi";
 import { adminPage } from "../../../styles/admin";
 import FollowUpDetailsModal from "../components/FollowUpDetailsModal";
 import FollowUpFilters from "../components/FollowUpFilters";
@@ -81,13 +87,26 @@ export default function FollowUpsPage() {
     undefined,
     { refetchOnMountOrArgChange: true },
   );
-  const [createFollowUp, { isLoading: creating }] = useCreateFollowUpMutation();
-  const [completeFollowUp, { isLoading: completing }] =
+  const [createFollowUp, { isLoading: creatingFollowUp }] =
+    useCreateFollowUpMutation();
+  const [createMeeting, { isLoading: creatingMeeting }] =
+    useCreateMeetingMutation();
+  const [completeFollowUp, { isLoading: completingFollowUp }] =
     useCompleteFollowUpMutation();
-  const [rescheduleFollowUp, { isLoading: rescheduling }] =
+  const [completeMeeting, { isLoading: completingMeeting }] =
+    useCompleteMeetingMutation();
+  const [rescheduleFollowUp, { isLoading: reschedulingFollowUp }] =
     useRescheduleFollowUpMutation();
-  const [cancelFollowUp, { isLoading: cancelling }] =
+  const [rescheduleMeeting, { isLoading: reschedulingMeeting }] =
+    useRescheduleMeetingMutation();
+  const [cancelFollowUp, { isLoading: cancellingFollowUp }] =
     useCancelFollowUpMutation();
+  const [cancelMeeting, { isLoading: cancellingMeeting }] =
+    useCancelMeetingMutation();
+  const creating = creatingFollowUp || creatingMeeting;
+  const completing = completingFollowUp || completingMeeting;
+  const rescheduling = reschedulingFollowUp || reschedulingMeeting;
+  const cancelling = cancellingFollowUp || cancellingMeeting;
   const [updateReminder, { isLoading: savingReminder }] =
     useUpdateFollowUpReminderMutation();
   const { data: focused } = useGetFollowUpQuery(focusId, { skip: !focusId });
@@ -140,41 +159,78 @@ export default function FollowUpsPage() {
   }
 
   async function onCreate(values: FollowUpFormValues) {
+    const isMeeting = values.type === "Meeting";
     try {
-      await createFollowUp(values).unwrap();
-      toast.success("Follow-up created.");
+      if (isMeeting) {
+        await createMeeting({ ...values, type: "Meeting" }).unwrap();
+        toast.success("Meeting scheduled.");
+      } else {
+        await createFollowUp(values).unwrap();
+        toast.success("Follow-up created.");
+      }
       setFormOpen(false);
     } catch (error) {
-      toast.error(getApiError(error, "Unable to create follow-up."));
+      toast.error(
+        getApiError(
+          error,
+          isMeeting ? "Unable to schedule meeting." : "Unable to create follow-up.",
+        ),
+      );
       throw error;
     }
   }
 
   async function onComplete(values: CompleteFollowUpValues) {
     if (!selected) return;
+    const isMeeting = selected.type === "Meeting";
     try {
-      await completeFollowUp({ id: selected.id, body: values }).unwrap();
-      toast.success(
-        values.createNextFollowUp
-          ? "Follow-up completed and next scheduled."
-          : "Follow-up completed.",
-      );
+      if (isMeeting) {
+        await completeMeeting({ id: selected.id, body: values }).unwrap();
+      } else {
+        await completeFollowUp({ id: selected.id, body: values }).unwrap();
+      }
       setCompleteOpen(false);
       setSelected(null);
+      toast.success(
+        values.createNextFollowUp
+          ? isMeeting
+            ? "Meeting completed and next scheduled."
+            : "Follow-up completed and next scheduled."
+          : isMeeting
+            ? "Meeting completed."
+            : "Follow-up completed.",
+      );
     } catch (error) {
-      toast.error(getApiError(error, "Unable to complete follow-up."));
+      toast.error(
+        getApiError(
+          error,
+          isMeeting ? "Unable to complete meeting." : "Unable to complete follow-up.",
+        ),
+      );
     }
   }
 
   async function onReschedule(values: RescheduleFollowUpValues) {
     if (!selected) return;
+    const isMeeting = selected.type === "Meeting";
     try {
-      await rescheduleFollowUp({ id: selected.id, body: values }).unwrap();
-      toast.success("Follow-up rescheduled.");
+      if (isMeeting) {
+        await rescheduleMeeting({ id: selected.id, body: values }).unwrap();
+      } else {
+        await rescheduleFollowUp({ id: selected.id, body: values }).unwrap();
+      }
       setRescheduleOpen(false);
       setSelected(null);
+      toast.success(isMeeting ? "Meeting rescheduled." : "Follow-up rescheduled.");
     } catch (error) {
-      toast.error(getApiError(error, "Unable to reschedule follow-up."));
+      toast.error(
+        getApiError(
+          error,
+          isMeeting
+            ? "Unable to reschedule meeting."
+            : "Unable to reschedule follow-up.",
+        ),
+      );
     }
   }
 
@@ -200,13 +256,23 @@ export default function FollowUpsPage() {
 
   async function onCancel(reason: string) {
     if (!selected) return;
+    const isMeeting = selected.type === "Meeting";
     try {
-      await cancelFollowUp({ id: selected.id, body: { reason } }).unwrap();
-      toast.success("Follow-up cancelled.");
+      if (isMeeting) {
+        await cancelMeeting({ id: selected.id, body: { reason } }).unwrap();
+      } else {
+        await cancelFollowUp({ id: selected.id, body: { reason } }).unwrap();
+      }
       setCancelOpen(false);
       setSelected(null);
+      toast.success(isMeeting ? "Meeting cancelled." : "Follow-up cancelled.");
     } catch (error) {
-      toast.error(getApiError(error, "Unable to cancel follow-up."));
+      toast.error(
+        getApiError(
+          error,
+          isMeeting ? "Unable to cancel meeting." : "Unable to cancel follow-up.",
+        ),
+      );
     }
   }
 
