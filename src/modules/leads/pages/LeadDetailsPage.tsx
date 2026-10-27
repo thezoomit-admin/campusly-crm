@@ -1333,19 +1333,19 @@ export default function LeadDetailsPage() {
         ]
           .filter(Boolean)
           .join("\n\n");
-        await createActivity({
-          type: "NOTE",
-          notes: noteBody,
-          outcome: "Note added",
-          relatedType: "lead",
-          relatedId: id,
-          relatedName: lead.name,
-        }).unwrap();
-        if (canEdit && payload.notes.trim()) {
-          await createLeadNote({
-            id,
-            body: payload.notes.trim(),
-            skipActivity: true,
+        // Prefer lead notes API: backend creates the note + activity in one
+        // transaction. Fall back to activity-only when the user can log
+        // activity but lacks lead:edit.
+        if (canEdit) {
+          await createLeadNote({ id, body: noteBody }).unwrap();
+        } else {
+          await createActivity({
+            type: "NOTE",
+            notes: noteBody,
+            outcome: "Note added",
+            relatedType: "lead",
+            relatedId: id,
+            relatedName: lead.name,
           }).unwrap();
         }
         saved.note = true;
