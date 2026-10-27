@@ -6,7 +6,7 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react";
-import { Modal, TimePicker } from "antd";
+import { TimePicker } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -263,7 +263,6 @@ export default function ChangeStatusModal({
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
-  const [confirming, setConfirming] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: channelData } = useListMasterDataOptionsQuery(
@@ -296,26 +295,6 @@ export default function ChangeStatusModal({
   const hasEmail = Boolean(leadEmail?.trim());
   const displayName = leadName || "Lead";
 
-  const dirty = Boolean(
-    statusCode ||
-    channels.length ||
-    note ||
-    lostReasonCode ||
-    overrideReason ||
-    nextFollowUpAt ||
-    scheduleMeeting ||
-    meetingTitle ||
-    meetingType ||
-    meetingDate ||
-    meetingStart ||
-    meetingEnd ||
-    meetingLocation ||
-    meetingAgenda ||
-    attachment ||
-    emailSubject ||
-    emailBody,
-  );
-
   useEffect(() => {
     if (!open) {
       setTab("status");
@@ -338,25 +317,12 @@ export default function ChangeStatusModal({
       setLocalErrors({});
       setEmailSubject("");
       setEmailBody("");
-      setConfirming(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }, [open]);
 
   function requestClose() {
-    if (!dirty) {
-      onClose();
-      return;
-    }
-    setConfirming(true);
-    Modal.confirm({
-      title: "Discard unsaved changes?",
-      content: "You have unsaved status changes. Close without updating?",
-      okText: "Discard",
-      cancelText: "Keep editing",
-      onOk: onClose,
-      afterClose: () => setConfirming(false),
-    });
+    onClose();
   }
 
   function onFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -449,7 +415,6 @@ export default function ChangeStatusModal({
       onClose={requestClose}
       title={`Change Status — ${displayName}`}
       width={980}
-      mask={{ closable: !confirming }}
       styles={{
         body: { padding: 0 },
         header: { padding: "16px 20px 0", borderBottom: "1px solid #eef3f8" },
