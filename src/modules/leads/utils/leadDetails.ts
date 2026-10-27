@@ -614,11 +614,17 @@ function followUpLifecycleTitle(
   outcome?: string | null,
   actionKey?: string | null,
   metaEvent?: string | null,
+  metadata?: Record<string, unknown> | null,
 ) {
   const key = (actionKey || metaEvent || "").toUpperCase();
   const outcomeText = (outcome || "").trim().toLowerCase();
   const text = `${action} ${details || ""} ${outcome || ""}`.toLowerCase();
-  const isMeeting = mentionsMeeting(action, details, outcome);
+  const followUpType = String(
+    metadata?.followUpType || metadata?.type || "",
+  ).toLowerCase();
+  const isMeeting =
+    followUpType === "meeting" ||
+    mentionsMeeting(action, details, outcome, followUpType);
 
   const label = (
     verb: "added" | "completed" | "rescheduled" | "cancelled",
@@ -783,6 +789,7 @@ export function activityTitle(
       outcome,
       key.startsWith("FOLLOW_UP") ? key : null,
       metaEvent.startsWith("FOLLOW_UP") ? metaEvent : null,
+      metadata,
     );
     if (followUpTitle) return followUpTitle;
   }
