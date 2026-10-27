@@ -21,6 +21,7 @@ import { useLeadMasterOptions } from "../hooks/useLeadMasterOptions";
 import {
   useAssignLeadMutation,
   useDeleteLeadDocumentMutation,
+  useRestoreLeadDocumentMutation,
   useHandoverLeadMutation,
   useCloseLeadMutation,
   useGetLeadQuery,
@@ -385,6 +386,8 @@ export default function LeadDetailsPage() {
     useRejectLeadDocumentMutation();
   const [deleteLeadDocument, { isLoading: documentDeleting }] =
     useDeleteLeadDocumentMutation();
+  const [restoreLeadDocument, { isLoading: documentRestoring }] =
+    useRestoreLeadDocumentMutation();
   const [fetchLeadDocumentBlob] = useLazyFetchLeadDocumentBlobQuery();
   const previewUrlRef = useRef("");
   const pendingUploadRef = useRef<UploadLeadDocumentForm | null>(null);
@@ -696,6 +699,34 @@ export default function LeadDetailsPage() {
     } catch (error) {
       toast.error(getApiError(error, "Unable to archive document."));
     }
+  }
+
+  function confirmRestoreDocument(document: LeadDocumentItem) {
+    if (!canDeleteDocument || !id || documentRestoring) return;
+    const name = document.name || document.fileName || "this document";
+    Modal.confirm({
+      title: "Restore document?",
+      content: `Restore ${name} to the active document list?`,
+      okText: "Restore",
+      cancelText: "Cancel",
+      okButtonProps: {
+        className:
+          "!bg-primary !border-primary hover:!bg-primary-hover hover:!border-primary-hover",
+      },
+      cancelButtonProps: {
+        className: "hover:!border-primary hover:!text-primary",
+      },
+      onOk: async () => {
+        try {
+          await restoreLeadDocument({ id, documentId: document.id }).unwrap();
+          toast.success("Document restored.");
+          setShowArchivedDocs(false);
+        } catch (error) {
+          toast.error(getApiError(error, "Unable to restore document."));
+          throw error;
+        }
+      },
+    });
   }
 
   async function onOverridePriority(priorityCode: string, reason: string) {
@@ -1762,6 +1793,7 @@ export default function LeadDetailsPage() {
                   }}
                   onVerify={(document) => setVerifyTarget(document)}
                   onDelete={(document) => setDeleteTarget(document)}
+                  onRestore={(document) => confirmRestoreDocument(document)}
                 />
               ) : null}
               {tab === "file-documents" && showFileDocumentsTab ? (

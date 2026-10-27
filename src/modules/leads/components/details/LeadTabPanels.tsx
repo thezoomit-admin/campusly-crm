@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Add01Icon,
+  ArchiveRestoreIcon,
   Calendar03Icon,
   Call02Icon,
   Cancel01Icon,
@@ -393,6 +394,7 @@ export function LeadDocumentsPanel({
   onView,
   onVerify,
   onDelete,
+  onRestore,
 }: {
   documents: LeadDocumentItem[];
   loading?: boolean;
@@ -406,6 +408,7 @@ export function LeadDocumentsPanel({
   onView: (document: LeadDocumentItem) => void;
   onVerify: (document: LeadDocumentItem) => void;
   onDelete: (document: LeadDocumentItem) => void;
+  onRestore?: (document: LeadDocumentItem) => void;
 }) {
   const { page, pageSize, setPage, setPageSize, pageItems, total } =
     useLeadListPagination(documents);
@@ -515,6 +518,13 @@ export function LeadDocumentsPanel({
                 onClick={() => onDelete(doc)}
               />
             ) : null}
+            {canDelete && showArchived && onRestore ? (
+              <DocumentActionButton
+                label="Restore"
+                icon={ArchiveRestoreIcon}
+                onClick={() => onRestore(doc)}
+              />
+            ) : null}
           </div>
         ),
       },
@@ -524,6 +534,7 @@ export function LeadDocumentsPanel({
       canUpload,
       canVerify,
       onDelete,
+      onRestore,
       onUploadMissing,
       onVerify,
       onView,

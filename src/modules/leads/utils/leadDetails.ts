@@ -719,11 +719,92 @@ export function noteActivityPreview(details?: string | null, maxWords = 5) {
   return truncateWords(source, maxWords);
 }
 
+function isDocumentLifecycleKey(key: string) {
+  return (
+    key === "LEAD_DOCUMENT_UPLOADED" ||
+    key === "LEAD_DOCUMENT_VERIFIED" ||
+    key === "LEAD_DOCUMENT_REJECTED" ||
+    key === "LEAD_DOCUMENT_ARCHIVED" ||
+    key === "LEAD_DOCUMENT_RESTORED" ||
+    key === "FILE_DOCUMENT_UPLOADED" ||
+    key === "FILE_DOCUMENT_VERIFIED" ||
+    key === "FILE_DOCUMENT_REJECTED" ||
+    key === "FILE_DOCUMENT_ARCHIVED"
+  );
+}
+
+/** Titles for document upload / verify / reject / archive on the Activities feed. */
+export function documentLifecycleTitle(
+  actionKey?: string | null,
+  outcome?: string | null,
+  details?: string | null,
+  metadata?: Record<string, unknown> | null,
+): string | null {
+  const key = (actionKey || "").toUpperCase();
+  const metaEvent = String(metadata?.event || "").toUpperCase();
+  const resolved = isDocumentLifecycleKey(key)
+    ? key
+    : isDocumentLifecycleKey(metaEvent)
+      ? metaEvent
+      : "";
+
+  if (
+    resolved === "LEAD_DOCUMENT_UPLOADED" ||
+    resolved === "FILE_DOCUMENT_UPLOADED"
+  ) {
+    return "Document uploaded";
+  }
+  if (
+    resolved === "LEAD_DOCUMENT_VERIFIED" ||
+    resolved === "FILE_DOCUMENT_VERIFIED"
+  ) {
+    return "Document verified";
+  }
+  if (
+    resolved === "LEAD_DOCUMENT_REJECTED" ||
+    resolved === "FILE_DOCUMENT_REJECTED"
+  ) {
+    return "Document rejected";
+  }
+  if (
+    resolved === "LEAD_DOCUMENT_ARCHIVED" ||
+    resolved === "FILE_DOCUMENT_ARCHIVED"
+  ) {
+    return "Document archived";
+  }
+  if (resolved === "LEAD_DOCUMENT_RESTORED") {
+    return "Document restored";
+  }
+
+  const outcomeText = (outcome || "").toLowerCase().trim();
+  if (outcomeText === "document uploaded") return "Document uploaded";
+  if (outcomeText === "document verified") return "Document verified";
+  if (outcomeText === "document rejected") return "Document rejected";
+  if (outcomeText === "document archived") return "Document archived";
+  if (outcomeText === "document restored") return "Document restored";
+
+  const text = `${details || ""} ${outcome || ""}`.toLowerCase();
+  if (
+    text.startsWith("document uploaded:") ||
+    text.startsWith("document replaced:") ||
+    text.startsWith("document version uploaded:")
+  ) {
+    return "Document uploaded";
+  }
+  if (text.startsWith("document verified:")) return "Document verified";
+  if (text.startsWith("document rejected:")) return "Document rejected";
+  if (text.startsWith("document archived:")) return "Document archived";
+  if (text.startsWith("document restored:")) return "Document restored";
+
+  return null;
+}
+
 export function isNoteActivity(
   item: {
     actionKey?: string | null;
     outcome?: string | null;
     metadata?: Record<string, unknown> | null;
+    details?: string | null;
   },
   title = "",
 ) {
@@ -738,6 +819,14 @@ export function isNoteActivity(
     metaAction === "handover" ||
     (item.outcome || "").toLowerCase() === "handed over" ||
     label.includes("handover")
+  ) {
+    return false;
+  }
+  if (
+    isDocumentLifecycleKey(key) ||
+    isDocumentLifecycleKey(metaEvent) ||
+    documentLifecycleTitle(key, item.outcome, item.details, item.metadata) ||
+    label.startsWith("document ")
   ) {
     return false;
   }
@@ -784,6 +873,14 @@ export function activityTitle(
   ) {
     return "Lead Handover to counselor";
   }
+  const documentTitle = documentLifecycleTitle(
+    key,
+    outcome,
+    details,
+    metadata,
+  );
+  if (documentTitle) return documentTitle;
+
   if (key === "LEAD_NOTE_PINNED") return "Note Pinned";
   if (key === "LEAD_NOTE_UNPINNED") return "Note unpinned";
   if (
@@ -844,7 +941,9 @@ export function activityTitle(
   if (key === "DOCUMENT_REQUEST") return "Document requested";
   if (key === "PAYMENT_DISCUSSION") return "Payment discussion";
   if (key === "SERVICE_DISCUSSION") return "Service discussion";
-  if (key.includes("DOCUMENT")) return "Document updated";
+  if (key.includes("DOCUMENT")) {
+    return documentLifecycleTitle(key, outcome, details, metadata) || "Document updated";
+  }
   if (key.includes("PAYMENT")) return "Payment updated";
 
   if (outcomeText) {
