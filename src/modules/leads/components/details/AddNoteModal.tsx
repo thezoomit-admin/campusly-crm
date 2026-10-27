@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Modal, TimePicker } from "antd";
+import { TimePicker } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
@@ -236,7 +236,8 @@ export default function AddNoteModal({
   const [note, setNote] = useState("");
   const [followUpOpen, setFollowUpOpen] = useState(false);
   const [followUpType, setFollowUpType] = useState("");
-  const [followUpDue, setFollowUpDue] = useState("");
+  const [followUpDate, setFollowUpDate] = useState("");
+  const [followUpTime, setFollowUpTime] = useState<Dayjs | null>(null);
   const [followUpAgenda, setFollowUpAgenda] = useState("");
   const [meetingOpen, setMeetingOpen] = useState(false);
   const [meetingTitle, setMeetingTitle] = useState("");
@@ -292,8 +293,8 @@ export default function AddNoteModal({
   const openFollowUpIsMeeting =
     (openFollowUp?.type || "").toLowerCase() === "meeting";
   const followUpIsPast =
-    Boolean(followUpDue) &&
-    dayjs(followUpDue).startOf("day").isBefore(dayjs().startOf("day"));
+    Boolean(followUpDate) &&
+    dayjs(followUpDate).startOf("day").isBefore(dayjs().startOf("day"));
   const needsLocation = meetingMode === "Offline";
   const needsLink = meetingMode === "Online";
   const scheduling =
@@ -312,7 +313,8 @@ export default function AddNoteModal({
     setNote("");
     setFollowUpOpen(false);
     setFollowUpType("");
-    setFollowUpDue("");
+    setFollowUpDate("");
+    setFollowUpTime(null);
     setFollowUpAgenda("");
     setMeetingOpen(false);
     setMeetingTitle("");
@@ -356,6 +358,7 @@ export default function AddNoteModal({
         ...current,
         followUpType: "",
         followUpDue: "",
+        followUpTime: "",
         followUpAgenda: "",
       }));
       return;
@@ -393,7 +396,16 @@ export default function AddNoteModal({
     }
     if (followUpOpen && !committed.followUp) {
       if (!followUpType) next.followUpType = "Follow-up type is required.";
-      if (!followUpDue) next.followUpDue = "Follow-up date is required.";
+      if (!followUpDate) next.followUpDue = "Follow-up date is required.";
+      if (!followUpTime) next.followUpTime = "Follow-up time is required.";
+      else if (followUpDate) {
+        const when = dayjs(
+          `${followUpDate}T${followUpTime.format("HH:mm")}:00`,
+        );
+        if (when.isBefore(dayjs())) {
+          next.followUpTime = "Follow-up time must be now or later.";
+        }
+      }
       if (!followUpAgenda.trim()) next.followUpAgenda = "Agenda is required.";
     }
     if (meetingOpen && !committed.meeting) {
@@ -442,7 +454,9 @@ export default function AddNoteModal({
         followUpOpen && !committed.followUp
           ? {
               type: followUpType,
-              dueAt: followUpDue,
+              dueAt: dayjs(
+                `${followUpDate}T${followUpTime?.format("HH:mm") || "09:00"}:00`,
+              ).toISOString(),
               assigneeId: ownerId,
               nextAction: followUpAgenda.trim(),
               reminder: "30 Minutes Before",
@@ -481,28 +495,7 @@ export default function AddNoteModal({
 
   function requestClose() {
     if (saving) return;
-    const dirty =
-      !committed.note &&
-      (note.trim().length > 0 ||
-        Boolean(channel) ||
-        followUpOpen ||
-        meetingOpen);
-    const unfinished =
-      (followUpOpen && !committed.followUp) ||
-      (meetingOpen && !committed.meeting);
-    if (!dirty && !unfinished) {
-      onClose();
-      return;
-    }
-    Modal.confirm({
-      title: committed.note ? "Close without finishing?" : "Discard this note?",
-      content: committed.note
-        ? "The note is already saved. Anything still open will not be scheduled."
-        : "The note and any schedule details you entered will be lost.",
-      okText: committed.note ? "Close" : "Discard",
-      cancelText: "Keep editing",
-      onOk: onClose,
-    });
+    onClose();
   }
 
   const leadName = lead?.name || "Lead";
@@ -642,28 +635,28 @@ export default function AddNoteModal({
                   close it.
                 </p>
               ) : null}
+              <label id="add-note-followUpType" className="grid gap-1">
+                <FieldLabel required>Follow-up type</FieldLabel>
+                <FormSelect
+                  showSearch
+                  optionFilterProp="label"
+                  placeholder="Select type"
+                  disabled={committed.followUp}
+                  value={followUpType || undefined}
+                  options={FOLLOW_UP_TYPE_OPTIONS.map((value) => ({
+                    value,
+                    label: value,
+                  }))}
+                  onChange={(value) => {
+                    setFollowUpType(asSelectString(value));
+                    clearError("followUpType");
+                  }}
+                />
+                {errors.followUpType ? (
+                  <InputError>{errors.followUpType}</InputError>
+                ) : null}
+              </label>
               <div className="grid gap-3 sm:grid-cols-2">
-                <label id="add-note-followUpType" className="grid gap-1">
-                  <FieldLabel required>Follow-up type</FieldLabel>
-                  <FormSelect
-                    showSearch
-                    optionFilterProp="label"
-                    placeholder="Select type"
-                    disabled={committed.followUp}
-                    value={followUpType || undefined}
-                    options={FOLLOW_UP_TYPE_OPTIONS.map((value) => ({
-                      value,
-                      label: value,
-                    }))}
-                    onChange={(value) => {
-                      setFollowUpType(asSelectString(value));
-                      clearError("followUpType");
-                    }}
-                  />
-                  {errors.followUpType ? (
-                    <InputError>{errors.followUpType}</InputError>
-                  ) : null}
-                </label>
                 <label id="add-note-followUpDue" className="grid gap-1">
                   <FieldLabel required>Follow-up date</FieldLabel>
                   <FormDatePicker
@@ -671,19 +664,11 @@ export default function AddNoteModal({
                     format="DD MMM YYYY"
                     placeholder="Select date"
                     disabled={committed.followUp}
-                    value={followUpDue ? dayjs(followUpDue) : null}
+                    value={followUpDate ? dayjs(followUpDate) : null}
                     onChange={(value) => {
-                      setFollowUpDue(
-                        value
-                          ? value
-                              .hour(9)
-                              .minute(0)
-                              .second(0)
-                              .millisecond(0)
-                              .toISOString()
-                          : "",
-                      );
+                      setFollowUpDate(value ? value.format("YYYY-MM-DD") : "");
                       clearError("followUpDue");
+                      clearError("followUpTime");
                     }}
                   />
                   {followUpIsPast && !errors.followUpDue ? (
@@ -693,6 +678,25 @@ export default function AddNoteModal({
                   ) : null}
                   {errors.followUpDue ? (
                     <InputError>{errors.followUpDue}</InputError>
+                  ) : null}
+                </label>
+                <label id="add-note-followUpTime" className="grid gap-1">
+                  <FieldLabel required>Follow-up time</FieldLabel>
+                  <TimePicker
+                    className="w-full"
+                    size="large"
+                    format="hh:mm A"
+                    needConfirm={false}
+                    placeholder="Select time"
+                    disabled={committed.followUp}
+                    value={followUpTime}
+                    onChange={(value) => {
+                      setFollowUpTime(value);
+                      clearError("followUpTime");
+                    }}
+                  />
+                  {errors.followUpTime ? (
+                    <InputError>{errors.followUpTime}</InputError>
                   ) : null}
                 </label>
               </div>
