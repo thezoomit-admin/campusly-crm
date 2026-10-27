@@ -97,6 +97,8 @@ export function isStatusChangeActivity(
 ) {
   const key = (item.actionKey || "").toUpperCase();
   const label = title.toLowerCase();
+  // Service-offer audits use *_STATUS_* keys but are not lead status changes.
+  if (key.startsWith("SERVICE_OFFER_")) return false;
   return (
     item.category === "status" ||
     key.includes("STATUS") ||

@@ -1,6 +1,8 @@
 import { Alert, Button, Checkbox, DatePicker, Form, Input, InputNumber, Modal, Select, Space } from 'antd'
 import dayjs from 'dayjs'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Invoice01Icon, UserIcon } from '@hugeicons/core-free-icons'
 import { toast } from 'react-toastify'
 import { getApiError } from '@/lib/api'
 import { formatMoney } from '@/modules/packages/utils/offerCalculator'
@@ -9,6 +11,33 @@ import {
   useListPaymentMethodsQuery,
 } from '../api/paymentsApi'
 import type { PaymentRecord } from '../types'
+
+function RequiredMark() {
+  return <span className="text-[#ef4444]"> *</span>
+}
+
+function FieldLabel({
+  children,
+  required,
+}: {
+  children: ReactNode
+  required?: boolean
+}) {
+  return (
+    <span>
+      {children}
+      {required ? <RequiredMark /> : null}
+    </span>
+  )
+}
+
+function InfoBadge({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex max-w-full items-center rounded-full bg-white/80 px-2.5 py-0.5 text-[0.75rem] font-semibold text-[#17324f] ring-1 ring-[#d5e8dc] dark:bg-emerald-900/40 dark:text-text-strong dark:ring-emerald-800/60">
+      {children}
+    </span>
+  )
+}
 
 type AddPaymentModalProps = {
   open: boolean
@@ -80,6 +109,10 @@ export default function AddPaymentModal({
     return 'Transaction / Reference No.'
   }, [selectedMethod])
 
+  const refRequired = Boolean(
+    selectedMethod?.requiresTransaction || selectedMethod?.requiresDescription,
+  )
+
   async function submit(generateReceipt: boolean, allowDuplicate = false) {
     try {
       const values = await form.validateFields()
@@ -141,20 +174,38 @@ export default function AddPaymentModal({
       footer={null}
       destroyOnHidden
     >
-      <div className="mb-4 grid gap-1 text-sm text-text-muted">
-        <p className="m-0">
-          <span className="font-medium text-text-strong">Lead:</span> {leadName}{' '}
-          <span className="mx-2">·</span>
-          <span className="font-medium text-text-strong">Lead ID:</span> {leadCode}
-        </p>
-        <p className="m-0">
-          <span className="font-medium text-text-strong">Service Offer:</span> {offerLabel}
-        </p>
-        <p className="m-0 mt-2 flex flex-wrap gap-x-4 gap-y-1">
-          <span>Final Payable: {formatMoney(finalPayable)}</span>
-          <span>Previously Paid: {formatMoney(previouslyPaid)}</span>
-          <span>Current Due: {formatMoney(currentDue)}</span>
-        </p>
+      <div className="mb-4 grid gap-2.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-[#eef8f3] px-3.5 py-2.5 text-[0.84rem] dark:bg-emerald-950/35">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#17324f] dark:text-text-strong">
+            <HugeiconsIcon
+              icon={UserIcon}
+              size={16}
+              color="#129a62"
+              strokeWidth={1.8}
+            />
+            Lead Details
+          </span>
+          <span className="text-[#c5d5c9]">|</span>
+          <InfoBadge>Lead: {leadName}</InfoBadge>
+          <InfoBadge>Lead ID: {leadCode}</InfoBadge>
+          <InfoBadge>Service Offer: {offerLabel}</InfoBadge>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-[#eef8f3] px-3.5 py-2.5 text-[0.84rem] dark:bg-emerald-950/35">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-[#17324f] dark:text-text-strong">
+            <HugeiconsIcon
+              icon={Invoice01Icon}
+              size={16}
+              color="#129a62"
+              strokeWidth={1.8}
+            />
+            Payment Details
+          </span>
+          <span className="text-[#c5d5c9]">|</span>
+          <InfoBadge>Final Payable: {formatMoney(finalPayable)}</InfoBadge>
+          <InfoBadge>Previously Paid: {formatMoney(previouslyPaid)}</InfoBadge>
+          <InfoBadge>Current Due: {formatMoney(currentDue)}</InfoBadge>
+        </div>
       </div>
 
       {duplicate ? (
@@ -178,75 +229,77 @@ export default function AddPaymentModal({
       ) : null}
 
       <Form form={form} layout="vertical" requiredMark={false}>
-        <Form.Item
-          name="amount"
-          label="Payment Amount"
-          rules={[
-            { required: true, message: 'Payment amount is required.' },
-            {
-              validator: async (_, value) => {
-                if (value == null || value === '') return
-                if (Number(value) <= 0) throw new Error('Please enter a valid payment amount.')
-                if (Number(value) > due) {
-                  throw new Error('Payment amount cannot exceed the current due amount.')
-                }
+        <div className="grid grid-cols-1 gap-x-3 sm:grid-cols-2">
+          <Form.Item
+            name="amount"
+            label={<FieldLabel required>Payment Amount</FieldLabel>}
+            rules={[
+              { required: true, message: 'Payment amount is required.' },
+              {
+                validator: async (_, value) => {
+                  if (value == null || value === '') return
+                  if (Number(value) <= 0) throw new Error('Please enter a valid payment amount.')
+                  if (Number(value) > due) {
+                    throw new Error('Payment amount cannot exceed the current due amount.')
+                  }
+                },
               },
-            },
-          ]}
-        >
-          <InputNumber
-            className="w-full"
-            style={{ width: '100%' }}
-            min={0.01}
-            step={100}
-            precision={2}
-            placeholder="0.00"
-          />
-        </Form.Item>
+            ]}
+          >
+            <InputNumber
+              className="w-full"
+              style={{ width: '100%' }}
+              min={0.01}
+              step={100}
+              precision={2}
+              placeholder="0.00"
+            />
+          </Form.Item>
 
-        <Form.Item
-          name="methodCode"
-          label="Payment Method"
-          rules={[{ required: true, message: 'Please select a payment method.' }]}
-        >
-          <Select
-            showSearch
-            optionFilterProp="label"
-            placeholder="Select method"
-            options={methods.map((item) => ({ value: item.code, label: item.name }))}
-          />
-        </Form.Item>
+          <Form.Item
+            name="methodCode"
+            label={<FieldLabel required>Payment Method</FieldLabel>}
+            rules={[{ required: true, message: 'Please select a payment method.' }]}
+          >
+            <Select
+              showSearch
+              optionFilterProp="label"
+              placeholder="Select method"
+              options={methods.map((item) => ({ value: item.code, label: item.name }))}
+            />
+          </Form.Item>
 
-        <Form.Item
-          name="transactionRef"
-          label={refLabel}
-          rules={[
-            {
-              validator: async (_, value) => {
-                if (!selectedMethod) return
-                const text = String(value || '').trim()
-                if (selectedMethod.requiresTransaction && !text) {
-                  throw new Error('Transaction ID is required for this payment method.')
-                }
-                if (selectedMethod.requiresDescription && !text) {
-                  throw new Error('Description is required for this payment method.')
-                }
+          <Form.Item
+            name="transactionRef"
+            label={<FieldLabel required={refRequired}>{refLabel}</FieldLabel>}
+            rules={[
+              {
+                validator: async (_, value) => {
+                  if (!selectedMethod) return
+                  const text = String(value || '').trim()
+                  if (selectedMethod.requiresTransaction && !text) {
+                    throw new Error('Transaction ID is required for this payment method.')
+                  }
+                  if (selectedMethod.requiresDescription && !text) {
+                    throw new Error('Description is required for this payment method.')
+                  }
+                },
               },
-            },
-          ]}
-        >
-          <Input placeholder={refLabel} maxLength={120} />
-        </Form.Item>
+            ]}
+          >
+            <Input placeholder={refLabel} maxLength={120} />
+          </Form.Item>
 
-        <Form.Item
-          name="paymentDate"
-          label="Payment Date"
-          rules={[{ required: true, message: 'Please select a valid payment date.' }]}
-        >
-          <DatePicker className="w-full" format="DD MMM YYYY" />
-        </Form.Item>
+          <Form.Item
+            name="paymentDate"
+            label={<FieldLabel required>Payment Date</FieldLabel>}
+            rules={[{ required: true, message: 'Please select a valid payment date.' }]}
+          >
+            <DatePicker className="w-full" format="DD MMM YYYY" />
+          </Form.Item>
+        </div>
 
-        <Form.Item name="notes" label="Notes">
+        <Form.Item name="notes" label={<FieldLabel>Notes</FieldLabel>}>
           <Input.TextArea rows={3} maxLength={500} showCount placeholder="Optional notes" />
         </Form.Item>
       </Form>

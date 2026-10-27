@@ -941,6 +941,27 @@ export function activityTitle(
   if (key === "DOCUMENT_REQUEST") return "Document requested";
   if (key === "PAYMENT_DISCUSSION") return "Payment discussion";
   if (key === "SERVICE_DISCUSSION") return "Service discussion";
+  if (key.startsWith("SERVICE_OFFER_")) {
+    if (key === "SERVICE_OFFER_CREATED") return "Service offer created";
+    if (key === "SERVICE_OFFER_REVISED") return "Service offer revised";
+    if (key === "SERVICE_OFFER_UPDATED") return "Service offer updated";
+    if (key === "SERVICE_OFFER_DELETED") return "Service offer deleted";
+    if (key === "SERVICE_OFFER_STATUS_CHANGED") {
+      const to = String(metadata?.to || "").toUpperCase();
+      if (to === "GENERATED") return "Service offer generated";
+      if (to === "SENT") return "Service offer sent";
+      if (to === "ACCEPTED") return "Service offer accepted";
+      if (to === "REJECTED") return "Service offer rejected";
+      if (to === "EXPIRED") return "Service offer expired";
+      if (to === "CANCELLED") return "Service offer cancelled";
+      return "Service offer updated";
+    }
+    if (key === "SERVICE_OFFER_PAYMENT_COMPLETED") return "Payment clear";
+    if (key === "SERVICE_OFFER_PAYMENT_RECORDED") return "Payment recorded";
+    if (key === "SERVICE_OFFER_PAYMENT_CANCELLED") return "Payment cancelled";
+    if (key === "SERVICE_OFFER_PAYMENT_REVERSED") return "Payment reversed";
+    return "Service offer updated";
+  }
   if (key.includes("DOCUMENT")) {
     return documentLifecycleTitle(key, outcome, details, metadata) || "Document updated";
   }
@@ -973,8 +994,13 @@ export function activityTitle(
     return "Lead Handover to counselor";
   if (text.includes("qualif")) return "Qualification updated";
   if (text.includes("status")) return "Status updated";
-  if (text.includes("created") || action.toLowerCase() === "lead created")
+  if (
+    !text.includes("service offer") &&
+    !/offer\s*v\d+/i.test(text) &&
+    (text.includes("created") || action.toLowerCase() === "lead created")
+  ) {
     return "Lead created";
+  }
   if (text.includes("meeting") && text.includes("reschedul"))
     return "Meeting rescheduled";
   if (text.includes("meeting") && text.includes("cancel"))
@@ -1020,6 +1046,12 @@ export function activityIconKind(
   const key = (actionKey || "").toUpperCase();
   const label = title.toLowerCase();
 
+  if (key.startsWith("SERVICE_OFFER_PAYMENT_") || label === "payment clear") {
+    return "payment";
+  }
+  if (key.startsWith("SERVICE_OFFER_") || label.includes("service offer")) {
+    return "system";
+  }
   if (
     key.includes("STATUS") ||
     key === "LEAD_CLOSED" ||
