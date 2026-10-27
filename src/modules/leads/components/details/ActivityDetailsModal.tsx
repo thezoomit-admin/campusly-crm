@@ -12,7 +12,7 @@ import {
 import { statusClass } from "@/lib/statusClass";
 
 export type ActivityDetails = {
-  kind: "meeting" | "follow-up";
+  kind: "meeting" | "follow-up" | "status" | "activity";
   title: string;
   status?: string | null;
   scheduledAt?: string | null;
@@ -37,7 +37,88 @@ export type ActivityDetails = {
   location?: string | null;
   endTime?: string | null;
   agenda?: string | null;
+  previousStatus?: string | null;
+  newStatus?: string | null;
+  channels?: string | null;
 };
+
+export function readStatusLabels(item: ActivityFeedItem) {
+  const previous =
+    typeof item.metadata?.previousStatus === "string"
+      ? item.metadata.previousStatus.trim()
+      : "";
+  const next =
+    typeof item.metadata?.newStatus === "string"
+      ? item.metadata.newStatus.trim()
+      : "";
+  if (previous && next) return { previous, next };
+
+  const details = item.details || "";
+  const match =
+    details.match(/status changed from\s+(.+?)\s+to\s+(.+?)(?:\.|$)/i) ||
+    details.match(/reopened from\s+(.+?)\s+to\s+(.+?)(?:\.|$)/i) ||
+    details.match(/closed as\s+(.+?)(?:\s|\(|\.|$)/i);
+  if (match?.[1] && match?.[2]) {
+    return { previous: match[1].trim(), next: match[2].trim() };
+  }
+  if (match?.[1] && !match[2]) {
+    return { previous: previous || "—", next: match[1].trim() };
+  }
+  return { previous, next };
+}
+
+export function statusChangeRemark(item: ActivityFeedItem) {
+  const remarks =
+    typeof item.metadata?.remarks === "string"
+      ? item.metadata.remarks.trim()
+      : typeof item.metadata?.reopenReason === "string"
+        ? item.metadata.reopenReason.trim()
+        : "";
+  if (remarks) return remarks;
+  const details = item.details || "";
+  const afterDot = details.includes(". ")
+    ? details.slice(details.indexOf(". ") + 2).trim()
+    : "";
+  if (
+    afterDot &&
+    !/^status changed/i.test(afterDot) &&
+    !/^lead (closed|reopened)/i.test(afterDot)
+  ) {
+    return afterDot;
+  }
+  return "";
+}
+
+export function isStatusChangeActivity(
+  item: Pick<ActivityFeedItem, "category" | "actionKey">,
+  title = "",
+) {
+  const key = (item.actionKey || "").toUpperCase();
+  const label = title.toLowerCase();
+  return (
+    item.category === "status" ||
+    key.includes("STATUS") ||
+    key === "LEAD_CLOSED" ||
+    key === "LEAD_REOPENED" ||
+    label.includes("status") ||
+    label === "lead closed" ||
+    label === "lead reopened"
+  );
+}
+
+function channelsLabel(item: ActivityFeedItem) {
+  const raw = item.metadata?.channels;
+  if (Array.isArray(raw)) {
+    return raw
+      .map((value) => String(value).trim())
+      .filter(Boolean)
+      .join(", ");
+  }
+  if (typeof raw === "string" && raw.trim()) return raw.trim();
+  const remark = statusChangeRemark(item);
+  const match = remark.match(/Channel:\s*(.+)$/im);
+  return match?.[1]?.trim() || "";
+}
 
 export type FollowUpDetailSource = {
   type: string;
@@ -116,7 +197,26 @@ export function activityDetailFromFeed(
   title: string,
 ): ActivityDetails {
   const label = title.toLowerCase();
+  const occurredAt = formatDisplayDateTime(item.occurredAt) || null;
+
+  if (isStatusChangeActivity(item, title)) {
+    const { previous, next } = readStatusLabels(item);
+    return {
+      kind: "status",
+      title,
+      previousStatus: previous || null,
+      newStatus: next || null,
+      assignedTo: item.user?.fullName || "System",
+      addedAt: occurredAt,
+      outcome: item.outcome,
+      notes: statusChangeRemark(item) || item.details || null,
+      channels: channelsLabel(item) || null,
+    };
+  }
+
   const isMeeting = label.includes("meeting");
+  const isFollowUp =
+    label.includes("follow-up") || label.includes("follow up");
   const meeting = isMeeting ? parseMeetingNotes(item.details) : null;
   const structured =
     meeting &&
@@ -128,19 +228,30 @@ export function activityDetailFromFeed(
         meeting.endTime,
     );
 
+  if (isMeeting || isFollowUp) {
+    return {
+      kind: isMeeting ? "meeting" : "follow-up",
+      title,
+      scheduledAt: occurredAt,
+      assignedTo: item.user?.fullName || null,
+      outcome: item.outcome,
+      notes: structured ? null : item.details,
+      meetingTitle: meeting?.title || null,
+      meetingType: meeting?.type || null,
+      mode: isMeeting ? meeting?.mode || null : null,
+      location: meeting?.location || null,
+      endTime: meeting?.endTime || null,
+      agenda: meeting?.agenda || null,
+    };
+  }
+
   return {
-    kind: isMeeting ? "meeting" : "follow-up",
+    kind: "activity",
     title,
-    scheduledAt: formatDisplayDateTime(item.occurredAt) || null,
-    assignedTo: item.user?.fullName || null,
+    addedAt: occurredAt,
+    assignedTo: item.user?.fullName || "System",
     outcome: item.outcome,
-    notes: structured ? null : item.details,
-    meetingTitle: meeting?.title || null,
-    meetingType: meeting?.type || null,
-    mode: isMeeting ? meeting?.mode || null : null,
-    location: meeting?.location || null,
-    endTime: meeting?.endTime || null,
-    agenda: meeting?.agenda || null,
+    notes: item.details || null,
   };
 }
 
@@ -197,7 +308,17 @@ export default function ActivityDetailsModal({
   onReschedule?: () => void;
 }) {
   const isMeeting = detail?.kind === "meeting";
-  const heading = isMeeting ? "Meeting details" : "Follow-up details";
+  const isStatus = detail?.kind === "status";
+  const isActivity = detail?.kind === "activity";
+  const heading = isMeeting
+    ? "Meeting details"
+    : isStatus
+      ? "Status change details"
+      : isActivity
+        ? "Activity details"
+        : "Follow-up details";
+  const actorLabel = isStatus ? "Changed by" : isActivity ? "Performed by" : "Assigned to";
+  const actorFallback = isStatus || isActivity ? "System" : "Unassigned";
 
   return (
     <AntModal
@@ -221,6 +342,26 @@ export default function ActivityDetailsModal({
             <p className="m-0 min-w-0 text-[1rem] font-semibold text-[#17324f] [overflow-wrap:anywhere] dark:text-text-strong">
               {detail.title}
             </p>
+            {isStatus && (detail.previousStatus || detail.newStatus) ? (
+              <div className="flex max-w-full flex-wrap items-center gap-1.5">
+                <span
+                  className={`${statusClass(detail.previousStatus || "—").replace("rounded-full", "rounded-md")} px-2 py-0.5 text-[0.72rem] font-semibold`}
+                >
+                  {detail.previousStatus || "—"}
+                </span>
+                <span
+                  className="text-[0.75rem] font-semibold text-[#8b97a8]"
+                  aria-hidden
+                >
+                  →
+                </span>
+                <span
+                  className={`${statusClass(detail.newStatus || "—").replace("rounded-full", "rounded-md")} px-2 py-0.5 text-[0.72rem] font-semibold`}
+                >
+                  {detail.newStatus || "—"}
+                </span>
+              </div>
+            ) : null}
             {detail.scheduledAt ? (
               <span
                 className={`inline-flex w-fit items-center gap-1.5 rounded-md px-2.5 py-1 text-[0.82rem] font-bold ${scheduleBadgeClass(detail)}`}
@@ -237,8 +378,8 @@ export default function ActivityDetailsModal({
           </div>
           <dl className="m-0 grid min-w-0 grid-cols-2 gap-x-4 gap-y-3">
             <DetailField
-              label="Assigned to"
-              value={detail.assignedTo || "Unassigned"}
+              label={actorLabel}
+              value={detail.assignedTo || actorFallback}
             />
             <DetailField label="Type" value={detail.type} />
             <DetailField label="Purpose" value={detail.purpose} />
@@ -247,7 +388,11 @@ export default function ActivityDetailsModal({
             <DetailField label="Meeting type" value={detail.meetingType} />
             <DetailField label="Mode" value={detail.mode} />
             <DetailField label="End time" value={detail.endTime} />
-            <DetailField label="Added" value={detail.addedAt} />
+            <DetailField
+              label={isStatus || isActivity ? "When" : "Added"}
+              value={detail.addedAt}
+            />
+            <DetailField label="Channel" value={detail.channels} />
             <DetailField label="Outcome" value={detail.outcome} />
             <DetailField label="Completed" value={detail.completedAt} />
             <DetailField label="Completed by" value={detail.completedByName} />
@@ -257,7 +402,11 @@ export default function ActivityDetailsModal({
             <DetailField wide label="Location" value={detail.location} />
             <DetailField wide label="Agenda" value={detail.agenda} />
             <DetailField wide label="Next action" value={detail.nextAction} />
-            <DetailField wide label="Notes" value={detail.notes} />
+            <DetailField
+              wide
+              label={isStatus ? "Remarks" : "Notes"}
+              value={detail.notes}
+            />
             <DetailField wide label="Cancel reason" value={detail.cancelReason} />
           </dl>
           {canAct ? (

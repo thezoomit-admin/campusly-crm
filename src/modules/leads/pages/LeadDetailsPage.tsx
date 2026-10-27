@@ -765,6 +765,23 @@ export default function LeadDetailsPage() {
         },
       }).unwrap();
 
+      // Close immediately on status success. Lead data refreshes via
+      // updateLeadStatus invalidatesTags — no extra refetchLead needed.
+      toast.success("Lead status updated.");
+      setStatusOpen(false);
+    } catch (error) {
+      const fields = getApiErrorFields(error);
+      if (Object.keys(fields).length > 0) setStatusErrors(fields);
+      toast.error(
+        getApiError(
+          error,
+          "Unable to update the lead status. Please try again.",
+        ),
+      );
+      return;
+    }
+
+    try {
       if (body.scheduleMeeting && body.meeting) {
         const meeting = body.meeting;
         const startIso =
@@ -824,17 +841,11 @@ export default function LeadDetailsPage() {
           fileName: body.attachment.name,
         }).unwrap();
       }
-
-      await refreshLeadWorkspace();
-      toast.success("Lead status updated.");
-      setStatusOpen(false);
     } catch (error) {
-      const fields = getApiErrorFields(error);
-      if (Object.keys(fields).length > 0) setStatusErrors(fields);
       toast.error(
         getApiError(
           error,
-          "Unable to update the lead status. Please try again.",
+          "Status updated, but a follow-up action failed. Please try again from the lead workspace.",
         ),
       );
     }

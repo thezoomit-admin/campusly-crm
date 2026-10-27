@@ -131,6 +131,18 @@ export default function LeadListChangeStatusModal({
         },
       }).unwrap()
 
+      // Close immediately on status success. List/detail caches refresh via
+      // updateLeadStatus invalidatesTags.
+      toast.success('Lead status updated.')
+      onClose()
+    } catch (error) {
+      const fields = getApiErrorFields(error)
+      if (Object.keys(fields).length > 0) setStatusErrors(fields)
+      toast.error(getApiError(error, 'Unable to update the lead status. Please try again.'))
+      return
+    }
+
+    try {
       if (body.scheduleMeeting && body.meeting) {
         const meeting = body.meeting
         const startIso =
@@ -190,13 +202,13 @@ export default function LeadListChangeStatusModal({
           fileName: body.attachment.name,
         }).unwrap()
       }
-
-      toast.success('Lead status updated.')
-      onClose()
     } catch (error) {
-      const fields = getApiErrorFields(error)
-      if (Object.keys(fields).length > 0) setStatusErrors(fields)
-      toast.error(getApiError(error, 'Unable to update the lead status. Please try again.'))
+      toast.error(
+        getApiError(
+          error,
+          'Status updated, but a follow-up action failed. Please try again from the lead workspace.',
+        ),
+      )
     }
   }
 

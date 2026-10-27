@@ -62,6 +62,9 @@ import LeadSectionCard from "./LeadSectionCard";
 import ActivityDetailsModal, {
   activityDetailFromFeed,
   activityDetailFromFollowUp,
+  isStatusChangeActivity,
+  readStatusLabels,
+  statusChangeRemark,
   type ActivityDetails,
 } from "./ActivityDetailsModal";
 import {
@@ -152,53 +155,6 @@ function ActivityTypeIcon({
   );
 }
 
-function readStatusLabels(item: ActivityFeedItem) {
-  const previous =
-    typeof item.metadata?.previousStatus === "string"
-      ? item.metadata.previousStatus.trim()
-      : "";
-  const next =
-    typeof item.metadata?.newStatus === "string"
-      ? item.metadata.newStatus.trim()
-      : "";
-  if (previous && next) return { previous, next };
-
-  const details = item.details || "";
-  const match =
-    details.match(/status changed from\s+(.+?)\s+to\s+(.+?)(?:\.|$)/i) ||
-    details.match(/reopened from\s+(.+?)\s+to\s+(.+?)(?:\.|$)/i) ||
-    details.match(/closed as\s+(.+?)(?:\s|\(|\.|$)/i);
-  if (match?.[1] && match?.[2]) {
-    return { previous: match[1].trim(), next: match[2].trim() };
-  }
-  if (match?.[1] && !match[2]) {
-    return { previous: previous || "—", next: match[1].trim() };
-  }
-  return { previous, next };
-}
-
-function statusChangeRemark(item: ActivityFeedItem) {
-  const remarks =
-    typeof item.metadata?.remarks === "string"
-      ? item.metadata.remarks.trim()
-      : typeof item.metadata?.reopenReason === "string"
-        ? item.metadata.reopenReason.trim()
-        : "";
-  if (remarks) return remarks;
-  const details = item.details || "";
-  const afterDot = details.includes(". ")
-    ? details.slice(details.indexOf(". ") + 2).trim()
-    : "";
-  if (
-    afterDot &&
-    !/^status changed/i.test(afterDot) &&
-    !/^lead (closed|reopened)/i.test(afterDot)
-  ) {
-    return afterDot;
-  }
-  return "";
-}
-
 function activityBadgeClass(status: string) {
   return `${statusClass(status).replace("rounded-full", "rounded-md")} px-2 py-0.5 text-[0.72rem] font-semibold`;
 }
@@ -215,18 +171,8 @@ function isMeetingOrFollowUpTitle(title: string) {
 const ACTIVITY_FILTER_OPTIONS = [
   { key: "all", label: "All" },
   { key: "meeting", label: "Meeting" },
-  { key: "follow-up", label: "Follow-up" },
-  { key: "note", label: "Note" },
+  { key: "follow-up", label: "Follow up" },
   { key: "status", label: "Status change" },
-  { key: "call", label: "Call" },
-  { key: "email", label: "Email" },
-  { key: "whatsapp", label: "WhatsApp" },
-  { key: "sms", label: "SMS" },
-  { key: "counselling", label: "Counselling" },
-  { key: "document", label: "Document" },
-  { key: "payment", label: "Payment" },
-  { key: "assignment", label: "Assignment" },
-  { key: "service", label: "Service" },
   { key: "other", label: "Other" },
 ] as const;
 
@@ -234,6 +180,22 @@ type ActivityFilterKey = (typeof ACTIVITY_FILTER_OPTIONS)[number]["key"];
 
 function isMeetingFollowUpType(type: string) {
   return type.trim().toLowerCase() === "meeting";
+}
+
+function isAssignmentActivity(
+  item: ActivityFeedItem,
+  title = "",
+) {
+  const key = (item.actionKey || "").toUpperCase();
+  const label = title.toLowerCase();
+  return (
+    key.includes("ASSIGN") ||
+    key.includes("HANDOVER") ||
+    item.category === "assignment" ||
+    label.includes("reassigned") ||
+    label.includes("assigned") ||
+    label.includes("handed over")
+  );
 }
 
 function feedActivityFilterKey(
@@ -250,51 +212,6 @@ function feedActivityFilterKey(
   ).toLowerCase();
   const category = item.category;
 
-  if (
-    key.startsWith("SERVICE_OFFER_PAYMENT") ||
-    metaEvent.startsWith("SERVICE_OFFER_PAYMENT")
-  ) {
-    return "payment";
-  }
-  if (
-    key === "SERVICE_OFFER_STATUS_CHANGED" ||
-    metaEvent === "SERVICE_OFFER_STATUS_CHANGED"
-  ) {
-    return "status";
-  }
-  if (
-    key.startsWith("SERVICE_OFFER_") ||
-    metaEvent.startsWith("SERVICE_OFFER_") ||
-    key === "SERVICE_DISCUSSION" ||
-    title.includes("service")
-  ) {
-    return "service";
-  }
-
-  if (
-    key === "LEAD_STATUS_CHANGED" ||
-    key === "LEAD_CLOSED" ||
-    key === "LEAD_REOPENED" ||
-    metaEvent === "LEAD_STATUS_CHANGED" ||
-    metaEvent === "LEAD_CLOSED" ||
-    metaEvent === "LEAD_REOPENED" ||
-    category === "status" ||
-    title === "status changed" ||
-    title === "status updated" ||
-    title === "lead closed" ||
-    title === "lead reopened"
-  ) {
-    return "status";
-  }
-
-  if (
-    key === "NOTE" ||
-    key.startsWith("LEAD_NOTE") ||
-    title.includes("note")
-  ) {
-    return "note";
-  }
-
   if (key === "MEETING" || category === "meeting" || title.includes("meeting")) {
     return "meeting";
   }
@@ -309,49 +226,8 @@ function feedActivityFilterKey(
     return "follow-up";
   }
 
-  if (key === "CALL" || category === "call" || title.includes("call")) {
-    return "call";
-  }
-  if (key === "SMS" || title.includes("sms")) return "sms";
-  if (
-    key === "WHATSAPP" ||
-    key === "MESSAGE" ||
-    title.includes("whatsapp") ||
-    category === "message"
-  ) {
-    return "whatsapp";
-  }
-  if (key === "EMAIL" || category === "email" || title.includes("email")) {
-    return "email";
-  }
-  if (
-    key === "COUNSELLING" ||
-    category === "counselling" ||
-    title.includes("counselling")
-  ) {
-    return "counselling";
-  }
-  if (
-    key.includes("DOCUMENT") ||
-    category === "document" ||
-    category === "file" ||
-    title.includes("document") ||
-    title.includes("attachment")
-  ) {
-    return "document";
-  }
-  if (key.includes("PAYMENT") || category === "payment" || title.includes("payment")) {
-    return "payment";
-  }
-  if (
-    key.includes("ASSIGN") ||
-    key.includes("HANDOVER") ||
-    category === "assignment" ||
-    title.includes("reassigned") ||
-    title.includes("assigned") ||
-    title.includes("handed over")
-  ) {
-    return "assignment";
+  if (isStatusChangeActivity(item, title)) {
+    return "status";
   }
 
   return "other";
@@ -366,11 +242,21 @@ function timelineEntryFilterKey(
   return feedActivityFilterKey(entry.item);
 }
 
-function StatusChangeBadges({ item }: { item: ActivityFeedItem }) {
+function StatusChangeBadges({
+  item,
+  align = "end",
+}: {
+  item: ActivityFeedItem;
+  align?: "start" | "end";
+}) {
   const { previous, next } = readStatusLabels(item);
   if (!previous && !next) return null;
   return (
-    <div className="flex max-w-full flex-wrap items-center justify-end gap-1.5">
+    <div
+      className={`flex max-w-full flex-wrap items-center gap-1.5 ${
+        align === "start" ? "justify-start" : "justify-end"
+      }`}
+    >
       <span className={activityBadgeClass(previous || "—")}>
         {previous || "—"}
       </span>
@@ -999,17 +885,7 @@ export function LeadActivitiesPanel({
       all: timeline.length,
       meeting: 0,
       "follow-up": 0,
-      note: 0,
       status: 0,
-      call: 0,
-      email: 0,
-      whatsapp: 0,
-      sms: 0,
-      counselling: 0,
-      document: 0,
-      payment: 0,
-      assignment: 0,
-      service: 0,
       other: 0,
     };
     for (const entry of timeline) {
@@ -1017,9 +893,7 @@ export function LeadActivitiesPanel({
     }
     return counts;
   }, [timeline]);
-  const visibleFilters = ACTIVITY_FILTER_OPTIONS.filter(
-    (option) => option.key === "all" || filterCounts[option.key] > 0,
-  );
+  const visibleFilters = ACTIVITY_FILTER_OPTIONS;
   const filteredTimeline = useMemo(
     () =>
       activityFilter === "all"
@@ -1158,7 +1032,6 @@ export function LeadActivitiesPanel({
                     ? "Follow-up rescheduled"
                     : "Follow-up added";
                 const iconKind = isMeeting ? "meeting" : "follow-up";
-                const addedAt = formatDisplayDateTime(item.createdAt);
                 const scheduledAt =
                   formatDisplayDateTime(item.dueAt) || item.due;
                 const urgency = scheduleUrgency(item.dueAt, clock);
@@ -1178,14 +1051,19 @@ export function LeadActivitiesPanel({
                             {title}
                           </p>
                           {scheduledAt ? (
-                            <span
-                              className={`mt-1.5 inline-flex w-fit rounded-md px-2 py-0.5 text-[0.80rem] font-bold ${ACTIVITY_URGENCY_DATE[urgency]}`}
+                            <p
+                              className={`mt-1.5 mb-0 text-[0.8rem] font-medium ${ACTIVITY_URGENCY_TEXT[urgency]}`}
                             >
-                              {scheduledAt}
-                            </span>
+                              <span className="font-semibold">Scheduled Time:</span>{" "}
+                              <span
+                                className={`inline-flex rounded-md px-2 py-0.5 text-[0.80rem] font-bold ${ACTIVITY_URGENCY_DATE[urgency]}`}
+                              >
+                                {scheduledAt}
+                              </span>
+                            </p>
                           ) : (
                             <p className="mt-1 mb-0 text-[0.8rem] text-[#8b97a8]">
-                              No date set
+                              Scheduled Time: No date set
                             </p>
                           )}
                           <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
@@ -1195,11 +1073,6 @@ export function LeadActivitiesPanel({
                           </p>
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1.5 text-right">
-                          {addedAt ? (
-                            <time className="text-[0.75rem] text-[#8b97a8]">
-                              {addedAt}
-                            </time>
-                          ) : null}
                           <span className={activityBadgeClass(item.status)}>
                             {item.status}
                           </span>
@@ -1264,12 +1137,7 @@ export function LeadActivitiesPanel({
                 item.actionKey,
                 item.category,
               );
-              const isStatusChange =
-                item.category === "status" ||
-                (item.actionKey || "").toUpperCase().includes("STATUS") ||
-                (item.actionKey || "").toUpperCase() === "LEAD_CLOSED" ||
-                (item.actionKey || "").toUpperCase() === "LEAD_REOPENED" ||
-                title.toLowerCase().includes("status");
+              const isStatusChange = isStatusChangeActivity(item, title);
               const occurredAt = formatDisplayDateTime(item.occurredAt);
               const actor = isStatusChange
                 ? item.user?.fullName
@@ -1278,6 +1146,49 @@ export function LeadActivitiesPanel({
                 : item.user?.fullName
                   ? `Performed by ${item.user.fullName}`
                   : "Performed by System";
+
+              if (isStatusChange) {
+                return (
+                  <li
+                    key={entry.id}
+                    className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
+                  >
+                    <ActivityTypeIcon kind={iconKind} />
+                    {index < pageItems.length - 1 ? (
+                      <span className="absolute top-10 bottom-[-6px] left-[15px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
+                    ) : null}
+                    <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="m-0 break-words text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
+                          {title}
+                        </p>
+                        <div className="mt-1.5">
+                          <StatusChangeBadges item={item} align="start" />
+                        </div>
+                        <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
+                          {actor}
+                        </p>
+                      </div>
+                      <PrimaryButton
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        icon={
+                          <HugeiconsIcon
+                            icon={ViewIcon}
+                            size={14}
+                            color="currentColor"
+                            strokeWidth={1.8}
+                          />
+                        }
+                        onClick={() => openFeedDetails(item, title)}
+                        label="View"
+                      />
+                    </div>
+                  </li>
+                );
+              }
 
               if (isMeetingOrFollowUpTitle(title)) {
                 const followUpId = item.metadata?.followUpId;
@@ -1312,11 +1223,14 @@ export function LeadActivitiesPanel({
                         <p className="m-0 break-words text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
                           {title}
                         </p>
-                        <p
-                          className={`mt-1 mb-0 text-[0.8rem] font-medium ${ACTIVITY_URGENCY_TEXT[urgency]}`}
-                        >
-                          {scheduledLabel}
-                        </p>
+                        {scheduledLabel ? (
+                          <p
+                            className={`mt-1 mb-0 text-[0.8rem] font-medium ${ACTIVITY_URGENCY_TEXT[urgency]}`}
+                          >
+                            <span className="font-semibold">Scheduled Time:</span>{" "}
+                            {scheduledLabel}
+                          </p>
+                        ) : null}
                         <p className="mt-0.5 mb-0 text-[0.75rem] text-[#8b97a8]">
                           {assignedTo}
                         </p>
@@ -1342,6 +1256,8 @@ export function LeadActivitiesPanel({
                 );
               }
 
+              const hideRowTime = isAssignmentActivity(item, title);
+
               return (
                 <li
                   key={entry.id}
@@ -1360,15 +1276,12 @@ export function LeadActivitiesPanel({
                         {item.outcome &&
                         !title
                           .toLowerCase()
-                          .includes(item.outcome.toLowerCase()) &&
-                        !isStatusChange ? (
+                          .includes(item.outcome.toLowerCase()) ? (
                           <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
                             {item.outcome}
                           </p>
                         ) : null}
-                        {isStatusChange ? (
-                          <StatusChangeRemark item={item} />
-                        ) : item.details ? (
+                        {item.details ? (
                           <p className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
                             {item.details}
                           </p>
@@ -1378,12 +1291,27 @@ export function LeadActivitiesPanel({
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1.5 text-right">
-                        <time className="text-[0.75rem] text-[#8b97a8]">
-                          {occurredAt}
-                        </time>
-                        {isStatusChange ? (
-                          <StatusChangeBadges item={item} />
+                        {!hideRowTime && occurredAt ? (
+                          <time className="text-[0.75rem] text-[#8b97a8]">
+                            {occurredAt}
+                          </time>
                         ) : null}
+                        <PrimaryButton
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0"
+                          icon={
+                            <HugeiconsIcon
+                              icon={ViewIcon}
+                              size={14}
+                              color="currentColor"
+                              strokeWidth={1.8}
+                            />
+                          }
+                          onClick={() => openFeedDetails(item, title)}
+                          label="View"
+                        />
                       </div>
                     </div>
                   </div>
