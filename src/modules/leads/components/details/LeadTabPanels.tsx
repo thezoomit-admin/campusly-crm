@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Input, Modal, Spin, Tag, Tooltip } from "antd";
+import { Input, Modal, Select, Spin, Tag, Tooltip } from "antd";
 import { toast } from "react-toastify";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -172,9 +172,18 @@ function isMeetingOrFollowUpTitle(title: string) {
 
 const ACTIVITY_FILTER_OPTIONS = [
   { key: "all", label: "All" },
+  { key: "note", label: "Note" },
   { key: "meeting", label: "Meeting" },
   { key: "follow-up", label: "Follow up" },
   { key: "status", label: "Status change" },
+  { key: "call", label: "Call" },
+  { key: "whatsapp", label: "WhatsApp" },
+  { key: "email", label: "Email" },
+  { key: "sms", label: "SMS" },
+  { key: "counselling", label: "Counselling" },
+  { key: "assignment", label: "Assignment" },
+  { key: "document", label: "Document" },
+  { key: "payment", label: "Payment" },
   { key: "other", label: "Other" },
 ] as const;
 
@@ -211,10 +220,13 @@ function feedActivityFilterKey(
     item.outcome,
     item.actionKey,
     item.metadata,
-  ).toLowerCase();
+  );
+  const titleLower = title.toLowerCase();
   const category = item.category;
 
-  if (key === "MEETING" || category === "meeting" || title.includes("meeting")) {
+  if (isNoteActivity(item, title)) return "note";
+
+  if (key === "MEETING" || category === "meeting" || titleLower.includes("meeting")) {
     return "meeting";
   }
 
@@ -222,14 +234,53 @@ function feedActivityFilterKey(
     key === "FOLLOW_UP" ||
     key.startsWith("FOLLOW_UP_") ||
     metaEvent.startsWith("FOLLOW_UP") ||
-    title.includes("follow-up") ||
-    title.includes("follow up")
+    titleLower.includes("follow-up") ||
+    titleLower.includes("follow up")
   ) {
     return "follow-up";
   }
 
-  if (isStatusChangeActivity(item, title)) {
+  if (isStatusChangeActivity(item, titleLower)) {
     return "status";
+  }
+
+  if (key === "CALL" || category === "call" || titleLower.includes("call")) {
+    return "call";
+  }
+  if (
+    key === "WHATSAPP" ||
+    key === "MESSAGE" ||
+    category === "message" ||
+    titleLower.includes("whatsapp")
+  ) {
+    return "whatsapp";
+  }
+  if (key === "EMAIL" || category === "email" || titleLower.includes("email")) {
+    return "email";
+  }
+  if (key === "SMS" || titleLower.includes("sms")) return "sms";
+  if (
+    key === "COUNSELLING" ||
+    category === "counselling" ||
+    titleLower.includes("counselling")
+  ) {
+    return "counselling";
+  }
+  if (isAssignmentActivity(item, title)) return "assignment";
+  if (
+    key.includes("DOCUMENT") ||
+    category === "document" ||
+    titleLower.includes("document") ||
+    titleLower.includes("attachment")
+  ) {
+    return "document";
+  }
+  if (
+    key.includes("PAYMENT") ||
+    category === "payment" ||
+    titleLower.includes("payment")
+  ) {
+    return "payment";
   }
 
   return "other";
@@ -883,19 +934,25 @@ export function LeadActivitiesPanel({
 
   const [activityFilter, setActivityFilter] = useState<ActivityFilterKey>("all");
   const filterCounts = useMemo(() => {
-    const counts: Record<ActivityFilterKey, number> = {
-      all: timeline.length,
-      meeting: 0,
-      "follow-up": 0,
-      status: 0,
-      other: 0,
-    };
+    const counts = Object.fromEntries(
+      ACTIVITY_FILTER_OPTIONS.map((option) => [option.key, 0]),
+    ) as Record<ActivityFilterKey, number>;
+    counts.all = timeline.length;
     for (const entry of timeline) {
       counts[timelineEntryFilterKey(entry)] += 1;
     }
     return counts;
   }, [timeline]);
-  const visibleFilters = ACTIVITY_FILTER_OPTIONS;
+  const filterSelectOptions = useMemo(
+    () =>
+      ACTIVITY_FILTER_OPTIONS.filter(
+        (option) => option.key === "all" || filterCounts[option.key] > 0,
+      ).map((option) => ({
+        value: option.key,
+        label: `${option.label} (${filterCounts[option.key]})`,
+      })),
+    [filterCounts],
+  );
   const filteredTimeline = useMemo(
     () =>
       activityFilter === "all"
@@ -972,35 +1029,18 @@ export function LeadActivitiesPanel({
       title="Activities"
       extra={
         !isLoading && timeline.length > 0 ? (
-          <div
-            className="ml-auto flex min-w-0 flex-1 justify-end gap-1 overflow-x-auto"
-            role="group"
-            aria-label="Filter activities"
-          >
-            {visibleFilters.map((option) => {
-              const active = activityFilter === option.key;
-              return (
-                <button
-                  key={option.key}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => {
-                    setActivityFilter(option.key);
-                    setPage(1);
-                  }}
-                  className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border px-2 py-0.5 text-[0.75rem] font-semibold transition-colors ${
-                    active
-                      ? "border-primary bg-primary text-white"
-                      : "border-[#d7e2ec] bg-surface text-[#5b6b7c] hover:border-primary hover:text-primary dark:border-border"
-                  }`}
-                >
-                  {option.label}
-                  <span className={active ? "opacity-80" : "text-[#8b97a8]"}>
-                    {filterCounts[option.key]}
-                  </span>
-                </button>
-              );
-            })}
+          <div className="ml-auto flex min-w-0 flex-1 justify-end">
+            <Select
+              aria-label="Filter activities"
+              value={activityFilter}
+              options={filterSelectOptions}
+              onChange={(value: ActivityFilterKey) => {
+                setActivityFilter(value);
+                setPage(1);
+              }}
+              className="min-w-[11.5rem]"
+              popupMatchSelectWidth={false}
+            />
           </div>
         ) : null
       }
@@ -1192,6 +1232,52 @@ export function LeadActivitiesPanel({
                 );
               }
 
+              if (isNoteActivity(item, title)) {
+                const notePreview = noteActivityPreview(item.details, 5);
+                return (
+                  <li
+                    key={entry.id}
+                    className="relative flex min-w-0 gap-3 border-b border-[#eef3f8] py-3 last:border-b-0 dark:border-border-subtle"
+                  >
+                    <ActivityTypeIcon kind={iconKind} />
+                    {index < pageItems.length - 1 ? (
+                      <span className="absolute top-10 bottom-[-6px] left-[15px] w-px bg-[#e6eef6] dark:bg-border-subtle" />
+                    ) : null}
+                    <div className="flex min-w-0 flex-1 items-start justify-between gap-3 overflow-hidden">
+                      <div className="min-w-0 max-w-2xl flex-1">
+                        <p className="m-0 break-words text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
+                          {title}
+                        </p>
+                        {notePreview ? (
+                          <p className="mt-1 mb-0 break-words text-[0.82rem] text-[#5b6b7c]">
+                            {notePreview}
+                          </p>
+                        ) : null}
+                        <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
+                          {actor}
+                        </p>
+                      </div>
+                      <PrimaryButton
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                        icon={
+                          <HugeiconsIcon
+                            icon={ViewIcon}
+                            size={14}
+                            color="currentColor"
+                            strokeWidth={1.8}
+                          />
+                        }
+                        onClick={() => openFeedDetails(item, title)}
+                        label="View"
+                      />
+                    </div>
+                  </li>
+                );
+              }
+
               if (isMeetingOrFollowUpTitle(title)) {
                 const followUpId = item.metadata?.followUpId;
                 const matched =
@@ -1259,10 +1345,6 @@ export function LeadActivitiesPanel({
               }
 
               const hideRowTime = isAssignmentActivity(item, title);
-              const noteActivity = isNoteActivity(item, title);
-              const notePreview = noteActivity
-                ? noteActivityPreview(item.details, 5)
-                : "";
 
               return (
                 <li
@@ -1279,29 +1361,19 @@ export function LeadActivitiesPanel({
                         <p className="m-0 break-words text-[0.95rem] font-semibold text-[#17324f] dark:text-text-strong">
                           {title}
                         </p>
-                        {noteActivity ? (
-                          notePreview ? (
-                            <p className="mt-1 mb-0 break-words text-[0.82rem] text-[#5b6b7c]">
-                              {notePreview}
-                            </p>
-                          ) : null
-                        ) : (
-                          <>
-                            {item.outcome &&
-                            !title
-                              .toLowerCase()
-                              .includes(item.outcome.toLowerCase()) ? (
-                              <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
-                                {item.outcome}
-                              </p>
-                            ) : null}
-                            {item.details ? (
-                              <p className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
-                                {item.details}
-                              </p>
-                            ) : null}
-                          </>
-                        )}
+                        {item.outcome &&
+                        !title
+                          .toLowerCase()
+                          .includes(item.outcome.toLowerCase()) ? (
+                          <p className="mt-1 mb-0 text-[0.82rem] text-[#5b6b7c]">
+                            {item.outcome}
+                          </p>
+                        ) : null}
+                        {item.details ? (
+                          <p className="mt-1 mb-0 whitespace-pre-wrap break-words text-[0.82rem] text-[#5b6b7c]">
+                            {item.details}
+                          </p>
+                        ) : null}
                         <p className="mt-1 mb-0 text-[0.75rem] text-[#8b97a8]">
                           {actor}
                         </p>

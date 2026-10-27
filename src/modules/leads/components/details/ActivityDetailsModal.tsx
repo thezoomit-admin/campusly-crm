@@ -404,7 +404,7 @@ export default function ActivityDetailsModal({
             <DetailField label="Mode" value={detail.mode} />
             <DetailField label="End time" value={detail.endTime} />
             <DetailField
-              label={isStatus || isActivity ? "When" : "Added"}
+              label={isStatus || isActivity ? "Date" : "Added"}
               value={detail.addedAt}
             />
             <DetailField label="Channel" value={detail.channels} />
