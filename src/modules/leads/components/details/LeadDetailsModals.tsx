@@ -56,6 +56,10 @@ function asSelectString(value: unknown) {
   return typeof value === "string" ? value : "";
 }
 
+function RequiredMark() {
+  return <span className="text-[#ef4444]"> *</span>;
+}
+
 function isImageMime(mimeType: string) {
   return mimeType.startsWith("image/");
 }
@@ -258,7 +262,10 @@ export function AddLeadDocumentModal({
     <AntModal open={open} onClose={onClose} title="Upload Document" width={520}>
       <div className="grid gap-3">
         <label className="grid gap-1.5 text-sm">
-          <span>Document Category</span>
+          <span>
+            Document Category
+            <RequiredMark />
+          </span>
           <FormSelect
             showSearch
             optionFilterProp="label"
@@ -281,7 +288,10 @@ export function AddLeadDocumentModal({
         </label>
 
         <label className="grid gap-1.5 text-sm">
-          <span>Document Type</span>
+          <span>
+            Document Type
+            <RequiredMark />
+          </span>
           <FormSelect
             showSearch
             optionFilterProp="label"
@@ -305,7 +315,10 @@ export function AddLeadDocumentModal({
         </label>
 
         <label className="grid gap-1.5 text-sm">
-          <span>Document Name</span>
+          <span>
+            Document Name
+            <RequiredMark />
+          </span>
           <FormInput
             value={name}
             placeholder="e.g. Passport"
@@ -320,7 +333,10 @@ export function AddLeadDocumentModal({
         </label>
 
         <div className="grid gap-1.5 text-sm">
-          <span>File</span>
+          <span>
+            File
+            <RequiredMark />
+          </span>
           <input
             ref={fileInputRef}
             type="file"
@@ -2022,7 +2038,7 @@ export {
 } from "./ScheduleMeetingModal";
 
 function CloseRequiredMark() {
-  return <span className="text-[#ef4444]"> *</span>;
+  return <RequiredMark />;
 }
 
 export function CloseLeadModal({

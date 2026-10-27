@@ -488,6 +488,21 @@ const leadsApi = baseApi.injectEndpoints({
         "Documents",
       ],
     }),
+    restoreLeadDocument: builder.mutation<
+      { message: string; document: LeadDocumentItem },
+      { id: string; documentId: string }
+    >({
+      query: ({ id, documentId }) => ({
+        url: `/leads/${id}/documents/${documentId}/restore`,
+        method: "POST",
+      }),
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: "Leads", id: `${id}-documents` },
+        { type: "Leads", id },
+        "Activities",
+        "Documents",
+      ],
+    }),
     getLeadDocumentHistory: builder.query<
       {
         document: LeadDocumentItem;
@@ -673,6 +688,7 @@ export const {
   useVerifyLeadDocumentMutation,
   useRejectLeadDocumentMutation,
   useDeleteLeadDocumentMutation,
+  useRestoreLeadDocumentMutation,
   useGetLeadDocumentHistoryQuery,
   useLazyGetLeadDocumentHistoryQuery,
   useLazyFetchLeadDocumentBlobQuery,
