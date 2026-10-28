@@ -117,6 +117,7 @@ export type FileDocumentListParams = {
   categoryCode?: string;
   typeCode?: string;
   status?: string;
+  queue?: string;
   uploadedById?: string;
   verifiedById?: string;
   expiryStatus?: string;
@@ -126,8 +127,48 @@ export type FileDocumentListParams = {
   limit?: number;
 };
 
+export type FileDocumentListSummary = {
+  total: number;
+  notRequested: number;
+  requested: number;
+  pendingReview: number;
+  verified: number;
+  rejected: number;
+  missing: number;
+  expiring: number;
+  expired: number;
+};
+
+export type FileDocumentListItem = {
+  id: string;
+  code: string;
+  fileId: string;
+  fileCode: string;
+  leadId: string;
+  leadCode: string;
+  owner: string;
+  leadName: string;
+  type: string;
+  typeCode: string;
+  category: string;
+  categoryCode: string;
+  requirement: "REQUIRED" | "OPTIONAL" | null;
+  uploadedBy: string;
+  verifiedBy: string;
+  status: string;
+  statusCode: string;
+  expiryStatus: string;
+  expiryDate: string | null;
+  hasFile: boolean;
+  assetCount: number;
+  updated: string;
+  createdAt: string;
+  ageDays: number;
+};
+
 const fileTag = (leadId: string) => [
   { type: "FileDocuments" as const, id: leadId },
+  { type: "FileDocuments" as const, id: "LIST" },
   "Documents" as const,
   "Activities" as const,
 ];
@@ -306,30 +347,11 @@ const filesApi = baseApi.injectEndpoints({
     }),
     listFileDocuments: builder.query<
       {
-        items: Array<{
-          id: string;
-          code: string;
-          fileId: string;
-          fileCode: string;
-          leadId: string;
-          leadCode: string;
-          owner: string;
-          leadName: string;
-          type: string;
-          typeCode: string;
-          category: string;
-          categoryCode: string;
-          uploadedBy: string;
-          verifiedBy: string;
-          status: string;
-          statusCode: string;
-          expiryStatus: string;
-          updated: string;
-          createdAt: string;
-        }>;
+        items: FileDocumentListItem[];
         total: number;
         page: number;
         limit: number;
+        summary: FileDocumentListSummary;
       },
       FileDocumentListParams | void
     >({
@@ -339,6 +361,7 @@ const filesApi = baseApi.injectEndpoints({
           categoryCode: params?.categoryCode,
           typeCode: params?.typeCode,
           status: params?.status,
+          queue: params?.queue,
           uploadedById: params?.uploadedById,
           verifiedById: params?.verifiedById,
           expiryStatus: params?.expiryStatus,
