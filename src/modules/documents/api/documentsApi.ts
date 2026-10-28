@@ -1,6 +1,6 @@
 import { baseApi } from '@/redux/api/baseApi'
 import { toQuery } from '@/lib/api'
-import type { DocumentRow } from '../types'
+import type { DocumentRow, DocumentSummary } from '../types'
 
 export type DocumentListParams = {
   search?: string
@@ -11,6 +11,8 @@ export type DocumentListParams = {
   missing?: string
   uploadedById?: string
   ownerId?: string
+  dateFrom?: string
+  dateTo?: string
   page?: number
   limit?: number
 }
@@ -20,6 +22,7 @@ export type DocumentListResponse = {
   total: number
   page?: number
   limit?: number
+  summary?: DocumentSummary
 }
 
 const documentsApi = baseApi.injectEndpoints({
@@ -35,6 +38,8 @@ const documentsApi = baseApi.injectEndpoints({
           missing: params?.missing,
           uploadedById: params?.uploadedById,
           ownerId: params?.ownerId,
+          dateFrom: params?.dateFrom,
+          dateTo: params?.dateTo,
           page: params?.page ? String(params.page) : undefined,
           limit: params?.limit ? String(params.limit) : undefined,
         })}`,
