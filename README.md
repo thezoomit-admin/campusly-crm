@@ -8,28 +8,28 @@ The API lives in the sibling repo [`campusly-crm-api`](../campusly-crm-api) (Exp
 
 ## Features
 
-| Area | What staff can do |
-|------|-------------------|
-| Pipeline | Leads, applications, students, documents, payments, follow-ups |
-| Operations | Reports and employee records |
-| Admin | Users, roles and permissions, audit log, master data, settings |
-| Account | Profile and password change |
-| Search | Global search across records |
+| Area       | What staff can do                                              |
+| ---------- | -------------------------------------------------------------- |
+| Pipeline   | Leads, applications, students, documents, payments, follow-ups |
+| Operations | Reports and employee records                                   |
+| Admin      | Users, roles and permissions, audit log, master data, settings |
+| Account    | Profile and password change                                    |
+| Search     | Global search across records                                   |
 
 Routes and sidebar items are permission-gated. A user only sees pages their role allows.
 
 ## Stack
 
-| Layer | Choice |
-|-------|--------|
-| UI | React 19, Vite 8, TypeScript |
-| Styling | Tailwind CSS 4, Ant Design 6 |
+| Layer        | Choice                                  |
+| ------------ | --------------------------------------- |
+| UI           | React 19, Vite 8, TypeScript            |
+| Styling      | Tailwind CSS 4, Ant Design 6            |
 | State / HTTP | Redux Toolkit, RTK Query, redux-persist |
-| Forms | Formik + Yup |
-| Routing | React Router 7 |
-| Icons | Hugeicons |
-| Tests | Vitest, Testing Library |
-| Lint | Oxlint |
+| Forms        | Formik + Yup                            |
+| Routing      | React Router 7                          |
+| Icons        | Hugeicons                               |
+| Tests        | Vitest, Testing Library                 |
+| Lint         | Oxlint                                  |
 
 ## Requirements
 
@@ -49,29 +49,29 @@ Open [http://localhost:4001](http://localhost:4001).
 
 Leave `VITE_API_URL` empty in local development. Vite proxies `/api` to `http://localhost:4000`, so the browser stays on the admin origin and session cookies work.
 
-On the API, set `CLIENT_ORIGIN=http://localhost:4001` so CORS allows this app. The seeded local admin is created by the API seed (`admin@campusly.com` / username `root`, unless those values were changed in the API env).
+On the API, set `CLIENT_ORIGIN=http://localhost:4001` so CORS allows this app. The seeded local admin is created by the API seed (`campusly_ceo@gmail.com` / username `root`, unless those values were changed in the API env).
 
 ## Environment
 
 Copy `.env.example` into `.env.development` or `.env.production`. Vite only exposes variables prefixed with `VITE_`.
 
-| Variable | Purpose |
-|----------|---------|
-| `VITE_API_URL` | API origin. Empty in local dev (uses the Vite `/api` proxy). Set to the API origin in production if the app is not proxied. |
-| `VITE_IMAGE_ACCESS_URL` | Base URL for stored images (Cloudinary or similar). |
+| Variable                | Purpose                                                                                                                     |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `VITE_API_URL`          | API origin. Empty in local dev (uses the Vite `/api` proxy). Set to the API origin in production if the app is not proxied. |
+| `VITE_IMAGE_ACCESS_URL` | Base URL for stored images (Cloudinary or similar).                                                                         |
 
 Production on Vercel rewrites `/api/*` to the deployed API. See `vercel.json`.
 
 ## Scripts
 
-| Command | What it does |
-|---------|----------------|
-| `pnpm dev` | Dev server on `0.0.0.0:4001` |
-| `pnpm build` | Typecheck, then production build |
-| `pnpm preview` | Serve the production build |
-| `pnpm typecheck` | `tsc -b` |
-| `pnpm lint` | Oxlint |
-| `pnpm test` | Vitest |
+| Command          | What it does                     |
+| ---------------- | -------------------------------- |
+| `pnpm dev`       | Dev server on `0.0.0.0:4001`     |
+| `pnpm build`     | Typecheck, then production build |
+| `pnpm preview`   | Serve the production build       |
+| `pnpm typecheck` | `tsc -b`                         |
+| `pnpm lint`      | Oxlint                           |
+| `pnpm test`      | Vitest                           |
 
 ## Project layout
 
@@ -106,15 +106,15 @@ Sign-in stores a session cookie (`crm_session`) set by the API. Requests use `cr
 
 ## Main routes
 
-| Path | Page |
-|------|------|
-| `/login` | Sign in |
-| `/forgot-password`, `/reset-password` | Password recovery |
-| `/dashboard` | Overview (`/` redirects here) |
-| `/leads` … `/follow-ups` | Pipeline |
-| `/reports`, `/employees` | Operations |
-| `/users`, `/roles`, `/audit-logs`, `/master-data`, `/settings` | Admin |
-| `/profile`, `/account` | Signed-in account |
+| Path                                                           | Page                          |
+| -------------------------------------------------------------- | ----------------------------- |
+| `/login`                                                       | Sign in                       |
+| `/forgot-password`, `/reset-password`                          | Password recovery             |
+| `/dashboard`                                                   | Overview (`/` redirects here) |
+| `/leads` … `/follow-ups`                                       | Pipeline                      |
+| `/reports`, `/employees`                                       | Operations                    |
+| `/users`, `/roles`, `/audit-logs`, `/master-data`, `/settings` | Admin                         |
+| `/profile`, `/account`                                         | Signed-in account             |
 
 ## Deployment
 

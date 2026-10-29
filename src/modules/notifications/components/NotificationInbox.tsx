@@ -265,10 +265,15 @@ export default function NotificationInbox({ auth, mode }: { auth: AuthSession; m
                     const type = TYPE_META[categoryKey]
                     const channelKey = channelOf(item)
                     const channelMeta = CHANNEL_META[channelKey]
+                    const unread = item.status === 'Unread'
                     return (
                       <tr
                         key={item.id}
-                        className="cursor-pointer border-t border-border-subtle hover:bg-hover-bg"
+                        className={`cursor-pointer border-t border-border-subtle hover:bg-hover-bg ${
+                          unread
+                            ? 'bg-[color-mix(in_srgb,var(--color-primary)_8%,white)] dark:bg-primary/10'
+                            : ''
+                        }`}
                         onClick={() => openLead(item)}
                       >
                         <td className="px-3 py-3" onClick={(event) => event.stopPropagation()}>
@@ -286,8 +291,15 @@ export default function NotificationInbox({ auth, mode }: { auth: AuthSession; m
                           </Pill>
                         </td>
                         <td className="px-2 py-3">
-                          <span className="block font-semibold text-text-strong">{item.title}</span>
-                          {item.body ? <span className="mt-0.5 line-clamp-2 block text-[0.75rem] text-text-muted">{item.body}</span> : null}
+                          <span className="flex items-center gap-2">
+                            {unread ? (
+                              <i className="size-2 shrink-0 rounded-full bg-primary" aria-hidden />
+                            ) : null}
+                            <span className={`block ${unread ? 'font-bold text-text-strong' : 'font-medium text-text-muted'}`}>
+                              {item.title}
+                            </span>
+                          </span>
+                          {item.body ? <span className={`mt-0.5 line-clamp-2 block text-[0.75rem] ${unread ? 'text-text-muted' : 'text-text-faint'}`}>{item.body}</span> : null}
                           {scope === 'team' && item.recipientName ? (
                             <span className="mt-0.5 block text-[0.72rem] text-text-faint">To {item.recipientName}</span>
                           ) : null}

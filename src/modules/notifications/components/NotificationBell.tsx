@@ -66,13 +66,13 @@ export default function NotificationBell({
   const [selected, setSelected] = useState<AppNotification | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  // One initial fetch; live updates come from SocketRealtimeProvider (no polling).
-  const { data } = useListNotificationsQuery(
+  // Initial fetch + live socket patches; reopen also refetches so grant/withdraw never stick empty.
+  const { data, refetch } = useListNotificationsQuery(
     { limit: 15 },
     {
       skip: !canView,
-      refetchOnMountOrArgChange: false,
-      refetchOnFocus: false,
+      refetchOnMountOrArgChange: true,
+      refetchOnFocus: true,
       refetchOnReconnect: true,
     },
   )
@@ -82,6 +82,12 @@ export default function NotificationBell({
 
   const items = data?.items || []
   const unreadCount = data?.unreadCount || 0
+
+  useEffect(() => {
+    if (open && canView) {
+      void refetch()
+    }
+  }, [open, canView, refetch])
 
   useEffect(() => {
     function onDocClick(event: MouseEvent) {
@@ -215,21 +221,65 @@ export default function NotificationBell({
               {items.length === 0 ? (
                 <li className="px-3.5 py-8 text-center text-[0.84rem] text-text-muted">No notifications yet.</li>
               ) : (
-                items.map((item) => (
-                  <li key={item.id} className="border-b border-border-subtle last:border-b-0">
-                    <button
-                      type="button"
-                      className={`grid w-full cursor-pointer gap-0.5 border-0 px-3.5 py-2.5 text-left hover:bg-hover-bg ${
-                        item.status === 'Unread' ? 'bg-[#f8fbff] dark:bg-blue-500/5' : 'bg-transparent'
-                      }`}
-                      onClick={() => openItem(item)}
-                    >
-                      <span className="text-[0.86rem] font-semibold text-text-strong">{item.title}</span>
-                      {item.body ? <span className="text-[0.78rem] leading-snug text-text-muted">{item.body}</span> : null}
-                      <span className="mt-0.5 text-[0.7rem] text-text-faint">{timeAgo(item.createdAt)}</span>
-                    </button>
-                  </li>
-                ))
+                items.map((item) => {
+                  const unread = item.status === 'Unread'
+                  return (
+                    <li key={item.id} className="border-b border-border-subtle last:border-b-0">
+                      <button
+                        type="button"
+                        className={`grid w-full cursor-pointer grid-cols-[10px_minmax(0,1fr)] gap-x-2.5 gap-y-0.5 border-0 px-3.5 py-2.5 text-left transition-colors ${
+                          unread
+                            ? 'bg-[color-mix(in_srgb,var(--color-primary)_10%,white)] hover:bg-[color-mix(in_srgb,var(--color-primary)_16%,white)] dark:bg-primary/15 dark:hover:bg-primary/22'
+                            : 'bg-transparent opacity-75 hover:bg-hover-bg hover:opacity-100'
+                        }`}
+                        onClick={() => openItem(item)}
+                      >
+                        <span className="col-start-1 row-span-3 mt-1.5 flex justify-center self-start">
+                          {unread ? (
+                            <i
+                              className="size-2.5 shrink-0 rounded-full bg-primary shadow-[0_0_0_3px_color-mix(in_srgb,var(--color-primary)_25%,transparent)]"
+                              aria-hidden
+                            />
+                          ) : (
+                            <i className="size-2.5 shrink-0 rounded-full bg-border" aria-hidden />
+                          )}
+                        </span>
+                        <span className="col-start-2 flex min-w-0 items-center gap-2">
+                          <span
+                            className={`min-w-0 truncate text-[0.86rem] ${
+                              unread
+                                ? 'font-bold text-text-strong'
+                                : 'font-medium text-text-muted'
+                            }`}
+                          >
+                            {item.title}
+                          </span>
+                          {unread ? (
+                            <span className="shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[0.62rem] font-semibold uppercase tracking-wide text-white">
+                              New
+                            </span>
+                          ) : (
+                            <span className="shrink-0 text-[0.62rem] font-medium uppercase tracking-wide text-text-faint">
+                              Read
+                            </span>
+                          )}
+                        </span>
+                        {item.body ? (
+                          <span
+                            className={`col-start-2 line-clamp-2 text-[0.78rem] leading-snug ${
+                              unread ? 'text-text' : 'text-text-faint'
+                            }`}
+                          >
+                            {item.body}
+                          </span>
+                        ) : null}
+                        <span className="col-start-2 mt-0.5 text-[0.7rem] text-text-faint">
+                          {timeAgo(item.createdAt)}
+                        </span>
+                      </button>
+                    </li>
+                  )
+                })
               )}
             </ul>
           )}

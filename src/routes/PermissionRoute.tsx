@@ -1,7 +1,4 @@
-import { adminCard, adminPage } from '../styles/admin'
-import { Outlet, useOutletContext } from 'react-router-dom'
-import { PageHeader } from '@/components/common/Navigation'
-import { PageMeta } from '@/components/common/Meta'
+import { Navigate, Outlet, useOutletContext } from 'react-router-dom'
 import { hasPermission } from '../lib/access'
 import type { AuthSession } from '../types'
 
@@ -11,30 +8,17 @@ type PermissionRouteProps = {
   deniedMessage?: string
 }
 
+/**
+ * Guards nested routes by permission. When access is withdrawn (e.g. live
+ * socket permission refresh), redirect to dashboard instead of a dead-end page.
+ */
 export default function PermissionRoute({
   permission,
-  deniedTitle = 'Access denied',
-  deniedMessage = 'You do not have permission to perform this action.',
 }: PermissionRouteProps) {
   const auth = useOutletContext<AuthSession>()
 
   if (!hasPermission(auth, permission)) {
-    return (
-      <div className={`${adminPage}`}>
-        <PageMeta
-          title="Access Denied"
-          description={deniedMessage}
-        />
-        <PageHeader
-          title={deniedTitle}
-          subtitle={deniedMessage}
-          breadcrumbs={[{ title: 'Dashboard', path: '/dashboard' }, { title: deniedTitle }]}
-        />
-        <div className={`${adminCard}`}>
-          <p>Contact an administrator if you believe you should have access to this area.</p>
-        </div>
-      </div>
-    )
+    return <Navigate to="/dashboard" replace />
   }
 
   return <Outlet context={auth} />

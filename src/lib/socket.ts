@@ -4,6 +4,7 @@ import { config } from '@/config'
 export const SOCKET_EVENTS = {
   notificationCreated: 'notification:created',
   emailInbound: 'email:inbound',
+  permissionsUpdated: 'permissions:updated',
 } as const
 
 export type EmailInboundEvent = {
@@ -12,6 +13,16 @@ export type EmailInboundEvent = {
   leadId: string | null
   fromEmail: string
   preview: string
+}
+
+export type PermissionsUpdatedEvent = {
+  reason: 'role_permissions_changed' | 'user_overrides_changed'
+  roleId?: string
+  roleName?: string
+  actorName?: string
+  grantedCount: number
+  revokedCount: number
+  message: string
 }
 
 export type SocketNotification = {
