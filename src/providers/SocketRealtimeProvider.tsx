@@ -1,14 +1,17 @@
 import { useEffect, type ReactNode } from 'react'
 import { toast } from 'react-toastify'
 import { useAuth } from '@/hooks/useAuth'
+import { isAuthSession } from '@/lib/auth'
 import {
   connectSocket,
   disconnectSocket,
   SOCKET_EVENTS,
   type EmailInboundEvent,
   type NotificationCreatedEvent,
+  type PermissionsUpdatedEvent,
 } from '@/lib/socket'
-import { useAppDispatch } from '@/redux'
+import { setSession, useAppDispatch } from '@/redux'
+import { authApi } from '@/redux/features/auth/authApi'
 import { emailApi } from '@/modules/email/api/emailApi'
 import {
   notificationsApi,
@@ -60,7 +63,7 @@ function upsertNotificationCache(
 
 /**
  * Keeps a cookie-authenticated Socket.IO connection while logged in.
- * Live notifications + email inbound → RTK cache invalidation / toast.
+ * Live notifications + email inbound + permission refresh (no permission toasts).
  */
 export default function SocketRealtimeProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated, hydrated, can } = useAuth()
@@ -77,6 +80,7 @@ export default function SocketRealtimeProvider({ children }: { children: ReactNo
     }
 
     const socket = connectSocket()
+    let reconnectTimer: number | undefined
 
     const refreshEmailThread = (threadId: string, leadId?: string | null) => {
       if (!canViewEmail || !threadId) return
@@ -99,9 +103,14 @@ export default function SocketRealtimeProvider({ children }: { children: ReactNo
     }
 
     const onNotificationCreated = (event: NotificationCreatedEvent) => {
-      if (!event?.notification?.id || !canViewNotifications) return
+      if (!event?.notification?.id) return
 
-      // Patch RTK cache only — no HTTP refetch. Socket is the live channel.
+      const type = event.notification.type || event.notification.eventType || ''
+      const isPermissionChange = type === 'permission_change'
+
+      // Always patch bell cache for permission changes; other types need notification:view.
+      if (!canViewNotifications && !isPermissionChange) return
+
       dispatch(
         notificationsApi.util.updateQueryData('listNotifications', LIST_ARGS, (draft) => {
           const next = upsertNotificationCache(draft, event)
@@ -109,6 +118,11 @@ export default function SocketRealtimeProvider({ children }: { children: ReactNo
           draft.unreadCount = next.unreadCount
         }),
       )
+
+      // Permission grant/withdraw: bell only — never toast / browser popup.
+      if (isPermissionChange) return
+
+      if (!canViewNotifications) return
 
       toast.info(event.notification.title, {
         toastId: `notification:${event.notification.id}`,
@@ -123,12 +137,10 @@ export default function SocketRealtimeProvider({ children }: { children: ReactNo
         try {
           new Notification(event.notification.title, { body: event.notification.body || undefined })
         } catch {
-          // Browser notifications are optional and depend on permission.
+          // Browser notifications are optional.
         }
       }
 
-      // Email notifications → refetch thread/list/messages once (no polling).
-      const type = event.notification.type || ''
       const isEmailNotif = type.includes('email')
       if (canViewEmail && isEmailNotif) {
         const link = event.notification.link || ''
@@ -152,10 +164,42 @@ export default function SocketRealtimeProvider({ children }: { children: ReactNo
       refreshEmailThread(event?.threadId, event?.leadId)
     }
 
-    const onReconnect = () => {
-      if (canViewNotifications) {
-        dispatch(notificationsApi.util.invalidateTags([{ type: 'Notifications', id: 'LIST' }]))
+    const onPermissionsUpdated = async (_event: PermissionsUpdatedEvent) => {
+      try {
+        const result = await dispatch(
+          authApi.endpoints.getMe.initiate(undefined, { forceRefetch: true }),
+        )
+        if (result.data && isAuthSession(result.data)) {
+          dispatch(setSession(result.data))
+        }
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.warn('[socket] permission refresh failed:', error)
+        }
       }
+
+      // Refetch bell so grant/withdraw rows appear even if notification:created raced.
+      dispatch(
+        notificationsApi.util.invalidateTags([
+          { type: 'Notifications', id: 'LIST' },
+          'Notifications',
+        ]),
+      )
+
+      // Defer reconnect so in-flight notification:created is not dropped.
+      window.clearTimeout(reconnectTimer)
+      reconnectTimer = window.setTimeout(() => {
+        if (!socket.connected) {
+          socket.connect()
+          return
+        }
+        socket.disconnect()
+        socket.connect()
+      }, 750)
+    }
+
+    const onReconnect = () => {
+      dispatch(notificationsApi.util.invalidateTags([{ type: 'Notifications', id: 'LIST' }]))
       if (canViewEmail) {
         dispatch(emailApi.util.invalidateTags([{ type: 'Email', id: 'LIST' }]))
       }
@@ -163,11 +207,14 @@ export default function SocketRealtimeProvider({ children }: { children: ReactNo
 
     socket.on(SOCKET_EVENTS.notificationCreated, onNotificationCreated)
     socket.on(SOCKET_EVENTS.emailInbound, onEmailInbound)
+    socket.on(SOCKET_EVENTS.permissionsUpdated, onPermissionsUpdated)
     socket.on('reconnect', onReconnect)
 
     return () => {
+      window.clearTimeout(reconnectTimer)
       socket.off(SOCKET_EVENTS.notificationCreated, onNotificationCreated)
       socket.off(SOCKET_EVENTS.emailInbound, onEmailInbound)
+      socket.off(SOCKET_EVENTS.permissionsUpdated, onPermissionsUpdated)
       socket.off('reconnect', onReconnect)
     }
   }, [canViewEmail, canViewNotifications, dispatch, hydrated, isAuthenticated])

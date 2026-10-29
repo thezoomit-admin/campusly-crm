@@ -1402,62 +1402,6 @@ export default function DashboardPage() {
 
       <QuickActionsCard onNavigate={navigate} />
 
-      <div className="grid min-w-0 grid-cols-1 gap-3 *:min-w-0 lg:grid-cols-2">
-        <article className={cx(dashCard, "min-w-0")}>
-          <div className={cardHead}>
-            <h3 className="m-0 text-base">Lead Source Overview</h3>
-            <span className={chip}>Last 30 Days</span>
-          </div>
-          {loading ? (
-            <LeadSourceSkeleton />
-          ) : leadSources.length === 0 ? (
-            <p className="m-0 py-8 text-center text-[0.85rem] text-text-faint">
-              No leads in the last 30 days.
-            </p>
-          ) : (
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="w-[min(100%,150px)] shrink-0 max-sm:w-[108px] xl:w-[min(100%,170px)]">
-                <DonutChart segments={leadSources} total={leadTotal} />
-              </div>
-              <ul className="m-0 grid min-w-0 flex-1 list-none gap-1.5 overflow-x-auto overscroll-x-contain p-0 [scrollbar-width:thin]">
-                {leadSources.map((source) => (
-                  <li
-                    key={source.label}
-                    className="flex justify-between gap-2 text-[0.8rem] max-sm:min-w-max max-sm:gap-3"
-                  >
-                    <span className="flex min-w-0 items-center gap-2 max-sm:min-w-max">
-                      <i
-                        className="size-2 shrink-0 rounded-full"
-                        style={{ background: source.color }}
-                      />
-                      <span className="truncate max-sm:overflow-visible max-sm:text-clip max-sm:whitespace-nowrap">
-                        {source.label}
-                      </span>
-                    </span>
-                    <span className="flex shrink-0 items-center gap-2 pr-0.5">
-                      <em className="min-w-7 not-italic text-text-faint">
-                        {source.percent}%
-                      </em>
-                      <strong className="min-w-5 text-right">
-                        {source.value}
-                      </strong>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </article>
-
-        <article className={cx(dashCard, "min-w-0")}>
-          <div className={cardHead}>
-            <h3 className="m-0 text-base">Lead Trend</h3>
-            <span className={chip}>Last 7 Days</span>
-          </div>
-          {loading ? <LeadTrendSkeleton /> : <LineChart points={leadTrend} />}
-        </article>
-      </div>
-
       <div className="grid min-w-0 grid-cols-1 items-stretch gap-3 *:min-w-0 md:grid-cols-2 lg:h-[28rem] lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:grid-rows-1">
         <article
           className={cx(
@@ -1688,6 +1632,62 @@ export default function DashboardPage() {
               </ul>
             </>
           )}
+        </article>
+      </div>
+
+      <div className="grid min-w-0 grid-cols-1 gap-3 *:min-w-0 lg:grid-cols-2">
+        <article className={cx(dashCard, "min-w-0")}>
+          <div className={cardHead}>
+            <h3 className="m-0 text-base">Lead Source Overview</h3>
+            <span className={chip}>Last 30 Days</span>
+          </div>
+          {loading ? (
+            <LeadSourceSkeleton />
+          ) : leadSources.length === 0 ? (
+            <p className="m-0 py-8 text-center text-[0.85rem] text-text-faint">
+              No leads in the last 30 days.
+            </p>
+          ) : (
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="w-[min(100%,150px)] shrink-0 max-sm:w-[108px] xl:w-[min(100%,170px)]">
+                <DonutChart segments={leadSources} total={leadTotal} />
+              </div>
+              <ul className="m-0 grid min-w-0 flex-1 list-none gap-1.5 overflow-x-auto overscroll-x-contain p-0 [scrollbar-width:thin]">
+                {leadSources.map((source) => (
+                  <li
+                    key={source.label}
+                    className="flex justify-between gap-2 text-[0.8rem] max-sm:min-w-max max-sm:gap-3"
+                  >
+                    <span className="flex min-w-0 items-center gap-2 max-sm:min-w-max">
+                      <i
+                        className="size-2 shrink-0 rounded-full"
+                        style={{ background: source.color }}
+                      />
+                      <span className="truncate max-sm:overflow-visible max-sm:text-clip max-sm:whitespace-nowrap">
+                        {source.label}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-2 pr-0.5">
+                      <em className="min-w-7 not-italic text-text-faint">
+                        {source.percent}%
+                      </em>
+                      <strong className="min-w-5 text-right">
+                        {source.value}
+                      </strong>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </article>
+
+        <article className={cx(dashCard, "min-w-0")}>
+          <div className={cardHead}>
+            <h3 className="m-0 text-base">Lead Trend</h3>
+            <span className={chip}>Last 7 Days</span>
+          </div>
+          {loading ? <LeadTrendSkeleton /> : <LineChart points={leadTrend} />}
         </article>
       </div>
 

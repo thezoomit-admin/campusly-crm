@@ -313,7 +313,6 @@ export default function RolesPage() {
         id: selected.id,
         permissionIds: checked,
       }).unwrap();
-      toast.success("Permissions saved. Changes apply on the next request.");
       setPermissionOpen(false);
       await load();
     } catch (err) {

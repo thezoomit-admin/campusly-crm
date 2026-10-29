@@ -35,7 +35,7 @@ export type ChangePasswordBody = {
   newPassword: string
 }
 
-const authApi = baseApi.injectEndpoints({
+export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getMe: builder.query<AuthSession, void>({
       query: () => '/me',
