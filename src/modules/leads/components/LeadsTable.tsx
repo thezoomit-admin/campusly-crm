@@ -12,6 +12,9 @@ type LeadsTableProps = {
   canChangeStatus?: boolean
   canClose?: boolean
   canReopen?: boolean
+  canReassign?: boolean
+  canOverridePriority?: boolean
+  canConvert?: boolean
   showStatus?: boolean
   showCloseMeta?: boolean
   onPageChange: (page: number) => void
@@ -21,6 +24,13 @@ type LeadsTableProps = {
   onChangeStatus?: (row: LeadRow) => void
   onCloseLead?: (row: LeadRow) => void
   onReopen?: (row: LeadRow) => void
+  onAddNote?: (row: LeadRow) => void
+  onAddFollowUp?: (row: LeadRow) => void
+  onAddMeeting?: (row: LeadRow) => void
+  onReassign?: (row: LeadRow) => void
+  onChangePriority?: (row: LeadRow) => void
+  onConvert?: (row: LeadRow) => void
+  onOwnerClick?: (row: LeadRow) => void
 }
 
 export default function LeadsTable({
@@ -33,6 +43,9 @@ export default function LeadsTable({
   canChangeStatus,
   canClose,
   canReopen,
+  canReassign,
+  canOverridePriority,
+  canConvert,
   showStatus = true,
   showCloseMeta = false,
   onPageChange,
@@ -42,6 +55,13 @@ export default function LeadsTable({
   onChangeStatus,
   onCloseLead,
   onReopen,
+  onAddNote,
+  onAddFollowUp,
+  onAddMeeting,
+  onReassign,
+  onChangePriority,
+  onConvert,
+  onOwnerClick,
 }: LeadsTableProps) {
   return (
     <DataTable
@@ -53,6 +73,9 @@ export default function LeadsTable({
         canChangeStatus,
         canClose,
         canReopen,
+        canReassign,
+        canOverridePriority,
+        canConvert,
         showStatus,
         showCloseMeta,
         onView,
@@ -60,6 +83,13 @@ export default function LeadsTable({
         onChangeStatus,
         onCloseLead,
         onReopen,
+        onAddNote,
+        onAddFollowUp,
+        onAddMeeting,
+        onReassign,
+        onChangePriority,
+        onConvert,
+        onOwnerClick,
       })}
       rowKey="id"
       selectRow

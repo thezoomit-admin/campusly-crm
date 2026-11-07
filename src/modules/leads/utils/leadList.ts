@@ -1,14 +1,24 @@
 import type { IconSvgElement } from '@hugeicons/react'
 import {
+  BrowserIcon,
   Call02Icon,
   CheckmarkCircle02Icon,
+  Facebook02Icon,
   FavouriteIcon,
   File01Icon,
+  Globe02Icon,
+  InstagramIcon,
+  Mail01Icon,
+  Megaphone01Icon,
+  Share07Icon,
   UserAdd01Icon,
   UserGroupIcon,
+  UserIcon,
   UserMultiple02Icon,
+  WhatsappIcon,
 } from '@hugeicons/core-free-icons'
 import type { LeadListSummary, LeadListSummaryStat, LeadRow } from '../types'
+import { followUpCountdownParts } from './leadDetails'
 
 export const LEAD_PIPELINE_TABS = [
   { key: 'all', label: 'All Leads' },
@@ -169,4 +179,70 @@ export function truncateLeadName(name?: string | null, wordLimit = 4, charLimit 
 
 export function leadDisplaySubtitle(row: LeadRow) {
   return row.subtitle?.trim() || ''
+}
+
+export function formatFollowUpStamp(value?: string | null) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const day = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  const time = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+  return `${day}, ${time}`
+}
+
+export type LeadFollowUpDisplay = {
+  primary: string
+  secondary: string
+  tone: 'overdue' | 'soon' | 'safe' | 'empty'
+}
+
+export function leadFollowUpDisplay(value?: string | null): LeadFollowUpDisplay {
+  if (!value) {
+    return { primary: 'Not set', secondary: '', tone: 'empty' }
+  }
+  const parts = followUpCountdownParts(value)
+  const stamp = formatFollowUpStamp(value)
+  if (!parts) {
+    return { primary: stamp || '—', secondary: '', tone: 'safe' }
+  }
+  if (parts.overdue) {
+    const primary =
+      parts.days >= 1
+        ? `${parts.days} day${parts.days === 1 ? '' : 's'} overdue`
+        : parts.hours >= 1
+          ? `${parts.hours} hour${parts.hours === 1 ? '' : 's'} overdue`
+          : 'Overdue'
+    return { primary, secondary: stamp, tone: 'overdue' }
+  }
+  if (parts.days === 0) {
+    return { primary: 'Due today', secondary: stamp, tone: 'soon' }
+  }
+  return {
+    primary: `In ${parts.days} day${parts.days === 1 ? '' : 's'}`,
+    secondary: stamp,
+    tone: parts.urgency === 'soon' ? 'soon' : 'safe',
+  }
+}
+
+export function leadSourceIcon(source?: string | null): IconSvgElement {
+  const key = (source || '').trim().toLowerCase()
+  if (!key || key === '—') return Share07Icon
+  if (key.includes('facebook') || key === 'meta') return Facebook02Icon
+  if (key.includes('instagram')) return InstagramIcon
+  if (key.includes('whatsapp')) return WhatsappIcon
+  if (key.includes('email') || key.includes('mail')) return Mail01Icon
+  if (key.includes('website') || key.includes('web')) return BrowserIcon
+  if (key.includes('referral')) return Share07Icon
+  if (key.includes('walk')) return UserIcon
+  if (key.includes('phone') || key.includes('call')) return Call02Icon
+  if (key.includes('campaign') || key.includes('ads')) return Megaphone01Icon
+  if (key.includes('manual') || key.includes('existing') || key.includes('client')) {
+    return UserAdd01Icon
+  }
+  if (key.includes('google')) return Globe02Icon
+  return Share07Icon
 }

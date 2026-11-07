@@ -412,7 +412,9 @@ export default function LeadDetailsPage() {
   const [followUpInitial, setFollowUpInitial] =
     useState<Partial<FollowUpFormValues> | null>(null);
   const [activityOpen, setActivityOpen] = useState(false);
-  const [logConversationOpen, setLogConversationOpen] = useState(false);
+  const [logConversationOpen, setLogConversationOpen] = useState(
+    searchParams.get("note") === "1",
+  );
   const [logConversationSaving, setLogConversationSaving] = useState(false);
   const [documentOpen, setDocumentOpen] = useState(false);
   const [defaultDocTypeCode, setDefaultDocTypeCode] = useState<
@@ -526,7 +528,9 @@ export default function LeadDetailsPage() {
   const documents = documentsData?.items || [];
   const followUps = followUpData?.items || [];
   const [qualifyOpen, setQualifyOpen] = useState(false);
-  const [priorityOpen, setPriorityOpen] = useState(false);
+  const [priorityOpen, setPriorityOpen] = useState(
+    searchParams.get("priority") === "1",
+  );
   const [statusOpen, setStatusOpen] = useState(false);
   const [applicationOpen, setApplicationOpen] = useState(false);
   const [statusErrors, setStatusErrors] = useState<Record<string, string>>({});
@@ -534,14 +538,20 @@ export default function LeadDetailsPage() {
   const [closeErrors, setCloseErrors] = useState<Record<string, string>>({});
   const [reopenOpen, setReopenOpen] = useState(false);
   const [reopenErrors, setReopenErrors] = useState<Record<string, string>>({});
-  const [ownerOpen, setOwnerOpen] = useState(false);
+  const [ownerOpen, setOwnerOpen] = useState(
+    searchParams.get("assign") === "1",
+  );
   const [handoverOpen, setHandoverOpen] = useState(false);
-  const [duplicateReviewOpen, setDuplicateReviewOpen] = useState(false);
+  const [duplicateReviewOpen, setDuplicateReviewOpen] = useState(
+    searchParams.get("delete") === "1",
+  );
   const [selectedFollowUp, setSelectedFollowUp] =
     useState<FollowUpRecord | null>(null);
   const [completeOpen, setCompleteOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [meetingOpen, setMeetingOpen] = useState(false);
+  const [meetingOpen, setMeetingOpen] = useState(
+    searchParams.get("meeting") === "1",
+  );
   const [meetingMode, setMeetingMode] = useState<"schedule" | "reschedule">(
     "schedule",
   );
@@ -586,6 +596,11 @@ export default function LeadDetailsPage() {
 
   useEffect(() => {
     if (searchParams.get("followUp") === "1") setFollowUpOpen(true);
+    if (searchParams.get("note") === "1") setLogConversationOpen(true);
+    if (searchParams.get("meeting") === "1") setMeetingOpen(true);
+    if (searchParams.get("assign") === "1") setOwnerOpen(true);
+    if (searchParams.get("priority") === "1") setPriorityOpen(true);
+    if (searchParams.get("delete") === "1") setDuplicateReviewOpen(true);
   }, [searchParams]);
 
   useEffect(() => {
