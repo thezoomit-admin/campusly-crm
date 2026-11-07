@@ -17,8 +17,13 @@ import LeadFilters, {
   EMPTY_LEAD_FILTERS,
   type LeadFilterValues,
 } from "../components/LeadFilters";
+import LeadListAddNoteModal from "../components/LeadListAddNoteModal";
 import LeadListChangeStatusModal from "../components/LeadListChangeStatusModal";
 import LeadListCloseModal from "../components/LeadListCloseModal";
+import LeadListFollowUpModal from "../components/LeadListFollowUpModal";
+import LeadListMeetingModal from "../components/LeadListMeetingModal";
+import LeadListPriorityModal from "../components/LeadListPriorityModal";
+import LeadListReassignModal from "../components/LeadListReassignModal";
 import LeadStatusTabs from "../components/LeadStatusTabs";
 import LeadsTable from "../components/LeadsTable";
 import type { LeadRow } from "../types";
@@ -35,6 +40,11 @@ export default function LeadsPage() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [statusLeadId, setStatusLeadId] = useState<string | null>(null);
+  const [noteLeadId, setNoteLeadId] = useState<string | null>(null);
+  const [followUpLeadId, setFollowUpLeadId] = useState<string | null>(null);
+  const [meetingLeadId, setMeetingLeadId] = useState<string | null>(null);
+  const [reassignLeadId, setReassignLeadId] = useState<string | null>(null);
+  const [priorityLeadId, setPriorityLeadId] = useState<string | null>(null);
   const [closeLead, setCloseLead] = useState<{
     id: string;
     status: string;
@@ -45,6 +55,13 @@ export default function LeadsPage() {
   const canEdit = hasPermission(auth, "lead:edit");
   const canChangeStatus = hasPermission(auth, "lead:update_status");
   const canClose = hasPermission(auth, "lead:close");
+  const canReassign = hasPermission(auth, "lead:reassign");
+  const canOverridePriority = hasPermission(auth, "lead:override_priority");
+  const canConvert = hasPermission(auth, "lead:convert");
+  const canAddNote = hasPermission(auth, "activity:create");
+  const canFollowUp = hasPermission(auth, "follow_up:create");
+  const canMeeting =
+    canFollowUp || hasPermission(auth, "activity:create");
 
   const { data, isFetching, isError } = useListLeadsQuery({
     search: debouncedSearch,
@@ -159,7 +176,10 @@ export default function LeadsPage() {
             canEdit={canEdit}
             canChangeStatus={canChangeStatus}
             canClose={canClose}
-            showStatus={status === "all"}
+            canReassign={canReassign}
+            canOverridePriority={canOverridePriority}
+            canConvert={canConvert}
+            showStatus
             onPageChange={setPage}
             onLimitChange={(value) => {
               setLimit(value);
@@ -171,6 +191,27 @@ export default function LeadsPage() {
             onCloseLead={(row) =>
               setCloseLead({ id: row.id, status: row.status })
             }
+            onAddNote={canAddNote ? (row) => setNoteLeadId(row.id) : undefined}
+            onAddFollowUp={
+              canFollowUp ? (row) => setFollowUpLeadId(row.id) : undefined
+            }
+            onAddMeeting={
+              canMeeting ? (row) => setMeetingLeadId(row.id) : undefined
+            }
+            onReassign={
+              canReassign ? (row) => setReassignLeadId(row.id) : undefined
+            }
+            onChangePriority={
+              canOverridePriority
+                ? (row) => setPriorityLeadId(row.id)
+                : undefined
+            }
+            onConvert={
+              canChangeStatus ? (row) => setStatusLeadId(row.id) : undefined
+            }
+            onOwnerClick={(row) => {
+              if (row.ownerId) navigate(`/users/${row.ownerId}`);
+            }}
           />
         </div>
       </div>
@@ -188,6 +229,37 @@ export default function LeadsPage() {
         auth={auth}
         currentStatus={closeLead?.status || ""}
         onClose={closeCloseModal}
+      />
+      <LeadListAddNoteModal
+        leadId={noteLeadId}
+        open={Boolean(noteLeadId)}
+        auth={auth}
+        onClose={() => setNoteLeadId(null)}
+      />
+      <LeadListFollowUpModal
+        leadId={followUpLeadId}
+        open={Boolean(followUpLeadId)}
+        auth={auth}
+        onClose={() => setFollowUpLeadId(null)}
+      />
+      <LeadListMeetingModal
+        leadId={meetingLeadId}
+        open={Boolean(meetingLeadId)}
+        auth={auth}
+        onClose={() => setMeetingLeadId(null)}
+      />
+      <LeadListReassignModal
+        leadId={reassignLeadId}
+        open={Boolean(reassignLeadId)}
+        auth={auth}
+        onClose={() => setReassignLeadId(null)}
+      />
+      <LeadListPriorityModal
+        leadId={priorityLeadId}
+        open={Boolean(priorityLeadId)}
+        auth={auth}
+        onClose={() => setPriorityLeadId(null)}
+        loadOptions={loadOptions}
       />
     </div>
   );

@@ -15,6 +15,8 @@ export type LeadRow = {
   country: string;
   source: string;
   owner: string;
+  ownerId?: string | null;
+  ownerPhotoUrl?: string | null;
   status: string;
   priority?: string;
   score?: string;
