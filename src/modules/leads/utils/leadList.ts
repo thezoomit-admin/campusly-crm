@@ -32,6 +32,16 @@ export const LEAD_PIPELINE_TABS = [
 
 export type LeadPipelineTab = (typeof LEAD_PIPELINE_TABS)[number]['key']
 
+export const LEAD_VIEW_TABS = [
+  { key: 'all', label: 'All Leads' },
+  { key: 'unassigned', label: 'Unassigned' },
+  { key: 'overdue', label: 'Overdue' },
+  { key: 'hot', label: 'Hot Leads' },
+  { key: 'no_follow_up', label: 'No Follow Up' },
+] as const
+
+export type LeadViewTab = (typeof LEAD_VIEW_TABS)[number]['key']
+
 const COUNTRY_FLAGS: Record<string, string> = {
   canada: '🇨🇦',
   uk: '🇬🇧',
@@ -125,6 +135,12 @@ export function tabCount(summary: LeadListSummary | undefined, tab: LeadPipeline
   if (!summary) return 0
   if (tab === 'all') return summary.total
   return summary.statuses.find((item) => item.label === tab)?.count || 0
+}
+
+export function viewTabCount(summary: LeadListSummary | undefined, tab: LeadViewTab) {
+  if (!summary) return 0
+  if (tab === 'all') return summary.views?.all ?? summary.total
+  return summary.views?.[tab] ?? 0
 }
 
 function statusStat(summary: LeadListSummary | undefined, label: string): LeadListSummaryStat {

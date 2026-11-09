@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { TimePicker } from 'antd'
+import { Spin, TimePicker } from 'antd'
 import dayjs, { type Dayjs } from 'dayjs'
 import { HugeiconsIcon } from '@hugeicons/react'
 import type { IconSvgElement } from '@hugeicons/react'
@@ -48,6 +48,7 @@ export type FollowUpLeadContext = {
 type FollowUpFormModalProps = {
   open: boolean
   saving?: boolean
+  loading?: boolean
   onClose: () => void
   onSubmit: (values: FollowUpFormValues) => Promise<void> | void
   fixedLeadId?: string
@@ -107,6 +108,7 @@ function statusBadgeClass(status: string) {
 export default function FollowUpFormModal({
   open,
   saving,
+  loading = false,
   onClose,
   onSubmit,
   fixedLeadId,
@@ -290,6 +292,7 @@ export default function FollowUpFormModal({
         },
         body: { padding: 0 },
       }}
+      mask={{ closable: !loading && !saving }}
       title={
         <span className="flex items-center gap-3">
           <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#e7f6ee] text-[#129a62] dark:bg-emerald-950/50">
@@ -311,6 +314,12 @@ export default function FollowUpFormModal({
         </span>
       }
     >
+      {loading ? (
+        <div className="grid min-h-[280px] place-items-center py-12">
+          <Spin size="large" />
+        </div>
+      ) : (
+      <>
       <div className="grid max-h-[calc(100vh-180px)] gap-3.5 overflow-y-auto px-5 py-4">
         {bannerName ? (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-[#eef8f3] px-3.5 py-2.5 text-[0.84rem] dark:bg-emerald-950/35">
@@ -587,6 +596,8 @@ export default function FollowUpFormModal({
           label="Save Follow-up"
         />
       </div>
+      </>
+      )}
     </AntModal>
   )
 }

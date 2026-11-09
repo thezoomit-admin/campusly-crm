@@ -192,10 +192,19 @@ export type LeadListSummaryStat = {
   change: number;
 };
 
+export type LeadListViewCounts = {
+  all: number;
+  unassigned: number;
+  overdue: number;
+  hot: number;
+  no_follow_up: number;
+};
+
 export type LeadListSummary = {
   total: number;
   change: number;
   statuses: LeadListSummaryStat[];
+  views?: LeadListViewCounts;
 };
 
 export type LeadOwner = {

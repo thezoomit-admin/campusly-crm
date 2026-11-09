@@ -6,7 +6,7 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react";
-import { TimePicker } from "antd";
+import { Spin, TimePicker } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -215,6 +215,7 @@ function ActivityHistorySidebar({
 export default function ChangeStatusModal({
   open,
   saving,
+  loading = false,
   emailSending = false,
   leadName,
   leadEmail,
@@ -230,6 +231,7 @@ export default function ChangeStatusModal({
 }: {
   open: boolean;
   saving: boolean;
+  loading?: boolean;
   emailSending?: boolean;
   leadName: string;
   leadEmail?: string | null;
@@ -419,7 +421,13 @@ export default function ChangeStatusModal({
         body: { padding: 0 },
         header: { padding: "16px 20px 0", borderBottom: "1px solid #eef3f8" },
       }}
+      mask={{ closable: !loading && !saving }}
     >
+      {loading ? (
+        <div className="grid min-h-[320px] place-items-center py-12">
+          <Spin size="large" />
+        </div>
+      ) : (
       <div className="grid max-h-[min(82vh,760px)] grid-rows-[auto_minmax(0,1fr)_auto]">
         <div className="flex gap-5 border-b border-[#eef3f8] px-5 dark:border-border-subtle">
           {(
@@ -927,6 +935,7 @@ export default function ChangeStatusModal({
           )}
         </div>
       </div>
+      )}
     </AntModal>
   );
 }

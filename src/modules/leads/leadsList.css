@@ -4,6 +4,7 @@
 
 .leads-status-tabs {
   scrollbar-width: none;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .leads-status-tabs::-webkit-scrollbar {
@@ -11,10 +12,10 @@
 }
 
 .leads-list-search.ant-input-affix-wrapper {
-  min-height: 42px !important;
-  height: 42px !important;
-  padding-inline: 12px;
-  border-radius: 12px;
+  min-height: 36px !important;
+  height: 36px !important;
+  padding-inline: 10px;
+  border-radius: 10px;
   border-color: var(--color-border);
   background: var(--color-surface);
   box-shadow: none;
@@ -22,18 +23,61 @@
 
 @media (min-width: 961px) {
   .leads-filters .leads-list-search.ant-input-affix-wrapper {
-    width: 280px !important;
-    max-width: min(280px, 42vw) !important;
-    flex: 0 0 auto !important;
+    flex: 1 1 360px !important;
+    min-width: 360px !important;
+    max-width: 480px !important;
   }
 }
 
+.leads-inline-filter.ant-select,
+.leads-inline-filter.ant-select-single.ant-select {
+  height: 36px !important;
+  min-height: 36px !important;
+}
+
+.leads-inline-filter.ant-select .ant-select-selector,
+.leads-inline-filter.ant-select-single .ant-select-selector {
+  height: 36px !important;
+  min-height: 36px !important;
+  border-radius: 10px !important;
+  align-items: center !important;
+  padding-inline: 10px !important;
+}
+
+.leads-inline-filter.ant-select .ant-select-selection-search,
+.leads-inline-filter.ant-select .ant-select-selection-search-input,
+.leads-inline-filter.ant-select .ant-select-selection-item,
+.leads-inline-filter.ant-select .ant-select-selection-placeholder,
+.leads-inline-filter.ant-select .ant-select-content {
+  line-height: 34px !important;
+  height: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.leads-filter-btn.ant-btn,
 .leads-filter-btn {
-  min-height: 42px !important;
-  height: 42px !important;
+  min-height: 36px !important;
+  height: 36px !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  border-radius: 12px !important;
+  padding-inline: 12px !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+.leads-filters {
+  position: relative;
+}
+
+.leads-columns-dropdown {
+  max-height: min(280px, calc(100vh - 120px));
+  overflow: auto;
+}
+
+.leads-columns-dropdown .ant-checkbox-wrapper {
+  font-size: 13px;
 }
 
 .leads-list-search.ant-input-affix-wrapper:hover,
@@ -44,7 +88,7 @@
 }
 
 .leads-list-search .ant-input {
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .leads-table-shell .ant-table-wrapper .ant-table-thead > tr > th {

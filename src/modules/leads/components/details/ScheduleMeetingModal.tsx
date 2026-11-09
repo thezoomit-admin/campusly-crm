@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { TimePicker } from "antd";
+import { Spin, TimePicker } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { UserIcon } from "@hugeicons/core-free-icons";
@@ -144,6 +144,7 @@ export function meetingStartIso(payload: ScheduleMeetingPayload) {
 export default function ScheduleMeetingModal({
   open,
   saving,
+  loading = false,
   mode = "schedule",
   leadName,
   leadCode,
@@ -155,6 +156,7 @@ export default function ScheduleMeetingModal({
 }: {
   open: boolean;
   saving: boolean;
+  loading?: boolean;
   mode?: "schedule" | "reschedule";
   leadName?: string;
   leadCode?: string | null;
@@ -274,7 +276,13 @@ export default function ScheduleMeetingModal({
       onClose={onClose}
       title={isReschedule ? "Reschedule Meeting" : "Schedule Meeting"}
       width={640}
+      mask={{ closable: !loading && !saving }}
     >
+      {loading ? (
+        <div className="grid min-h-[260px] place-items-center py-10">
+          <Spin size="large" />
+        </div>
+      ) : (
       <div className="grid gap-3">
         {leadName ? (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl bg-[#eef8f3] px-3.5 py-2.5 text-[0.84rem] dark:bg-emerald-950/35">
@@ -512,6 +520,7 @@ export default function ScheduleMeetingModal({
           />
         </div>
       </div>
+      )}
     </AntModal>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { getApiError } from '@/lib/api'
 import { hasPermission } from '@/lib/access'
@@ -21,30 +21,27 @@ export default function LeadListReassignModal({
 }: LeadListReassignModalProps) {
   const canReassign =
     hasPermission(auth, 'lead:reassign') || hasPermission(auth, 'lead:assign')
-  const { data, isFetching, isError } = useGetLeadQuery(leadId || '', {
+  const { data, isFetching, isError, isUninitialized } = useGetLeadQuery(leadId || '', {
     skip: !open || !leadId || !canReassign,
   })
   const lead = data?.lead
+  const loading = Boolean(
+    open && leadId && canReassign && (isUninitialized || isFetching || (!lead && !isError)),
+  )
   const [assignLead, { isLoading: saving }] = useAssignLeadMutation()
-  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (!open) {
-      setReady(false)
-      return
-    }
+    if (!open) return
     if (!leadId || !canReassign) {
       onClose()
       return
     }
-    if (isFetching || !lead) return
+    if (loading) return
     if (isError) {
       toast.error('Unable to load lead for reassignment.')
       onClose()
-      return
     }
-    setReady(true)
-  }, [open, leadId, canReassign, isFetching, isError, lead, onClose])
+  }, [open, leadId, canReassign, loading, isError, onClose])
 
   async function onSubmit(ownerId: string, reason: string) {
     if (!leadId) return
@@ -63,7 +60,8 @@ export default function LeadListReassignModal({
 
   return (
     <ChangeOwnerModal
-      open={ready && open && Boolean(lead)}
+      open={Boolean(open && leadId && canReassign)}
+      loading={loading}
       lead={lead || null}
       saving={saving}
       onClose={onClose}

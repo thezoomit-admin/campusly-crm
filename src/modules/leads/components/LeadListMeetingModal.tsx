@@ -29,32 +29,29 @@ export default function LeadListMeetingModal({
   const canFollowUp = hasPermission(auth, 'follow_up:create')
   const canAddActivity = hasPermission(auth, 'activity:create')
   const canSchedule = canFollowUp || canAddActivity
-  const { data, isFetching, isError } = useGetLeadQuery(leadId || '', {
+  const { data, isFetching, isError, isUninitialized } = useGetLeadQuery(leadId || '', {
     skip: !open || !leadId || !canSchedule,
   })
   const lead = data?.lead
+  const loading = Boolean(
+    open && leadId && canSchedule && (isUninitialized || isFetching || (!lead && !isError)),
+  )
   const [createMeeting] = useCreateMeetingMutation()
   const [createActivity] = useCreateActivityMutation()
   const [saving, setSaving] = useState(false)
-  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (!open) {
-      setReady(false)
-      return
-    }
+    if (!open) return
     if (!leadId || !canSchedule) {
       onClose()
       return
     }
-    if (isFetching || !lead) return
+    if (loading) return
     if (isError) {
       toast.error('Unable to load lead for meeting.')
       onClose()
-      return
     }
-    setReady(true)
-  }, [open, leadId, canSchedule, isFetching, isError, lead, onClose])
+  }, [open, leadId, canSchedule, loading, isError, onClose])
 
   async function onSubmit(payload: ScheduleMeetingPayload) {
     if (!leadId || !lead) return
@@ -102,7 +99,8 @@ export default function LeadListMeetingModal({
 
   return (
     <ScheduleMeetingModal
-      open={ready && open && Boolean(lead)}
+      open={Boolean(open && leadId && canSchedule)}
+      loading={loading}
       saving={saving}
       mode="schedule"
       leadName={lead?.name}

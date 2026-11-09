@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { getApiError } from '@/lib/api'
 import { hasPermission } from '@/lib/access'
@@ -22,30 +22,27 @@ export default function LeadListFollowUpModal({
   onClose,
 }: LeadListFollowUpModalProps) {
   const canFollowUp = hasPermission(auth, 'follow_up:create')
-  const { data, isFetching, isError } = useGetLeadQuery(leadId || '', {
+  const { data, isFetching, isError, isUninitialized } = useGetLeadQuery(leadId || '', {
     skip: !open || !leadId || !canFollowUp,
   })
   const lead = data?.lead
+  const loading = Boolean(
+    open && leadId && canFollowUp && (isUninitialized || isFetching || (!lead && !isError)),
+  )
   const [createFollowUp, { isLoading: saving }] = useCreateFollowUpMutation()
-  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (!open) {
-      setReady(false)
-      return
-    }
+    if (!open) return
     if (!leadId || !canFollowUp) {
       onClose()
       return
     }
-    if (isFetching || !lead) return
+    if (loading) return
     if (isError) {
       toast.error('Unable to load lead for follow-up.')
       onClose()
-      return
     }
-    setReady(true)
-  }, [open, leadId, canFollowUp, isFetching, isError, lead, onClose])
+  }, [open, leadId, canFollowUp, loading, isError, onClose])
 
   async function onSubmit(values: FollowUpFormValues) {
     if (!leadId) return
@@ -61,7 +58,8 @@ export default function LeadListFollowUpModal({
 
   return (
     <FollowUpFormModal
-      open={ready && open && Boolean(lead)}
+      open={Boolean(open && leadId && canFollowUp)}
+      loading={loading}
       saving={saving}
       fixedLeadId={leadId || undefined}
       title="Schedule Follow-up"

@@ -1,18 +1,18 @@
 import type { LeadListSummary } from '../types'
-import { LEAD_PIPELINE_TABS, tabCount, type LeadPipelineTab } from '../utils/leadList'
+import { LEAD_VIEW_TABS, viewTabCount, type LeadViewTab } from '../utils/leadList'
 
 type LeadStatusTabsProps = {
-  value: LeadPipelineTab
+  value: LeadViewTab
   summary?: LeadListSummary
-  onChange: (value: LeadPipelineTab) => void
+  onChange: (value: LeadViewTab) => void
 }
 
 export default function LeadStatusTabs({ value, summary, onChange }: LeadStatusTabsProps) {
   return (
-    <div className="leads-status-tabs flex w-full min-w-0 items-center gap-1 overflow-x-auto min-[961px]:w-auto min-[961px]:flex-1">
-      {LEAD_PIPELINE_TABS.map((tab) => {
+    <div className="leads-status-tabs flex w-full min-w-0 items-center gap-1 overflow-x-auto">
+      {LEAD_VIEW_TABS.map((tab) => {
         const active = value === tab.key
-        const count = tabCount(summary, tab.key)
+        const count = viewTabCount(summary, tab.key)
         return (
           <button
             key={tab.key}

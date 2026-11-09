@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { TimePicker } from "antd";
+import { Spin, TimePicker } from "antd";
 import dayjs, { type Dayjs } from "dayjs";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
@@ -218,6 +218,7 @@ function ScheduleSection({
 export default function AddNoteModal({
   open,
   saving,
+  loading = false,
   lead,
   canScheduleFollowUp,
   canScheduleMeeting,
@@ -226,6 +227,7 @@ export default function AddNoteModal({
 }: {
   open: boolean;
   saving: boolean;
+  loading?: boolean;
   lead: LeadRecord | null;
   canScheduleFollowUp: boolean;
   canScheduleMeeting: boolean;
@@ -507,7 +509,13 @@ export default function AddNoteModal({
       title="Add Note"
       width={680}
       styles={{ body: { paddingTop: 8 } }}
+      mask={{ closable: !loading && !saving }}
     >
+      {loading ? (
+        <div className="grid min-h-[260px] place-items-center py-10">
+          <Spin size="large" />
+        </div>
+      ) : (
       <div
         className="grid gap-4"
         onKeyDown={(event) => {
@@ -906,6 +914,7 @@ export default function AddNoteModal({
           />
         </div>
       </div>
+      )}
     </AntModal>
   );
 }

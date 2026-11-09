@@ -38,6 +38,7 @@ export type LeadListParams = {
   priority?: string;
   country?: string;
   ownerId?: string;
+  view?: string;
   duplicatesOnly?: boolean;
 };
 
@@ -109,6 +110,8 @@ const leadsApi = baseApi.injectEndpoints({
           priority: params?.priority,
           country: params?.country,
           ownerId: params?.ownerId,
+          view:
+            params?.view && params.view !== "all" ? params.view : undefined,
           duplicatesOnly: params?.duplicatesOnly ? "true" : undefined,
         })}`,
       providesTags: [{ type: "Leads", id: "LIST" }],

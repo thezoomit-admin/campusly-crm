@@ -20,18 +20,22 @@ export default function LeadListReopenModal({
   onClose,
 }: LeadListReopenModalProps) {
   const canReopenPermission = hasPermission(auth, 'lead:reopen')
-  const { data, isFetching, isError } = useGetLeadQuery(leadId || '', {
+  const { data, isFetching, isError, isUninitialized } = useGetLeadQuery(leadId || '', {
     skip: !open || !leadId || !canReopenPermission,
   })
   const lead = data?.lead
   const canReopen = Boolean(canReopenPermission && lead?.statusChange?.canReopen)
+  const loading = Boolean(
+    open &&
+      leadId &&
+      canReopenPermission &&
+      (isUninitialized || isFetching || (!lead && !isError)),
+  )
   const [reopenLead, { isLoading: saving }] = useReopenLeadMutation()
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     if (!open) {
-      setReady(false)
       setErrors({})
       return
     }
@@ -39,19 +43,17 @@ export default function LeadListReopenModal({
       onClose()
       return
     }
-    if (isFetching || !lead) return
+    if (loading) return
     if (isError) {
       toast.error('Unable to load lead for reopen.')
       onClose()
       return
     }
-    if (!lead.statusChange?.canReopen) {
+    if (lead && !lead.statusChange?.canReopen) {
       toast.info(lead.statusChange?.lockedReason || 'This lead cannot be reopened.')
       onClose()
-      return
     }
-    setReady(true)
-  }, [open, leadId, canReopenPermission, isFetching, isError, lead, onClose])
+  }, [open, leadId, canReopenPermission, loading, isError, lead, onClose])
 
   async function onSubmit(body: { reopenReason: string; followUpDate: string; ownerId: string }) {
     if (!canReopen || !leadId) return
@@ -69,7 +71,8 @@ export default function LeadListReopenModal({
 
   return (
     <ReopenLeadModal
-      open={open && ready && canReopen}
+      open={Boolean(open && leadId && canReopenPermission)}
+      loading={loading || (Boolean(lead) && !canReopen && !isError)}
       saving={saving}
       leadName={lead?.name}
       currentOwnerId={lead?.owner?.id}

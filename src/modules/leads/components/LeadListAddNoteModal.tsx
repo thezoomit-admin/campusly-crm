@@ -39,34 +39,31 @@ export default function LeadListAddNoteModal({
   const canFollowUp = hasPermission(auth, 'follow_up:create')
   const canScheduleMeeting = canFollowUp || canAddActivity
 
-  const { data, isFetching, isError } = useGetLeadQuery(leadId || '', {
+  const { data, isFetching, isError, isUninitialized } = useGetLeadQuery(leadId || '', {
     skip: !open || !leadId || !canAddActivity,
   })
   const lead = data?.lead
+  const loading = Boolean(
+    open && leadId && canAddActivity && (isUninitialized || isFetching || (!lead && !isError)),
+  )
   const [createLeadNote] = useCreateLeadNoteMutation()
   const [createActivity] = useCreateActivityMutation()
   const [createFollowUp] = useCreateFollowUpMutation()
   const [createMeeting] = useCreateMeetingMutation()
   const [saving, setSaving] = useState(false)
-  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (!open) {
-      setReady(false)
-      return
-    }
+    if (!open) return
     if (!leadId || !canAddActivity) {
       onClose()
       return
     }
-    if (isFetching || !lead) return
+    if (loading) return
     if (isError) {
       toast.error('Unable to load lead for note.')
       onClose()
-      return
     }
-    setReady(true)
-  }, [open, leadId, canAddActivity, isFetching, isError, lead, onClose])
+  }, [open, leadId, canAddActivity, loading, isError, onClose])
 
   async function saveMeeting(meeting: AddNoteMeetingPayload, noteText: string) {
     if (!leadId || !lead) return
@@ -184,7 +181,8 @@ export default function LeadListAddNoteModal({
 
   return (
     <AddNoteModal
-      open={ready && open && Boolean(lead)}
+      open={Boolean(open && leadId && canAddActivity)}
+      loading={loading}
       saving={saving}
       lead={lead || null}
       canScheduleFollowUp={canFollowUp}

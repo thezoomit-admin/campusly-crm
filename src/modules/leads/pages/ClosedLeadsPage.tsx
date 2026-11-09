@@ -22,6 +22,10 @@ import LeadListReassignModal from "../components/LeadListReassignModal";
 import LeadListReopenModal from "../components/LeadListReopenModal";
 import LeadsTable from "../components/LeadsTable";
 import type { LeadRow } from "../types";
+import {
+  DEFAULT_CLOSED_VISIBLE_LEAD_COLUMNS,
+  type LeadColumnKey,
+} from "../utils/leadColumns";
 import "../leadsList.css";
 
 export default function ClosedLeadsPage() {
@@ -29,6 +33,9 @@ export default function ClosedLeadsPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<LeadFilterValues>(EMPTY_LEAD_FILTERS);
+  const [visibleColumns, setVisibleColumns] = useState<LeadColumnKey[]>(
+    DEFAULT_CLOSED_VISIBLE_LEAD_COLUMNS,
+  );
   const [duplicatesOnly, setDuplicatesOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -103,11 +110,14 @@ export default function ClosedLeadsPage() {
       />
 
       <div className="overflow-hidden rounded-[20px] border border-border bg-surface shadow-soft">
-        <div className="leads-toolbar flex min-w-0 max-w-full flex-col gap-4 border-b border-border px-3 min-[961px]:flex-row min-[961px]:flex-nowrap min-[961px]:items-center min-[961px]:gap-x-3 min-[961px]:gap-y-0 min-[961px]:px-4">
+        <div className="leads-toolbar flex min-w-0 max-w-full flex-col border-b border-border">
           <LeadFilters
             search={search}
             filters={filters}
             duplicatesOnly={duplicatesOnly}
+            showCloseMetaColumns
+            visibleColumns={visibleColumns}
+            onVisibleColumnsChange={setVisibleColumns}
             loadOptions={loadOptions}
             onSearchChange={(value) => {
               setSearch(value);
@@ -145,6 +155,7 @@ export default function ClosedLeadsPage() {
             canOverridePriority={canOverridePriority}
             showStatus
             showCloseMeta
+            visibleColumns={visibleColumns}
             onPageChange={setPage}
             onLimitChange={(value) => {
               setLimit(value);

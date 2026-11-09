@@ -1200,6 +1200,7 @@ export function QualifyLeadModal({
 export function OverridePriorityModal({
   open,
   saving,
+  loading = false,
   currentPriority,
   currentPriorityCode,
   priorityOptions,
@@ -1208,6 +1209,7 @@ export function OverridePriorityModal({
 }: {
   open: boolean;
   saving: boolean;
+  loading?: boolean;
   currentPriority?: string | null;
   currentPriorityCode?: string | null;
   priorityOptions: MasterOption[];
@@ -1241,7 +1243,13 @@ export function OverridePriorityModal({
       onClose={onClose}
       title="Override Lead Priority"
       width={520}
+      mask={{ closable: !loading && !saving }}
     >
+      {loading ? (
+        <div className="grid min-h-[220px] place-items-center py-8">
+          <Spin />
+        </div>
+      ) : (
       <div className="grid gap-4">
         <p className="m-0 text-sm text-text-muted">
           System priority follows Lead Score. A manual override keeps the chosen
@@ -1311,6 +1319,7 @@ export function OverridePriorityModal({
           />
         </div>
       </div>
+      )}
     </AntModal>
   );
 }
@@ -1324,6 +1333,7 @@ export function AssignLeadModal({
   ownerRoleKey,
   assignedTeamId,
   saving,
+  loading = false,
   onClose,
   onSubmit,
 }: {
@@ -1335,6 +1345,7 @@ export function AssignLeadModal({
   ownerRoleKey?: string | null;
   assignedTeamId?: string | null;
   saving: boolean;
+  loading?: boolean;
   onClose: () => void;
   onSubmit: (ownerId: string, reason: string) => Promise<void>;
 }) {
@@ -1383,7 +1394,18 @@ export function AssignLeadModal({
   const title = currentOwnerName ? "Reassign Lead" : "Assign Lead";
 
   return (
-    <AntModal open={open} onClose={onClose} title={title} width={480}>
+    <AntModal
+      open={open}
+      onClose={onClose}
+      title={title}
+      width={480}
+      mask={{ closable: !loading && !saving }}
+    >
+      {loading ? (
+        <div className="grid min-h-[220px] place-items-center py-8">
+          <Spin />
+        </div>
+      ) : (
       <div className="grid gap-3">
         {leadName ? (
           <p className="m-0 text-sm text-text-muted">
@@ -1437,6 +1459,7 @@ export function AssignLeadModal({
           />
         </div>
       </div>
+      )}
     </AntModal>
   );
 }
@@ -1994,12 +2017,14 @@ export function ChangeOwnerModal({
   open,
   lead,
   saving,
+  loading = false,
   onClose,
   onSubmit,
 }: {
   open: boolean;
   lead: LeadRecord | null;
   saving?: boolean;
+  loading?: boolean;
   onClose: () => void;
   onSubmit?: (ownerId: string, reason: string) => Promise<void>;
 }) {
@@ -2013,6 +2038,7 @@ export function ChangeOwnerModal({
       ownerRoleKey={lead?.owner?.role?.key}
       assignedTeamId={lead?.assignedTeam?.id}
       saving={Boolean(saving)}
+      loading={loading}
       onClose={onClose}
       onSubmit={onSubmit || (async () => undefined)}
     />
@@ -2252,6 +2278,7 @@ export function CloseLeadModal({
 export function ReopenLeadModal({
   open,
   saving,
+  loading = false,
   leadName,
   currentOwnerId,
   assignedTeamId,
@@ -2261,6 +2288,7 @@ export function ReopenLeadModal({
 }: {
   open: boolean;
   saving: boolean;
+  loading?: boolean;
   leadName?: string | null;
   currentOwnerId?: string | null;
   assignedTeamId?: string | null;
@@ -2324,8 +2352,13 @@ export function ReopenLeadModal({
       onClose={requestClose}
       title="Reopen Lead"
       width={520}
-      mask={{ closable: !confirming }}
+      mask={{ closable: !confirming && !loading && !saving }}
     >
+      {loading ? (
+        <div className="grid min-h-[220px] place-items-center py-8">
+          <Spin />
+        </div>
+      ) : (
       <div className="grid gap-3">
         {leadName ? (
           <p className="m-0 text-sm text-text-muted">
@@ -2396,6 +2429,7 @@ export function ReopenLeadModal({
           />
         </div>
       </div>
+      )}
     </AntModal>
   );
 }

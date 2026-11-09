@@ -1,6 +1,6 @@
 import { DataTable } from '@/components/common/Tables'
 import type { LeadRow } from '../types'
-import { getLeadColumns } from '../utils/leadColumns'
+import { getLeadColumns, type LeadColumnKey } from '../utils/leadColumns'
 
 type LeadsTableProps = {
   data: LeadRow[]
@@ -17,6 +17,7 @@ type LeadsTableProps = {
   canConvert?: boolean
   showStatus?: boolean
   showCloseMeta?: boolean
+  visibleColumns?: LeadColumnKey[]
   onPageChange: (page: number) => void
   onLimitChange: (limit: number) => void
   onView: (row: LeadRow) => void
@@ -48,6 +49,7 @@ export default function LeadsTable({
   canConvert,
   showStatus = true,
   showCloseMeta = false,
+  visibleColumns,
   onPageChange,
   onLimitChange,
   onView,
@@ -78,6 +80,7 @@ export default function LeadsTable({
         canConvert,
         showStatus,
         showCloseMeta,
+        visibleColumns,
         onView,
         onEdit,
         onChangeStatus,

@@ -5,7 +5,7 @@ import { getApiError, getApiErrorFields } from '@/lib/api'
 import { hasPermission } from '@/lib/access'
 import type { AuthSession } from '@/types'
 import { useCreateActivityMutation, useListActivityFeedQuery } from '@/redux/features/activities/activitiesApi'
-import { useCreateFollowUpMutation } from '@/modules/follow-ups/api/followUpsApi'
+import { useCreateMeetingMutation } from '@/modules/meetings/api/meetingsApi'
 import {
   useSendEmailMessageMutation,
   useStartLeadEmailMutation,
@@ -44,30 +44,31 @@ export default function LeadListChangeStatusModal({
   const canViewActivity = hasPermission(auth, 'activity:view')
   const canUploadDocument = hasPermission(auth, 'document:upload')
 
-  const { data, isFetching, isError } = useGetLeadQuery(leadId || '', {
+  const { data, isFetching, isError, isUninitialized } = useGetLeadQuery(leadId || '', {
     skip: !open || !leadId || !canUpdateStatus,
   })
   const lead = data?.lead
   const canChangeStatus = Boolean(canUpdateStatus && lead?.statusChange?.canUpdate)
+  const loading = Boolean(
+    open && leadId && canUpdateStatus && (isUninitialized || isFetching || (!lead && !isError)),
+  )
 
   const { data: activityData } = useListActivityFeedQuery(
     { relatedId: leadId || '' },
-    { skip: !open || !leadId || !canViewActivity },
+    { skip: !open || !leadId || !canViewActivity || loading },
   )
 
   const [updateStatus, { isLoading: statusSaving }] = useUpdateLeadStatusMutation()
-  const [createFollowUp, { isLoading: followUpSaving }] = useCreateFollowUpMutation()
+  const [createMeeting, { isLoading: meetingSaving }] = useCreateMeetingMutation()
   const [createActivity, { isLoading: activitySaving }] = useCreateActivityMutation()
   const [uploadLeadDocument, { isLoading: documentUploading }] = useUploadLeadDocumentMutation()
   const [startLeadEmail] = useStartLeadEmailMutation()
   const [sendEmailMessage, { isLoading: emailSending }] = useSendEmailMessageMutation()
 
   const [statusErrors, setStatusErrors] = useState<Record<string, string>>({})
-  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     if (!open) {
-      setReady(false)
       setStatusErrors({})
       return
     }
@@ -75,19 +76,17 @@ export default function LeadListChangeStatusModal({
       onClose()
       return
     }
-    if (isFetching || !lead) return
+    if (loading) return
     if (isError) {
       toast.error('Unable to load lead for status change.')
       onClose()
       return
     }
-    if (!lead.statusChange?.canUpdate) {
+    if (lead && !lead.statusChange?.canUpdate) {
       toast.info(lead.statusChange?.lockedReason || 'Status cannot be changed for this lead.')
       onClose()
-      return
     }
-    setReady(true)
-  }, [open, leadId, canUpdateStatus, isFetching, isError, lead, onClose])
+  }, [open, leadId, canUpdateStatus, loading, isError, lead, onClose])
 
   async function onUpdateStatus(body: ChangeStatusSubmitPayload) {
     if (!canUpdateStatus || !leadId || !lead) return
@@ -102,9 +101,8 @@ export default function LeadListChangeStatusModal({
           ? 'WhatsApp'
           : body.channels.includes('EMAIL')
             ? 'Email'
-            : body.channels.includes('SMS')
-              ? 'SMS'
-              : 'Call'
+            : 'Call'
+
       const previousDue = lead.nextFollowUp?.dueAt ? dayjs(lead.nextFollowUp.dueAt) : null
       const nextDueAt = body.nextFollowUpAt
         ? previousDue?.isValid()
@@ -131,8 +129,6 @@ export default function LeadListChangeStatusModal({
         },
       }).unwrap()
 
-      // Close immediately on status success. List/detail caches refresh via
-      // updateLeadStatus invalidatesTags.
       toast.success('Lead status updated.')
       onClose()
     } catch (error) {
@@ -163,9 +159,8 @@ export default function LeadListChangeStatusModal({
           .join('\n')
 
         if (canFollowUp && startIso) {
-          await createFollowUp({
+          await createMeeting({
             leadId,
-            type: 'Meeting',
             dueAt: startIso,
             priority: 'Medium',
             purpose: 'Other',
@@ -178,9 +173,7 @@ export default function LeadListChangeStatusModal({
           const scheduledLabel = dayjs(startIso).format('MMM D, YYYY, h:mm A')
           await createActivity({
             type: 'MEETING',
-            notes: [`Scheduled for ${scheduledLabel}`, meetingNotes]
-              .filter(Boolean)
-              .join('\n'),
+            notes: [`Scheduled for ${scheduledLabel}`, meetingNotes].filter(Boolean).join('\n'),
             outcome: 'Scheduled',
             nextAction: meeting.agenda || meeting.title || 'Scheduled meeting',
             relatedType: 'lead',
@@ -234,10 +227,9 @@ export default function LeadListChangeStatusModal({
 
   return (
     <ChangeStatusModal
-      open={open && ready && canChangeStatus}
-      saving={
-        statusSaving || followUpSaving || activitySaving || documentUploading
-      }
+      open={Boolean(open && leadId && canUpdateStatus)}
+      loading={loading || (Boolean(lead) && !canChangeStatus && !isError)}
+      saving={statusSaving || meetingSaving || activitySaving || documentUploading}
       emailSending={emailSending}
       leadName={lead?.name || 'Lead'}
       leadEmail={lead?.email}

@@ -27,15 +27,22 @@ import LeadListReassignModal from "../components/LeadListReassignModal";
 import LeadStatusTabs from "../components/LeadStatusTabs";
 import LeadsTable from "../components/LeadsTable";
 import type { LeadRow } from "../types";
-import type { LeadPipelineTab } from "../utils/leadList";
+import {
+  DEFAULT_VISIBLE_LEAD_COLUMNS,
+  type LeadColumnKey,
+} from "../utils/leadColumns";
+import type { LeadViewTab } from "../utils/leadList";
 import "../leadsList.css";
 
 export default function LeadsPage() {
   const auth = useOutletContext<AuthSession>();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState<LeadPipelineTab>("all");
+  const [view, setView] = useState<LeadViewTab>("all");
   const [filters, setFilters] = useState<LeadFilterValues>(EMPTY_LEAD_FILTERS);
+  const [visibleColumns, setVisibleColumns] = useState<LeadColumnKey[]>(
+    DEFAULT_VISIBLE_LEAD_COLUMNS,
+  );
   const [duplicatesOnly, setDuplicatesOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -67,7 +74,8 @@ export default function LeadsPage() {
     search: debouncedSearch,
     page,
     limit,
-    status,
+    view,
+    status: filters.status || undefined,
     source: filters.source,
     priority: filters.priority,
     country: filters.country,
@@ -110,7 +118,8 @@ export default function LeadsPage() {
                 title="Leads"
                 path={`/leads/export${toQuery({
                   search: debouncedSearch,
-                  status: status !== "all" ? status : undefined,
+                  view: view !== "all" ? view : undefined,
+                  status: filters.status || undefined,
                   source: filters.source,
                   priority: filters.priority,
                   country: filters.country,
@@ -131,19 +140,24 @@ export default function LeadsPage() {
       />
 
       <div className="overflow-hidden rounded-[20px] border border-border bg-surface shadow-soft">
-        <div className="leads-toolbar flex min-w-0 max-w-full flex-col gap-4 border-b border-border px-3 min-[961px]:flex-row min-[961px]:flex-nowrap min-[961px]:items-center min-[961px]:gap-x-3 min-[961px]:gap-y-0 min-[961px]:px-4">
-          <LeadStatusTabs
-            value={status}
-            summary={data?.summary}
-            onChange={(next) => {
-              setStatus(next);
-              resetPage();
-            }}
-          />
+        <div className="leads-toolbar flex min-w-0 max-w-full flex-col border-b border-border">
+          <div className="px-3 min-[961px]:px-4">
+            <LeadStatusTabs
+              value={view}
+              summary={data?.summary}
+              onChange={(next) => {
+                setView(next);
+                resetPage();
+              }}
+            />
+          </div>
           <LeadFilters
             search={search}
             filters={filters}
             duplicatesOnly={duplicatesOnly}
+            showStatusFilter
+            visibleColumns={visibleColumns}
+            onVisibleColumnsChange={setVisibleColumns}
             loadOptions={loadOptions}
             onSearchChange={(value) => {
               setSearch(value);
@@ -180,6 +194,7 @@ export default function LeadsPage() {
             canOverridePriority={canOverridePriority}
             canConvert={canConvert}
             showStatus
+            visibleColumns={visibleColumns}
             onPageChange={setPage}
             onLimitChange={(value) => {
               setLimit(value);

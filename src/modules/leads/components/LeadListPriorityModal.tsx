@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { toast } from 'react-toastify'
 import { getApiError } from '@/lib/api'
 import { hasPermission } from '@/lib/access'
@@ -24,30 +24,27 @@ export default function LeadListPriorityModal({
 }: LeadListPriorityModalProps) {
   const canOverride = hasPermission(auth, 'lead:override_priority')
   const options = useLeadMasterOptions({ skip: !loadOptions })
-  const { data, isFetching, isError } = useGetLeadQuery(leadId || '', {
+  const { data, isFetching, isError, isUninitialized } = useGetLeadQuery(leadId || '', {
     skip: !open || !leadId || !canOverride,
   })
   const lead = data?.lead
+  const loading = Boolean(
+    open && leadId && canOverride && (isUninitialized || isFetching || (!lead && !isError)),
+  )
   const [updatePriority, { isLoading: saving }] = useUpdateLeadPriorityMutation()
-  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    if (!open) {
-      setReady(false)
-      return
-    }
+    if (!open) return
     if (!leadId || !canOverride) {
       onClose()
       return
     }
-    if (isFetching || !lead) return
+    if (loading) return
     if (isError) {
       toast.error('Unable to load lead for priority change.')
       onClose()
-      return
     }
-    setReady(true)
-  }, [open, leadId, canOverride, isFetching, isError, lead, onClose])
+  }, [open, leadId, canOverride, loading, isError, onClose])
 
   async function onSubmit(priorityCode: string, reason: string) {
     if (!leadId) return
@@ -66,7 +63,8 @@ export default function LeadListPriorityModal({
 
   return (
     <OverridePriorityModal
-      open={ready && open && Boolean(lead)}
+      open={Boolean(open && leadId && canOverride)}
+      loading={loading}
       saving={saving}
       currentPriority={lead?.priority}
       currentPriorityCode={lead?.priorityCode}

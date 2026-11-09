@@ -12,13 +12,61 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { toast } from "react-toastify";
 import type { LeadRow } from "../types";
 import LeadTableActions from "../components/LeadTableActions";
-import { stageBadgeClass } from "./leadDetails";
+import { priorityBadgeClass, stageBadgeClass } from "./leadDetails";
 import {
   emptyLeadValue,
+  formatLeadCreatedOn,
   leadFollowUpDisplay,
   leadSourceIcon,
   truncateLeadName,
 } from "./leadList";
+
+export type LeadColumnKey =
+  | "name"
+  | "code"
+  | "status"
+  | "priority"
+  | "score"
+  | "nextFollowUpAt"
+  | "updated"
+  | "createdAt"
+  | "source"
+  | "owner"
+  | "closedBy"
+  | "closeReason"
+  | "actions";
+
+export const LEAD_COLUMN_OPTIONS: Array<{
+  key: LeadColumnKey;
+  label: string;
+  locked?: boolean;
+  closedOnly?: boolean;
+  defaultHidden?: boolean;
+}> = [
+  { key: "name", label: "Lead", locked: true },
+  { key: "code", label: "Lead ID", defaultHidden: true },
+  { key: "status", label: "Status" },
+  { key: "priority", label: "Priority" },
+  { key: "score", label: "Score" },
+  { key: "nextFollowUpAt", label: "Next follow-up" },
+  { key: "updated", label: "Last contact" },
+  { key: "createdAt", label: "Created on", defaultHidden: true },
+  { key: "source", label: "Source" },
+  { key: "owner", label: "Assigned to" },
+  { key: "closedBy", label: "Closed By", closedOnly: true },
+  { key: "closeReason", label: "Reason", closedOnly: true },
+  { key: "actions", label: "Action", locked: true },
+];
+
+export const DEFAULT_VISIBLE_LEAD_COLUMNS: LeadColumnKey[] =
+  LEAD_COLUMN_OPTIONS.filter(
+    (item) => !item.closedOnly && !item.defaultHidden,
+  ).map((item) => item.key);
+
+export const DEFAULT_CLOSED_VISIBLE_LEAD_COLUMNS: LeadColumnKey[] =
+  LEAD_COLUMN_OPTIONS.filter((item) => !item.defaultHidden).map(
+    (item) => item.key,
+  );
 
 type LeadColumnOptions = {
   canEdit?: boolean;
@@ -30,6 +78,7 @@ type LeadColumnOptions = {
   canConvert?: boolean;
   showStatus?: boolean;
   showCloseMeta?: boolean;
+  visibleColumns?: LeadColumnKey[];
   onView: (row: LeadRow) => void;
   onEdit: (row: LeadRow) => void;
   onChangeStatus?: (row: LeadRow) => void;
@@ -79,7 +128,9 @@ function scoreBarColor(score: number) {
   return "#e11d48";
 }
 
-function followUpPrimaryClass(tone: ReturnType<typeof leadFollowUpDisplay>["tone"]) {
+function followUpPrimaryClass(
+  tone: ReturnType<typeof leadFollowUpDisplay>["tone"],
+) {
   if (tone === "overdue") return "font-semibold text-[#9f1239]";
   if (tone === "soon") return "font-semibold text-[#d97706]";
   if (tone === "empty") return "text-[#a16207]";
@@ -96,6 +147,7 @@ export function getLeadColumns({
   canConvert,
   showStatus = true,
   showCloseMeta = false,
+  visibleColumns,
   onView,
   onEdit,
   onChangeStatus,
@@ -109,6 +161,15 @@ export function getLeadColumns({
   onConvert,
   onOwnerClick,
 }: LeadColumnOptions): ColumnsType<LeadRow> {
+  const visible = new Set(
+    visibleColumns?.length
+      ? visibleColumns
+      : showCloseMeta
+        ? DEFAULT_CLOSED_VISIBLE_LEAD_COLUMNS
+        : DEFAULT_VISIBLE_LEAD_COLUMNS,
+  );
+  const show = (key: LeadColumnKey) => visible.has(key);
+
   const columns: ColumnsType<LeadRow> = [
     {
       title: "Lead",
@@ -199,11 +260,7 @@ export function getLeadColumns({
               <div className="flex min-w-0 items-center gap-1">
                 <p className="m-0 min-w-0 truncate text-[11px] text-text-faint">
                   {emptyLeadValue(row.country)}
-                  {row.country &&
-                  row.country !== "—" &&
-                  showPhone
-                    ? " · "
-                    : ""}
+                  {row.country && row.country !== "—" && showPhone ? " · " : ""}
                   {showPhone
                     ? row.phone
                     : !row.country || row.country === "—"
@@ -244,7 +301,21 @@ export function getLeadColumns({
     },
   ];
 
-  if (showStatus) {
+  if (show("code")) {
+    columns.push({
+      title: "Lead ID",
+      dataIndex: "code",
+      key: "code",
+      width: 120,
+      render: (value: string | undefined) => (
+        <span className="whitespace-nowrap text-[13px] font-medium text-text">
+          {emptyLeadValue(value)}
+        </span>
+      ),
+    });
+  }
+
+  if (showStatus && show("status")) {
     columns.push({
       title: "Status",
       dataIndex: "status",
@@ -256,7 +327,9 @@ export function getLeadColumns({
         const pill = (
           <span
             className={`inline-flex items-center gap-1 rounded-md border border-current/40 px-2.5 py-1 text-[11px] font-semibold ${stageBadgeClass(value || "")} ${
-              clickable ? "cursor-pointer transition-opacity hover:opacity-80" : ""
+              clickable
+                ? "cursor-pointer transition-opacity hover:opacity-80"
+                : ""
             }`}
           >
             {label}
@@ -289,8 +362,55 @@ export function getLeadColumns({
     });
   }
 
-  columns.push(
-    {
+  if (show("priority")) {
+    columns.push({
+      title: "Priority",
+      dataIndex: "priority",
+      key: "priority",
+      width: 130,
+      render: (value: string | undefined, row) => {
+        const label = emptyLeadValue(value);
+        const clickable = Boolean(canOverridePriority && onChangePriority);
+        const pill = (
+          <span
+            className={`inline-flex items-center gap-1 rounded-md border border-current/40 px-2.5 py-1 text-[11px] font-semibold ${priorityBadgeClass(value)} ${
+              clickable
+                ? "cursor-pointer transition-opacity hover:opacity-80"
+                : ""
+            }`}
+          >
+            {label}
+            {clickable ? (
+              <HugeiconsIcon
+                icon={ArrowDown01Icon}
+                size={12}
+                color="currentColor"
+                strokeWidth={2}
+              />
+            ) : null}
+          </span>
+        );
+        if (!clickable) return pill;
+        return (
+          <button
+            type="button"
+            className="border-0 bg-transparent p-0"
+            onClick={(event) => {
+              event.stopPropagation();
+              onChangePriority?.(row);
+            }}
+            onMouseDown={(event) => event.stopPropagation()}
+            aria-label={`Change priority for ${row.name}`}
+          >
+            {pill}
+          </button>
+        );
+      },
+    });
+  }
+
+  if (show("score")) {
+    columns.push({
       title: "Score",
       dataIndex: "score",
       key: "score",
@@ -315,8 +435,11 @@ export function getLeadColumns({
           </div>
         );
       },
-    },
-    {
+    });
+  }
+
+  if (show("nextFollowUpAt")) {
+    columns.push({
       title: "Next follow-up",
       dataIndex: "nextFollowUpAt",
       key: "nextFollowUpAt",
@@ -345,17 +468,24 @@ export function getLeadColumns({
         }
         return (
           <div className="leading-tight">
-            <p className={`m-0 text-[13px] ${followUpPrimaryClass(display.tone)}`}>
+            <p
+              className={`m-0 text-[13px] ${followUpPrimaryClass(display.tone)}`}
+            >
               {display.primary}
             </p>
             {display.secondary ? (
-              <p className="m-0 text-[11px] text-[#6b7280]">{display.secondary}</p>
+              <p className="m-0 text-[11px] text-[#6b7280]">
+                {display.secondary}
+              </p>
             ) : null}
           </div>
         );
       },
-    },
-    {
+    });
+  }
+
+  if (show("updated")) {
+    columns.push({
       title: "Last contact",
       dataIndex: "updated",
       key: "updated",
@@ -365,8 +495,33 @@ export function getLeadColumns({
           {emptyLeadValue(value)}
         </span>
       ),
-    },
-    {
+    });
+  }
+
+  if (show("createdAt")) {
+    columns.push({
+      title: "Created on",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 140,
+      render: (value: string | undefined) => {
+        const created = formatLeadCreatedOn(value);
+        return (
+          <div className="leading-tight">
+            <p className="m-0 whitespace-nowrap text-[13px] text-text">
+              {created.date}
+            </p>
+            {created.time ? (
+              <p className="m-0 text-[11px] text-[#6b7280]">{created.time}</p>
+            ) : null}
+          </div>
+        );
+      },
+    });
+  }
+
+  if (show("source")) {
+    columns.push({
       title: "Source",
       dataIndex: "source",
       key: "source",
@@ -388,105 +543,113 @@ export function getLeadColumns({
           </span>
         );
       },
-    },
-  );
+    });
+  }
 
-  columns.push({
-    title: "Assigned to",
-    dataIndex: "owner",
-    key: "owner",
-    width: 170,
-    ellipsis: true,
-    render: (value: string, row) => {
-      const name = emptyLeadValue(value);
-      const clickable = Boolean(row.ownerId && onOwnerClick && name !== "—");
-      return (
-        <div
-          className="flex min-w-0 items-center gap-2"
-          onClick={(event) => event.stopPropagation()}
-          onMouseDown={(event) => event.stopPropagation()}
-        >
-          <span className="grid size-7 shrink-0 place-items-center overflow-hidden rounded-full bg-[#eef2f7] text-[#6b7280]">
-            {row.ownerPhotoUrl ? (
-              <img
-                src={row.ownerPhotoUrl}
-                alt=""
-                className="size-full object-cover"
-              />
+  if (show("owner")) {
+    columns.push({
+      title: "Assigned to",
+      dataIndex: "owner",
+      key: "owner",
+      width: 170,
+      ellipsis: true,
+      render: (value: string, row) => {
+        const name = emptyLeadValue(value);
+        const clickable = Boolean(row.ownerId && onOwnerClick && name !== "—");
+        return (
+          <div
+            className="flex min-w-0 items-center gap-2"
+            onClick={(event) => event.stopPropagation()}
+            onMouseDown={(event) => event.stopPropagation()}
+          >
+            <span className="grid size-7 shrink-0 place-items-center overflow-hidden rounded-full bg-[#eef2f7] text-[#6b7280]">
+              {row.ownerPhotoUrl ? (
+                <img
+                  src={row.ownerPhotoUrl}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              ) : (
+                <HugeiconsIcon
+                  icon={UserIcon}
+                  size={14}
+                  color="currentColor"
+                  strokeWidth={1.7}
+                />
+              )}
+            </span>
+            {clickable ? (
+              <button
+                type="button"
+                className="m-0 min-w-0 cursor-pointer truncate border-0 bg-transparent p-0 text-left text-[13px] font-medium text-[#0f9d8e] hover:underline"
+                onClick={() => onOwnerClick?.(row)}
+              >
+                {name}
+              </button>
             ) : (
-              <HugeiconsIcon
-                icon={UserIcon}
-                size={14}
-                color="currentColor"
-                strokeWidth={1.7}
-              />
+              <span className="min-w-0 truncate text-[13px] text-text">
+                {name}
+              </span>
             )}
-          </span>
-          {clickable ? (
-            <button
-              type="button"
-              className="m-0 min-w-0 truncate border-0 bg-transparent p-0 text-left text-[13px] font-medium text-[#0f9d8e] hover:underline"
-              onClick={() => onOwnerClick?.(row)}
-            >
-              {name}
-            </button>
-          ) : (
-            <span className="min-w-0 truncate text-[13px] text-text">{name}</span>
-          )}
-        </div>
-      );
-    },
-  });
+          </div>
+        );
+      },
+    });
+  }
 
   if (showCloseMeta) {
-    columns.push(
-      {
+    if (show("closedBy")) {
+      columns.push({
         title: "Closed By",
         dataIndex: "closedBy",
         key: "closedBy",
         width: 140,
         ellipsis: true,
         render: (value: string | null | undefined) => emptyLeadValue(value),
-      },
-      {
+      });
+    }
+    if (show("closeReason")) {
+      columns.push({
         title: "Reason",
         dataIndex: "closeReason",
         key: "closeReason",
         width: 220,
         ellipsis: true,
         render: (value: string | null | undefined) => emptyLeadValue(value),
-      },
-    );
+      });
+    }
   }
 
-  columns.push({
-    title: "Action",
-    key: "actions",
-    width: 128,
-    align: "right",
-    fixed: "right",
-    render: (_value, row) => (
-      <LeadTableActions
-        row={row}
-        canEdit={canEdit}
-        canClose={canClose}
-        canReopen={canReopen}
-        canReassign={canReassign}
-        canOverridePriority={canOverridePriority}
-        canConvert={canConvert}
-        onView={onView}
-        onEdit={onEdit}
-        onCloseLead={onCloseLead}
-        onReopen={onReopen}
-        onAddNote={onAddNote}
-        onAddFollowUp={onAddFollowUp}
-        onAddMeeting={onAddMeeting}
-        onReassign={onReassign}
-        onChangePriority={onChangePriority}
-        onConvert={onConvert}
-      />
-    ),
-  });
+  if (show("actions")) {
+    columns.push({
+      title: "Action",
+      key: "actions",
+      width: 128,
+      align: "right",
+      fixed: "right",
+      render: (_value, row) => (
+        <LeadTableActions
+          row={row}
+          canEdit={canEdit}
+          canClose={canClose}
+          canReopen={canReopen}
+          canReassign={canReassign}
+          canOverridePriority={canOverridePriority}
+          canConvert={canConvert}
+          onView={onView}
+          onEdit={onEdit}
+          onCloseLead={onCloseLead}
+          onReopen={onReopen}
+          onAddNote={onAddNote}
+          onAddFollowUp={onAddFollowUp}
+          onAddMeeting={onAddMeeting}
+          onReassign={onReassign}
+          onChangePriority={onChangePriority}
+          onConvert={onConvert}
+        />
+      ),
+    });
+  }
 
   return columns;
 }
